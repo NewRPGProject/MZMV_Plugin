@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.151 When executing skills, call motion freely.
+ * @plugindesc v1.152 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help When executing skills(items), call motion freely.
@@ -537,7 +537,7 @@
  */
 
 /*:ja
- * @plugindesc v1.151 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.152 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在にモーションを呼び出します。
@@ -3292,7 +3292,7 @@ Sprite_Actor.prototype.updateTargetPosition = function() {
  */
 var _Sprite_Actor_stepForward = Sprite_Actor.prototype.stepForward;
 Sprite_Actor.prototype.stepForward = function() {
-    if (BattleManager._phase == "action") {
+    if (BattleManager._phase == "action" && BattleManager._action) {
         // 前進の有無
         if (pSetStepForward) {
             // 1:常に無
@@ -3780,7 +3780,7 @@ Sprite_Battler.prototype.mainSprite = function() {
 const _BattleManager_invokeAction = BattleManager.invokeAction;
 BattleManager.invokeAction = function(subject, target) {
     // 不死身設定の場合、対象を不死身化
-    if (this._action.existDynamicSetting("Immortal")) {
+    if (this._action && this._action.existDynamicSetting("Immortal")) {
         target.addState(pImmortalState);
     }
 
@@ -3793,7 +3793,7 @@ BattleManager.invokeAction = function(subject, target) {
 const _BattleManager_endAction = BattleManager.endAction;
 BattleManager.endAction = function() {
     // 不死身設定の場合、全員の不死身化解除
-    if (this._action.existDynamicSetting("Immortal")) {
+    if (this._action && this._action.existDynamicSetting("Immortal")) {
         this.allBattleMembers().forEach(function(battler) {
             battler.removeState(pImmortalState);
             // 既に死んでいる場合は演出実行
