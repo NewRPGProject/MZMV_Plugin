@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.211 Automate & super-enhance battle animations.
+ * @plugindesc v1.22 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help Call battle animations freely from skills (items).
@@ -118,6 +118,13 @@
  * @decimals 2
  * @desc Disperse the numerical value at random calculation.
  * If the value is 0.20, move away from the previous position by about 20%.
+ * 
+ * @param considerTargetScale
+ * @parent <Animation Position>
+ * @type boolean
+ * @default true
+ * @desc When calculating the animation position, consider the target scale.
+ * This item also affects DynamicMotion.
  * 
  * @param <For FrontView>
  * @desc Items related to the front view.
@@ -439,7 +446,7 @@
  */
 
 /*:ja
- * @plugindesc v1.211 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.22 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在に戦闘アニメーションを呼び出します。
@@ -565,6 +572,14 @@
  * @decimals 2
  * @desc ランダム計算時の乱数を作為的に分散させます。
  * 0.20なら20%以上、前回位置から離します。
+ * 
+ * @param considerTargetScale
+ * @text 対象の拡大率を考慮
+ * @parent <Animation Position>
+ * @type boolean
+ * @default true
+ * @desc アニメーションの位置計算時に対象の拡大率を考慮します。
+ * この項目はDynamicMotionにも適用されます。
  * 
  * @param <For FrontView>
  * @text ＜フロントビュー用＞
@@ -1021,6 +1036,18 @@ function parseStruct2(arg) {
 
     return ret;
 }
+function toBoolean(val, def) {
+    // 空白なら初期値を返す
+    if (val === "" || val === undefined) {
+        return def;
+        
+    // 既にboolean型なら、そのまま返す
+    } else if (typeof val === "boolean") {
+        return val;
+    }
+    // 文字列ならboolean型に変換して返す
+    return val.toLowerCase() == "true";
+}
 function toNumber(str, def) {
     return isNaN(str) ? def : +(str || def);
 }
@@ -1040,6 +1067,7 @@ var pAllRangeY = setDefault(parameters["allRangeY"], "($gameSystem.isSideView() 
 var pMirrorAdjustX = parameters["mirrorAdjustX"];
 var pMirrorAdjustY = parameters["mirrorAdjustY"];
 var pRandomAdjust = toNumber(parameters["randomAdjust"], 0);
+var pConsiderTargetScale = toBoolean(parameters["considerTargetScale"], true);
 // フロントビュー関連
 var pFvActorHomeX = parameters["fvActorHomeX"];
 var pFvActorHomeY = parameters["fvActorHomeY"];
@@ -3620,13 +3648,12 @@ Sprite_Battler.prototype.setBattlerData = function() {
     this._battler.z = this.z;
     this._battler._homeX = this._homeX;
     this._battler._homeY = this._homeY;
-    // アクターとエネミーで取得先が違うので考慮
-    if (this._battler.isActor()) {
-        this._battler.width = this._effectTarget.width;
-        this._battler.height = this._effectTarget.height;
-    } else {
-        this._battler.width = this.width;
-        this._battler.height = this.height;
+    this._battler.width = this.mainSprite().width;
+    this._battler.height = this.mainSprite().height;
+    // 拡大率を考慮
+    if (pConsiderTargetScale) {
+        this._battler.width *= Math.abs(this.mainSprite().scale.x);
+        this._battler.height *= Math.abs(this.mainSprite().scale.y);
     }
 };
 

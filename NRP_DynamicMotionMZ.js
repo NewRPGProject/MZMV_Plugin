@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.092 When executing skills, call motion freely.
+ * @plugindesc v1.10 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -543,7 +543,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.092 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.10 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -1965,13 +1965,13 @@ BaseMotion.prototype.isUseDuration = function () {
 BaseMotion.prototype.getDefaultMotionDuration = function (a, motion) {
     var motionDuration;
 
-    // アクターの場合
-    if (a && a._actor) {
+    // SVモーションが有効な場合（アクターを想定）
+    if (a && a.hasSvMotion()) {
         // 一時的にモーションを変更し、標準のモーション速度を取得する。
         let tmp = a._motion;
         // attackの場合は本来のモーションを取得
         if (motion == "attack") {
-            var weapons = a._actor.weapons();
+            var weapons = a._battler.weapons();
             var wtypeId = weapons[0] ? weapons[0].wtypeId : 0;
             var attackMotion = $dataSystem.attackMotions[wtypeId];
             if (attackMotion) {
@@ -1989,7 +1989,7 @@ BaseMotion.prototype.getDefaultMotionDuration = function (a, motion) {
         motionDuration = a.motionSpeed();
         a._motion = tmp; // モーションを戻す
 
-    // エネミーの場合
+    // それ以外（エネミーを想定）
     // またはフロントビューで無理やりアクターのモーションを指定した場合
     } else {
         // 初期値を設定
@@ -2801,7 +2801,7 @@ Sprite.prototype.startDynamicSvMotion = function(dynamicMotion) {
     const dm = dynamicMotion;
 
     // モーションが取得できなければ終了（アクター専用）
-    if (!dm.motion || !this._actor) {
+    if (!dm.motion || !this.hasSvMotion()) {
         return;
     }
 
@@ -3307,7 +3307,7 @@ Game_Actor.prototype.performAction = function(action) {
         if (pSetStartMotion == 1) {
             return;
         // 2:モーション指定時のみ無
-        } else if (pSetStartMotion == 2 && isDynamicMotion(action)) {
+        } else if (pSetStartMotion == 2 && action.isDynamicMotion()) {
             return;
         }
     }
@@ -3317,11 +3317,11 @@ Game_Actor.prototype.performAction = function(action) {
 };
 
 /**
- * ●動的モーションかの判定処理
+ * 【独自】動的モーションかの判定処理
  */
-function isDynamicMotion(action) {
-    var item = action.item();
-    var note = item.note;
+Game_Action.prototype.isDynamicMotion = function() {
+    const item = this.item();
+    const note = item.note;
 
     // 省略タグを考慮
     var tagNameSet = "(?:" + TAG_NAME + ")";
@@ -3340,7 +3340,7 @@ function isDynamicMotion(action) {
         return true;
     }
     return false;
-}
+};
 
 /**
  * ●アクション実行終了（バトラー共通）
@@ -3375,20 +3375,21 @@ Sprite_Actor.prototype.updateTargetPosition = function() {
  */
 var _Sprite_Actor_stepForward = Sprite_Actor.prototype.stepForward;
 Sprite_Actor.prototype.stepForward = function() {
-    if (BattleManager._phase == "action" && BattleManager._action) {
+    const action = BattleManager._action;
+    if (BattleManager._phase == "action" && action) {
         // 前進の有無
         if (pSetStepForward) {
             // 1:常に無
             if (pSetStepForward == 1) {
                 return;
             // 2:モーション指定時のみ無
-            } else if (pSetStepForward == 2 && isDynamicMotion(BattleManager._action)) {
+            } else if (pSetStepForward == 2 && action.isDynamicMotion()) {
                 return;
             }
         }
 
         // NoStepの設定があれば前進しない
-        if (BattleManager._action.existDynamicSetting("NoStep")) {
+        if (action.existDynamicSetting("NoStep")) {
             return;
         }
     }
@@ -3820,6 +3821,13 @@ function getSpriteset() {
         return SceneManager._scene._spriteset;
     }
 }
+
+/**
+ * 【独自】サイドビュー用モーションを保持しているかどうか？
+ */
+Sprite.prototype.hasSvMotion = function() {
+    return this._actor;
+};
 
 //-------------------------------------------------------------
 // ダメージ処理関連
