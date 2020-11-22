@@ -32,7 +32,7 @@
  * ・Dealing with step forward process can be controlled.
  * ・Adjustable movement direction at the start of battle.
  * 
- * ■Note
+ * ■About the problem with animatedSVEnemies.js
  * In the default spec of animatedSVEnemies.js,
  * when an actor is defeated, the enemy takes a victory motion.
  * However, there is a glitch in this process
@@ -41,6 +41,7 @@
  * If you want the enemy's victory motion on top of that,
  * please turn on the "PlayVictoryMotion" option in my plugin.
  * 
+ * ■About Using with Other Plugins
  * When used in conjunction with NRP_EnemyAttackAnimation.js,
  * please place it below this plugin.
  * Otherwise, the enemy's normal attack animations will not appear.
@@ -100,7 +101,7 @@
  * ・一歩前進処理を制御できるように対処。
  * ・戦闘開始時の移動演出を調整可能に。
  * 
- * ■注意点
+ * ■animatedSVEnemies.jsの不具合について
  * animatedSVEnemies.jsのデフォルトの仕様では、
  * アクターの敗北時に敵が勝利モーションを取ります。
  * ……が、この処理には不具合があって、敗北処理が二重に実行されてしまいます。
@@ -108,6 +109,7 @@
  * その上で敵の勝利モーションが必要ならば、
  * 当プラグインで『勝利モーションを実行』をオンにしてください。
  * 
+ * ■他プラグインとの併用について
  * NRP_EnemyAttackAnimation.jsと併用する場合は、
  * 当プラグインより下に配置してください。
  * さもないと敵の通常攻撃のアニメーションが表示されません。
