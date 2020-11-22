@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.04 Read the definition of DynamicAnimation&Motion from txt file.
+ * @plugindesc v1.041 Read the definition of DynamicAnimation&Motion from txt file.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -71,7 +71,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 DynamicAnimation&Motionの定義をtxtから読み込みます。
+ * @plugindesc v1.041 DynamicAnimation&Motionの定義をtxtから読み込みます。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -475,7 +475,6 @@ DataManager.isDynamicTextAllLoaded = function() {
 
             // 結果ＯＫなら
             if (result) {
-                console.log($dynamicReadText);
                 // 不要になったキーをクリア
                 DataManager._dynamicTextFileKeys = undefined;
                 // ロード中解除
