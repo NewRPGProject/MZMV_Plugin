@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.032 Read the definition of DynamicAnimation&Motion from txt file.
+ * @plugindesc v1.04 Read the definition of DynamicAnimation&Motion from txt file.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -35,6 +35,14 @@
  * This allows you to check the operation repeatedly without stopping the game.
  * In production mode, all definitions are read at startup.
  * 
+ * [Caution!]
+ * At the test startup, create a file named "FILE_LIST.txt" in the "ReadTxtFolder".
+ * This file is used to obtain a list of files to be loaded
+ * when starting a browser, such as "RPG Atsumaru".
+ * Therefore, after each txt file renaming,
+ * if you upload a production file without ever starting the test, it will not work properly.
+ * ※I think it is unlikely to happen first...
+ * 
  * [Terms]
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
@@ -53,11 +61,17 @@
  * @default true
  * @desc When testing, the game will load every time someone uses a skill.
  * This allows you to change behavior without stopping the game.
+ * 
+ * @param BrowserMode
+ * @type boolean
+ * @default false
+ * @desc Force it to run in browser mode behavior.
+ * Items for debugging. Basically, it is recommended off.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.032 DynamicAnimation&Motionの定義をtxtから読み込みます。
+ * @plugindesc v1.04 DynamicAnimation&Motionの定義をtxtから読み込みます。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -85,6 +99,14 @@
  * これにより、ゲームを停止することなく動作を繰り返し確認できます。
  * ※本番モード時は起動時に全ての定義を読み込みます。
  * 
+ * ■注意！
+ * テスト起動時、FILE_LIST.txtというファイルを『txt配置フォルダ』に作成します。
+ * これはRPGアツマールなどのブラウザ起動時に、
+ * 読込対象となるファイル一覧を取得するためのファイルです。
+ * そのため、各txtのファイル名変更後、一度もテスト起動せず、
+ * 本番ファイルをアップロードした場合、正常に動作しません。
+ * ※まずありえないと思いますが……。
+ * 
  * ■利用規約
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
@@ -103,6 +125,13 @@
  * @default true
  * @desc テスト時はスキルを使用する度に読込を行います。
  * これによりゲームを停止せずに動作変更が可能です。
+ * 
+ * @param BrowserMode
+ * @text ブラウザモードで実行
+ * @type boolean
+ * @default false
+ * @desc 強制的にブラウザモードの挙動で実行します。
+ * ※デバッグ用の項目なので基本的にはオフ推奨です。
  */
 
 // DynamicTextファイルの内容を格納する配列
@@ -130,11 +159,13 @@ function setDefault(str, def) {
 }
 
 const PLUGIN_NAME = "NRP_DynamicReadTxt";
-var parameters = PluginManager.parameters(PLUGIN_NAME);
-var pReadTxtFolder = setDefault(parameters["ReadTxtFolder"], "data/D-Txt/");
-var pDynamicReadOnTest = toBoolean(parameters["DynamicReadOnTest"], true);
+const parameters = PluginManager.parameters(PLUGIN_NAME);
+const pReadTxtFolder = setDefault(parameters["ReadTxtFolder"], "data/D-Txt/");
+const pDynamicReadOnTest = toBoolean(parameters["DynamicReadOnTest"], true);
+const pBrowserMode = toBoolean(parameters["BrowserMode"], false);
 
 const TAG_NAME = "D-Txt";
+const FILE_LIST_NAME = "FILE_LIST"
 
 /************************************************
  * 以下、共通処理
@@ -144,11 +175,36 @@ const TAG_NAME = "D-Txt";
 DataManager._dynamicTextErrors = [];
 
 /**
+ * ●テスト実行かどうか？
+ */
+function isPlaytest() {
+    // ブラウザ実行時は常に本番と判定
+    if (isBrowserMode()) {
+        return false;
+
+    // ※この段階では$gameTemp.isPlaytest()は有効にならないため、こちらで判定。
+    } else if (Utils.isOptionValid("test")) {
+        return true;
+    }
+    return false;
+}
+
+/**
+ * ●ブラウザ実行かどうか？
+ */
+function isBrowserMode() {
+    if (!Utils.isNwjs() || pBrowserMode) {
+        return true;
+    }
+    return false;
+}
+
+/**
  * ●テスト時に定義の動的読込を行うか？
  */
 function isDynamicReadOnTest() {
     // テスト時はプラグインパラメータの定義を使用
-    if ($gameTemp.isPlaytest()) {
+    if (isPlaytest()) {
         return pDynamicReadOnTest;
     }
 
@@ -170,7 +226,7 @@ function loadDynamicTextFile(item) {
 
         // 複数ファイルに対してロード実行
         for (const fileName of fileNames) {
-            DataManager.loadDynamicTextFile("$dynamicReadTextTemp", fileName + ".txt", fileName);
+            DataManager.loadDynamicTextFile("$dynamicReadTextTemp", fileName + ".txt");
         }
         return true;
     }
@@ -231,9 +287,11 @@ function readLineFileName(line, item) {
 /**
  * 【独自】テキストファイルを読み込む
  */
-DataManager.loadDynamicTextFile = function(name, src, key) {
+DataManager.loadDynamicTextFile = function(name, src) {
     const xhr = new XMLHttpRequest();
     const url = pReadTxtFolder + src;
+    // 拡張子を除去してキーにする。abc.txt -> abc
+    const key = src.replace(/\.[^/.]+$/, "");
     window[name][key] = null;
     xhr.open("GET", url);
     xhr.overrideMimeType("text/plain");
@@ -315,6 +373,15 @@ DataManager.loadDatabase = function() {
  * 【独自】DynamicTextを全件読込する。
  */
 DataManager.loadDynamicTextAll = function() {
+    // ブラウザ実行時
+    if (isBrowserMode()) {
+        // FILE_LIST.txtから一覧を取得
+        DataManager.loadDynamicTextFile("$dynamicReadTextTemp", FILE_LIST_NAME + ".txt");
+        // 一覧用のロード実行フラグ
+        this.onLoadDynamicFileList = true;
+        return;
+    }
+
     // node.jsの関数を呼び出し、フォルダ内にあるファイル名を取得
     const fs = require("fs");
     // 処理はreaddirDynamicTextFileに引き継ぐ
@@ -340,6 +407,27 @@ function readdirDynamicTextFile(err, dynamicFileNames) {
         return fileName.endsWith(".txt");
     });
 
+    // テスト実行時
+    if (isPlaytest()) {
+        // ファイル一覧をファイルに出力
+        const fs = require("fs");
+        fs.writeFile(pReadTxtFolder + FILE_LIST_NAME + ".txt", dynamicTextFileNames, (err, data) => {
+            if (err) {
+                alert(err);
+            } else {
+                console.log('write end');
+            }
+        });
+    }
+
+    // ファイル名の一覧からロード実行
+    loadDynamicTextFileNames(dynamicTextFileNames);
+}
+
+/**
+ * ●ファイル名の一覧からロード実行
+ */
+function loadDynamicTextFileNames(dynamicTextFileNames) {
     // 一行ずつファイルを読込
     for (const fileName of dynamicTextFileNames) {
         DataManager.loadDynamicTextFile("$dynamicReadTextTemp", fileName);
@@ -356,8 +444,26 @@ function readdirDynamicTextFile(err, dynamicFileNames) {
  * 【独自】全テキストがロードできているかどうか？
  */
 DataManager.isDynamicTextAllLoaded = function() {
-    // ロード中の場合
-    if (this.onLoadDynamicTextAll) {
+    // ファイル一覧のロード中の場合
+    if (this.onLoadDynamicFileList) {
+        this.checkErrorDynamicText();
+
+        // ロード完了したかどうか？
+        if ($dynamicReadText[FILE_LIST_NAME] != undefined) {
+            // ファイル一覧のロード中解除
+            this.onLoadDynamicFileList = false;
+            // ロード完了なら、さらに各DynamicTxtのロードへ進む
+            // DynamicTxtのロード実行中フラグを立てる。
+            this.onLoadDynamicTextAll = true;
+            // カンマ区切りによって配列化
+            const dynamicTextFileNames = $dynamicReadText[FILE_LIST_NAME].split(",");
+            // ファイル名の一覧からロード実行
+            loadDynamicTextFileNames(dynamicTextFileNames);
+        }
+        return false;
+
+    // DynamicTxtのロード中の場合
+    } else if (this.onLoadDynamicTextAll) {
         this.checkErrorDynamicText();
 
         // ファイル名リストから全ての該当キーが存在するかチェック
@@ -369,6 +475,7 @@ DataManager.isDynamicTextAllLoaded = function() {
 
             // 結果ＯＫなら
             if (result) {
+                console.log($dynamicReadText);
                 // 不要になったキーをクリア
                 DataManager._dynamicTextFileKeys = undefined;
                 // ロード中解除
