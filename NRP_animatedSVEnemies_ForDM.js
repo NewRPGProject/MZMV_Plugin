@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Allows animatedSVEnemies to be used in conjunction with DynamicMotion.
+ * @plugindesc v1.011 Allows animatedSVEnemies to be used in conjunction with DynamicMotion.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base animatedSVEnemies
  * @base NRP_DynamicMotionMZ
@@ -73,7 +73,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 animatedSVEnemiesをDynamicMotionと併用できるようにします。
+ * @plugindesc v1.011 animatedSVEnemiesをDynamicMotionと併用できるようにします。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @base animatedSVEnemies
  * @base NRP_DynamicMotionMZ
@@ -178,9 +178,11 @@ Rexal.ASVE.NoMovement = eval(String(Rexal.ASVE.Parameters['No Movement']));
  * ●MZかMVかを判定してパラメータを返す。
  */
 function getDynamicMotionParameters() {
-    const mzParams = PluginManager.parameters("NRP_DynamicMotionMZ");
-    if (mzParams != undefined) {
-        return mzParams;
+    const isDynamicMotionMZ = PluginManager._scripts.some(function(scriptName) {
+        return scriptName == "NRP_DynamicMotionMZ";
+    });
+    if (isDynamicMotionMZ) {
+        return PluginManager.parameters("NRP_DynamicMotionMZ");
     }
     return PluginManager.parameters("NRP_DynamicMotion");
 }
