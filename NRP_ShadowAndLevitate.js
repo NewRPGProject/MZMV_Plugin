@@ -34,6 +34,7 @@
  * 
  * Separate settings are also possible by including the following
  * in the notes for enemy and actor.
+ * ※<BattlerFloat> is also valid only for states.
  * 
  * ■Note Settings
  * <MakeShadow> / <MakeShadow:false>
@@ -57,8 +58,9 @@
  * Changes the opacity of the shadow; it becomes opaque at 255.
  * 
  * <BattlerFloat> / <BattlerFloat:?>
- * The battler floats in the air for a specified numerical amount of height.
- * If not specified, use the set value of the plugin parameters.
+ * The battler will float in the air.
+ * The height depends on the settings of the plugin parameters.
+ * It is also possible to specify the height numerically and individually.
  * 
  * Also, only this item is valid in the notes field of the state.
  * For example, you can create a state like the Levitate in the FF series.
@@ -241,8 +243,8 @@
  * なお、プラグインを導入しただけでは敵キャラの影は表示されません。
  * 『影を作成』をオンにする必要があります。
  * 
- * 敵キャラおよびアクターのメモ欄に以下を記載すれば、
- * 個別の設定も可能です。
+ * 敵キャラおよびアクターのメモ欄に以下を記載すれば、個別の設定も可能です。
+ * ※<BattlerFloat>のみステートにも有効です。
  * 
  * ■メモ欄の設定
  * <MakeShadow> / <MakeShadow:false>
@@ -263,8 +265,8 @@
  * 影の不透明度を変更します。255で不透明になります。
  * 
  * <BattlerFloat> / <BattlerFloat:?>
- * 指定した数値分の高さだけ、バトラーが宙に浮きます。
- * 指定がない場合はプラグインパラメータの設定値を使います。
+ * バトラーが宙に浮きます。高さはプラグインパラメータの設定値に従います。
+ * 高さを数値で個別に指定することも可能です。
  * 
  * また、この項目のみステートのメモ欄でも有効です。
  * 例えば、ＦＦシリーズのレビテトのようなステートが作成できます。
