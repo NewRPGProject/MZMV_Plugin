@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Setting the battler's shadow & adding the levitation effect
+ * @plugindesc v1.001 Setting the battler's shadow & adding the levitation effect
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base animatedSVEnemies
  * @base NRP_DynamicMotionMZ
@@ -23,7 +23,8 @@
  * ・This plugin supports DynamicMotion and animatedSVEnemies.js.
  * 
  * ■Install
- * Register this plugin below the following plugins.
+ * If used in conjunction with the following plugins,
+ * please register below them.
  * ・NRP_DynamicMotion.js or NRP_DynamicMotionMZ.js
  * ・animatedSVEnemies.js
  * 
@@ -96,9 +97,12 @@
  * 
  * @param EnemyMakeShadow
  * @parent <Enemy Shadow>
- * @type boolean
- * @default false
+ * @type select
+ * @option
+ * @option Make @value true
+ * @option Not Make @value false
  * @desc Create the shadow of the enemies in the same way as the actors.
+ * Blank and use the default settings (usually Not Make).
  * 
  * @param EnemyShadowImage
  * @parent <Enemy Shadow>
@@ -216,7 +220,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 バトラーの影を設定＆浮遊効果の追加
+ * @plugindesc v1.001 バトラーの影を設定＆浮遊効果の追加
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @orderAfter animatedSVEnemies
  * @orderAfter NRP_DynamicMotionMZ
@@ -234,7 +238,7 @@
  * ・DynamicMotionおよびanimatedSVEnemies.jsに対応
  * 
  * ■導入
- * 以下のプラグインよりも下に登録してください。
+ * 以下のプラグインと併用する場合は、それらよりも下に登録してください。
  * ・NRP_DynamicMotion.js or NRP_DynamicMotionMZ.js
  * ・animatedSVEnemies.js
  * 
@@ -301,9 +305,12 @@
  * @param EnemyMakeShadow
  * @parent <Enemy Shadow>
  * @text 影を作成
- * @type boolean
- * @default false
+ * @type select
+ * @option
+ * @option 作成する @value true
+ * @option 作成しない @value false
  * @desc 敵の影をアクターと同じように作成します。
+ * 空欄だと初期設定（原則は未作成）を使用します。
  * 
  * @param EnemyShadowImage
  * @parent <Enemy Shadow>
@@ -487,7 +494,7 @@ function setDefault(str, def) {
 const parameters = PluginManager.parameters("NRP_ShadowAndLevitate");
 
 // 敵キャラ
-const pEnemyMakeShadow = toBoolean(parameters["EnemyMakeShadow"], false);
+const pEnemyMakeShadow = setDefault(parameters["EnemyMakeShadow"]);
 const pEnemyShadowImage = setDefault(parameters["EnemyShadowImage"], "Shadow2");
 const pEnemyShadowScaleX = setDefault(parameters["EnemyShadowScaleX"], "a.width / shadow.width * 1.5");
 const pEnemyShadowScaleY = setDefault(parameters["EnemyShadowScaleY"], "a.width / shadow.width * 1.5");
@@ -810,17 +817,20 @@ Sprite_Battler.prototype.initBattlerShadow = function() {
  * ●影を作成するかどうか？
  */
 function isMakeShadow(sprite, metaMakeShadow) {
-    const isActor = sprite._battler.isActor();
-
     // 個別の設定があればそちらを優先
     if (metaMakeShadow) {
         return eval(metaMakeShadow);
-    // アクターなら原則作成
-    } else if (isActor) {
-        return true;
-    // 敵ならプラグインの設定を採用
-    } else if (!isActor && pEnemyMakeShadow) {
+    }
+
+    const isActor = isUseActorSetting(sprite);
+
+    // 敵かつプラグインの設定があれば採用
+    if (!isActor && pEnemyMakeShadow != undefined) {
         return eval(pEnemyMakeShadow);
+    // アクターなら原則作成
+    // ※animatedSVEnemies.jsの敵も対象にする。
+    } else if (isAnimatedBattler(sprite)) {
+        return true;
     }
     return false;
 }
@@ -830,7 +840,7 @@ function isMakeShadow(sprite, metaMakeShadow) {
  */
 function getScaleX(sprite, shadow, metaScaleX) {
     const a = getMainSprite(sprite);
-    const isActor = sprite._battler.isActor();
+    const isActor = isUseActorSetting(sprite);
 
     if (metaScaleX) {
         return eval(metaScaleX);
@@ -847,7 +857,7 @@ function getScaleX(sprite, shadow, metaScaleX) {
  */
 function getScaleY(sprite, shadow, metaScaleY) {
     const a = getMainSprite(sprite);
-    const isActor = sprite._battler.isActor();
+    const isActor = isUseActorSetting(sprite);
 
     if (metaScaleY) {
         return eval(metaScaleY);
@@ -864,7 +874,7 @@ function getScaleY(sprite, shadow, metaScaleY) {
  */
 function getOpacity(sprite, metaOpacity) {
     const a = getMainSprite(sprite);
-    const isActor = sprite._battler.isActor();
+    const isActor = isUseActorSetting(sprite);
 
     if (metaOpacity) {
         return eval(metaOpacity);
@@ -881,7 +891,7 @@ function getOpacity(sprite, metaOpacity) {
  */
 function getShadowX(sprite, metaShadowX) {
     const a = getMainSprite(sprite);
-    const isActor = sprite._battler.isActor();
+    const isActor = isUseActorSetting(sprite);
 
     if (metaShadowX) {
         return eval(metaShadowX);
@@ -898,7 +908,7 @@ function getShadowX(sprite, metaShadowX) {
  */
 function getShadowY(sprite, metaShadowY) {
     const a = getMainSprite(sprite);
-    const isActor = sprite._battler.isActor();
+    const isActor = isUseActorSetting(sprite);
     let shadowY = 0;
 
     if (metaShadowY) {
@@ -919,6 +929,21 @@ function getShadowY(sprite, metaShadowY) {
     shadowY += floatHeight;
 
     return shadowY;
+}
+
+/**
+ * ●アクター側の設定を使用するかどうか？
+ */
+function isUseActorSetting(sprite) {
+    return sprite._battler.isActor();
+}
+
+/**
+ * ●SVモーションを使用できるバトラーかどうか？
+ * ※animatedSVEnemies.jsを考慮
+ */
+function isAnimatedBattler(sprite) {
+    return !!sprite._actor;
 }
 
 /**
@@ -966,7 +991,7 @@ function setFloat(sprite, metaBattlerFloat) {
  */
 function getFloatHeight(sprite, metaBattlerFloat) {
     const a = getMainSprite(sprite);
-    const isActor = sprite._battler.isActor();
+    const isActor = isUseActorSetting(sprite);
     let floatHeight = metaBattlerFloat;
 
     // バトラーが浮遊ステートを保持しているなら優先設定
