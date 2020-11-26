@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.16 When executing skills, call motion freely.
+ * @plugindesc v1.17 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help When executing skills(items), call motion freely.
@@ -537,7 +537,7 @@
  */
 
 /*:ja
- * @plugindesc v1.16 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.17 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在にモーションを呼び出します。
@@ -3071,7 +3071,7 @@ Sprite.prototype.updateDynamicMove = function() {
             this.rotation = eval(motion._evalRotation);
 
             // 画像の原点を高さの中央に
-            this.mainSprite().anchor.y = 0.5;
+            this.getMain().anchor.y = 0.5;
 
             if (this._weaponSprite) {
                 this._weaponSprite.anchor.y = 0.5;
@@ -3088,7 +3088,7 @@ Sprite.prototype.updateDynamicMove = function() {
 
         // 色調変更
         if (motion._evalColor != undefined) {
-            this.mainSprite().setBlendColor(eval(motion._evalColor));
+            this.getMain().setBlendColor(eval(motion._evalColor));
         }
 
         // Ｚ座標
@@ -3144,11 +3144,11 @@ Sprite.prototype.onDynamicMoveEnd = function() {
     this._targetAirY = undefined;
 
     // 画像基準点が変更されている場合
-    if (this.mainSprite().anchor.y == 0.5) {
+    if (this.getMain().anchor.y == 0.5) {
         // かつ回転終了の場合
         if (this.rotation == undefined || this.rotation % Math.PI*2 == 0) {
             // 基準点を戻す（本体、武器、ステート）
-            this.mainSprite().anchor.y = 1;
+            this.getMain().anchor.y = 1;
             if (this._weaponSprite) {
                 this._weaponSprite.anchor.y = 1;
             }
@@ -3321,13 +3321,19 @@ Sprite_Actor.prototype.stepForward = function() {
 /**
  * ●アクターの影更新
  */
-var _Sprite_Actor_updateShadow = Sprite_Actor.prototype.updateShadow;
+const _Sprite_Actor_updateShadow = Sprite_Actor.prototype.updateShadow;
 Sprite_Actor.prototype.updateShadow = function() {
-    // 元処理実行
-    _Sprite_Actor_updateShadow.call(this);
+    _Sprite_Actor_updateShadow.apply(this, arguments);
 
-    var motion = this._setDynamicMotion;
-    if (!motion) {
+    this.updateDynamicShadow();
+};
+
+/**
+ * ●影更新
+ */
+Sprite_Actor.prototype.updateDynamicShadow = function() {
+    const motion = this._setDynamicMotion;
+    if (!motion || !this._shadowSprite) {
         return;
     }
 
@@ -3342,8 +3348,8 @@ Sprite_Actor.prototype.updateShadow = function() {
 
     // ジャンプ時の影表示
     if (pJumpShadow == true) {
-        this._shadowSprite.x = 0;
-        this._shadowSprite.y = 0;
+        // 影の位置を初期化
+        this.initShadowPosition();
 
         // ジャンプ座標分だけ影のＹ座標を調整
         if (airY && this._shadowSprite.visible) {
@@ -3375,6 +3381,15 @@ Sprite_Actor.prototype.updateShadow = function() {
 };
 
 /**
+ * 【独自】影の位置を初期化
+ * ※基本的にはSprite_Actor用だが、NRP_BattlerShadow,jsとの連携を考慮
+ */
+Sprite_Battler.prototype.initShadowPosition = function() {
+    this._shadowSprite.x = 0;
+    this._shadowSprite.y = -2;
+};
+
+/**
  * 【独自】回転調整後の空中Ｙ座標を取得
  * ※マップ版と共有するためSpriteに定義する。
  */
@@ -3384,7 +3399,7 @@ Sprite.prototype.rollAirY = function() {
         airY += this._airY;
     }
     // 基準点（回転軸）が変更されている場合はズレるので調整
-    if (this.mainSprite().anchor.y == 0.5) {
+    if (this.getMain().anchor.y == 0.5) {
         // scaleの変更を考慮
         airY += -this.height/2 * this.scale.y;
     }
@@ -3743,11 +3758,11 @@ function setSpriteInfo(sprite) {
         sprite.gy = sprite._character.y;
 
     // バトラーかつアクターの場合
-    } if (sprite.hasSvMotion() && sprite.mainSprite) {
+    } if (sprite.hasSvMotion() && sprite.getMain) {
         // Sprite_Actorのサイズが取れないのでeffectTargetのものをセットする。
         // やや強引かも……。
-        sprite.width = sprite.mainSprite().width;
-        sprite.height = sprite.mainSprite().height;
+        sprite.width = sprite.getMain().width;
+        sprite.height = sprite.getMain().height;
     }
 }
 
@@ -3763,13 +3778,6 @@ function getSpriteset() {
         return SceneManager._scene._spriteset;
     }
 }
-
-/**
- * 【独自】バトラーの主体となるスプライトを取得
- */
-Sprite_Battler.prototype.mainSprite = function() {
-    return this._effectTarget;
-};
 
 /**
  * 【独自】SV用モーションを保持しているかどうか？

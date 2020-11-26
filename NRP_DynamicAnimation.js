@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.22 Automate & super-enhance battle animations.
+ * @plugindesc v1.221 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help Call battle animations freely from skills (items).
@@ -446,7 +446,7 @@
  */
 
 /*:ja
- * @plugindesc v1.22 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.221 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在に戦闘アニメーションを呼び出します。
@@ -3648,12 +3648,12 @@ Sprite_Battler.prototype.setBattlerData = function() {
     this._battler.z = this.z;
     this._battler._homeX = this._homeX;
     this._battler._homeY = this._homeY;
-    this._battler.width = this.mainSprite().width;
-    this._battler.height = this.mainSprite().height;
+    this._battler.width = this.getMain().width;
+    this._battler.height = this.getMain().height;
     // 拡大率を考慮
     if (pConsiderTargetScale) {
-        this._battler.width *= Math.abs(this.mainSprite().scale.x);
-        this._battler.height *= Math.abs(this.mainSprite().scale.y);
+        this._battler.width *= Math.abs(this.getMain().scale.x);
+        this._battler.height *= Math.abs(this.getMain().scale.y);
     }
 };
 
@@ -3881,6 +3881,14 @@ function getSpriteset() {
         return SceneManager._scene._spriteset;
     }
 }
+
+/**
+ * 【独自】バトラーの主体となるスプライトを取得
+ * ※ＭＺに合わせてmainSprite()にしたかったが、VE系とかぶるので変更……。
+ */
+Sprite_Battler.prototype.getMain = function() {
+    return this._effectTarget;
+};
 
 //-----------------------------------------------
 // ダメージ処理関連

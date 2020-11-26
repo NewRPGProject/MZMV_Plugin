@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.10 When executing skills, call motion freely.
+ * @plugindesc v1.11 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -543,7 +543,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.10 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.11 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -3401,13 +3401,19 @@ Sprite_Actor.prototype.stepForward = function() {
 /**
  * ●アクターの影更新
  */
-var _Sprite_Actor_updateShadow = Sprite_Actor.prototype.updateShadow;
+const _Sprite_Actor_updateShadow = Sprite_Actor.prototype.updateShadow;
 Sprite_Actor.prototype.updateShadow = function() {
-    // 元処理実行
-    _Sprite_Actor_updateShadow.call(this);
+    _Sprite_Actor_updateShadow.apply(this, arguments);
 
-    var motion = this._setDynamicMotion;
-    if (!motion) {
+    this.updateDynamicShadow();
+};
+
+/**
+ * ●影更新
+ */
+Sprite_Actor.prototype.updateDynamicShadow = function() {
+    const motion = this._setDynamicMotion;
+    if (!motion || !this._shadowSprite) {
         return;
     }
 
@@ -3422,8 +3428,8 @@ Sprite_Actor.prototype.updateShadow = function() {
 
     // ジャンプ時の影表示
     if (pJumpShadow == true) {
-        this._shadowSprite.x = 0;
-        this._shadowSprite.y = 0;
+        // 影の位置を初期化
+        this.initShadowPosition();
 
         // ジャンプ座標分だけ影のＹ座標を調整
         if (airY && this._shadowSprite.visible) {
@@ -3452,6 +3458,15 @@ Sprite_Actor.prototype.updateShadow = function() {
     } else {
         this._shadowSprite.rotation = 0;
     }
+};
+
+/**
+ * 【独自】影の位置を初期化
+ * ※基本的にはSprite_Actor用だが、NRP_BattlerShadow,jsとの連携を考慮
+ */
+Sprite_Battler.prototype.initShadowPosition = function() {
+    this._shadowSprite.x = 0;
+    this._shadowSprite.y = -2;
 };
 
 /**
