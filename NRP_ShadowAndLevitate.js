@@ -29,8 +29,8 @@
  * 
  * ■Usage
  * You set the shadow settings in the plugin parameters.
- * For enemy, if you turn on "EnemyMakeShadow",
- * a shadow similar to that of actor will appear.
+ * In addition, the shadow of the enemy does not appear
+ * just by installing the plugin. "EnemyMakeShadow" must be turned on.
  * 
  * Separate settings are also possible by including the following
  * in the notes for enemy and actor.
@@ -238,8 +238,8 @@
  * 
  * ■使用方法
  * プラグインパラメータで、影の設定をしてください。
- * 敵キャラについては『影を作成』をオンにすれば、
- * アクターと同じような影が表示されるようになります。
+ * なお、プラグインを導入しただけでは敵キャラの影は表示されません。
+ * 『影を作成』をオンにする必要があります。
  * 
  * 敵キャラおよびアクターのメモ欄に以下を記載すれば、
  * 個別の設定も可能です。
