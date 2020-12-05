@@ -6,7 +6,7 @@
  * @target MV MZ
  * @plugindesc v1.00 Motion the event with DynamicMotionMap.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
- * @url http://newrpg.seesaa.net/article/477913000.html
+ * @url http://newrpg.seesaa.net/article/478832629.html
  *
  * @help Causes events to perform
  * side-view battle-like motions from a DynamicMotionMap.
@@ -56,7 +56,7 @@
  * @base DRQ_EventMotions
  * @orderAfter NRP_DynamicMotionMap
  * @orderAfter DRQ_EventMotions
- * @url http://newrpg.seesaa.net/article/477913000.html
+ * @url http://newrpg.seesaa.net/article/478832629.html
  *
  * @help DynamicMotionMapからイベントに
  * サイドビュー戦闘のようなモーションを実行させます。
@@ -69,7 +69,7 @@
  * ※上記のプラグインよりも当プラグインを下に登録してください。
  * 
  * ■使い方
- * DRQ_EventMotions.jsのプラグインパラメータからモーション情報を登録します。
+ * DRQ_EventMotions.jsのプラグインパラメータにモーション情報を登録します。
  * 登録したモーションの名前を使ってDynamicMotion側から呼び出します。
  * 方法はサイドビュー戦闘時とほぼ同じです。
  * 
