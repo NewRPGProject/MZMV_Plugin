@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV
- * @plugindesc v1.081 Call DynamicAnimation on the map.
+ * @plugindesc v1.082 Call DynamicAnimation on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimation
  * @url http://newrpg.seesaa.net/article/477639171.html
@@ -137,7 +137,7 @@
 
 /*:ja
  * @target MV
- * @plugindesc v1.081 DynamicAnimationをマップ上から起動します。
+ * @plugindesc v1.082 DynamicAnimationをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimation
  * @url http://newrpg.seesaa.net/article/477639171.html
@@ -1193,6 +1193,9 @@ Sprite_Character.prototype.isActor = function() {
 };
 Sprite_Character.prototype.isEnemy = function() {
     return false;
+};
+Sprite_Character.prototype.getMain = function() {
+    return this;
 };
 
 //----------------------------------------
