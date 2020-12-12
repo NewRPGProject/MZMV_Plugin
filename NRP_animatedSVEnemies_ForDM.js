@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.011 Allows animatedSVEnemies to be used in conjunction with DynamicMotion.
+ * @plugindesc v1.02 Allows animatedSVEnemies to be used in conjunction with DynamicMotion.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base animatedSVEnemies
  * @base NRP_DynamicMotionMZ
@@ -25,12 +25,16 @@
  * 
  * ※I have tested it with the stable version, v1.15.51.
  * 　Please note that in the latest version I am unconfirmed.
- * ※Naturally, you need NRP_DynamicMotion or NRP_DynamicMotionMZ.
+ * ※Basically, it is intended to be used together
+ * 　with NRP_DynamicMotion or NRP_DynamicMotionMZ.
+ * 　However, it can be used as a bug fix patch even when not used together.
  * 
  * ■Contents
  * ・Addressed the problem of an error when selecting a target in MZ.
  * ・Dealing with step forward process can be controlled.
  * ・Adjustable movement direction at the start of battle.
+ * ・The "SV Sprite" function of v1.16a is implemented separately.
+ * 　You can specify the image as "SV Sprite: Actor1_1".
  * 
  * ■About the problem with animatedSVEnemies.js
  * In the default spec of animatedSVEnemies.js,
@@ -73,7 +77,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.011 animatedSVEnemiesをDynamicMotionと併用できるようにします。
+ * @plugindesc v1.02 animatedSVEnemiesをDynamicMotionと併用できるようにします。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @base animatedSVEnemies
  * @base NRP_DynamicMotionMZ
@@ -94,12 +98,15 @@
  * 
  * ※安定版のv1.15.51で動作確認しています。
  * 　最新版では未確認なのでご注意ください。
- * ※当然ながら、NRP_DynamicMotionまたはNRP_DynamicMotionMZが必要です。
+ * ※基本的にはNRP_DynamicMotionまたはNRP_DynamicMotionMZとの併用を想定しています。
+ * 　ただし、併用しない場合でもバグ修正パッチとして使えます。
  * 
  * ■対応内容
  * ・ＭＺにて対象選択時にエラーとなる問題に対処。
  * ・一歩前進処理を制御できるように対処。
  * ・戦闘開始時の移動演出を調整可能に。
+ * ・v1.16aのSV Sprite機能を別途実装。
+ * 　『SV Sprite: Actor1_1』というように画像を指定できます。
  * 
  * ■animatedSVEnemies.jsの不具合について
  * animatedSVEnemies.jsのデフォルトの仕様では、
@@ -168,24 +175,8 @@ const parameters = PluginManager.parameters("NRP_animatedSVEnemies_ForDM");
 const pStartPosition = toNumber(parameters["StartPosition"]);
 const pPlayVictoryMotion = toBoolean(parameters["PlayVictoryMotion"], false);
 
-const dMotionParams = getDynamicMotionParameters();
-const pSetStepForward = dMotionParams["setStepForward"];
-
 Rexal.ASVE.Parameters = PluginManager.parameters('animatedSVEnemies');
 Rexal.ASVE.NoMovement = eval(String(Rexal.ASVE.Parameters['No Movement']));
-
-/**
- * ●MZかMVかを判定してパラメータを返す。
- */
-function getDynamicMotionParameters() {
-    const isDynamicMotionMZ = PluginManager._scripts.some(function(scriptName) {
-        return scriptName == "NRP_DynamicMotionMZ";
-    });
-    if (isDynamicMotionMZ) {
-        return PluginManager.parameters("NRP_DynamicMotionMZ");
-    }
-    return PluginManager.parameters("NRP_DynamicMotion");
-}
 
 /**
  * ●対象選択時のフラッシュ
@@ -213,35 +204,111 @@ Sprite_EnemyRex.prototype.stepForward = function() {
 };
 
 /**
- * ●一歩前進
+ * ●敵の作成
+ * ※sv sprite機能を追加実装
  */
-const _Sprite_Enemy_stepForward = Sprite_Enemy.prototype.stepForward;
-Sprite_Enemy.prototype.stepForward = function() {
-    const action = BattleManager._action;
-    if (BattleManager._phase == "action" && action) {
-        // 前進の有無
-        if (pSetStepForward) {
-            // 1:常に無
-            if (pSetStepForward == 1) {
-                return;
-            // 2:モーション指定時のみ無
-            } else if (pSetStepForward == 2 && action.isDynamicMotion()) {
+const _Spriteset_Battle_createEnemies = Spriteset_Battle.prototype.createEnemies;
+Spriteset_Battle.prototype.createEnemies = function() {
+    // 敵一体ごとに処理
+    for (const enemy of $gameTroop.members()) {
+        // JSONデータを取得し、メモ欄を取得
+        const obj = enemy.enemy();
+        const notedata = obj.note.split(/[\r\n]+/);
+        // 一行ごとに処理
+        for (const line of notedata) {
+            var lines = line.split(': ');
+            if (lines[0].toLowerCase() == 'sv sprite') {
+                obj.animated = true;
+                obj.battlerName = lines[1];
+            }
+        }
+    }
+
+    _Spriteset_Battle_createEnemies.apply(this, arguments);
+};
+
+/**
+ * ●敵の画像更新
+ * ※画像変更時のみ処理するように変更
+ */
+Sprite_EnemyRex.prototype.updateBitmap = function() {
+	Rexal.ASVE.spriteactorupdatebitmap.call(this);
+	this.updateEffect();
+	var hue = this._actor.battlerHue();
+    var name = this._actor.battlerName();
+
+    if (this._battlerName !== name || this._battlerHue !== hue) {
+        this._battlerName = name;
+        this._battlerHue = hue;
+        this._mainSprite.bitmap = ImageManager.loadSvActor(name, hue);
+        this._mainSprite.scale.x = -this._actor._scale;
+        this._mainSprite.scale.y = this._actor._scale;
+        this._mainSprite.anchor.x = this._actor._anchor[0];
+        this._mainSprite.anchor.y = this._actor._anchor[1];
+    }
+};
+
+//-----------------------------------------------------------------------------
+// DynamicMotion連携用
+//-----------------------------------------------------------------------------
+const dMotionParams = getDynamicMotionParameters();
+
+/**
+ * ●MZかMVかを判定してパラメータを返す。
+ */
+function getDynamicMotionParameters() {
+    // MZの場合
+    const isDynamicMotionMZ = PluginManager._scripts.some(function(scriptName) {
+        return scriptName == "NRP_DynamicMotionMZ";
+    });
+    if (isDynamicMotionMZ) {
+        return PluginManager.parameters("NRP_DynamicMotionMZ");
+    }
+    // MVの場合
+    const isDynamicMotion = PluginManager._scripts.some(function(scriptName) {
+        return scriptName == "NRP_DynamicMotion";
+    });
+    if (isDynamicMotion) {
+        return PluginManager.parameters("NRP_DynamicMotion");
+    }
+    // DynamicMotion未登録
+    return undefined;
+}
+
+if (dMotionParams) {
+    const pSetStepForward = dMotionParams["setStepForward"];
+
+    /**
+     * ●一歩前進
+     */
+    const _Sprite_Enemy_stepForward = Sprite_Enemy.prototype.stepForward;
+    Sprite_Enemy.prototype.stepForward = function() {
+        const action = BattleManager._action;
+        if (BattleManager._phase == "action" && action) {
+            // 前進の有無
+            if (pSetStepForward) {
+                // 1:常に無
+                if (pSetStepForward == 1) {
+                    return;
+                // 2:モーション指定時のみ無
+                } else if (pSetStepForward == 2 && action.isDynamicMotion()) {
+                    return;
+                }
+            }
+
+            // NoStepの設定があれば前進しない
+            if (action.existDynamicSetting("NoStep")) {
                 return;
             }
         }
 
-        // NoStepの設定があれば前進しない
-        if (action.existDynamicSetting("NoStep")) {
-            return;
-        }
-    }
-
-    _Sprite_Enemy_stepForward.apply(this, arguments);
-};
+        _Sprite_Enemy_stepForward.apply(this, arguments);
+    };
+}
 
 //-----------------------------------------------------------------------------
 // BattleManager
-//============================================================================
+//-----------------------------------------------------------------------------
 if (pPlayVictoryMotion) {
     /**
      * ●敗北時
