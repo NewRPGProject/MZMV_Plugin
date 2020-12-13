@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.041 Read the definition of DynamicAnimation&Motion from txt file.
+ * @plugindesc v1.05 Read the definition of DynamicAnimation&Motion from txt file.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -71,7 +71,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.041 DynamicAnimation&Motionの定義をtxtから読み込みます。
+ * @plugindesc v1.05 DynamicAnimation&Motionの定義をtxtから読み込みます。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -384,12 +384,25 @@ DataManager.loadDynamicTextAll = function() {
 
     // node.jsの関数を呼び出し、フォルダ内にあるファイル名を取得
     const fs = require("fs");
+    
     // 処理はreaddirDynamicTextFileに引き継ぐ
-    fs.readdir(pReadTxtFolder, readdirDynamicTextFile);
+    fs.readdir(getReaddirTarget(fs), readdirDynamicTextFile);
 
     // ロード実行フラグ
     this.onLoadDynamicTextAll = true;
 };
+
+/**
+ * ●対象とするフォルダを取得
+ */
+function getReaddirTarget(fs) {
+    // 本番時、wwwフォルダがあればそちらを参照
+    // ※ＭＶ本番では参照先が変わるため
+    if (!isPlaytest() && fs.existsSync("www")) {
+        return "www" + "/" + pReadTxtFolder;
+    }
+    return pReadTxtFolder;
+}
 
 /**
  * ●DynamicTextフォルダのファイルリストを読み込む
