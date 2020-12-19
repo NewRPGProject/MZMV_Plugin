@@ -21,6 +21,9 @@
  * ■■　■□　□■　■■
  * ■□　■■　■■　□■
  * 
+ * The feature must be turned on,
+ * either by a plugin parameter or by a note in the tileset.
+ * 
  * [Individual Settings]
  * If you specify the following for the tileset note,
  * it will take precedence over the plugin parameters.
@@ -71,6 +74,9 @@
  * ゲーム実行時に斜めの影として表示されます。
  * ■■　■□　□■　■■
  * ■□　■■　■■　□■
+ * 
+ * なお、プラグインパラメータ、またはタイルセットのメモ欄によって、
+ * 機能をオンにする必要があります。
  * 
  * ■個別設定
  * タイルセットのメモ欄に以下を指定すれば、
