@@ -16,8 +16,8 @@
  * 3. change the position of the damage popup.
  * 
  * Effective from ver1.02, a staging for resistance has been added.
- * In the initial state, resistance effect 1 is assumed to be disabled,
- * and resistance effect 2 is assumed to be absorbed.
+ * Initially, resistance effect 1 is assumed to be halved
+ * and resistance effect 2 is assumed to be disabled.
  * 
  * For more information, please see below.
  * http://newrpg.seesaa.net/article/475586753.html
@@ -128,9 +128,9 @@
  * @param resistCondition2
  * @parent <Resist2>
  * @type string
- * @default 0 == action.calcElementRate(target) * 100
+ * @default 0 >= action.calcElementRate(target) * 100
  * @desc The condition for staging resistance.
- * The initial value is conditional on 0% validity.
+ * The default value is less than 0% validity.
  * 
  * @param <Critical & Weak>
  * 
@@ -185,8 +185,8 @@
  * ・ダメージポップアップの表示位置を変更
  * 
  * ver1.02より、耐性時の演出を追加しました。
- * 初期状態では耐性演出１は無効、
- * 耐性演出２は吸収を想定しています。
+ * 初期状態では耐性演出１は半減、
+ * 耐性演出２は無効を想定しています。
  * 
  * 詳細は以下をご覧ください。
  * http://newrpg.seesaa.net/article/475586753.html
@@ -314,9 +314,9 @@
  * @text 耐性演出を行う条件２
  * @parent <Resist2>
  * @type string
- * @default 0 == action.calcElementRate(target) * 100
+ * @default 0 >= action.calcElementRate(target) * 100
  * @desc 耐性演出を行う条件です。
- * 初期値は有効度0%が条件です。
+ * 初期値は有効度0%以下が条件です。
  * 
  * @param <Critical & Weak>
  * @text ＜クリティカル／弱点共通＞
