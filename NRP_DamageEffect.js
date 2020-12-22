@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.011 Change the effect of damage handling.
+ * @plugindesc v1.02 Change the effect of damage handling.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475586753.html
  *
@@ -14,6 +14,10 @@
  * 1. enable/disable enemy & actor blinking effects.
  * 2. Play an animation during critical or weak.
  * 3. change the position of the damage popup.
+ * 
+ * Effective from ver1.02, a staging for resistance has been added.
+ * In the initial state, resistance effect 1 is assumed to be disabled,
+ * and resistance effect 2 is assumed to be absorbed.
  * 
  * For more information, please see below.
  * http://newrpg.seesaa.net/article/475586753.html
@@ -84,6 +88,50 @@
  * @desc The condition for staging weaknesses.
  * The initial value must be 150% effective or higher.
  * 
+ * @param <Resist1>
+ * 
+ * @param resistAnimation1
+ * @parent <Resist1>
+ * @type animation
+ * @desc When resist, this animation plays back to the target.
+ * Formula is allowed (Text). (e.g.:target.isEnemy() ? 1 : 2)
+ * 
+ * @param resistBlinkOff1
+ * @parent <Resist1>
+ * @type boolean
+ * @defalt false
+ * @desc When resist, the target will not blink.
+ * If you want to leave the effect to animation only.
+ * 
+ * @param resistCondition1
+ * @parent <Resist1>
+ * @type string
+ * @default 50 >= action.calcElementRate(target) * 100
+ * @desc The condition for staging resistance.
+ * The default value is less than 50% validity.
+ * 
+ * @param <Resist2>
+ * 
+ * @param resistAnimation2
+ * @parent <Resist2>
+ * @type animation
+ * @desc When resist, this animation plays back to the target.
+ * Formula is allowed (Text). (e.g.:target.isEnemy() ? 1 : 2)
+ * 
+ * @param resistBlinkOff2
+ * @parent <Resist2>
+ * @type boolean
+ * @defalt false
+ * @desc When resist, the target will not blink.
+ * If you want to leave the effect to animation only.
+ * 
+ * @param resistCondition2
+ * @parent <Resist2>
+ * @type string
+ * @default 0 == action.calcElementRate(target) * 100
+ * @desc The condition for staging resistance.
+ * The initial value is conditional on 0% validity.
+ * 
  * @param <Critical & Weak>
  * 
  * @param effectPrioritity
@@ -125,7 +173,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.011 ダメージ処理の演出を変更します。
+ * @plugindesc v1.02 ダメージ処理の演出を変更します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475586753.html
  *
@@ -135,6 +183,10 @@
  * ・敵味方の点滅演出の有効・無効化
  * ・クリティカルや弱点時にアニメーションで演出
  * ・ダメージポップアップの表示位置を変更
+ * 
+ * ver1.02より、耐性時の演出を追加しました。
+ * 初期状態では耐性演出１は無効、
+ * 耐性演出２は吸収を想定しています。
  * 
  * 詳細は以下をご覧ください。
  * http://newrpg.seesaa.net/article/475586753.html
@@ -214,6 +266,58 @@
  * @desc 弱点演出を行う条件です。
  * 初期値は有効度150%以上が条件です。
  * 
+ * @param <Resist1>
+ * @text ＜耐性演出１＞
+ * 
+ * @param resistAnimation1
+ * @text 耐性時のアニメ１
+ * @parent <Resist1>
+ * @type animation
+ * @desc 耐性時、対象に再生するアニメーションです。
+ * 数式可（テキスト）。例：target.isEnemy() ? 1 : 2
+ * 
+ * @param resistBlinkOff1
+ * @text 耐性時の点滅オフ１
+ * @parent <Resist1>
+ * @type boolean
+ * @defalt false
+ * @desc 耐性時、対象を点滅させません。
+ * アニメーションのみに演出を任せたい場合。
+ * 
+ * @param resistCondition1
+ * @text 耐性演出を行う条件１
+ * @parent <Resist1>
+ * @type string
+ * @default 50 >= action.calcElementRate(target) * 100
+ * @desc 耐性演出を行う条件です。
+ * 初期値は有効度50%以下が条件です。
+ * 
+ * @param <Resist2>
+ * @text ＜耐性演出２＞
+ * 
+ * @param resistAnimation2
+ * @text 耐性時のアニメ２
+ * @parent <Resist2>
+ * @type animation
+ * @desc 耐性時、対象に再生するアニメーションです。
+ * 数式可（テキスト）。例：target.isEnemy() ? 1 : 2
+ * 
+ * @param resistBlinkOff2
+ * @text 耐性時の点滅オフ２
+ * @parent <Resist2>
+ * @type boolean
+ * @defalt false
+ * @desc 耐性時、対象を点滅させません。
+ * アニメーションのみに演出を任せたい場合。
+ * 
+ * @param resistCondition2
+ * @text 耐性演出を行う条件２
+ * @parent <Resist2>
+ * @type string
+ * @default 0 == action.calcElementRate(target) * 100
+ * @desc 耐性演出を行う条件です。
+ * 初期値は有効度0%が条件です。
+ * 
  * @param <Critical & Weak>
  * @text ＜クリティカル／弱点共通＞
  * 
@@ -276,25 +380,33 @@ function setDefault(str, def) {
     return (str != undefined && str.length > 0) ? str : def;
 }
 
-var parameters = PluginManager.parameters("NRP_DamageEffect");
+const parameters = PluginManager.parameters("NRP_DamageEffect");
 // 点滅
-var pEnemyBlink = toBoolean(parameters["enemyBlink"], true);
-var pActorBlink = toBoolean(parameters["actorBlink"], false);
-var pBlinkDuration = toNumber(parameters["blinkDuration"]);
+const pEnemyBlink = toBoolean(parameters["enemyBlink"], true);
+const pActorBlink = toBoolean(parameters["actorBlink"], false);
+const pBlinkDuration = toNumber(parameters["blinkDuration"]);
 // クリティカル
-var pCriticalAnimation = parameters["criticalAnimation"];
-var pCriticalBlinkOff = toBoolean(parameters["criticalBlinkOff"], false);
+const pCriticalAnimation = parameters["criticalAnimation"];
+const pCriticalBlinkOff = toBoolean(parameters["criticalBlinkOff"], false);
 // 弱点
-var pWeakAnimation = parameters["weakAnimation"];
-var pWeakBlinkOff = toBoolean(parameters["weakBlinkOff"], false);
-var pWeakCondition = parameters["weakCondition"];
+const pWeakAnimation = parameters["weakAnimation"];
+const pWeakBlinkOff = toBoolean(parameters["weakBlinkOff"], false);
+const pWeakCondition = parameters["weakCondition"];
+// 耐性１
+const pResistAnimation1 = parameters["resistAnimation1"];
+const pResistBlinkOff1 = toBoolean(parameters["resistBlinkOff1"], false);
+const pResistCondition1 = parameters["resistCondition1"];
+// 耐性２
+const pResistAnimation2 = parameters["resistAnimation2"];
+const pResistBlinkOff2 = toBoolean(parameters["resistBlinkOff2"], false);
+const pResistCondition2 = parameters["resistCondition2"];
 // クリティカル／弱点
-var pEffectPrioritity = setDefault(parameters["effectPrioritity"], "critical");
+const pEffectPrioritity = setDefault(parameters["effectPrioritity"], "critical");
 // ダメージ位置
-var pEnemyDamageOffsetX = setDefault(parameters["enemyDamageOffsetX"]);
-var pEnemyDamageOffsetY = setDefault(parameters["enemyDamageOffsetY"]);
-var pActorDamageOffsetX = setDefault(parameters["actorDamageOffsetX"]);
-var pActorDamageOffsetY = setDefault(parameters["actorDamageOffsetY"]);
+const pEnemyDamageOffsetX = setDefault(parameters["enemyDamageOffsetX"]);
+const pEnemyDamageOffsetY = setDefault(parameters["enemyDamageOffsetY"]);
+const pActorDamageOffsetX = setDefault(parameters["actorDamageOffsetX"]);
+const pActorDamageOffsetY = setDefault(parameters["actorDamageOffsetY"]);
 
 // 競合を避けるためのフラグ
 var noBlink = false;
@@ -311,8 +423,8 @@ Game_Enemy.prototype.performDamage = function() {
     if (!pEnemyBlink) {
         noBlink = true;
     }
-    // クリティカル or 弱点の演出対象
-    if (isCriticalEffect(this) || isWeakEffect(this)) {
+    // クリティカル or 弱点 or 耐性の演出対象
+    if (isEffectTarget(this)) {
         // 通常のダメージ効果音をオフ
         noDamageSound = true;
     }
@@ -380,8 +492,8 @@ Sprite_Actor.prototype.update = function() {
  */
 var _Game_Actor_performDamage = Game_Actor.prototype.performDamage;
 Game_Actor.prototype.performDamage = function() {
-    // クリティカル or 弱点の演出対象
-    if (isCriticalEffect(this) || isWeakEffect(this)) {
+    // クリティカル or 弱点 or 耐性の演出対象
+    if (isEffectTarget(this)) {
         // 通常のダメージ効果音をオフ
         noDamageSound = true;
     }
@@ -497,6 +609,14 @@ Game_Battler.prototype.requestEffect = function(effectType) {
         // 弱点かつ点滅無効なら処理しない
         } else if (isWeakEffect(this) && pWeakBlinkOff) {
             return;
+
+        // 耐性１かつ点滅無効なら処理しない
+        } else if (isResistEffect1(this) && pResistBlinkOff1) {
+            return;
+
+        // 耐性２かつ点滅無効なら処理しない
+        } else if (isResistEffect2(this) && pResistBlinkOff2) {
+            return;
         }
     }
 
@@ -511,11 +631,13 @@ Game_Battler.prototype.requestEffect = function(effectType) {
  */
 var _Window_BattleLog_displayCritical = Window_BattleLog.prototype.displayCritical;
 Window_BattleLog.prototype.displayCritical = function(target) {
-    var isCriticalFlg = isCriticalEffect(target); // クリティカル判定
-    var isWeakFlg = isWeakEffect(target);         // 弱点判定
+    const isCriticalFlg = isCriticalEffect(target); // クリティカル判定
+    const isWeakFlg = isWeakEffect(target);         // 弱点判定
+    const isResistFlg1 = isResistEffect1(target);   // 耐性判定１
+    const isResistFlg2 = isResistEffect2(target);   // 耐性判定２
 
-    // クリティカルと弱点が同時発生した場合
-    if (isCriticalFlg && isWeakFlg) {
+    // クリティカルと弱点（耐性）が同時発生した場合
+    if (isCriticalFlg && (isWeakFlg || isResistFlg1 || isResistFlg2)) {
         // クリティカル優先
         if (pEffectPrioritity == "critical") {
             callAnimation(target, eval(pCriticalAnimation), this);
@@ -523,9 +645,19 @@ Window_BattleLog.prototype.displayCritical = function(target) {
             _Window_BattleLog_displayCritical.apply(this, arguments);
             return;
 
-        // 弱点優先
+        // 弱点～耐性優先
         } else if (pEffectPrioritity == "weak") {
-            callAnimation(target, eval(pWeakAnimation), this);
+            // 弱点
+            if (isWeakFlg) {
+                callAnimation(target, eval(pWeakAnimation), this);
+            // 耐性２（耐性１よりも優先）
+            } else if (isResistFlg2) {
+                callAnimation(target, eval(pResistAnimation2), this);
+            // 耐性１
+            } else if (isResistFlg1) {
+                callAnimation(target, eval(pResistAnimation1), this);
+            }
+
             // 処理終了
             _Window_BattleLog_displayCritical.apply(this, arguments);
             return;
@@ -536,19 +668,40 @@ Window_BattleLog.prototype.displayCritical = function(target) {
     if (isCriticalFlg) {
         callAnimation(target, eval(pCriticalAnimation), this);
     }
+    // 弱点
     if (isWeakFlg) {
         callAnimation(target, eval(pWeakAnimation), this);
+    // 耐性２（耐性１よりも優先）
+    } else if (isResistFlg2) {
+        callAnimation(target, eval(pResistAnimation2), this);
+    // 耐性１
+    } else if (isResistFlg1) {
+        callAnimation(target, eval(pResistAnimation1), this);
     }
 
     _Window_BattleLog_displayCritical.apply(this, arguments);
 };
 
 /**
+ * ●演出対象とするかどうか？
+ */
+function isEffectTarget(target) {
+    // クリティカル or 弱点 or 耐性の演出対象
+    if (isCriticalEffect(target)
+            || isWeakEffect(target)
+            || isResistEffect1(target)
+            || isResistEffect2(target)) {
+        return true;
+    }
+    return false;
+}
+
+/**
  * ●クリティカル演出を行うかどうか？
  */
 function isCriticalEffect(target) {
     // eval参照用
-    var action = BattleManager._action;
+    const action = BattleManager._action;
 
     // クリティカルかつアニメーションが設定されている
     if (target.result().critical && pCriticalAnimation) {
@@ -562,7 +715,7 @@ function isCriticalEffect(target) {
  */
 function isWeakEffect(target) {
     // eval参照用
-    var action = BattleManager._action;
+    const action = BattleManager._action;
 
     // ミス、回避、弱点アニメーションの設定がない場合は無効
     if (target.result().missed || target.result().evaded || !pWeakAnimation) {
@@ -574,6 +727,36 @@ function isWeakEffect(target) {
     }
 
     return eval(pWeakCondition);
+}
+
+/**
+ * ●耐性演出１を行うかどうか？
+ */
+function isResistEffect1(target) {
+    // eval参照用
+    const action = BattleManager._action;
+
+    // ミス、回避、弱点アニメーションの設定がない場合は無効
+    if (target.result().missed || target.result().evaded || !pResistAnimation1) {
+        return false;
+    }
+
+    return eval(pResistCondition1);
+}
+
+/**
+ * ●耐性演出２を行うかどうか？
+ */
+function isResistEffect2(target) {
+    // eval参照用
+    const action = BattleManager._action;
+
+    // ミス、回避、弱点アニメーションの設定がない場合は無効
+    if (target.result().missed || target.result().evaded || !pResistAnimation2) {
+        return false;
+    }
+
+    return eval(pResistCondition2);
 }
 
 /**
