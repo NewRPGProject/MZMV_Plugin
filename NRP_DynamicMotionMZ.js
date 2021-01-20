@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.11 When executing skills, call motion freely.
+ * @plugindesc v1.111 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -543,7 +543,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.11 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.111 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -2029,6 +2029,8 @@ DynamicMotion.prototype.initialize = function (baseMotion, performer, target, r)
     var b = getReferenceBattler(target);
     var bm = baseMotion;
     var dm = this;
+    // 常にスキルの使用者を参照（condition用）
+    const subject = bm.getReferenceSubject();
 
     var no = baseMotion.no;
     this.no = no;
