@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.13 Automate & super-enhance battle animations.
+ * @plugindesc v1.131 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -484,7 +484,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.13 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.131 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -3546,7 +3546,7 @@ Sprite_Battler.prototype.startDynamicAnimation = function(mirror, delay, dynamic
 };
 
 /**
- * ●DynamicAnimation用アニメーションの生成
+ * 【独自】DynamicAnimation用アニメーションの生成
  */
 Spriteset_Base.prototype.createDynamicAnimation = function(targets, animation, dynamicAnimation) {
     // 既に考慮しているのでディレイは不要
@@ -3565,7 +3565,7 @@ Spriteset_Base.prototype.createDynamicAnimation = function(targets, animation, d
 };
 
 /**
- * ●アニメーションスプライトの生成
+ * 【独自】アニメーションスプライトの生成
  */
 Spriteset_Base.prototype.createDynamicAnimationSprite = function(
     targets, animation, mirror, delay, dynamicAnimation
@@ -3636,7 +3636,7 @@ Sprite_Animation.prototype.setup = function(
 
 /**
  * 【独自】アニメーションの長さを取得する。
- * ※MVと同名関数
+ * ※MZには存在しないが、MVには存在した関数
  */
 Sprite_Animation.prototype.setupDuration = function() {
     // ＭＺのエフェクトには終点フレームが存在しない。
@@ -3972,7 +3972,7 @@ Sprite_Animation.prototype.processSoundTimings = function() {
 };
 
 /**
- * ●フラッシ制御
+ * ●フラッシュ制御
  */
 const _Sprite_Animation_processFlashTimings = Sprite_Animation.prototype.processFlashTimings;
 Sprite_Animation.prototype.processFlashTimings = function() {
@@ -4100,7 +4100,7 @@ function getBattlerSprite(battler) {
  * ●位置の指定がある場合のみ関数定義
  */
 if (pFvActorHomeX && pFvActorHomeY) {
-    var _Sprite_Actor_setActorHome = Sprite_Actor.prototype.setActorHome;
+    const _Sprite_Actor_setActorHome = Sprite_Actor.prototype.setActorHome;
     Sprite_Actor.prototype.setActorHome = function(index) {
         // フロントビューの場合、位置を設定
         if (!$gameSystem.isSideView()) {
@@ -4111,6 +4111,20 @@ if (pFvActorHomeX && pFvActorHomeY) {
 
         // 元処理実行
         _Sprite_Actor_setActorHome.call(this, index);
+    };
+
+    const _Spriteset_Battle_createActors = Spriteset_Battle.prototype.createActors;
+    Spriteset_Battle.prototype.createActors = function() {
+        _Spriteset_Battle_createActors.apply(this, arguments);
+
+        // フロントビューの場合もアクタースプライトを作成
+        if (!$gameSystem.isSideView() && this._actorSprites.length == 0) {
+            for (let i = 0; i < $gameParty.maxBattleMembers(); i++) {
+                const sprite = new Sprite_Actor();
+                this._actorSprites.push(sprite);
+                this._battleField.addChild(sprite);
+            }
+        }
     };
 }
 
