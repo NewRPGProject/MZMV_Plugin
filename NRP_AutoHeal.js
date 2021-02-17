@@ -3,13 +3,13 @@
 //=============================================================================
 /*:
  * @target MV,MZ
- * @plugindesc v0.90 It enables the "Auto Heal" command.
+ * @plugindesc v1.00 It enables the "Auto Heal" command.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/480069638.html
  * 
  * @help It enables the "Auto Heal" command.
- * Party members will automatically use their skills
- * to heal from the menu screen.
+ * When you run it from the menu screen, etc.,
+ * your party members will automatically use the skill to heal.
  * 
  * ■Main Specifications
  * - The "Auto Heal" command can be added to the menu.
@@ -292,14 +292,14 @@
 
 /*:ja
  * @target MV,MZ
- * @plugindesc v0.90 自動回復コマンド（まんたん）を実現
+ * @plugindesc v1.00 自動回復コマンド（まんたん）を実現
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/480069638.html
  *
  * @help 自動回復コマンドを実現します。
  * いわゆるドラクエのまんたんコマンドです。
- * メニュー画面などからパーティメンバーが、
- * スキルを自動的に使用して回復してくれます。
+ * メニュー画面などから実行すると、
+ * パーティメンバーがスキルを自動的に使用して回復してくれます。
  * 
  * ■主な仕様
  * ・メニューに自動回復コマンドを追加。
@@ -787,6 +787,8 @@ Scene_Menu.prototype.commandAutoHeal = function() {
 
 // 結果表示用のメッセージ
 const resultMessages = [];
+// ウィンドウサイズの拡大フラグ
+let m_bigWindowFlg = false;
 
 /**
  * ●自動回復の開始
@@ -1087,6 +1089,10 @@ function getUsableHealSkills(member, target) {
         if (action.isForUser() && member != target) {
             return false;
 
+        // 対象が戦闘不能者の場合は除外
+        } else if (action.isForDeadFriend()) {
+            return false;
+
         // ランダム対象は除外
         } else if (action.isForRandom()) {
             return false;
@@ -1105,7 +1111,7 @@ function getUsableHealSkills(member, target) {
  * ●有効な治療スキルを取得する。
  */
 function getUsableCureSkills(member, target, stateId) {
-    // 使用可能なスキルから、さらに対象に対して有効な蘇生スキルに限定する。
+    // 使用可能なスキルから、さらに対象に対して有効な治療スキルに限定する。
     return member.usableSkills().filter(function(skill) {
         const action = new Game_Action(member);
         action.setSkill(skill.id);
@@ -1289,7 +1295,11 @@ function applySkill(user, skill, target) {
     // 2:スキルの使用状況を表示
     // 3:スキルの使用結果も表示
     if (pMessageType == 2 || pMessageType == 3) {
-        resultMessages.push(skill.message1.format(user.name(), skill.name));
+        if (Utils.RPGMAKER_NAME != "MV") {
+            resultMessages.push(skill.message1.format(user.name(), skill.name));
+        } else {
+            resultMessages.push(user.name() + skill.message1.format(skill.name));
+        }
     }
 
     // 対象毎に反映
@@ -1305,13 +1315,18 @@ function applySkill(user, skill, target) {
                 const states = result.removedStateObjects();
                 for (const state of states) {
                     if (state.message4) {
-                        resultMessages.push(state.message4.format(target.name()));
+                        if (Utils.RPGMAKER_NAME != "MV") {
+                            resultMessages.push(state.message4.format(target.name()));
+                        } else {
+                            resultMessages.push(target.name() + state.message4);
+                        }
                     }
                 }
                 // 回復
                 const damage = result.hpDamage;
                 if (damage < 0) {
-                    resultMessages.push(TextManager.actorRecovery.format(target.name(), TextManager.hp, -damage));
+                    resultMessages.push(
+                        TextManager.actorRecovery.format(target.name(), TextManager.hp, -damage));
                 }
             }
         }
@@ -1398,8 +1413,9 @@ Game_Party.prototype.aliveBattleMembers = function() {
 // 自動回復のメッセージ表示
 //-----------------------------------------------------------------------------
 
-// 一時保存用メッセージウィンドウの高さ
+// 一時保存用メッセージウィンドウの高さとＹ座標
 let m_keepMessageWindowHeight = undefined;
+let m_keepMessageWindowY = undefined;
 
 /**
  * ●成功メッセージの追加
@@ -1424,12 +1440,8 @@ function successMessage(message) {
                 $gameMessage.add("\\>" + msg);
             }
 
-            // ウィンドウのサイズ調整前に高さを保持
-            m_keepMessageWindowHeight = window.height;
-            // ウィンドウのサイズ調整
-            window.move(window.x, window.y, window.width, Graphics.boxHeight);
-            // サイズに合わせて表示行数を変更
-            window.createContents();
+            // ウィンドウサイズを拡大するフラグ
+            m_bigWindowFlg = true;
         }
 
         // メッセージウィンドウにフォーカス
@@ -1444,7 +1456,7 @@ function successMessage(message) {
     // メッセージ未使用
     } else {
         // コマンド選択状態に戻す
-        if (scene._statusWindow) {
+        if (scene._commandWindow) {
             scene._commandWindow.activate();
         }
     }
@@ -1473,7 +1485,7 @@ function failureMessage(message) {
     // メッセージ未使用
     } else {
         // コマンド選択状態に戻す
-        if (scene._statusWindow) {
+        if (scene._commandWindow) {
             scene._commandWindow.activate();
         }
     }
@@ -1499,14 +1511,6 @@ if (pMessageType) {
                 this._keepActivateWindow.activate();
                 this._keepActivateWindow = undefined;
             }
-
-            // 詳細ログを表示する場合
-            if (pMessageType == 2 || pMessageType == 3) {
-                // ウィンドウのサイズ調整
-                window.move(window.x, window.y, window.width, m_keepMessageWindowHeight);
-                // サイズに合わせて表示行数を変更
-                window.createContents();
-            }
         }
     };
 }
@@ -1514,19 +1518,46 @@ if (pMessageType) {
 // 詳細ログを表示する場合
 if (pMessageType == 2 || pMessageType == 3) {
     /**
-     * ●マップの場合
+     * ●ウィンドウを開く更新処理
      */
-    const _Scene_Map_update = Scene_Map.prototype.update;
-    Scene_Map.prototype.update = function() {
-        _Scene_Map_update.apply(this, arguments);
+    const _Window_Message_updateOpen = Window_Message.prototype.updateOpen;
+    Window_Message.prototype.updateOpen = function() {
+        if (this._opening) {
+            // 自動回復後にメニューを閉じる設定の場合
+            // その後のメッセージウィンドウを拡大
+            if (m_bigWindowFlg) {
+                // ウィンドウのサイズ調整前に高さとＹ座標を保持
+                m_keepMessageWindowHeight = this.height;
+                m_keepMessageWindowY = this.y;
+                // ウィンドウのサイズ調整
+                this.move(this.x, 0, this.width, Graphics.boxHeight);
+                // サイズに合わせて表示行数を変更
+                this.createContents();
+                // フラグ解除
+                m_bigWindowFlg = false;
+            }
+        }
 
-        const window = this._messageWindow;
-        // メッセージウィンドウの状態を監視
-        if (window.isClosing()) {
+        _Window_Message_updateOpen.apply(this, arguments);
+    };
+
+    /**
+     * ●ウィンドウを閉じる更新処理
+     */
+    const _Window_Message_updateClose = Window_Message.prototype.updateClose;
+    Window_Message.prototype.updateClose = function() {
+        _Window_Message_updateClose.apply(this, arguments);
+
+        // 閉じ終わった際、かつサイズ変更がされていた場合
+        if (this.isClosed() && m_keepMessageWindowHeight) {
             // ウィンドウのサイズ調整
-            window.move(window.x, window.y, window.width, m_keepMessageWindowHeight);
+            this.move(this.x, m_keepMessageWindowY, this.width, m_keepMessageWindowHeight);
             // サイズに合わせて表示行数を変更
-            window.createContents();
+            this.createContents();
+
+            // クリア
+            m_keepMessageWindowHeight = undefined;
+            m_keepMessageWindowY = undefined;
         }
     };
 }
@@ -1543,7 +1574,11 @@ if (pMessageType && !Scene_Menu.prototype.createMessageWindow) {
     Scene_Menu.prototype.initialize = function() {
         _Scene_Menu_initialize.apply(this, arguments);
 
-        Scene_Message.prototype.initialize.call(this);
+        if (Utils.RPGMAKER_NAME != "MV") {
+            Scene_Message.prototype.initialize.call(this);
+        } else {
+            // MVにはScene_Messageがないので何もしない
+        }
     };
 
     /**
@@ -1551,7 +1586,9 @@ if (pMessageType && !Scene_Menu.prototype.createMessageWindow) {
      */
     const _Scene_Menu_start = Scene_Menu.prototype.start;
     Scene_Menu.prototype.start = function() {
-        Scene_Message.prototype.start.call(this);
+        if (Utils.RPGMAKER_NAME != "MV") {
+            Scene_Message.prototype.start.call(this);
+        }
 
         _Scene_Menu_start.apply(this, arguments);
     };
@@ -1571,7 +1608,9 @@ if (pMessageType && !Scene_Menu.prototype.createMessageWindow) {
      */
     const _Scene_Menu_stop = Scene_Menu.prototype.stop;
     Scene_Menu.prototype.stop = function() {
-        Scene_Message.prototype.stop.call(this);
+        if (Utils.RPGMAKER_NAME != "MV") {
+            Scene_Message.prototype.stop.call(this);
+        }
 
         _Scene_Menu_stop.apply(this, arguments);
     };
@@ -1581,7 +1620,9 @@ if (pMessageType && !Scene_Menu.prototype.createMessageWindow) {
      */
     const _Scene_Menu_terminate = Scene_Menu.prototype.terminate;
     Scene_Menu.prototype.terminate = function() {
-        Scene_Message.prototype.terminate.call(this);
+        if (Utils.RPGMAKER_NAME != "MV") {
+            Scene_Message.prototype.terminate.call(this);
+        }
 
         _Scene_Menu_terminate.apply(this, arguments);
     };
@@ -1592,7 +1633,20 @@ if (pMessageType && !Scene_Menu.prototype.createMessageWindow) {
      * ●ウィンドウ生成
      */
     Scene_Menu.prototype.createAllWindows = function() {
-        Scene_Message.prototype.createAllWindows.call(this);
+        if (Utils.RPGMAKER_NAME != "MV") {
+            this.createMessageWindow();
+            this.createScrollTextWindow();
+            // this.createGoldWindow();
+            this.createNameBoxWindow();
+            this.createChoiceListWindow();
+            this.createNumberInputWindow();
+            this.createEventItemWindow();
+            this.associateWindows();
+
+        } else {
+            this.createMessageWindow();
+            this.createScrollTextWindow();
+        }
 
         // メッセージウィンドウの下が消えないよう調整
         this.addChild(this._windowLayer.removeChild(this._messageWindow));
@@ -1606,43 +1660,62 @@ if (pMessageType && !Scene_Menu.prototype.createMessageWindow) {
     };
 
     Scene_Menu.prototype.createMessageWindow = function() {
-        Scene_Message.prototype.createMessageWindow.call(this);
+        if (Utils.RPGMAKER_NAME != "MV") {
+            Scene_Message.prototype.createMessageWindow.call(this);
+        } else {
+            Scene_Map.prototype.createMessageWindow.call(this);
+        }
     };
 
+    Scene_Menu.prototype.createScrollTextWindow = function() {
+        if (Utils.RPGMAKER_NAME != "MV") {
+            Scene_Message.prototype.createScrollTextWindow.call(this);
+        } else {
+            Scene_Map.prototype.createScrollTextWindow.call(this);
+        }
+    };
+
+    Scene_Menu.prototype.createNameBoxWindow = function() {
+        if (Utils.RPGMAKER_NAME != "MV") {
+            Scene_Message.prototype.createNameBoxWindow.call(this);
+        } else {
+            Scene_Map.prototype.createNameBoxWindow.call(this);
+        }
+    };
+
+    Scene_Menu.prototype.createChoiceListWindow = function() {
+        if (Utils.RPGMAKER_NAME != "MV") {
+            Scene_Message.prototype.createChoiceListWindow.call(this);
+        } else {
+            Scene_Map.prototype.createChoiceListWindow.call(this);
+        }
+    };
+
+    Scene_Menu.prototype.createNumberInputWindow = function() {
+        if (Utils.RPGMAKER_NAME != "MV") {
+            Scene_Message.prototype.createNumberInputWindow.call(this);
+        } else {
+            Scene_Map.prototype.createNumberInputWindow.call(this);
+        }
+    };
+
+    Scene_Menu.prototype.createEventItemWindow = function() {
+        if (Utils.RPGMAKER_NAME != "MV") {
+            Scene_Message.prototype.createEventItemWindow.call(this);
+        } else {
+            Scene_Map.prototype.createEventItemWindow.call(this);
+        }
+    };
+
+    /**
+     * ●以下はＭＺのみの関数
+     */
     Scene_Menu.prototype.messageWindowRect = function() {
         return Scene_Message.prototype.messageWindowRect.call(this);
     };
 
-    Scene_Menu.prototype.createScrollTextWindow = function() {
-        Scene_Message.prototype.createScrollTextWindow.call(this);
-    };
-
     Scene_Menu.prototype.scrollTextWindowRect = function() {
         return Scene_Message.prototype.scrollTextWindowRect.call(this);
-    };
-
-    Scene_Menu.prototype.createGoldWindow = function() {
-        Scene_Message.prototype.createGoldWindow.call(this);
-    };
-
-    Scene_Menu.prototype.goldWindowRect = function() {
-        return Scene_Message.prototype.goldWindowRect.call(this);
-    };
-
-    Scene_Menu.prototype.createNameBoxWindow = function() {
-        Scene_Message.prototype.createNameBoxWindow.call(this);
-    };
-
-    Scene_Menu.prototype.createChoiceListWindow = function() {
-        Scene_Message.prototype.createChoiceListWindow.call(this);
-    };
-
-    Scene_Menu.prototype.createNumberInputWindow = function() {
-        Scene_Message.prototype.createNumberInputWindow.call(this);
-    };
-
-    Scene_Menu.prototype.createEventItemWindow = function() {
-        Scene_Message.prototype.createEventItemWindow.call(this);
     };
 
     Scene_Menu.prototype.eventItemWindowRect = function() {
@@ -1650,7 +1723,21 @@ if (pMessageType && !Scene_Menu.prototype.createMessageWindow) {
     };
 
     Scene_Menu.prototype.associateWindows = function() {
-        Scene_Message.prototype.associateWindows.call(this);
+        const messageWindow = this._messageWindow;
+
+        // 余計な表示がされるので、ダミーのウィンドウを設定
+        const rect = new Rectangle(0, 0, 0, 0);
+        const goldWindow = new Window_Gold(rect);
+        messageWindow.setGoldWindow(goldWindow);
+
+        messageWindow.setNameBoxWindow(this._nameBoxWindow);
+        messageWindow.setChoiceListWindow(this._choiceListWindow);
+        messageWindow.setNumberInputWindow(this._numberInputWindow);
+        messageWindow.setEventItemWindow(this._eventItemWindow);
+        this._nameBoxWindow.setMessageWindow(messageWindow);
+        this._choiceListWindow.setMessageWindow(messageWindow);
+        this._numberInputWindow.setMessageWindow(messageWindow);
+        this._eventItemWindow.setMessageWindow(messageWindow);
     };
 }
 
