@@ -2,8 +2,8 @@
 // NRP_AutoHeal.js
 //=============================================================================
 /*:
- * @target MV,MZ
- * @plugindesc v1.00 It enables the "Auto Heal" command.
+ * @target MV MZ
+ * @plugindesc v1.001 It enables the "Auto Heal" command.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/480069638.html
  * 
@@ -291,8 +291,8 @@
  */
 
 /*:ja
- * @target MV,MZ
- * @plugindesc v1.00 自動回復コマンド（まんたん）を実現
+ * @target MV MZ
+ * @plugindesc v1.001 自動回復コマンド（まんたん）を実現
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/480069638.html
  *
