@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.05 Read the definition of DynamicAnimation&Motion from txt file.
+ * @plugindesc v1.06 Read the definition of DynamicAnimation&Motion from txt file.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -71,7 +71,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.05 DynamicAnimation&Motionの定義をtxtから読み込みます。
+ * @plugindesc v1.06 DynamicAnimation&Motionの定義をtxtから読み込みます。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -422,9 +422,12 @@ function readdirDynamicTextFile(err, dynamicFileNames) {
 
     // テスト実行時
     if (isPlaytest()) {
+        // v1.2.0に伴い、NW.jsの挙動が変化
+        // 配列のまま引数には使えなくなったので、文字列に変換する。
+        const dynamicTextFileNamesJoin = dynamicTextFileNames.join(",");
         // ファイル一覧をファイルに出力
         const fs = require("fs");
-        fs.writeFile(pReadTxtFolder + FILE_LIST_NAME + ".txt", dynamicTextFileNames, (err, data) => {
+        fs.writeFile(pReadTxtFolder + FILE_LIST_NAME + ".txt", dynamicTextFileNamesJoin, (err, data) => {
             if (err) {
                 alert(err);
             } else {
