@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.001 Setting the battler's shadow & adding the levitation effect
+ * @plugindesc v1.01 Setting the battler's shadow & adding the levitation effect
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base animatedSVEnemies
  * @base NRP_DynamicMotionMZ
@@ -63,8 +63,16 @@
  * The height depends on the settings of the plugin parameters.
  * It is also possible to specify the height numerically and individually.
  * 
- * Also, only this item is valid in the notes field of the state.
- * For example, you can create a state like the Levitate in the FF series.
+ * <FloatAmplitude:?>
+ * Changes the amplitude when floating.
+ * The position when floating fluctuates by twice this height.
+ * 
+ * <FloatPeriodicTime:?>
+ * Changes the floating period, where 60 corresponds to 1 second.
+ * 
+ * It is also valid for notes with only three states,
+ * <BattlerFloat>, <FloatAmplitude>, and <FloatPeriodicTime>.
+ * For example, you can create a state like the FF series Levitate.
  * 
  * ■Automatic adjustment of shadow size
  * By default, "EnemyShadowScaleX", "EnemyShadowScaleY"
@@ -161,6 +169,19 @@
  * @desc The height at which the enemy floats. The formula is valid.
  * It is valid if you write <BattlerFloat> in note.
  * 
+ * @param EnemyFloatAmplitude
+ * @parent <Enemy Shadow>
+ * @type text
+ * @default 5
+ * @desc The amplitude of the enemy floating effect.
+ * Mathematical formula is acceptable.
+ * 
+ * @param EnemyFloatPeriodicTime
+ * @parent <Enemy Shadow>
+ * @type text
+ * @default 120
+ * @desc The period of the amplitude of the enemy floating effect. Formulae allowed. 60 equals 1 second.
+ * 
  * @param <Actor Shadow>
  * @desc The setting regarding the shadow of the actor.
  * 
@@ -216,11 +237,24 @@
  * @default 24
  * @desc The height at which the actor floats. The formula is valid.
  * It is valid if you write <BattlerFloat> in note.
+ * 
+ * @param ActorFloatAmplitude
+ * @parent <Actor Shadow>
+ * @type text
+ * @default 5
+ * @desc The amplitude of the actor floating effect.
+ * Mathematical formula is acceptable.
+ * 
+ * @param ActorFloatPeriodicTime
+ * @parent <Actor Shadow>
+ * @type text
+ * @default 120
+ * @desc The period of the amplitude of the actor floating effect. Formulae allowed. 60 equals 1 second.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.001 バトラーの影を設定＆浮遊効果の追加
+ * @plugindesc v1.01 バトラーの影を設定＆浮遊効果の追加
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @orderAfter animatedSVEnemies
  * @orderAfter NRP_DynamicMotionMZ
@@ -272,7 +306,15 @@
  * バトラーが宙に浮きます。高さはプラグインパラメータの設定値に従います。
  * 高さを数値で個別に指定することも可能です。
  * 
- * また、この項目のみステートのメモ欄でも有効です。
+ * <FloatAmplitude:?>
+ * 浮遊時の振幅を変更します。
+ * この二倍の高さ分だけ浮遊時の位置が変動します。
+ * 
+ * <FloatPeriodicTime:?>
+ * 浮遊時の周期を変更します。60が1秒に相当します。
+ * 
+ * また、<BattlerFloat>, <FloatAmplitude>, <FloatPeriodicTime>
+ * の３項目のみステートのメモ欄でも有効です。
  * 例えば、ＦＦシリーズのレビテトのようなステートが作成できます。
  * 
  * ■影幅の自動調整
@@ -377,6 +419,22 @@
  * @desc 敵の浮遊効果の高さです。数式可。
  * メモ欄に<BattlerFloat>を記述した場合に有効となります。
  * 
+ * @param EnemyFloatAmplitude
+ * @parent <Enemy Shadow>
+ * @text 浮遊効果の振幅
+ * @type text
+ * @default 5
+ * @desc 敵の浮遊効果の振幅です。数式可。
+ * 0で無効となります。
+ * 
+ * @param EnemyFloatPeriodicTime
+ * @parent <Enemy Shadow>
+ * @text 浮遊効果の周期
+ * @type text
+ * @default 120
+ * @desc 敵の浮遊効果の振幅の周期です。数式可。
+ * 60が1秒に相当します。
+ * 
  * @param <Actor Shadow>
  * @text ＜アクターの影＞
  * @desc アクターの影に関する設定です。
@@ -441,6 +499,22 @@
  * @default 24
  * @desc アクターの浮遊効果の高さです。数式可。
  * メモ欄に<BattlerFloat>を記述した場合に有効となります。
+ * 
+ * @param ActorFloatAmplitude
+ * @parent <Actor Shadow>
+ * @text 浮遊効果の振幅
+ * @type text
+ * @default 5
+ * @desc アクターの浮遊効果の振幅です。数式可。
+ * 0で無効となります。
+ * 
+ * @param ActorFloatPeriodicTime
+ * @parent <Actor Shadow>
+ * @text 浮遊効果の周期
+ * @type text
+ * @default 120
+ * @desc アクターの浮遊効果の振幅の周期です。数式可。
+ * 60が1秒に相当します。
  */
 
 (function() {
@@ -503,6 +577,8 @@ const pEnemyShadowY = setDefault(parameters["EnemyShadowY"], "(a.height / 20) * 
 const pEnemyShadowZ = toNumber(parameters["EnemyShadowZ"], 2);
 const pEnemyShadowOpacity = toNumber(parameters["EnemyShadowOpacity"], 255);
 const pEnemyFloatHeight = setDefault(parameters["EnemyFloatHeight"], "48");
+const pEnemyFloatAmplitude = setDefault(parameters["EnemyFloatAmplitude"], "5");
+const pEnemyFloatPeriodicTime = setDefault(parameters["EnemyFloatPeriodicTime"], "120");
 
 // アクター
 const pActorShadowImage = setDefault(parameters["ActorShadowImage"]);
@@ -513,6 +589,8 @@ const pActorShadowY = setDefault(parameters["ActorShadowY"]);
 const pActorShadowZ = setDefault(parameters["ActorShadowZ"]);
 const pActorShadowOpacity = toNumber(parameters["ActorShadowOpacity"], 255);
 const pActorFloatHeight = setDefault(parameters["ActorFloatHeight"], "24");
+const pActorFloatAmplitude = setDefault(parameters["ActorFloatAmplitude"], "5");
+const pActorFloatPeriodicTime = setDefault(parameters["ActorFloatPeriodicTime"], "120");
 
 // DynamicMotionのパラメータ
 const dMotionParams = getDynamicMotionParameters();
@@ -810,7 +888,7 @@ Sprite_Battler.prototype.initBattlerShadow = function() {
     this._shadowSprite.visible = true;
 
     // 浮遊処理の設定
-    setFloat(this, meta.BattlerFloat);
+    setFloat(this, meta);
 };
 
 /**
@@ -925,8 +1003,11 @@ function getShadowY(sprite, metaShadowY) {
     }
 
     // 浮遊値加算
-    const floatHeight = sprite.floatHeight ? sprite.floatHeight : 0;
-    shadowY += floatHeight;
+    if (sprite.floatHeight) {
+        shadowY += sprite.floatHeight;
+        // 変動幅を減算
+        shadowY -= sprite.floatSwing;
+    }
 
     return shadowY;
 }
@@ -965,17 +1046,24 @@ function getMainSprite(sprite) {
 /**
  * ●浮遊設定を行う
  */
-function setFloat(sprite, metaBattlerFloat) {
+function setFloat(sprite, meta) {
     const battler = sprite._battler;
 
     const oldFloatHeight = sprite.floatHeight ? sprite.floatHeight : 0;
-    const floatHeight = getFloatHeight(sprite, metaBattlerFloat);
+    const floatHeight = getFloatHeight(sprite, meta);
     // 前回の浮遊値との差分を取得
     const diffFloatHeight = floatHeight - oldFloatHeight;
 
     // 参照用にスプライトとバトラーの両方に浮遊値を設定
     sprite.floatHeight = floatHeight;
     battler.floatHeight = floatHeight;
+
+    // 浮遊の上下変動を設定
+    sprite._floatAmplitude = getAmplitude(sprite, meta);
+    sprite._floatPeriodicTime = getPeriodicTime(sprite, meta);
+
+    // 浮遊時間制御用
+    sprite._floatTime = 0;
 
     // ホームポジションのＹ座標を調整
     if (battler.isEnemy()) {
@@ -989,10 +1077,10 @@ function setFloat(sprite, metaBattlerFloat) {
 /**
  * ●浮遊する高さを取得
  */
-function getFloatHeight(sprite, metaBattlerFloat) {
+function getFloatHeight(sprite, meta) {
     const a = getMainSprite(sprite);
     const isActor = isUseActorSetting(sprite);
-    let floatHeight = metaBattlerFloat;
+    let floatHeight = meta.BattlerFloat;
 
     // バトラーが浮遊ステートを保持しているなら優先設定
     for (const state of sprite._battler.states()) {
@@ -1008,6 +1096,58 @@ function getFloatHeight(sprite, metaBattlerFloat) {
         return eval(pEnemyFloatHeight);
     } else if (floatHeight != undefined) {
         return eval(floatHeight);
+    }
+    return 0;
+}
+
+/**
+ * ●浮遊振幅を取得
+ */
+ function getAmplitude(sprite, meta) {
+    const a = getMainSprite(sprite);
+    const isActor = isUseActorSetting(sprite);
+
+    // ステートに振幅が設定されているなら最優先
+    for (const state of sprite._battler.states()) {
+        if (state.meta.FloatAmplitude) {
+            return eval(state.meta.FloatAmplitude);
+        }
+    }
+
+    // メタ情報 -> プラグイン設定値の優先順で取得
+    const floatAmplitude = meta.FloatAmplitude;
+    if (floatAmplitude) {
+        return eval(floatAmplitude);
+    } else if (isActor && pActorFloatAmplitude) {
+        return eval(pActorFloatAmplitude);
+    } else if (!isActor && pEnemyFloatAmplitude) {
+        return eval(pEnemyFloatAmplitude);
+    }
+    return 0;
+}
+
+/**
+ * ●浮遊周期を取得
+ */
+ function getPeriodicTime(sprite, meta) {
+    const a = getMainSprite(sprite);
+    const isActor = isUseActorSetting(sprite);
+
+    // ステートに周期が設定されているなら最優先
+    for (const state of sprite._battler.states()) {
+        if (state.meta.FloatPeriodicTime) {
+            return eval(state.meta.FloatPeriodicTime);
+        }
+    }
+
+    // メタ情報 -> プラグイン設定値の優先順で取得
+    const floatPeriodicTime = meta.FloatPeriodicTime;
+    if (floatPeriodicTime) {
+        return eval(floatPeriodicTime);
+    } else if (isActor && pActorFloatPeriodicTime) {
+        return eval(pActorFloatPeriodicTime);
+    } else if (!isActor && pEnemyFloatPeriodicTime) {
+        return eval(pEnemyFloatPeriodicTime);
     }
     return 0;
 }
@@ -1058,6 +1198,35 @@ Game_BattlerBase.prototype.clearStates = function() {
             // 影を未設定にして初期化
             sprite._isSetShadow = false;
         }
+    }
+};
+
+/**
+ * ●変数初期化
+ */
+const _Sprite_Battler_initMembers = Sprite_Battler.prototype.initMembers;
+Sprite_Battler.prototype.initMembers = function() {
+    _Sprite_Battler_initMembers.apply(this, arguments);
+
+    // 浮遊時間制御用
+    this._floatTime = 0;
+}
+
+/**
+ * ●更新時の位置補正
+ */
+const _Sprite_Battler_updatePosition = Sprite_Battler.prototype.updatePosition;
+Sprite_Battler.prototype.updatePosition = function() {
+    _Sprite_Battler_updatePosition.apply(this, arguments);
+
+    // 浮遊状態の場合、浮遊時間に応じて上下させる。
+    if (this.floatHeight) {
+        // 変動幅を設定し、Ｙ座標に加算
+        this.floatSwing =
+            Math.sin(this._floatTime / this._floatPeriodicTime * Math.PI * 2) * this._floatAmplitude;
+        this.y += this.floatSwing;
+        // 時間を進める。
+        this._floatTime++;
     }
 };
 
