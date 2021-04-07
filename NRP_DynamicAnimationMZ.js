@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.131 Automate & super-enhance battle animations.
+ * @plugindesc v1.14 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -484,7 +484,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.131 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.14 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -3950,8 +3950,10 @@ Sprite_Animation.prototype.targetPosition = function(renderer) {
         this.y -= da.scrollY;
     }
 
-    pos.x = this.x;
-    pos.y = this.y - 20; // 20ほどズレるようなのでよく分からないけど調整
+    // Effekseer用に位置を補正
+    const tpos = this.targetSpritePosition(this);
+    pos.x = tpos.x;
+    pos.y = tpos.y;
 
     return pos;
 };
