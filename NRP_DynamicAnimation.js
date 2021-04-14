@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.221 Automate & super-enhance battle animations.
+ * @plugindesc v1.222 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help Call battle animations freely from skills (items).
@@ -446,7 +446,7 @@
  */
 
 /*:ja
- * @plugindesc v1.221 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.222 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在に戦闘アニメーションを呼び出します。
@@ -2337,10 +2337,6 @@ DynamicAnimation.prototype.initialize = function(baseAnimation, target, r, sprit
         this.onScroll = mapAnimation.onScroll; // スクロール連動
         this.isDynamicAuto = mapAnimation.isDynamicAuto; // 注釈からの自動起動
         this.isParallel = mapAnimation.isParallel; // 並列処理から起動
-
-        // スクロール判定用の初期値を設定
-        this.scrollX = 0;
-        this.scrollY = 0;
     }
 }
 
@@ -2433,10 +2429,10 @@ DynamicAnimation.prototype.evaluate = function (spriteAnimation) {
         // マップ上でのスクロール補正を行う場合
         if (this.onScroll) {
             // 本体のスクロール補正を残像にも行う
-            sx -= parentDA.scrollX;
-            sy -= parentDA.scrollY;
-            ex -= parentDA.scrollX;
-            ey -= parentDA.scrollY;
+            sx += parentDA.diffScreenX();
+            sy += parentDA.diffScreenY();
+            ex += parentDA.diffScreenX();
+            ey += parentDA.diffScreenY();
         }
 
     // 通常時
@@ -2595,6 +2591,14 @@ DynamicAnimation.prototype.evaluate = function (spriteAnimation) {
     this.radiusY = baseAnimation.radiusY;
     this.radX = baseAnimation.radX;
     this.radY = baseAnimation.radY;
+
+    // マップ時のスクロール制御用
+    const mapAnimation = baseAnimation.mapAnimation;
+    if (mapAnimation) {
+        // スクロール開始時の初期値
+        this.originalScreenX = $gameMap.displayX() * $gameMap.tileWidth();
+        this.originalScreenY = $gameMap.displayY() * $gameMap.tileHeight();
+    }
 
     // r=0のみ設定する
     if (r == 0) {
@@ -3490,11 +3494,47 @@ Sprite_Animation.prototype.updateDynamicAnimation = function() {
 
     // 初期位置からのスクロール差分を加算
     if (onScroll) {
-        da.scrollX += $gameMap.moveScreenX();
-        da.scrollY += $gameMap.moveScreenY();
-        this.x -= da.scrollX;
-        this.y -= da.scrollY;
+        this.x += da.diffScreenX();
+        this.y += da.diffScreenY();
     }
+};
+
+/**
+ * ●初期位置からのスクロール差分Ｘ座標（ピクセル）を取得する。
+ */
+ DynamicAnimation.prototype.diffScreenX = function () {
+    let diffScreenX = this.originalScreenX - $gameMap.displayX() * $gameMap.tileWidth();
+
+    // マップ全体の横幅（ピクセル）
+    const mapWidth = $gameMap.width() * $gameMap.tileWidth();
+
+    // 全体座標の半分以上を移動した（ループ）
+    if (diffScreenX > mapWidth / 2) {
+        diffScreenX -= mapWidth;
+    } else if (diffScreenX < mapWidth / 2 * -1) {
+        diffScreenX += mapWidth;
+    }
+
+    return diffScreenX;
+};
+
+/**
+ * ●初期位置からのスクロール差分Ｙ座標（ピクセル）を取得する。
+ */
+ DynamicAnimation.prototype.diffScreenY = function () {
+    let diffScreenY = this.originalScreenY - $gameMap.displayY() * $gameMap.tileHeight();
+
+    // マップ全体の縦幅（ピクセル）
+    const mapHeight = $gameMap.height() * $gameMap.tileHeight();
+
+    // 全体座標の半分以上を移動した（ループ）
+    if (diffScreenY > mapHeight / 2) {
+        diffScreenY -= mapHeight;
+    } else if (diffScreenY < mapHeight / 2 * -1) {
+        diffScreenY += mapHeight;
+    }
+
+    return diffScreenY;
 };
 
 /**

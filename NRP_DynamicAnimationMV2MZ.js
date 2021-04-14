@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.021 It makes MV animations correspond to DynamicAnimationMZ.
+ * @plugindesc v1.022 It makes MV animations correspond to DynamicAnimationMZ.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -60,7 +60,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.021 ＭＶ用アニメーションをDynamicAnimationMZに対応させます。
+ * @plugindesc v1.022 ＭＶ用アニメーションをDynamicAnimationMZに対応させます。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -445,10 +445,8 @@ Sprite_AnimationMV.prototype.updateDynamicAnimation = function() {
 
     // 初期位置からのスクロール差分を加算
     if (onScroll) {
-        da.scrollX += $gameMap.moveScreenX();
-        da.scrollY += $gameMap.moveScreenY();
-        this.x -= da.scrollX;
-        this.y -= da.scrollY;
+        this.x += da.diffScreenX();
+        this.y += da.diffScreenY();
     }
 };
 
