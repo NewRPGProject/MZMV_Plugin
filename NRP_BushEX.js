@@ -22,9 +22,11 @@
  * So, if there are other tiles on the layer above the bushes,
  * do not apply the bushes attribute.
  * 
- * In addition, you can adjust the opacity and the depth of the bushes.
- * You can also make detailed settings
- * by using terrain tags and region IDs as conditions.
+ * In addition, you can adjust the opacity, the depth of the bushes,
+ * and, as an added extra, the color.
+ * You can also fine-tune the settings by using TerrainTags,
+ * RegionIDs, TileIDs and AutoTileTypes as conditions.
+ * 
  * If you add a "SettingId" to the settings you have created,
  * you can call up the settings for each tileset.
  * 
@@ -121,14 +123,13 @@
  * @param BushDepth
  * @parent <OpacitySetting>
  * @type number
- * @desc The height of the translucency effect applied to the lower body on the bushes. Default 12.
+ * @desc The height of the translucency effect applied to the lower body on the bushes.
  * 
  * @param BushOpacity
  * @parent <OpacitySetting>
  * @type number
  * @max 255
  * @desc The opacity to apply to the lower body on the bushes.
- * Opaque at 255. Default value is 128.
  * 
  * @param <ExtraSetting>
  * 
@@ -160,8 +161,9 @@
  * そこで、茂みの上のレイヤーに他のタイルがある場合、
  * 茂み属性を適用しないようにします。
  * 
- * その他にも、不透明度や茂みの深さを調整できます。
- * 地形タグやリージョンＩＤを条件にして細かく設定することも可能です。
+ * その他にも、不透明度や茂みの深さ、おまけに色を調整できます。
+ * 地形タグやリージョンＩＤ、タイルＩＤやオートタイルタイプを
+ * 条件にして細かく設定することも可能です。
  * 作成した設定に『設定ＩＤ』を付加すれば、
  * タイルセット毎に設定を呼び出すことも可能です。
  * 
@@ -268,7 +270,7 @@
  * @text 茂みの深さ
  * @parent <OpacitySetting>
  * @type number
- * @desc 茂み上でキャラクターの下半身に半透明効果を適用する高さです。初期値は12。
+ * @desc 茂み上でキャラクターの下半身に半透明効果を適用する高さです。
  * 
  * @param BushOpacity
  * @text 茂みでの不透明度
@@ -276,7 +278,6 @@
  * @type number
  * @max 255
  * @desc 茂み上でキャラクターの下半身に適用する不透明度です。
- * 255で不透明。初期値は128です。
  * 
  * @param <ExtraSetting>
  * @text ＜おまけ＞
