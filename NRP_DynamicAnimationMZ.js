@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.141 Automate & super-enhance battle animations.
+ * @plugindesc v1.142 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -484,7 +484,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.141 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.142 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -2807,12 +2807,14 @@ DynamicAnimation.prototype.evaluate = function (spriteAnimation) {
                 var commonEvent = new Game_CommonEvent(commonEventId);
                 // 強制実行フラグを立てる。
                 commonEvent._isForceActive = true;
+                // Spriteを取得
+                const spriteB = getBattlerSprite(b);
                 // コモンイベントリストが未定義なら初期化
-                if (b._commonEvents == undefined) {
-                    b._commonEvents = [];
+                if (spriteB._commonEvents == undefined) {
+                    spriteB._commonEvents = [];
                 }
                 // Sprite_Battlerに実行コモンイベントを追加
-                b._commonEvents.push(commonEvent);
+                spriteB._commonEvents.push(commonEvent);
                 // 初期化
                 commonEvent.refresh();
             }

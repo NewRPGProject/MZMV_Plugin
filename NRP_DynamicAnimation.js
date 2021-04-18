@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.222 Automate & super-enhance battle animations.
+ * @plugindesc v1.223 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help Call battle animations freely from skills (items).
@@ -446,7 +446,7 @@
  */
 
 /*:ja
- * @plugindesc v1.222 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.223 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在に戦闘アニメーションを呼び出します。
@@ -2611,12 +2611,25 @@ DynamicAnimation.prototype.evaluate = function (spriteAnimation) {
                 var commonEvent = new Game_CommonEvent(commonEventId);
                 // 強制実行フラグを立てる。
                 commonEvent._isForceActive = true;
+
+                // Spriteを取得
+                // bの中身がBattlerでもSpriteでも受け付ける。
+                let spriteB;
+
+                // Spriteの場合
+                if (b.spriteId != undefined) {
+                    spriteB = b;
+                // Battlerの場合
+                } else {
+                    spriteB = getBattlerSprite(b);
+                }
+
                 // コモンイベントリストが未定義なら初期化
-                if (b._commonEvents == undefined) {
-                    b._commonEvents = [];
+                if (spriteB._commonEvents == undefined) {
+                    spriteB._commonEvents = [];
                 }
                 // Sprite_Battlerに実行コモンイベントを追加
-                b._commonEvents.push(commonEvent);
+                spriteB._commonEvents.push(commonEvent);
                 // 初期化
                 commonEvent.refresh();
             }
