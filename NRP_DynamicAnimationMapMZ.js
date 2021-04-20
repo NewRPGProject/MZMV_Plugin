@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.082 Call DynamicAnimationMZ on the map.
+ * @plugindesc v1.083 Call DynamicAnimationMZ on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -168,7 +168,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.082 DynamicAnimationMZをマップ上から起動します。
+ * @plugindesc v1.083 DynamicAnimationMZをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -1584,7 +1584,7 @@ Game_Event.prototype.setupPageSettings = function() {
  */
 function getDynamicSkill(note) {
     // メモ欄から<D-Skill:*>を取得
-    var skillStrArr = note.match("<D-Skill:(.*)>");
+    const skillStrArr = note.match("<D-Skill:([0-9]+)>");
     // 取得できれば返す
     if (skillStrArr) {
         return skillStrArr[1];

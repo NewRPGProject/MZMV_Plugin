@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV
- * @plugindesc v1.082 Call DynamicAnimation on the map.
+ * @plugindesc v1.083 Call DynamicAnimation on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimation
  * @url http://newrpg.seesaa.net/article/477639171.html
@@ -113,7 +113,7 @@
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
  * The author is not responsible,
- * but we will respond to defects as far as possible.
+ * but will deal with defects to the extent possible.
  * 
  * @param keepAnimation
  * @type boolean
@@ -137,7 +137,7 @@
 
 /*:ja
  * @target MV
- * @plugindesc v1.082 DynamicAnimationをマップ上から起動します。
+ * @plugindesc v1.083 DynamicAnimationをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimation
  * @url http://newrpg.seesaa.net/article/477639171.html
@@ -694,7 +694,7 @@ Game_Interpreter.prototype.characterAndFollower = function(param) {
  * ●初期化
  */
 const _Game_Map_initialize = Game_Map.prototype.initialize;
-Game_Map.prototype.initialize = function() {
+Game_Map.prototype.initialize = function () {
     _Game_Map_initialize.apply(this, arguments);
 
     this._beforeDisplayScreenX = this.displayX() * this.tileWidth();
@@ -705,7 +705,7 @@ Game_Map.prototype.initialize = function() {
  * ●更新処理
  */
 const _Game_Map_update = Game_Map.prototype.update;
-Game_Map.prototype.update = function(sceneActive) {
+Game_Map.prototype.update = function (sceneActive) {
     _Game_Map_update.apply(this, arguments);
 
     // 現在の画面座標
@@ -720,7 +720,7 @@ Game_Map.prototype.update = function(sceneActive) {
 /**
  * 【独自】１フレームでスクロールしたスクリーンＸ座標
  */
-Game_Map.prototype.moveScreenX = function() {
+Game_Map.prototype.moveScreenX = function () {
     // 現在の座標と前回の座標を比較し差分を求める。
     const displayScreenX = this.displayX() * this.tileWidth();
     let moveScreenX = displayScreenX - this._beforeDisplayScreenX;
@@ -740,7 +740,7 @@ Game_Map.prototype.moveScreenX = function() {
 /**
  * 【独自】１フレームでスクロールしたスクリーンＹ座標
  */
-Game_Map.prototype.moveScreenY = function() {
+Game_Map.prototype.moveScreenY = function () {
     // 現在の座標と前回の座標を比較し差分を求める。
     const displayScreenY = this.displayY() * this.tileHeight();
     let moveScreenY = displayScreenY - this._beforeDisplayScreenY;
@@ -1498,7 +1498,7 @@ Game_Event.prototype.setupPageSettings = function() {
  */
 function getDynamicSkill(note) {
     // メモ欄から<D-Skill:*>を取得
-    var skillStrArr = note.match("<D-Skill:(.*)>");
+    const skillStrArr = note.match("<D-Skill:([0-9]+)>");
     // 取得できれば返す
     if (skillStrArr) {
         return skillStrArr[1];
