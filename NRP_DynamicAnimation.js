@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.223 Automate & super-enhance battle animations.
+ * @plugindesc v1.23 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help Call battle animations freely from skills (items).
@@ -258,6 +258,12 @@
  * @desc Damage processing without waiting for end of the animation.
  * This is all handled. (Faster normal damage processing)
  * 
+ * @param playSe
+ * @parent <Repeat>
+ * @type string
+ * @desc Plays the specified sound effect. ex1. Cat
+ * ex2. {"name": "Cat", "volume": 90, "pitch": 100, "pan": 0}
+ * 
  * @param commonEvent
  * @parent <Repeat>
  * @type common_event
@@ -446,7 +452,7 @@
  */
 
 /*:ja
- * @plugindesc v1.223 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.23 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在に戦闘アニメーションを呼び出します。
@@ -739,6 +745,13 @@
  * @type boolean
  * @desc 全アニメーションの終了を待たずにダメージ処理を行います。
  * こちらは全て処理します。（通常のダメージ処理を早める）
+ * 
+ * @param playSe
+ * @text 効果音
+ * @parent <Repeat>
+ * @type string
+ * @desc 指定した効果音（SE）を再生します。例1:Cat
+ * 例2:{"name":"Cat","volume":90,"pitch":100,"pan":0}
  * 
  * @param commonEvent
  * @text コモンイベント
@@ -2545,6 +2558,17 @@ DynamicAnimation.prototype.evaluate = function (spriteAnimation) {
     }
     this.initRadX = initRadX;
     this.initRadY = initRadY;
+
+    // 効果音
+    if (baseAnimation.playSe != undefined) {
+        // "{"で始まる場合はObject指定
+        if (baseAnimation.playSe.startsWith("{")) {
+            AudioManager.playSe(JSON.parse(baseAnimation.playSe))
+        // ファイル名指定
+        } else {
+            AudioManager.playSe({"name":baseAnimation.playSe, "volume":90, "pitch":100, "pan":0})
+        }
+    }
 
     // スクリプト
     if (baseAnimation.script != undefined) {
