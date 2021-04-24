@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.04 Call DynamicMotion on the map.
+ * @plugindesc v1.05 Call DynamicMotion on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicMotionMZ
  * @base NRP_DynamicAnimationMapMZ
@@ -88,7 +88,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 DynamicMotionをマップ上から起動します。
+ * @plugindesc v1.05 DynamicMotionをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicMotionMZ
  * @base NRP_DynamicAnimationMapMZ
@@ -394,11 +394,11 @@ const _Game_Interpreter_isDynamicAnimationPlaying = Game_Interpreter.prototype.i
 Game_Interpreter.prototype.isDynamicAnimationPlaying = function() {
     // リクエスト中のDynamicMotionを検索
     // ※最終ターゲットがリクエスト情報を持っているかどうか
-    if (this.isRequestMotion(this._lastAnimationTarget)) {
+    if (this.isRequestMotion(this.getLastDynamicTarget())) {
         return true;
 
     // さらに行動主体がリクエスト情報を持っているかどうか
-    } else if (this.isRequestMotion(this._subject)) {
+    } else if (this.isRequestMotion(this.getDynamicSubject())) {
         return true;
     }
 

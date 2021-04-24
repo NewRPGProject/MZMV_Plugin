@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.23 Automate & super-enhance battle animations.
+ * @plugindesc v1.24 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help Call battle animations freely from skills (items).
@@ -452,7 +452,7 @@
  */
 
 /*:ja
- * @plugindesc v1.23 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.24 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在に戦闘アニメーションを呼び出します。
@@ -2622,6 +2622,25 @@ DynamicAnimation.prototype.evaluate = function (spriteAnimation) {
         // スクロール開始時の初期値
         this.originalScreenX = $gameMap.displayX() * $gameMap.tileWidth();
         this.originalScreenY = $gameMap.displayY() * $gameMap.tileHeight();
+
+        // 途中から開始する場合
+        if (mapAnimation.startTiming) {
+            const startDuration = mapAnimation.startTiming * baseAnimation.basicRate;
+
+            // 通常開始タイミング（targetDelay）が、途中開始タイミング（startDuration）以内の場合
+            if (this.targetDelay < startDuration) {
+                // ■実行時間を減算
+                // ※例
+                // 通常は50のタイミングに実行される長さ100のアニメーションを
+                // 70のタイミングから途中開始する場合、
+                // 100 + 50 - 70 = 80 の長さに減算する。
+                spriteAnimation._duration += this.targetDelay - startDuration;
+                // マイナスになる場合は非表示
+                if (spriteAnimation._duration < 0) {
+                    spriteAnimation._duration = 0;
+                }
+            }
+        }
     }
 
     // r=0のみ設定する
@@ -3064,10 +3083,22 @@ Game_Actor.prototype.setDynamicAnimation = function(dynamicAnimation) {
  * 【独自定義】動的アニメーションをバトラーにセットする。
  */
 Game_Battler.prototype.setDynamicAnimation = function(dynamicAnimation) {
-    var data = {
+    let delay = dynamicAnimation.targetDelay;
+
+    const mapAnimation = dynamicAnimation.baseAnimation.mapAnimation;
+    // 開始時間が設定されている場合、始動を早める。
+    if (mapAnimation && mapAnimation.startTiming) {
+        const startDuration = mapAnimation.startTiming * dynamicAnimation.baseAnimation.basicRate;
+        delay -= startDuration;
+        if (delay < 0) {
+            delay = 0;
+        }
+    }
+
+    const data = {
         animationId: dynamicAnimation.id,
         mirror: dynamicAnimation.mirror,
-        delay: dynamicAnimation.targetDelay,
+        delay: delay,
         dynamicAnimation: dynamicAnimation
     };
     this._animations.push(data);
@@ -3256,7 +3287,7 @@ Sprite_Battler.prototype.startDynamicAnimation = function(animation, mirror, del
         const interpreter = dynamicAnimation.interpreter;
         // プラグインコマンドから起動した場合
         if (interpreter) {
-            interpreter.setDynamicDuration(dynamicAnimation.waitDuration);
+            interpreter.setDynamicDuration(dynamicAnimation);
         }
     }
 };

@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.15 Automate & super-enhance battle animations.
+ * @plugindesc v1.16 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -490,7 +490,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.15 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.16 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -1120,7 +1120,7 @@ var parameters = PluginManager.parameters("NRP_DynamicAnimationMZ");
 var pTemplateList = parseStruct2(parameters["templateList"]);
 var pShortTagName = parameters["shortTagName"];
 var pReferenceBattler = 1; // 1固定に変更
-var pCalculationRate = toNumber(parameters["calculationRate"], 1);
+var pCalculationRate = toNumber(parameters["calculationRate"], 4);
 // アニメーション位置
 var pScreenX = setDefault(parameters["screenX"], "($gameSystem.isSideView() ? Graphics.boxWidth / 4 + 48 : Graphics.boxWidth / 2)");
 var pScreenY = setDefault(parameters["screenY"], "($gameSystem.isSideView() ? Graphics.boxHeight / 3 + 24 : Graphics.boxHeight / 2)");
@@ -2818,6 +2818,25 @@ DynamicAnimation.prototype.evaluate = function (spriteAnimation) {
         // スクロール開始時の初期値
         this.originalScreenX = $gameMap.displayX() * $gameMap.tileWidth();
         this.originalScreenY = $gameMap.displayY() * $gameMap.tileHeight();
+
+        // 途中から開始する場合
+        if (mapAnimation.startTiming) {
+            const startDuration = mapAnimation.startTiming * baseAnimation.basicRate;
+
+            // 通常開始タイミング（targetDelay）が、途中開始タイミング（startDuration）以内の場合
+            if (this.targetDelay < startDuration) {
+                // ■実行時間を減算
+                // ※例
+                // 通常は50のタイミングに実行される長さ100のアニメーションを
+                // 70のタイミングから途中開始する場合、
+                // 100 + 50 - 70 = 80 の長さに減算する。
+                spriteAnimation._duration += this.targetDelay - startDuration;
+                // マイナスになる場合は非表示
+                if (spriteAnimation._duration < 0) {
+                    spriteAnimation._duration = 0;
+                }
+            }
+        }
     }
 
     // r=0のみ設定する
@@ -3314,10 +3333,22 @@ Game_Actor.prototype.setDynamicAnimation = function(dynamicAnimation) {
  * 【独自】動的アニメーションをバトラーにセットする。
  */
 Game_Battler.prototype.setDynamicAnimation = function(dynamicAnimation) {
-    var data = {
+    let delay = dynamicAnimation.targetDelay;
+
+    const mapAnimation = dynamicAnimation.baseAnimation.mapAnimation;
+    // 開始時間が設定されている場合、始動を早める。
+    if (mapAnimation && mapAnimation.startTiming) {
+        const startDuration = mapAnimation.startTiming * pCalculationRate;
+        delay -= startDuration;
+        if (delay < 0) {
+            delay = 0;
+        }
+    }
+
+    const data = {
         animationId: dynamicAnimation.id,
         mirror: dynamicAnimation.mirror,
-        delay: dynamicAnimation.targetDelay,
+        delay: delay,
         dynamicAnimation: dynamicAnimation
     };
     this._animations.push(data);
@@ -3570,7 +3601,7 @@ Sprite_Battler.prototype.startDynamicAnimation = function(mirror, delay, dynamic
         const interpreter = dynamicAnimation.interpreter;
         // プラグインコマンドから起動した場合
         if (interpreter) {
-            interpreter.setDynamicDuration(dynamicAnimation.waitDuration);
+            interpreter.setDynamicDuration(dynamicAnimation);
         }
     }
 };

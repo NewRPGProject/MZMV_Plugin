@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV
- * @plugindesc v1.083 Call DynamicAnimation on the map.
+ * @plugindesc v1.09 Call DynamicAnimation on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimation
  * @url http://newrpg.seesaa.net/article/477639171.html
@@ -108,6 +108,16 @@
  * Also fill in the tag in the note at the top of the event page.
  * You can switch the status of this one for each of the current pages.
  *
+ * [Play from the middle] (ver1.09~)
+ * <D-StartTiming:?>
+ * You can play the animation from an advanced state
+ * by adding the above to the note field of the skill.
+ * If ? =30 will start the animation with 30 frames advanced.
+ * ※The standard value is 1 frame = 1/4 second.
+ * 
+ * This is useful when you want the animation
+ * to start immediately after switching maps.
+ * 
  * [Terms]
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
@@ -119,6 +129,11 @@
  * @type boolean
  * @desc Keep the animation when changing scenes such as menu, battle.
  * As for the animation in MZ format, it is incomplete.
+ * @default true
+ * 
+ * @param eventResetOnLoad
+ * @type boolean
+ * @desc Resets the processing status of any events that are running DynamicAnimation at load time.
  * @default true
  * 
  * @param targetRangeGrid
@@ -137,7 +152,7 @@
 
 /*:ja
  * @target MV
- * @plugindesc v1.083 DynamicAnimationをマップ上から起動します。
+ * @plugindesc v1.09 DynamicAnimationをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimation
  * @url http://newrpg.seesaa.net/article/477639171.html
@@ -231,6 +246,13 @@
  * 
  * また、イベントページ先頭の注釈に記入しても有効です。
  * こちらは現在のページ毎に状態を切り替えることも可能です。
+ * 
+ * 【途中から再生】（ver1.09～）
+ * <D-StartTiming:?>
+ * スキルのメモ欄に上記を追加すれば、アニメーションを進めた状態から再生できます。
+ * ?=30ならば、アニメーションを30フレーム進めた状態から開始します。
+ * ※標準では1フレーム＝1/4秒です。
+ * マップを切り替えた直後から表示したい演出などに有用です。
  *
  * 【利用規約】
  * 特に制約はありません。
@@ -241,6 +263,12 @@
  * @text シーン変更時もアニメを維持
  * @type boolean
  * @desc メニューや戦闘などシーン変更時もアニメの表示を維持します。
+ * @default true
+ * 
+ * @param eventResetOnLoad
+ * @text ロード時にイベントリセット
+ * @type boolean
+ * @desc ロード時にDynamicAnimationを実行中のイベントの処理状況をリセットします。
  * @default true
  * 
  * @param targetRangeGrid
@@ -312,17 +340,26 @@ function setDefault(str, def) {
 }
 
 const PLUGIN_NAME = "NRP_DynamicAnimationMap";
+const BASE_PLUGIN_NAME = "NRP_DynamicAnimation";
 
 //-----------------------------------------------------------
-// 以下、NRP_DynamicAnimationMapMZとNRP_DynamicAnimationMapは
-// 注釈部分とプラグイン名を除いて全く同じソースとなります。
+// ここより下、NRP_DynamicAnimationMapMZと
+// NRP_DynamicAnimationMapは全く同じソースとなります。
 //-----------------------------------------------------------
 
-var parameters = PluginManager.parameters(PLUGIN_NAME);
-var pKeepAnimation = toBoolean(parameters["keepAnimation"], true);
-var pTargetRangeGrid = toNumber(parameters["targetRangeGrid"]);
-var pNoteTargetRangeGrid = toNumber(parameters["noteTargetRangeGrid"]);
-var pActingNoStateAnimation = toBoolean(parameters["actingNoStateAnimation"], false);
+const parameters = PluginManager.parameters(PLUGIN_NAME);
+const pKeepAnimation = toBoolean(parameters["keepAnimation"], true);
+const pEventResetOnLoad = toBoolean(parameters["eventResetOnLoad"], true);
+const pTargetRangeGrid = toNumber(parameters["targetRangeGrid"]);
+const pNoteTargetRangeGrid = toNumber(parameters["noteTargetRangeGrid"]);
+const pActingNoStateAnimation = toBoolean(parameters["actingNoStateAnimation"], false);
+
+// DynamicAnimation本体側のパラメータ
+const baseParameters = PluginManager.parameters(PLUGIN_NAME);
+// 計算レート（ＭＶの場合は存在しないので既定値=4になる）
+const pCalculationRate = toNumber(baseParameters["calculationRate"], 4);
+
+const STARTTIMING_TAG_NAME = "D-StartTiming";
 
 // DynamicMotionMapへ連携
 Nrp.pKeepAnimation = pKeepAnimation;
@@ -414,7 +451,7 @@ function showMapAnimation(mapAnimationParams) {
     for (const subject of subjects) {
         // アクション情報を作成
         const action = makeAction(skillId, battleSubject, isItem);
-        const mapAnimation = makeMapAnimation(this, subject, wait, noScroll);
+        const mapAnimation = makeMapAnimation(this, subject, wait, noScroll, action);
 
         // 最後の対象のイベントIDを取得
         this._characterId = targets[targets.length - 1]._eventId;
@@ -428,15 +465,34 @@ function showMapAnimation(mapAnimationParams) {
             this.setWaitMode("animation");
             this._onDynamicAnimation = true; // 実行中判定
             // タイミングを測るためアニメーションの最終対象を保持しておく
-            this._lastAnimationTarget = targets[targets.length - 1];
-            this._character = this._lastAnimationTarget;
+            this._lastDynamicTargetId = this.getDynamicTargetId(targets[targets.length - 1]);
             // モーション判定用の行動主体
-            this._subject = subject;
+            this._dynamicSubjectId = this.getDynamicTargetId(subject);
+
+            // ＭＶの場合
+            // ※ＭＺでは循環参照になるので厳禁！
+            if (Utils.RPGMAKER_NAME == "MV") {
+                this._character = targets[targets.length - 1];
+            }
         }
 
         // DynamicAnimation開始
         this.startDynamicAnimation(targets, action, mapAnimation);
     }
+}
+
+/**
+ * ●lastDynamicTargetIdを元に最終ターゲットを取得する。
+ */
+Game_Interpreter.prototype.getLastDynamicTarget = function() {
+    return this.getDynamicTarget(this._lastDynamicTargetId);
+}
+
+/**
+ * ●dynamicSubjectIdを元に行動主体を取得する。
+ */
+Game_Interpreter.prototype.getDynamicSubject = function() {
+    return this.getDynamicTarget(this._dynamicSubjectId);
 }
 
 /**
@@ -500,25 +556,7 @@ function showBattleAnimation(skillId, targetCondition, subjectCondition, wait) {
     
     // アクション情報を作成
     const action = makeAction(skillId)
-
-    const mapAnimation = [];
-    mapAnimation.subject = subject;
-    mapAnimation.interpreter = this;
-    mapAnimation.noWait = !toBoolean(wait); // 反転させておく
-
-    // 設定があればウェイト
-    if (!mapAnimation.noWait) {
-        this.setWaitMode("animation");
-        this._onDynamicAnimation = true; // 実行中判定
-        // タイミングを測るためアニメーションの最終対象を保持しておく
-        this._lastAnimationTarget = targets[targets.length - 1];
-        this._character = this._lastAnimationTarget;
-        // モーション判定用の行動主体
-        this._subject = mapAnimation.subject;
-    }
-
-    // 呼出元が並列処理かどうか？
-    mapAnimation.isParallel = isParallel(this);
+    const mapAnimation = makeMapAnimationBattle(this, subject, wait, action, targets)
     
     // DynamicAnimation開始
     this.startDynamicAnimation(targets, action, mapAnimation);
@@ -624,7 +662,7 @@ function makeAction(itemId, battleSubject, isItem) {
 /**
  * ●マップアニメーション用情報を作成
  */
-function makeMapAnimation(interpreter, subject, wait, noScroll) {
+function makeMapAnimation(interpreter, subject, wait, noScroll, action) {
     // 始点の初期値はプレイヤー
     if (subject === undefined) {
         subject = $gamePlayer;
@@ -635,9 +673,178 @@ function makeMapAnimation(interpreter, subject, wait, noScroll) {
     mapAnimation.interpreter = interpreter;
     mapAnimation.noWait = !toBoolean(wait); // 反転させておく
     mapAnimation.onScroll = !toBoolean(noScroll); // 反転させておく
+    // 開始時間の設定
+    const startTimingTarget = getStartTimingTarget(interpreter);
+    setStartTiming(mapAnimation, action, startTimingTarget);
 
     return mapAnimation;
 }
+
+/**
+ * ●マップアニメーション用情報を作成（戦闘時）
+ */
+function makeMapAnimationBattle(interpreter, subject, wait, action, targets) {
+    const mapAnimation = [];
+    mapAnimation.subject = subject;
+    mapAnimation.interpreter = interpreter;
+    mapAnimation.noWait = !toBoolean(wait); // 反転させておく
+
+    // 設定があればウェイト
+    if (!mapAnimation.noWait) {
+        interpreter.setWaitMode("animation");
+        interpreter._onDynamicAnimation = true; // 実行中判定
+        // タイミングを測るためアニメーションの最終対象を保持しておく
+        interpreter._lastDynamicTargetId = interpreter.getDynamicTargetId(targets[targets.length - 1]);
+        // モーション判定用の行動主体
+        interpreter._dynamicSubjectId = interpreter.getDynamicTargetId(subject);
+
+        // ＭＶの場合
+        // ※ＭＺでは循環参照になるので厳禁！
+        if (Utils.RPGMAKER_NAME == "MV") {
+            interpreter._character = targets[targets.length - 1];
+        }
+    }
+
+    // 呼出元が並列処理かどうか？
+    mapAnimation.isParallel = isParallel(interpreter);
+    // 開始時間の設定
+    const startTimingTarget = getStartTimingTarget(interpreter);
+    setStartTiming(mapAnimation, action, startTimingTarget);
+
+    return mapAnimation;
+}
+
+/**
+ * ●開始時間の設定
+ */
+function setStartTiming(mapAnimation, action, startTimingTarget) {
+    // メモ欄から開始タイミングを取得
+    const startTiming = getStartTiming(action);
+    // 設定があるなら制御
+    if (startTiming) {
+        const itemId = action.item().id;
+        // 未登録の場合のみ処理
+        // ※二回目以降は処理しない
+        if (!startTimingTarget.includesDynamicStartSkill(itemId)) {
+            // 開始時間を設定
+            mapAnimation.startTiming = startTiming
+            // スキルＩＤをイベントに設定
+            // これにより、一度だけ開始時間処理を行うようにする。
+            startTimingTarget.setDynamicStartSkill(itemId);
+        }
+    }
+}
+
+/**
+ * ●開始時間の管理対象を取得
+ */
+function getStartTimingTarget(interpreter) {
+    // コモンイベントが存在すればコモンイベントを取得
+    for (const commonEvent of $gameMap._commonEvents) {
+        if (commonEvent._interpreter == interpreter) {
+            return commonEvent;
+        }
+    }
+
+    // 実行元のイベントを取得
+    const event = $gameMap.event(interpreter._eventId);
+    if (event) {
+        return event;
+    }
+
+    // 取得できなければプレイヤーを設定
+    return $gamePlayer;
+}
+
+/**
+ * ●開始時間を取得
+ */
+function getStartTiming(action) {
+    // <D-StartTiming:*>を取得
+    const setting = action.getDynamicNote().match("<" + STARTTIMING_TAG_NAME + "\\s*:(.*)>");
+    if (setting) {
+        return setting[1];
+    }
+    return 0;
+};
+
+/**
+ * ●戦闘終了時
+ * ※アニメーション終了後に実行する必要があるため、
+ * 　BattleManager.endBattleではなくここでやる。
+ */
+const _Scene_Battle_terminate = Scene_Battle.prototype.terminate;
+Scene_Battle.prototype.terminate = function() {
+    _Scene_Battle_terminate.apply(this, arguments);
+
+    // 戦闘用コモンイベントのDynamicAnimationのフラグをクリア
+    // ※NRP_BattleParallelCommon.jsとの連携
+    if ($gameMap._battleCommonEvents) {
+        for (const commonEvent of $gameMap._battleCommonEvents) {
+            clearRunningEvent(commonEvent);
+        }
+    }
+};
+
+/**
+ * 【独自】DynamicAnimationの途中実行制御フラグ
+ */
+Game_Character.prototype.includesDynamicStartSkill = function(skillId) {
+    // 初期化されていない
+    if (this._dynamicStartSkills === undefined) {
+        return false;
+    }
+
+    // 既に登録済ならば
+    if (this._dynamicStartSkills.includes(skillId)) {
+        return true;
+    }
+    return false;
+};
+Game_CommonEvent.prototype.includesDynamicStartSkill = function(skillId) {
+    // 初期化されていない
+    if (this._dynamicStartSkills === undefined) {
+        return false;
+    }
+
+    // 既に登録済ならば
+    if (this._dynamicStartSkills.includes(skillId)) {
+        return true;
+    }
+    return false;
+};
+
+/**
+ * 【独自】DynamicAnimationの途中実行制御フラグ
+ */
+Game_Character.prototype.setDynamicStartSkill = function(skillId) {
+    // 初期化されていないならば初期化
+    if (this._dynamicStartSkills === undefined) {
+        this._dynamicStartSkills = [];
+    }
+
+    // 登録
+    this._dynamicStartSkills.push(skillId);
+};
+Game_CommonEvent.prototype.setDynamicStartSkill = function(skillId) {
+    // 初期化されていないならば初期化
+    if (this._dynamicStartSkills === undefined) {
+        this._dynamicStartSkills = [];
+    }
+
+    // 登録
+    this._dynamicStartSkills.push(skillId);
+};
+
+/**
+ * 【独自】DynamicAnimationの途中実行制御フラグをクリア
+ */
+Game_Character.prototype.clearDynamicStartSkill = function() {
+    this._dynamicStartSkills = [];
+};
+Game_CommonEvent.prototype.clearDynamicStartSkill = function() {
+    this._dynamicStartSkills = [];
+};
 
 /**
  * ●イベントが範囲対象外かどうか？
@@ -686,6 +893,65 @@ Game_Interpreter.prototype.characterAndFollower = function(param) {
     }
 };
 
+/**
+ * 【独自】DynamicTargetIdを元に戦闘、マップを問わずに対象を取得する。
+ */
+Game_Interpreter.prototype.getDynamicTarget = function(dynamicId) {
+    // 戦闘
+    if ($gameParty.inBattle()) {
+        // １以上はエネミー
+        if (dynamicId > 0) {
+            const index = dynamicId - 1;
+            return $gameTroop.members()[index];
+
+        // －１以下はアクター
+        } else if (dynamicId < 0) {
+            const index = dynamicId * -1 - 1;
+            return $gameParty.members()[index];
+        }
+
+    // マップ
+    } else {
+        return this.characterAndFollower(dynamicId);
+    }
+}
+
+/**
+ * 【独自】戦闘時はアクター、エネミー
+ * マップ時はイベント、プレイヤー、フォロワーを一意に識別するためのＩＤを取得する。
+ */
+Game_Interpreter.prototype.getDynamicTargetId = function(target) {
+    // ■戦闘時
+    // エネミーは1, 2, 3, 4...
+    // アクターは-1, -2, -3, -4...として取得
+    if ($gameParty.inBattle()) {
+        if (target.isEnemy()) {
+            return target.index() + 1;
+        } else {
+            return (target.index() + 1) * -1;
+        }
+    }
+
+    // ■マップ時
+    // プレイヤーは-1、フォロワーは-2, -3, -4として取得
+    // フォロワーならば-2以下に変換して返す
+    for (let i = 0; i < $gamePlayer.followers()._data.length; i++) {
+        const follower = $gamePlayer.followers().follower(i);
+        if (follower == target) {
+            // 0 -> -2, 1 -> -3というように変換
+            return i * -1 - 2;
+        }
+    }
+
+    // イベントＩＤがあればそのまま返す
+    if (target._eventId) {
+        return target._eventId;
+    }
+
+    // それ以外はプレイヤー
+    return -1;
+}
+
 //----------------------------------------
 // マップ用共通処理
 //----------------------------------------
@@ -694,7 +960,7 @@ Game_Interpreter.prototype.characterAndFollower = function(param) {
  * ●初期化
  */
 const _Game_Map_initialize = Game_Map.prototype.initialize;
-Game_Map.prototype.initialize = function () {
+Game_Map.prototype.initialize = function() {
     _Game_Map_initialize.apply(this, arguments);
 
     this._beforeDisplayScreenX = this.displayX() * this.tileWidth();
@@ -705,7 +971,7 @@ Game_Map.prototype.initialize = function () {
  * ●更新処理
  */
 const _Game_Map_update = Game_Map.prototype.update;
-Game_Map.prototype.update = function (sceneActive) {
+Game_Map.prototype.update = function(sceneActive) {
     _Game_Map_update.apply(this, arguments);
 
     // 現在の画面座標
@@ -720,7 +986,7 @@ Game_Map.prototype.update = function (sceneActive) {
 /**
  * 【独自】１フレームでスクロールしたスクリーンＸ座標
  */
-Game_Map.prototype.moveScreenX = function () {
+Game_Map.prototype.moveScreenX = function() {
     // 現在の座標と前回の座標を比較し差分を求める。
     const displayScreenX = this.displayX() * this.tileWidth();
     let moveScreenX = displayScreenX - this._beforeDisplayScreenX;
@@ -740,7 +1006,7 @@ Game_Map.prototype.moveScreenX = function () {
 /**
  * 【独自】１フレームでスクロールしたスクリーンＹ座標
  */
-Game_Map.prototype.moveScreenY = function () {
+Game_Map.prototype.moveScreenY = function() {
     // 現在の座標と前回の座標を比較し差分を求める。
     const displayScreenY = this.displayY() * this.tileHeight();
     let moveScreenY = displayScreenY - this._beforeDisplayScreenY;
@@ -794,10 +1060,22 @@ Game_CharacterBase.prototype.setDynamicAnimation = function(dynamicAnimation) {
  * 【独自】動的アニメーションをSpriteにセットする。
  */
 Sprite_Character.prototype.setDynamicAnimation = function(dynamicAnimation) {
-    var data = {
+    let delay = dynamicAnimation.targetDelay;
+
+    const mapAnimation = dynamicAnimation.baseAnimation.mapAnimation;
+    // 開始時間が設定されている場合
+    if (mapAnimation && mapAnimation.startTiming) {
+        const startDuration = mapAnimation.startTiming * pCalculationRate;
+        delay -= startDuration;
+        if (delay < 0) {
+            delay = 0;
+        }
+    }
+
+    const data = {
         animationId: dynamicAnimation.id,
         mirror: dynamicAnimation.mirror,
-        delay: dynamicAnimation.targetDelay,
+        delay: delay,
         dynamicAnimation: dynamicAnimation
     };
     this._animations.push(data);
@@ -976,29 +1254,22 @@ Sprite_Character.prototype.startDynamicAnimation = function(dynamicAnimation) {
         // プラグインコマンドから起動した場合
         if (interpreter) {
             // DynamicAnimationの実行時間を設定
-            interpreter.setDynamicDuration(dynamicAnimation.waitDuration);
+            interpreter.setDynamicDuration(dynamicAnimation);
 
         // イベント注釈から自動起動した場合
         } else if (dynamicAnimation.isDynamicAuto) {
-            // 実行時間を設定
-            let dynamicDuration = 0;
-            if (this._character.dynamicDuration) {
-                dynamicDuration = this._character.dynamicDuration;
-            }
-            let waitDuration = 0;
-            if (dynamicAnimation.waitDuration) {
-                waitDuration = dynamicAnimation.waitDuration;
-            }
-            // より長いほうを採用
-            this._character.dynamicDuration = Math.max(waitDuration, dynamicDuration);
+            this.setDynamicAutoDuration(dynamicAnimation);
         }
     }
 };
 
 /**
  * ●DynamicAnimationの実行時間を設定
+ * ※引数にはDynamicAnimationとMotionの両方が来る場合あり
  */
-Game_Interpreter.prototype.setDynamicDuration = function(newWaitDuration) {
+Game_Interpreter.prototype.setDynamicDuration = function(dynamicAction) {
+    const newWaitDuration = dynamicAction.waitDuration
+
     this.setWaitMode("animation");
 
     // 実行時間を設定
@@ -1011,7 +1282,54 @@ Game_Interpreter.prototype.setDynamicDuration = function(newWaitDuration) {
         waitDuration = newWaitDuration;
     }
     // より長いほうを採用
-    this.dynamicDuration = Math.max(waitDuration, dynamicDuration);
+    dynamicDuration = Math.max(waitDuration, dynamicDuration);
+    // 起動時のタイミング調整がある場合、実行時間も短縮
+    // ※関数が存在する場合実行。
+    //   現状はDynamicAnimationのみが対象
+    if (dynamicAction.getStartTiming) {
+        dynamicDuration -= dynamicAction.getStartTiming();
+    }
+
+    this.dynamicDuration = dynamicDuration;
+};
+
+/**
+ * ●DynamicAnimationの実行時間を設定
+ * ※メモ欄からの自動実行用
+ * ※引数にはDynamicAnimationとMotionの両方が来る場合あり
+ */
+Sprite_Character.prototype.setDynamicAutoDuration = function(dynamicAction) {
+    // 実行時間を設定
+    let dynamicDuration = 0;
+    if (this._character.dynamicDuration) {
+        dynamicDuration = this._character.dynamicDuration;
+    }
+    let waitDuration = 0;
+    if (dynamicAction.waitDuration) {
+        waitDuration = dynamicAction.waitDuration;
+    }
+    // より長いほうを採用
+    dynamicDuration = Math.max(waitDuration, dynamicDuration);
+    // 起動時のタイミング調整がある場合、実行時間も短縮
+    // ※関数が存在する場合実行。
+    //   現状はDynamicAnimationのみが対象
+    if (dynamicAction.getStartTiming) {
+        dynamicDuration -= dynamicAction.getStartTiming();
+    }
+
+    this._character.dynamicDuration = dynamicDuration;
+}
+
+/**
+ * ●開始タイミングを取得
+ */
+DynamicAnimation.prototype.getStartTiming = function () {
+    const mapAnimation = this.baseAnimation.mapAnimation;
+    // 起動時のタイミング調整がある場合、実行時間も短縮
+    if (mapAnimation.startTiming) {
+        return mapAnimation.startTiming * pCalculationRate;
+    }
+    return 0;
 };
 
 /**
@@ -1083,8 +1401,9 @@ Game_Interpreter.prototype.isDynamicAnimationPlaying = function() {
 
     // リクエスト中のDynamicAnimationを検索
     // ※最終ターゲットがリクエスト情報を持っているかどうかで判定する。
-    if (this._lastAnimationTarget) {
-        const sprite = getSprite(this._lastAnimationTarget);
+    const lastDynamicTarget = this.getLastDynamicTarget();
+    if (lastDynamicTarget) {
+        const sprite = getSprite(lastDynamicTarget);
         if (sprite) {
             for (const animation of sprite.animations()) {
                 const da = animation.dynamicAnimation;
@@ -1197,6 +1516,52 @@ Sprite_Character.prototype.isEnemy = function() {
 Sprite_Character.prototype.getMain = function() {
     return this;
 };
+
+//----------------------------------------
+// セーブ＆ロード時
+//----------------------------------------
+
+if (pEventResetOnLoad) {
+    /**
+     * ●ロード時のデータ展開
+     */
+    const _DataManager_extractSaveContents = DataManager.extractSaveContents;
+    DataManager.extractSaveContents = function(contents) {
+        _DataManager_extractSaveContents.apply(this, arguments);
+
+        // マップイベント
+        for (const event of $gameMap.events()) {
+            // 4:並列処理
+            if (event._trigger === 4) {
+                // 実行中のイベントをクリア
+                clearRunningEvent(event);
+            }
+        }
+
+        // コモンイベント
+        for (const commonEvent of $gameMap.parallelCommonEvents()) {
+            // 2:並列処理
+            if (commonEvent._trigger === 2) {
+                // 実行中のイベントをクリア
+                clearRunningEvent(commonEvent);
+            }
+        }
+    };
+}
+
+/**
+ * ●実行中のイベントをクリアする。
+ */
+function clearRunningEvent(event) {
+    if (event._interpreter && event._interpreter.isRunning()) {
+        // DynamicAnimation実行状態なら、イベントの実行状況もクリア
+        // ※そうしないと再開時にアニメーションが途切れてしまう。
+        if (event._dynamicStartSkills && event._dynamicStartSkills.length) {
+            event._interpreter = new Game_Interpreter();
+            event.clearDynamicStartSkill();
+        }
+    }
+}
 
 //----------------------------------------
 // シーン切替時の情報保持
@@ -1538,7 +1903,7 @@ Game_Event.prototype.update = function() {
 
         const targets = [this];
         const action = makeAction(this._dynamicSkill);
-        const mapAnimation = makeMapAnimationEvent(this, this._dynamicSkill);
+        const mapAnimation = makeMapAnimationEvent(this, this._dynamicSkill, action);
 
         // DynamicAnimation開始
         this.showDynamicAnimation(targets, action, mapAnimation);
@@ -1558,7 +1923,7 @@ Game_Event.prototype.showDynamicAnimation = function(targets, action, mapAnimati
 /**
  * ●マップアニメーション用情報を作成
  */
-function makeMapAnimationEvent(event, skillId) {
+function makeMapAnimationEvent(event, skillId, action) {
     // 始点となる行動主体
     const subject = event;
 
@@ -1569,6 +1934,8 @@ function makeMapAnimationEvent(event, skillId) {
     mapAnimation.onScroll = true;
     mapAnimation.isDynamicAuto = true;
     mapAnimation.skillId = skillId;
+    // 開始時間の設定
+    setStartTiming(mapAnimation, action, event);
 
     return mapAnimation;
 }
@@ -1656,7 +2023,7 @@ Sprite_Battler.prototype.update = function() {
 
             const targets = [battler];
             const action = makeAction(skillId);
-            const mapAnimation = makeMapAnimationState(battler, skillId);
+            const mapAnimation = makeMapAnimationState(battler, skillId, action);
 
             // DynamicAnimation開始
             battler.showDynamicAnimation(targets, action, mapAnimation);
@@ -1667,7 +2034,7 @@ Sprite_Battler.prototype.update = function() {
 /**
  * ●マップアニメーション用情報を作成
  */
-function makeMapAnimationState(battler, skillId) {
+function makeMapAnimationState(battler, skillId, action) {
     // 始点となる行動主体
     const subject = battler;
 
