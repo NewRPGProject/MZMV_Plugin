@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.16 Automate & super-enhance battle animations.
+ * @plugindesc v1.161 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -490,7 +490,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.16 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.161 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -2818,6 +2818,8 @@ DynamicAnimation.prototype.evaluate = function (spriteAnimation) {
         // スクロール開始時の初期値
         this.originalScreenX = $gameMap.displayX() * $gameMap.tileWidth();
         this.originalScreenY = $gameMap.displayY() * $gameMap.tileHeight();
+        this.beforeScreenX = this.originalScreenX;
+        this.beforeScreenY = this.originalScreenY;
 
         // 途中から開始する場合
         if (mapAnimation.startTiming) {
@@ -4021,16 +4023,34 @@ Sprite_Animation.prototype.targetPosition = function(renderer) {
  * ●初期位置からのスクロール差分Ｘ座標（ピクセル）を取得する。
  */
 DynamicAnimation.prototype.diffScreenX = function () {
-    let diffScreenX = this.originalScreenX - $gameMap.displayX() * $gameMap.tileWidth();
+    // 現在の画面座標を取得
+    const screenX = $gameMap.displayX() * $gameMap.tileWidth();
+    // アニメーションの初期位置と現在位置の差
+    let diffScreenX = this.originalScreenX - screenX;
+    // 現在の画面座標と前回の画面座標を比較（１フレームでの差分）
+    let diffFrameX = this.beforeScreenX - screenX;
+    // Ｙ座標の差分を保持
+    this.beforeScreenX = screenX;
 
     // マップ全体の横幅（ピクセル）
     const mapWidth = $gameMap.width() * $gameMap.tileWidth();
 
-    // 全体座標の半分以上を移動した（ループ）
-    if (diffScreenX > mapWidth / 2) {
-        diffScreenX -= mapWidth;
-    } else if (diffScreenX < mapWidth / 2 * -1) {
-        diffScreenX += mapWidth;
+    // １フレームで全体座標の半分以上を移動した
+    // →ループフラグをオン
+    if (diffFrameX > mapWidth / 2) {
+        this._mapLoopedX = true;
+    } else if (diffFrameX < mapWidth / 2 * -1) {
+        this._mapLoopedX = true;
+    }
+
+    // 初期位置との比較で、全体座標の半分以上を移動した
+    // →ループしたとみなして補正
+    if (this._mapLoopedX) {
+        if (diffScreenX > mapWidth / 2) {
+            diffScreenX -= mapWidth;
+        } else if (diffScreenX < mapWidth / 2 * -1) {
+            diffScreenX += mapWidth;
+        }
     }
 
     return diffScreenX;
@@ -4039,17 +4059,35 @@ DynamicAnimation.prototype.diffScreenX = function () {
 /**
  * ●初期位置からのスクロール差分Ｙ座標（ピクセル）を取得する。
  */
- DynamicAnimation.prototype.diffScreenY = function () {
-    let diffScreenY = this.originalScreenY - $gameMap.displayY() * $gameMap.tileHeight();
+DynamicAnimation.prototype.diffScreenY = function () {
+    // 現在の画面座標を取得
+    const screenY = $gameMap.displayY() * $gameMap.tileHeight();
+    // アニメーションの初期位置と現在位置の差分
+    let diffScreenY = this.originalScreenY - screenY;
+    // 現在の画面座標と前回の画面座標を比較（１フレームでの差分）
+    let diffFrameY = this.beforeScreenY - screenY;
+    // Ｙ座標の差分を保持
+    this.beforeScreenY = screenY;
 
     // マップ全体の縦幅（ピクセル）
     const mapHeight = $gameMap.height() * $gameMap.tileHeight();
 
-    // 全体座標の半分以上を移動した（ループ）
-    if (diffScreenY > mapHeight / 2) {
-        diffScreenY -= mapHeight;
-    } else if (diffScreenY < mapHeight / 2 * -1) {
-        diffScreenY += mapHeight;
+    // １フレームで全体座標の半分以上を移動した
+    // →ループフラグをオン
+    if (diffFrameY > mapHeight / 2) {
+        this._mapLoopedY = true;
+    } else if (diffFrameY < mapHeight / 2 * -1) {
+        this._mapLoopedY = true;
+    }
+
+    // 初期位置との比較で、全体座標の半分以上を移動した
+    // →ループしたとみなして補正
+    if (this._mapLoopedY) {
+        if (diffScreenY > mapHeight / 2) {
+            diffScreenY -= mapHeight;
+        } else if (diffScreenY < mapHeight / 2 * -1) {
+            diffScreenY += mapHeight;
+        }
     }
 
     return diffScreenY;
