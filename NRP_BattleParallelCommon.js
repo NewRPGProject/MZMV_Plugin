@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Enables parallel common events, even during battle.
+ * @plugindesc v1.021 Enables parallel common events, even during battle.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477740800.html
  *
@@ -45,7 +45,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 コモンイベントの並列処理を戦闘中も有効にします。
+ * @plugindesc v1.021 コモンイベントの並列処理を戦闘中も有効にします。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477740800.html
  *
@@ -107,6 +107,9 @@ function toBoolean(val, def) {
  * ●JSON用数値リストをJS用に変換
  */
 function parseNumberList(param) {
+    if (!param) {
+        return [];
+    }
     return JSON.parse(param).map(val => Number(val));
 }
 
