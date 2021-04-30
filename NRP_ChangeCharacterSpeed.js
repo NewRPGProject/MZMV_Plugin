@@ -11,8 +11,8 @@
  * This includes players, events, and various vehicles.
  * 
  * [Main Features]
- * - Allows you to set detailed speed settings
- *   that cannot be specified normally.
+ * - Allows you to set speeds that cannot be specified normally.
+ * 　Speeds in the middle or beyond the limit, for example.
  * - Set from plugin command or notes field.
  * - Can change the default value of Always Dash to On.
  * - Set the initial speed of the player and vehicles.
@@ -38,6 +38,11 @@
  * You can target a player or each events.
  * You can target multiple events at the same time.
  * 
+ * For example, if the target is "1,2,3",
+ * you can specify them one by one,
+ * and if the target is "1~5", you can specify them all at once.
+ * There is an example in the combo box, so please use it.
+ *
  * [Plugin commands for MV]
  * > nrp.changecharacterspeed.speed 3.5
  * 
@@ -88,7 +93,7 @@
  * 
  * 
  * @param DefaultAlwaysDash
- * @desc Turns on the default value of the Always On dash.
+ * @desc Turn on the default value for Always On Dash in Options.
  * @type boolean
  * 
  * @param PlayerSpeed
@@ -143,7 +148,8 @@
  * プレイヤー、イベント、各種乗り物が対象です。
  * 
  * ■主な機能
- * ・通常では指定できない中間の速度を設定可能。
+ * ・通常では指定できない速度を設定可能。
+ * 　中間の速度や限界を超えた速度など。
  * ・プラグインコマンドやメモ欄から設定。
  * ・常時ダッシュの初期値をオンに変更可能。
  * ・プレイヤーや乗り物の初期速度を設定。
@@ -168,6 +174,10 @@
  * 『速度の変更』により対象と速度を指定してください。
  * プレイヤーや各イベントを対象にできます。
  * 同時に複数のイベントを対象とすることも可能です。
+ * 
+ * 例えば、対象を"1,2,3"とすると一つずつ指定できます。
+ * また、"1~5"で一括指定となります。
+ * ※コンボボックスに例があるのでご利用ください。
  * 
  * ■ＭＶ用プラグインコマンド
  * > nrp.changecharacterspeed.speed 3.5
@@ -221,7 +231,7 @@
  * 
  * @param DefaultAlwaysDash
  * @text 常時ダッシュの初期値
- * @desc 常時ダッシュの初期値をオンにします。
+ * @desc オプション画面にある常時ダッシュの初期値をオンにします。
  * @type boolean
  * 
  * @param PlayerSpeed
@@ -233,7 +243,7 @@
  * 
  * @param PlusSpeedDash
  * @text ダッシュ時の加算速度
- * @desc プレイヤーがダッシュ時に加算する速度です。初期値は1です。
+ * @desc プレイヤーがダッシュ時に加算される速度です。初期値は1です。
  * 小数も指定可能です。
  * @type number
  * @decimals 3
