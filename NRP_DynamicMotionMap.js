@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.05 Call DynamicMotion on the map.
+ * @plugindesc v1.06 Call DynamicMotion on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicMotionMZ
  * @base NRP_DynamicAnimationMapMZ
@@ -88,7 +88,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.05 DynamicMotionをマップ上から起動します。
+ * @plugindesc v1.06 DynamicMotionをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicMotionMZ
  * @base NRP_DynamicAnimationMapMZ
@@ -261,6 +261,9 @@ Game_Character.prototype.setDynamicMotion = function(dynamicMotion) {
     // 　dynamicMotionが保存されないようにする。
     const sprite = getSprite(this);
     sprite.setDynamicMotion(dynamicMotion);
+
+    // DynamicMotion実行中フラグ
+    this._onDynamicMotion = true;
 };
 
 /**
@@ -273,7 +276,7 @@ Sprite_Character.prototype.setDynamicMotion = function(dynamicMotion) {
         return;
     }
 
-    var data = {
+    const data = {
         delay: dynamicMotion.targetDelay,
         dynamicMotion: dynamicMotion
     };
@@ -297,8 +300,18 @@ Sprite_Character.prototype.updateDynamicMotion = function() {
     // モーション実行中ならば、時間カウント-1
     if (this.isMotionPlaying()) {
         this._dynamicMotionDuration--;
+
+        // モーション実行中でなくなれば、フラグをクリア
+        if (!this.isMotionPlaying() && !this.isDynamicMotionRequested()) {
+            this._character._onDynamicMotion = undefined;
+        }
     }
     
+    // リクエストが存在しなければ処理終了
+    if (!this.isDynamicMotionRequested()) {
+        return;
+    }
+
     const spriteset = getSpriteset();
     // DynamicAnimationと同タイミングで実行するため、準備完了まで待つ。
     if (!spriteset || !spriteset._isDynamicAnimationReady) {
@@ -306,11 +319,9 @@ Sprite_Character.prototype.updateDynamicMotion = function() {
     }
 
     // delayの昇順でソートする。
-    if (this.isDynamicMotionRequested()) {
-        this.motions().sort(function(a, b) {
-            return a.delay - b.delay;
-        });
-    }
+    this.motions().sort(function(a, b) {
+        return a.delay - b.delay;
+    });
 
     // 実行モーションの設定があれば処理
     while (this.isDynamicMotionRequested()) {
@@ -330,9 +341,9 @@ Sprite_Character.prototype.updateDynamicMotion = function() {
         }
 
         // 実行条件を満たしたのでshift（先頭を削除＆取得）する。
-        var data = this.shiftDynamicMotion();
+        const data = this.shiftDynamicMotion();
 
-        var dynamicMotion = data.dynamicMotion;
+        const dynamicMotion = data.dynamicMotion;
         // モーション実行時間を設定
         // モーション実行時間が未設定、または新規モーションが現在のモーションより長い
         if (!this._dynamicMotionDuration || dynamicMotion.maxDuration > this._dynamicMotionDuration) {
@@ -615,7 +626,9 @@ Sprite_Character.prototype.updateDynamicMove = function() {
  */
 const _Game_CharacterBase_updateMove = Game_CharacterBase.prototype.updateMove;
 Game_CharacterBase.prototype.updateMove = function() {
-    if (pPlayerOnScroll) {
+    // 実行中フラグがオンの場合のみ処理
+    // ※この処理は重いので制限
+    if (pPlayerOnScroll && this._onDynamicMotion) {
         const sprite = getSprite(this);
         // モーション実行中なら表示座標に実体座標を合わせる
         // ※プレイヤーのスクロール位置に影響
@@ -704,14 +717,18 @@ function strToDirection(val) {
  */
 const _Game_CharacterBase_jumpHeight = Game_CharacterBase.prototype.jumpHeight;
 Game_CharacterBase.prototype.jumpHeight = function() {
-    const sprite = getSprite(this);
+    // 実行中フラグがオンの場合のみ処理
+    // ※この処理は重いので制限
+    if (this._onDynamicMotion) {
+        const sprite = getSprite(this);
 
-    if (sprite) {
-        // 空中座標指定がある場合はそちらを優先
-        const airY = sprite.rollAirY();
-        if (airY) {
-            // 符号反転
-            return airY * -1;
+        if (sprite) {
+            // 空中座標指定がある場合はそちらを優先
+            const airY = sprite.rollAirY();
+            if (airY) {
+                // 符号反転
+                return airY * -1;
+            }
         }
     }
 
