@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Extends the functionality of the bushes attribute.
+ * @plugindesc v1.001 Extends the functionality of the bushes attribute.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481013577.html
  *
@@ -142,7 +142,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 茂み属性の機能を拡張します。
+ * @plugindesc v1.001 茂み属性の機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481013577.html
  *
@@ -171,7 +171,7 @@
  * プラグインを適用すると初期状態で『茂みレイヤーの限定』機能がオンとなります。
  * 茂みの深さや不透明度もパラメータで設定可能です。
  * 
- * さらに、設定リストより細かい調整が可能となります。
+ * さらに、設定リストによって細かい調整が可能となります。
  * 全タイルセットで有効とするか、タイルセット毎に呼び出すかを、
  * リスト内のパラメータによって切り替え可能です。
  * 
@@ -459,7 +459,18 @@ Game_CharacterBase.prototype.refreshBushDepth = function() {
                 // 条件設定が取得できた場合
                 if (setting) {
                     this.bushSetting = setting;
-                    this._bushDepth = setting.bushDepth;
+
+                    // 条件設定がある場合
+                    if (setting.bushDepth) {
+                        this._bushDepth = setting.bushDepth;
+                    // 条件設定はないが、全体設定がある場合
+                    } else if (pBushDepth) {
+                        this._bushDepth = pBushDepth;
+                    // ツクールの初期値
+                    } else {
+                        this._bushDepth = 12;
+                    }
+
                     return;
                 }
                 // 条件設定が取得できない場合
@@ -505,7 +516,7 @@ Sprite_Character.prototype.createHalfBodySprites = function() {
         character.changeBushOpacityFlg = undefined;
 
         // 条件設定が取得できた場合
-        if (character.bushSetting) {
+        if (character.bushSetting && character.bushSetting.bushOpacity) {
             this._lowerBody.opacity = character.bushSetting.bushOpacity;
             return;
         }
