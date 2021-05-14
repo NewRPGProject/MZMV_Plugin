@@ -1,0 +1,114 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<title>プラグインの説明変換システム</title>
+<script>
+
+function convert() {
+    let str = document.getElementById("before").value;
+
+    // " * "を除去する。
+    str = str.replace(/ \* /g, "");
+
+    const newLines = [];
+    const parameterList = [];
+    let parameter = {};
+
+    // パラメータの場合
+    let paramMode = false;
+    let descMode = false;
+
+    // 一行ずつ処理
+    const inputLines = (str.split(/\r\n|\r|\n/));
+    for (const line of inputLines) {
+        // @descモード
+        if (descMode) {
+            descMode = false;
+
+            // @以外から開始するなら説明の続き行
+            if (!line.startsWith("@")) {
+                parameter.desc += line;
+                continue;
+            }
+        }
+
+        // パラメータならば
+        if (line.startsWith("@param")) {
+            // パラメータが格納されているならば
+            if (parameter.param) {
+                // パラメータリストに追加
+                parameterList.push(parameter);
+                // パラメータをクリア
+                parameter = {};
+            }
+
+            // モード開始
+            paramMode = true;
+            parameter.param = line.replace("@param ", "");
+            continue;
+        }
+
+        // @text
+        if (line.startsWith("@text")) {
+            parameter.text = line.replace("@text ", "");
+            continue;
+
+        // @desc
+        } else if (line.startsWith("@desc")) {
+            parameter.desc = line.replace("@desc ", "");
+            descMode = true;
+            continue;
+
+        // それ以外のパラメータ要素
+        } else if (line.startsWith("@")) {
+            // 何もしない
+            continue;
+        
+        // 行に追加しない
+        } else if (paramMode) {
+            continue;
+        }
+
+        newLines.push(line);
+    }
+
+    // パラメータが格納されているならば
+    if (parameter.param) {
+        // パラメータリストに追加
+        parameterList.push(parameter);
+    }
+
+    newLines.push("");
+
+    // パラメータの中身を追加（目次）
+    for (const parameter of parameterList) {
+        newLines.push("<h6><a href=\"#"
+            + parameter.param + "\">"
+            + parameter.text + "（" + parameter.param + "）"
+            + "</a></h6>");
+    }
+
+    // パラメータの中身を追加（詳細）
+    for (const parameter of parameterList) {
+        newLines.push("");
+        newLines.push("<h5 id=\""
+            + parameter.param + "\">"
+            + parameter.text + "（" + parameter.param + "）"
+            + "</h5>");
+        newLines.push("　" + parameter.desc);
+    }
+
+    document.getElementById("after").textContent = newLines.join("\n");
+}
+
+</script>
+</head>
+<body>
+
+<input type="button" value="変換！" onclick="convert()">
+<br/><br/>
+<textarea name="before" id="before" rows="30" cols="70"></textarea>
+<textarea name="after" id="after" rows="30" cols="70"></textarea>
+
+</body>
+</html>
