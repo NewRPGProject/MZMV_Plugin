@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.02 Extends the functionality of battle events.
+ * @plugindesc v1.03 Extends the functionality of battle events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_EnemyRoutineKai
  * @url http://newrpg.seesaa.net/article/477489099.html
@@ -43,6 +43,35 @@
  * false: Regardless of the setting of parameters,
  *        the action is judged on "Force Action".
  *
+ * [Note Of Skills]
+ * The following statements are valid.
+ * 
+ * <NoStartAction>
+ * 
+ * Omit the start performance when activating a skill.
+ * Allows you to avoid showing the performance
+ * when calling a common event with the effect of using a skill.
+ * 
+ * <NoCommonEventActionEnd:true or false>
+ * 
+ * Toggles whether or not to adjust the timing of the end-of-action process
+ * when calling a common event with the use effect of a skill.
+ * The default value can be set in the plugin parameter.
+ * 
+ * If set to true, it will cause the end of action process
+ * to be executed only once at the termination of the common event.
+ * This will address the problem that states
+ * with a release timing of "at the end of the action"
+ * will be released immediately after the common event is activated.
+ * 
+ * The target condition is when the damage type is "None"
+ * and the only effect used is Common Event.
+ * Please note that it will not work if any settings are made.
+ * 
+ * Note that this control is not necessary for CTB.
+ * It is already taken into account
+ * in the control in NRP_CountTimeBattle.js.
+ * 
  * [Terms]
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
@@ -158,6 +187,11 @@
  * @default true
  * @desc Always refer to the subject with "a" on the battle event.
  * This value can be referenced from the script.
+ * 
+ * @param adjustCommonEventActionEnd
+ * @type boolean
+ * @default true
+ * @desc Adjusts the timing of the end process when a common event is invoked by the effect of a skill.
  */
 
  /*~struct~Option:
@@ -176,7 +210,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.02 バトルイベントの機能を拡張します。
+ * @plugindesc v1.03 バトルイベントの機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_EnemyRoutineKai
  * @url http://newrpg.seesaa.net/article/477489099.html
@@ -212,6 +246,31 @@
  * true : パラメータの設定に関わらず『戦闘行動の強制』で強制行動を実行します。
  * false: パラメータの設定に関わらず『戦闘行動の強制』で行動判定を実行します。
  *
+ * 【スキルのメモ欄】
+ * 以下の記述が有効です。
+ * 
+ * <NoStartAction>
+ * スキル発動時の開始演出を省略します。
+ * スキルの使用効果でコモンイベントを呼び出す際に、
+ * 演出を見せないようにできます。
+ * 
+ * <AdjustCommonEventActionEnd:true or false>
+ * スキルの使用効果でコモンイベントを呼び出す際、
+ * 行動終了処理のタイミング調整をするかどうかを切り替えます。
+ * ※プラグインパラメータでデフォルト値を設定可能。
+ * 
+ * trueにすると、コモンイベントの終了時に、
+ * 一度だけ行動終了処理を実行するようにします。
+ * これにより、解除のタイミングが『行動終了時』のステートが、
+ * コモンイベントを起動した直後に解除されてしまう問題に対処します。
+ * 
+ * 対象となる条件はダメージタイプが『なし』、
+ * かつ、使用効果がコモンイベントのみの場合です。
+ * 何らかの設定がされていると機能しないのでご注意ください。
+ * 
+ * なお、この制御はＣＴＢでは不要です。
+ * ※NRP_CountTimeBattle.js内の制御で考慮済み。
+ * 
  * 【利用規約】
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
@@ -342,6 +401,13 @@
  * @default true
  * @desc バトルイベント上で常に『a』で行動主体を参照します。
  * この値はスクリプトから参照可能です。
+ * 
+ * @param adjustCommonEventActionEnd
+ * @text ｺﾓﾝｲﾍﾞﾝﾄ時の終了処理を調整
+ * @type boolean
+ * @default true
+ * @desc スキルの使用効果でコモンイベントを呼び出した際、
+ * 行動終了処理のタイミングを調整するようにします。
  */
 
 /*~struct~Option:ja
@@ -380,10 +446,11 @@ function toBoolean(val, def) {
 }
 
 const PLUGIN_NAME = "NRP_BattleEventEXMZ";
-var parameters = PluginManager.parameters(PLUGIN_NAME);
+const parameters = PluginManager.parameters(PLUGIN_NAME);
 
-var pForceValid = toBoolean(parameters["forceValid"], true);
-var pAIsSubject = toBoolean(parameters["aIsSubject"], true);
+const pForceValid = toBoolean(parameters["forceValid"], true);
+const pAIsSubject = toBoolean(parameters["aIsSubject"], true);
+const pAdjustCommonEventActionEnd = toBoolean(parameters["adjustCommonEventActionEnd"], true);
 
 var plSuperForce = undefined;
 var plForceSubject = undefined;
@@ -536,6 +603,9 @@ BattleManager.initMembers = function() {
 
     // 変数クリア
     clearParam();
+
+    // 終了処理を無視するためのフラグ
+    this._ignoreAllActionsEnd = undefined;
 };
 
 /**
@@ -945,6 +1015,81 @@ Game_Action.prototype.targetsForAlive = function(unit) {
     }
     
     return _Game_Action_targetsForAlive.apply(this, arguments);
+};
+
+/**
+ * ●全体の効果
+ * ※通常はコモンイベントの処理のみ
+ */
+const _Game_Action_applyGlobal = Game_Action.prototype.applyGlobal;
+Game_Action.prototype.applyGlobal = function() {
+    // ダメージタイプが『なし』の場合
+    if (this.item().damage.type == 0) {
+        // かつ、使用効果がコモンイベントのみの場合
+        const isCommonEvent = this.item().effects.every(function(effect) {
+            return effect.code === Game_Action.EFFECT_COMMON_EVENT;
+        });
+        if (isCommonEvent) {
+            // コモンイベント呼び出し時、終了処理のタイミング調整を行う制御。
+            if (getAdjustCommonEventActionEnd(this)) {
+                BattleManager._ignoreAllActionsEnd = true;
+            }
+        }
+    }
+
+    _Game_Action_applyGlobal.apply(this, arguments);
+};
+
+/**
+ * ●コモンイベントの終了処理のタイミング調整を行うかどうか？
+ */
+function getAdjustCommonEventActionEnd(action) {
+    const item = action.item();
+
+    // メモ欄の設定値がある場合は、そちらを優先
+    let adjustCommonEventActionEnd = item.meta.AdjustCommonEventActionEnd;
+    if (adjustCommonEventActionEnd !== undefined) {
+        // 文字列なのでtrue/falseに変換
+        return toBoolean(adjustCommonEventActionEnd);
+    }
+
+    // それ以外はパラメータから取得
+    return pAdjustCommonEventActionEnd;
+}
+
+/**
+ * ●行動終了時
+ */
+const _Game_Battler_onAllActionsEnd = Game_Battler.prototype.onAllActionsEnd;
+Game_Battler.prototype.onAllActionsEnd = function() {
+    // コモンイベントに対する終了処理を行わない。
+    if (BattleManager._ignoreAllActionsEnd) {
+        return;
+    }
+
+    _Game_Battler_onAllActionsEnd.apply(this, arguments);
+};
+
+/**
+ * ●イベント終了時
+ */
+const _Game_Interpreter_terminate = Game_Interpreter.prototype.terminate;
+Game_Interpreter.prototype.terminate = function() {
+    _Game_Interpreter_terminate.apply(this, arguments);
+
+    // 戦闘中のコモンイベントの場合
+    if ($gameParty.inBattle() && BattleManager._ignoreAllActionsEnd) {
+        // フラグをクリアし、行動終了処理を呼ぶ
+        BattleManager._ignoreAllActionsEnd = undefined;
+
+        if (BattleManager._action) {
+            // 行動主体を取得し、行動終了処理を実行
+            const subject = BattleManager._action.subject();
+            if (subject) {
+                subject.onAllActionsEnd();
+            }
+        }
+    }
 };
 
 })();
