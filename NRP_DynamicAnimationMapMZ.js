@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.09 Call DynamicAnimationMZ on the map.
+ * @plugindesc v1.091 Call DynamicAnimationMZ on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -183,7 +183,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.09 DynamicAnimationMZをマップ上から起動します。
+ * @plugindesc v1.091 DynamicAnimationMZをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -1624,13 +1624,10 @@ if (pEventResetOnLoad) {
             }
         }
 
-        // コモンイベント
-        for (const commonEvent of $gameMap.parallelCommonEvents()) {
-            // 2:並列処理
-            if (commonEvent._trigger === 2) {
-                // 実行中のイベントをクリア
-                clearRunningEvent(commonEvent);
-            }
+        // コモンイベント（並列）
+        for (const commonEvent of $gameMap._commonEvents) {
+            // 実行中のイベントをクリア
+            clearRunningEvent(commonEvent);
         }
     };
 }
@@ -1920,7 +1917,7 @@ Game_Event.prototype.setupPageSettings = function() {
         for (const line of list) {
             // 108:注釈開始, 408:注釈続き
             if (line.code == 108 || line.code == 408) {
-                // メモ欄から<D-Skill:*>を取得
+                // 注釈から<D-Skill:*>を取得
                 let skillId = getDynamicSkill(line.parameters[0]);
                 // 取得できれば実行スキルに設定
                 if (skillId != undefined) {

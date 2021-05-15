@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV
- * @plugindesc v1.09 Call DynamicAnimation on the map.
+ * @plugindesc v1.091 Call DynamicAnimation on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimation
  * @url http://newrpg.seesaa.net/article/477639171.html
@@ -152,7 +152,7 @@
 
 /*:ja
  * @target MV
- * @plugindesc v1.09 DynamicAnimationをマップ上から起動します。
+ * @plugindesc v1.091 DynamicAnimationをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimation
  * @url http://newrpg.seesaa.net/article/477639171.html
@@ -1538,13 +1538,10 @@ if (pEventResetOnLoad) {
             }
         }
 
-        // コモンイベント
-        for (const commonEvent of $gameMap.parallelCommonEvents()) {
-            // 2:並列処理
-            if (commonEvent._trigger === 2) {
-                // 実行中のイベントをクリア
-                clearRunningEvent(commonEvent);
-            }
+        // コモンイベント（並列）
+        for (const commonEvent of $gameMap._commonEvents) {
+            // 実行中のイベントをクリア
+            clearRunningEvent(commonEvent);
         }
     };
 }
