@@ -3,8 +3,9 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.001 Extends the functionality of the bushes attribute.
+ * @plugindesc v1.002 Extends the functionality of the bushes attribute.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
+ * @orderBefore OverpassTile
  * @url http://newrpg.seesaa.net/article/481013577.html
  *
  * @help Extends the functionality of the bushes attribute.
@@ -50,6 +51,10 @@
  * 
  * <BushSetting:A,B,C>
  * 
+ * [Notice]
+ * When using this plugin together with OverpassTile.js,
+ * be sure to place this plugin on the top.
+ * 
  * [Terms]
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
@@ -80,7 +85,7 @@
 /*~struct~Setting:
  * @param SettingId
  * @type string
- * @desc Identifier used to call from the memo field of a tileset. This is not required if "ValidAllTilesets" is on.
+ * @desc Identifier used to call from the note field of a tileset. This is not required if "ValidAllTilesets" is on.
  * 
  * @param ValidAllTilesets
  * @type boolean
@@ -142,8 +147,9 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.001 茂み属性の機能を拡張します。
+ * @plugindesc v1.002 茂み属性の機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
+ * @orderBefore OverpassTile
  * @url http://newrpg.seesaa.net/article/481013577.html
  *
  * @help 茂み属性の機能を拡張します。
@@ -182,6 +188,10 @@
  * ?の部分が設定リストに登録した『設定ＩＤ』となります。
  * また、カンマ区切りによって複数指定も可能です。
  * <BushSetting:A,B,C>
+ * 
+ * ■注意点
+ * OverpassTile.js（立体交差プラグイン）と併用する場合、
+ * 当プラグインを必ず上側に配置してください。
  * 
  * ■利用規約
  * 特に制約はありません。
