@@ -3,18 +3,19 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Fine-tune the encounter rate.
+ * @plugindesc v1.00 Change the battleback and encounter rate for each terrain.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481820874.html
  *
- * @help Fine-tune the encounter rate.
+ * @help Change the battleback and encounter rate for each terrain.
  *
- * You can set the encounter rate in detail　by using terrain tags,
- * region IDs, tile IDs　and auto tile types as conditions.
+ * You can change the battleback and encounter rate by using terrain tags,
+ * region IDs, tile IDs, and auto tile types as conditions.
  * Since terrain tags are limited in number and regions
  * are hard to set, auto tile type is useful.
  * 
  * ※Please use the included NRP_DebugTile.js to check the auto tile type.
+ * ※Changing the battleback only available when the tileset is world type.
  * 
  * In addition, RPG Maker MV to MZ includes
  * the following hidden specifications by default.
@@ -26,16 +27,16 @@
  * It is possible to change these specifications.
  * 
  * ■Usage
- * Enter the condition and the encounter rate
- * in the setting list of the plugin parameters.
+ * Enter the condition, encounter rate, and battlebacks
+ * in the plugin parameter SettingList.
  * You can set the registered Id in the note field of the tileset.
  * 
- * <EncounterSetting:?>
+ * <TerrainSetting:?>
  * 
  * The ? is the Id registered in the setting list.
  * You can also specify multiple settings
  * by separating them with commas.
- * <EncounterSetting:A,B,C>
+ * <TerrainSetting:A,B,C>
  * 
  * The sample is registered in the setting list from the beginning.
  * The content is tailored to Maker's default fields,
@@ -72,7 +73,7 @@
  * 
  * @param SettingList
  * @type struct<Setting>[]
- * @default ["{\"Id\":\"sample\",\"Memo\":\"Plain\",\"Rate\":\"100\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"16\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Forest\",\"Rate\":\"200\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"20,21\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Mountain\",\"Rate\":\"200\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"22\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Beach\",\"Rate\":\"150\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"32\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Desert\",\"Rate\":\"150\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"33\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Snow Field\",\"Rate\":\"150\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"40\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Snow Forest\",\"Rate\":\"200\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"44\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Snow Mountain\",\"Rate\":\"200\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"47\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Wasteland\",\"Rate\":\"150\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"24,25\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Wasteland Forest\",\"Rate\":\"200\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"28\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Plain Road\",\"Rate\":\"100\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"17\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Sandy Road\",\"Rate\":\"100\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"29\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Stone Road\",\"Rate\":\"100\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"37\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Shallow Sea\",\"Rate\":\"100\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"0\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Deep Sea\",\"Rate\":\"100\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"1\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Poison Swamp\",\"Rate\":\"200\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"4\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Lava\",\"Rate\":\"200\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"35\",\"TileId\":\"\"}"]
+ * @default ["{\"Id\":\"sample\",\"Memo\":\"Plain\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"16\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"100\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Forest\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"20,21\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"200\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Mountain\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"22\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"200\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Beach\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"32\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"150\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Desert\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"33\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"150\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Snow Field\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"40\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"150\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Snow Forest\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"44\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"200\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Snow Mountain\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"47\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"200\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Wasteland\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"24,25\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"150\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Wasteland Forest\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"28\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"200\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Plain Road\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"17\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"100\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Sandy Road\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"29\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"100\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Road\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"37\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"100\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Shallow Sea\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"0\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"100\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Deep Sea\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"1\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"100\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Poison Swamp\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"4\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"200\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"Lava\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"35\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"200\",\"Battleback1\":\"\",\"Battleback2\":\"\"}"]
  * @desc This is a list of settings for the encounter rate.
  */
 /*~struct~Setting:
@@ -84,13 +85,6 @@
  * @type string
  * @desc This is a memo for identification.
  * It is not used for processing.
- * 
- * @param Rate
- * @text Encounter Rate
- * @type number
- * @default 100
- * @desc This is the encounter rate when the condition is met.
- * Set it based on 100.
  * 
  * @param ValidAllTilesets
  * @type boolean
@@ -122,23 +116,46 @@
  * @type string
  * @desc Specify the Tile Id to be targeted.
  * Multiple ids can be specified. (Example: 1,3~5)
+ * 
+ * @param <Contents>
+ * 
+ * @param EncounterRate
+ * @parent <Contents>
+ * @type number
+ * @desc This is the encounter rate when the condition is met.
+ * Set it based on 100.
+ * 
+ * @param Battleback1
+ * @parent <Contents>
+ * @type file
+ * @dir img/battlebacks1
+ * @desc This is the Battleback (below) when the conditions are met.
+ * Valid only if the tileset is world type.
+ * 
+ * @param Battleback2
+ * @parent <Contents>
+ * @type file
+ * @dir img/battlebacks2
+ * @desc This is the Battleback (above) when the conditions are met.
+ * Valid only if the tileset is world type.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 エンカウント率を細かく調整します。
+ * @plugindesc v1.00 戦闘背景やエンカウント率を地形毎に変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481820874.html
  *
- * @help エンカウント率を細かく調整します。
+ * @help 戦闘背景やエンカウント率を地形毎に変更します。
  *
  * 地形タグやリージョンＩＤ、タイルＩＤやオートタイルタイプを
- * 条件にして細かくエンカウント率を設定できます。
+ * 条件にして戦闘背景やエンカウント率を変更できます。
  * 地形タグは数が限られているし、リージョンは設定が大変なので、
  * オートタイルタイプが便利です。
  * 
  * ※オートタイルタイプの確認には、
  * 　付属のNRP_DebugTile.jsをご活用ください。
+ * ※戦闘背景の変更はフィールドタイプのタイルセットのみ有効です。
  * 
  * また、ツクールＭＶ～ＭＺには、
  * デフォルトで以下の隠し仕様が含まれています。
@@ -150,14 +167,15 @@
  * これらの仕様を変更することも可能です。
  * 
  * ■使用方法
- * プラグインパラメータの設定リストに、条件とエンカウント率を入力してください。
+ * プラグインパラメータの設定リストに、
+ * 条件、エンカウント率、戦闘背景を入力してください。
  * 登録した『設定ＩＤ』をタイルセットのメモ欄に設定すればＯＫです。
  * 
- * <EncounterSetting:?>
+ * <TerrainSetting:?>
  * 
  * ?の部分が設定リストに登録した『設定ＩＤ』となります。
  * また、カンマ区切りによって複数指定も可能です。
- * <EncounterSetting:A,B,C>
+ * <TerrainSetting:A,B,C>
  * 
  * 設定リストには最初からサンプルが登録されています。
  * ツクールのデフォルトのフィールドに合わせた内容になっているので、
@@ -197,7 +215,7 @@
  * @param SettingList
  * @text 設定リスト
  * @type struct<Setting>[]
- * @default ["{\"Id\":\"sample\",\"Memo\":\"平原\",\"Rate\":\"100\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"16\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"森\",\"Rate\":\"200\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"20,21\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"山\",\"Rate\":\"200\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"22\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"浜辺\",\"Rate\":\"150\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"32\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"砂漠\",\"Rate\":\"150\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"33\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"雪原\",\"Rate\":\"150\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"40\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"雪の森\",\"Rate\":\"200\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"44\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"雪山\",\"Rate\":\"200\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"47\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"荒野\",\"Rate\":\"150\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"24,25\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"荒野の森\",\"Rate\":\"200\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"28\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"平原の道\",\"Rate\":\"100\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"17\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"砂の道\",\"Rate\":\"100\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"29\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"街道\",\"Rate\":\"100\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"37\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"浅い海\",\"Rate\":\"100\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"0\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"深い海\",\"Rate\":\"100\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"1\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"毒沼\",\"Rate\":\"200\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"4\",\"TileId\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"溶岩\",\"Rate\":\"200\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"35\",\"TileId\":\"\"}"]
+ * @default ["{\"Id\":\"sample\",\"Memo\":\"平原\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"16\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"100\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"森\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"20,21\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"200\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"山\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"22\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"200\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"浜辺\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"32\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"150\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"砂漠\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"33\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"150\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"雪原\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"40\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"150\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"雪の森\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"44\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"200\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"雪山\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"47\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"200\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"荒野\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"24,25\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"150\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"荒野の森\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"28\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"200\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"平原の道\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"17\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"100\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"砂の道\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"29\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"100\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"街道\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"37\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"100\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"浅い海\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"0\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"100\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"深い海\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"1\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"100\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"毒沼\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"4\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"200\",\"Battleback1\":\"\",\"Battleback2\":\"\"}","{\"Id\":\"sample\",\"Memo\":\"溶岩\",\"ValidAllTilesets\":\"false\",\"<Condition>\":\"\",\"TerrainTag\":\"\",\"RegionId\":\"\",\"AutotileType\":\"35\",\"TileId\":\"\",\"<Contents>\":\"\",\"EncounterRate\":\"200\",\"Battleback1\":\"\",\"Battleback2\":\"\"}"]
  * @desc エンカウント率の設定の一覧です。
  */
 /*~struct~Setting:ja
@@ -212,13 +230,6 @@
  * @type string
  * @desc 判別用のメモです。
  * 処理には使用しませんので、分かりやすい名前を付けてください。
- * 
- * @param Rate
- * @text エンカウント率
- * @type number
- * @default 100
- * @desc 条件を満たした場合のエンカウント率です。
- * 100を基準に設定してください。
  * 
  * @param ValidAllTilesets
  * @text 全タイルセットで有効
@@ -257,6 +268,32 @@
  * @type string
  * @desc 対象とするタイルＩＤを指定します。
  * 複数指定も可能です。（例：1,3~5）
+ * 
+ * @param <Contents>
+ * @text ＜内容＞
+ * 
+ * @param EncounterRate
+ * @text エンカウント率
+ * @parent <Contents>
+ * @type number
+ * @desc 条件を満たした場合のエンカウント率です。
+ * 100を基準に設定してください。
+ * 
+ * @param Battleback1
+ * @text 戦闘背景１
+ * @parent <Contents>
+ * @type file
+ * @dir img/battlebacks1
+ * @desc 条件を満たした場合の戦闘背景（下）です。
+ * タイルセットがフィールドタイプの場合のみ有効です。
+ * 
+ * @param Battleback2
+ * @text 戦闘背景２
+ * @parent <Contents>
+ * @type file
+ * @dir img/battlebacks2
+ * @desc 条件を満たした場合の戦闘背景（上）です。
+ * タイルセットがフィールドタイプの場合のみ有効です。
  */
 (function() {
 "use strict";
@@ -329,7 +366,7 @@ function makeArray(values) {
     return results;
 }
 
-const PLUGIN_NAME = "NRP_EncounterRate";
+const PLUGIN_NAME = "NRP_TerrainInfo";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pBushEncounterRate = toNumber(parameters["BushEncounterRate"]);
 const pShipEncounterRate = toNumber(parameters["ShipEncounterRate"]);
@@ -345,7 +382,9 @@ for (const setting of pSettingList) {
     setting.regionIds = makeArray(setting.RegionId);
     setting.autotileTypes = makeArray(setting.AutotileType);
     setting.tileIds = makeArray(setting.TileId);
-    setting.encounterRate = toNumber(setting.Rate);
+    setting.encounterRate = toNumber(setting.EncounterRate);
+    setting.battleback1 = setting.Battleback1;
+    setting.battleback2 = setting.Battleback2;
 }
 
 /**
@@ -374,11 +413,43 @@ Game_Player.prototype.encounterProgressValue = function() {
 
     const setting = getMatchSetting(this._x, this._y);
     // 条件設定が取得できた場合
-    if (setting) {
+    if (setting && setting.encounterRate != undefined) {
         value *= (setting.encounterRate / 100);
     }
 
     return value;
+};
+
+//----------------------------------------
+// 戦闘背景
+//----------------------------------------
+
+/**
+ * ●戦闘背景１
+ */
+const _Sprite_Battleback_normalBattleback1Name = Sprite_Battleback.prototype.normalBattleback1Name;
+Sprite_Battleback.prototype.normalBattleback1Name = function() {
+    const setting = getMatchSetting($gamePlayer.x, $gamePlayer.y);
+    // 条件設定が取得できた場合
+    if (setting && setting.battleback1 != undefined) {
+        return setting.battleback1;
+    }
+    
+    return _Sprite_Battleback_normalBattleback1Name.apply(this, arguments);
+};
+
+/**
+ * ●戦闘背景２
+ */
+const _Sprite_Battleback_normalBattleback2Name = Sprite_Battleback.prototype.normalBattleback2Name;
+Sprite_Battleback.prototype.normalBattleback2Name = function() {
+    const setting = getMatchSetting($gamePlayer.x, $gamePlayer.y);
+    // 条件設定が取得できた場合
+    if (setting && setting.battleback2 != undefined) {
+        return setting.battleback2;
+    }
+    
+    return _Sprite_Battleback_normalBattleback2Name.apply(this, arguments);
 };
 
 //----------------------------------------
@@ -432,7 +503,7 @@ function setTilesetInfo() {
     }
 
     // タイルセットに設定
-    tileset.encounterSettingList = settingList;
+    tileset.terrainSettingList = settingList;
 }
 
 /**
@@ -443,7 +514,7 @@ function isValidSetting(settingId, tileset) {
         return false;
     }
 
-    const setting = tileset.meta.EncounterSetting;
+    const setting = tileset.meta.TerrainSetting;
     if (setting) {
         // カンマ区切りで分解
         const settingArray = setting.split(",");
@@ -464,7 +535,7 @@ function getMatchSetting(x, y) {
     const tileset = $gameMap.tileset();
 
     // 設定がなければundefined
-    if (!tileset.encounterSettingList) {
+    if (!tileset.terrainSettingList) {
         return undefined;
     }
 
@@ -475,7 +546,7 @@ function getMatchSetting(x, y) {
     let tileId;
 
     // 設定を１つずつ確認
-    for (const setting of tileset.encounterSettingList) {
+    for (const setting of tileset.terrainSettingList) {
         let noMatch = false;
 
         // 地形タグの一致を確認
