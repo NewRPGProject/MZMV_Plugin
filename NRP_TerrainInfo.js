@@ -3,11 +3,11 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Change the battleback and encounter rate for each terrain.
+ * @plugindesc v1.00 Set detailed settings for battleback and encounter rates.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481820874.html
  *
- * @help Change the battleback and encounter rate for each terrain.
+ * @help Set detailed settings for battleback and encounter rates.
  *
  * You can change the battleback and encounter rate by using terrain tags,
  * region IDs, tile IDs, and auto tile types as conditions.
@@ -142,11 +142,11 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 戦闘背景やエンカウント率を地形毎に変更します。
+ * @plugindesc v1.00 戦闘背景やエンカウント率を詳細設定。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481820874.html
  *
- * @help 戦闘背景やエンカウント率を地形毎に変更します。
+ * @help 戦闘背景やエンカウント率を詳細な条件で設定します。
  *
  * 地形タグやリージョンＩＤ、タイルＩＤやオートタイルタイプを
  * 条件にして戦闘背景やエンカウント率を変更できます。
