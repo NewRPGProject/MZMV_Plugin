@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.091 Call DynamicAnimationMZ on the map.
+ * @plugindesc v1.10 Call DynamicAnimationMZ on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -32,6 +32,16 @@
  * You can also specify multiple targets.
  * "1,2,3" specifies one by one, and "1~5" specifies a batch.
  * 
+ * >removeAnimation
+ * Remove the currently running DynamicAnimation.
+ * Specify the conditions (AND) for removal.
+ * 
+ * For example, if only "target" is specified.
+ * Remove all animations currently displayed for the target.
+ * 
+ * If both "skillId" and "target" are specified,
+ * only animations for which both match will be removed.
+ * 
  * >showAnimationBattle
  * You can use DynamicAnimation during the battle.
  * Basically, the background of the battle is assumed to be used.
@@ -42,6 +52,12 @@
  * If necessary, you can also select the subject or target.
  * In that case, please set the condition
  * with reference to the candidate of the combo box.
+ * 
+ * >removeAnimationBattle
+ * During battle, remove the DynamicAnimation that is running.
+ * The gist is the same as in "removeAnimation",
+ * but The method of specifying the conditions
+ * is the same as in "showAnimation(Battle)".
  * 
  * [Call from note]
  * <D-Skill:1>
@@ -107,6 +123,40 @@
  * @type struct<Option>
  * 
  * 
+ * @command removeAnimation
+ * @desc Remove the currently running DynamicAnimation.
+ * Specify the condition (AND) for removal.
+ * 
+ * @arg skillId
+ * @desc Select the skills to be removed.
+ * @type skill
+ * 
+ * @arg target
+ * @desc Specifies the target (endpoint) of the animation to be removed.
+ * @type combo
+ * @default -1 #player
+ * @option 0 #this event
+ * @option -1 #player
+ * @option -2 #follower
+ * @option this._eventId + 1
+ * @option 1,2,3 #multiple
+ * @option 1~3 #range
+ * @option -1~-4 #party
+ * 
+ * @arg startPoint
+ * @text startPoint(subject)
+ * @desc Specify the starting point(subject) of the animation to be removed.
+ * @type combo
+ * @default -1 #player
+ * @option 0 #this event
+ * @option -1 #player
+ * @option -2 #follower
+ * @option this._eventId + 1
+ * @option 1,2,3 #multiple
+ * @option 1~3 #range
+ * @option -1~-4 #party
+ * 
+ * 
  * @command showAnimationBattle
  * @desc Show the DynamicAnimation for the battle.
  * 
@@ -129,11 +179,38 @@
  * @type combo
  * @option a.isActor() && a.index() == 0 #Actor index
  * @option a.isEnemy() && a.index() == 0 #Enemy index
- * @option a._actorId == 1 #All actor
- * @option a._enemyId == 1 #All enemy
+ * @option a._actorId == 1
+ * @option a._enemyId == 1
  * 
  * @arg option
  * @type struct<BattleOption>
+ * 
+ * 
+ * @command removeAnimationBattle
+ * @desc Removes the DynamicAnimation that is running during battle.
+ * Specify the condition (AND) for removal.
+ * 
+ * @arg skillId
+ * @desc Select the skills to be removed.
+ * @type skill
+ * 
+ * @arg targetCondition
+ * @desc Specifies the target conditions for animation removal.
+ * @type combo
+ * @option a.isActor() && a.index() == 0 #Actor index
+ * @option a.isEnemy() && a.index() == 0 #Enemy index
+ * @option a._actorId == 1
+ * @option a._enemyId == 1
+ * @option a.isActor() #All actor
+ * @option a.isEnemy() #All enemy
+ * 
+ * @arg subjectCondition
+ * @desc Specifies the subject condition for animation removal.
+ * @type combo
+ * @option a.isActor() && a.index() == 0 #Actor index
+ * @option a.isEnemy() && a.index() == 0 #Enemy index
+ * @option a._actorId == 1
+ * @option a._enemyId == 1
  * 
  * 
  * @param keepAnimation
@@ -183,7 +260,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.091 DynamicAnimationMZをマップ上から起動します。
+ * @plugindesc v1.10 DynamicAnimationMZをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -215,6 +292,16 @@
  * this._eventId + 1
  * はこのイベントのID+1のイベントとなります。
  * 
+ * ◆アニメーションの削除
+ * 実行中のDynamicAnimationの削除を行います。
+ * 削除する条件（ＡＮＤ）を指定してください。
+ * 
+ * 例えば、『対象』だけを指定した場合、
+ * 対象に対して表示中のアニメーションを全て削除します。
+ * 
+ * 『スキルＩＤ』と『対象』の両方を指定した場合、
+ * 両方が一致するアニメーションだけを削除します。
+ * 
  * ◆アニメーションの表示（戦闘）
  * 戦闘中にDynamicAnimationでの演出を行います。
  * 基本的には戦闘背景などの演出を想定しています。
@@ -223,6 +310,11 @@
  * 
  * 必要な場合は使用者や対象の選択も可能です。
  * その際はコンボボックスの候補を参考に条件を設定してください。
+ * 
+ * ◆アニメーションの削除（戦闘）
+ * 戦闘中、実行中のDynamicAnimationの削除を行います。
+ * 要領は『アニメーションの削除』と同じですが、
+ * 条件の指定方法は『アニメーションの表示（戦闘）』と同じになります。
  * 
  * 【メモ欄＆注釈からの起動】
  * <D-Skill:1>
@@ -286,6 +378,42 @@
  * @type struct<Option>
  * 
  * 
+ * @command removeAnimation
+ * @text アニメーションの削除
+ * @desc 実行中のDynamicAnimationを削除します。
+ * 削除する条件（ＡＮＤ）を指定してください。
+ * 
+ * @arg skillId
+ * @text スキルID
+ * @desc 削除の対象とするスキルを選択します。
+ * @type skill
+ * 
+ * @arg target
+ * @text 対象
+ * @desc 削除するアニメーションの対象（終点）を指定します。
+ * @type combo
+ * @default 0 #このイベント
+ * @option 0 #このイベント
+ * @option -1 #プレイヤー
+ * @option -2 #仲間
+ * @option this._eventId + 1 #イベントID+1
+ * @option 1,2,3 #複数指定
+ * @option 1~3 #範囲指定
+ * @option -1~-4 #パーティ全員
+ * 
+ * @arg startPoint
+ * @text 始点（行動主体）
+ * @desc 削除するアニメーションの始点（行動主体）を指定します。
+ * @type combo
+ * @option 0 #このイベント
+ * @option -1 #プレイヤー
+ * @option -2 #仲間
+ * @option this._eventId + 1 #イベントID+1
+ * @option 1,2,3 #複数指定
+ * @option 1~3 #範囲指定
+ * @option -1~-4 #パーティ全員
+ * 
+ * 
  * @command showAnimationBattle
  * @text アニメーションの表示（戦闘）
  * @desc DynamicAnimationを実行します。こちらは戦闘用です。
@@ -318,6 +446,37 @@
  * @arg option
  * @text オプション
  * @type struct<BattleOption>
+ * 
+ * 
+ * @command removeAnimationBattle
+ * @text アニメーションの削除（戦闘）
+ * @desc 戦闘時、実行中のDynamicAnimationを削除します。
+ * 削除する条件（ＡＮＤ）を指定してください。
+ * 
+ * @arg skillId
+ * @text スキルID
+ * @desc 削除の対象とするスキルを選択します。
+ * @type skill
+ * 
+ * @arg targetCondition
+ * @text 対象（条件）
+ * @desc アニメーション削除の対象条件を指定します。（複数可）
+ * @type combo
+ * @option a.isActor() && a.index() == 0 #アクター位置
+ * @option a.isEnemy() && a.index() == 0 #エネミー位置
+ * @option a._actorId == 1 #アクターID
+ * @option a._enemyId == 1 #敵キャラID
+ * @option a.isActor() #アクター全体
+ * @option a.isEnemy() #エネミー全体
+ * 
+ * @arg subjectCondition
+ * @text 使用者（条件）
+ * @desc アニメーション削除の使用者条件を指定します。
+ * @type combo
+ * @option a.isActor() && a.index() == 0 #アクター位置
+ * @option a.isEnemy() && a.index() == 0 #エネミー位置
+ * @option a._actorId == 1 #アクターID
+ * @option a._enemyId == 1 #敵キャラID
  * 
  * 
  * @param keepAnimation
@@ -568,6 +727,157 @@ function showMapAnimation(mapAnimationParams) {
 }
 
 /**
+ * ●アニメーションの削除
+ */
+PluginManager.registerCommand(PLUGIN_NAME, "removeAnimation", function(args) {
+    // 戦闘中は無効
+    if ($gameParty.inBattle()) {
+        return;
+    }
+
+    const skillId = getCommandValue(args.skillId);
+    const targetId = getCommandValue(args.target);
+    const startPointId = getCommandValue(args.startPoint);
+
+    const targets = makeTargetsAndSubjects.bind(this)(targetId);
+    const startPoints = makeTargetsAndSubjects.bind(this)(startPointId);
+
+    const spriteset = getSpriteset();
+
+    // 再生中の全アニメーションでループ
+    for (const animationSprite of spriteset._animationSprites.clone()) {
+        const dynamicAnimation = animationSprite.dynamicAnimation;
+        // DynamicAnimationでないなら処理しない。
+        if (!dynamicAnimation) {
+            continue;
+        }
+
+        const baseAnimation = dynamicAnimation.baseAnimation;
+
+        // スキルＩＤが条件に設定されている。
+        if (skillId) {
+            const id = baseAnimation.action.item().id;
+
+            // スキルＩＤが一致していないなら処理しない
+            if (skillId != id) {
+                continue;
+            }
+        }
+
+        // 行動主体が条件に設定されている。
+        if (startPoints.length > 0) {
+            // 行動主体が一致していないなら処理しない
+            if (!startPoints.includes(baseAnimation.getSubject())) {
+                continue;
+            }
+        }
+
+        let removeFlg = false;
+
+        // アニメーションの対象毎にループ
+        for (const targetSprite of animationSprite._targets) {
+            // 対象が不一致ならば削除しない。
+            if (targets.length > 0
+                    && !targets.includes(targetSprite._character)) {
+                continue;
+            }
+
+            //------------------------------------------------
+            // ここまで来たならば、条件に一致しているということ。
+            //------------------------------------------------
+
+            // 予約されているアニメーションを削除
+            targetSprite._animations = [];
+            removeFlg = true;
+        }
+
+        if (removeFlg) {
+            // 再生中のアニメーションを削除
+            spriteset.removeAnimation(animationSprite);
+        }
+    }
+});
+
+/**
+ * ●アニメーションの削除（戦闘）
+ */
+PluginManager.registerCommand(PLUGIN_NAME, "removeAnimationBattle", function(args) {
+    // 戦闘中以外は無効
+    if (!$gameParty.inBattle()) {
+        return;
+    }
+
+    const skillId = eval(getCommandValue(args.skillId));
+    const targetCondition = getCommandValue(args.targetCondition);
+    const subjectCondition = getCommandValue(args.subjectCondition);
+
+    // 行動主体を取得
+    let subject = undefined;
+    if (subjectCondition) {
+        subject = BattleManager.allBattleMembers().find(a => eval(subjectCondition));
+    }
+    // 対象を取得
+    let targets = undefined;
+    if (targetCondition) {
+        targets = BattleManager.allBattleMembers().filter(a => eval(targetCondition));
+    }
+
+    const spriteset = getSpriteset();
+
+    // 再生中の全アニメーションでループ
+    for (const animationSprite of spriteset._animationSprites.clone()) {
+        const dynamicAnimation = animationSprite.dynamicAnimation;
+        // DynamicAnimationでないなら処理しない。
+        if (!dynamicAnimation) {
+            continue;
+        }
+
+        const baseAnimation = dynamicAnimation.baseAnimation;
+
+        // スキルＩＤが条件に設定されている。
+        if (skillId) {
+            const id = baseAnimation.action.item().id;
+
+            // スキルＩＤが一致していないなら処理しない
+            if (skillId != id) {
+                continue;
+            }
+        }
+
+        // 行動主体が条件に設定されている。
+        if (subject) {
+            // 行動主体が一致していないなら処理しない
+            if (subject != baseAnimation.getSubject()) {
+                continue;
+            }
+        }
+
+        let removeFlg = false;
+
+        // アニメーションの対象毎にループ
+        for (const targetSprite of animationSprite._targets) {
+            // 対象が不一致ならば削除しない。
+            if (targets && targets.length > 0
+                    && !targets.includes(targetSprite._battler)) {
+                continue;
+            }
+
+            //------------------------------------------------
+            // ここまで来たならば、条件に一致しているということ。
+            //------------------------------------------------
+            // 予約されているアニメーションを削除
+            targetSprite._battler._animations = [];
+            removeFlg = true;
+        }
+
+        if (removeFlg) {
+            // 再生中のアニメーションを削除
+            spriteset.removeAnimation(animationSprite);
+        }
+    }
+});
+
+/**
  * ●lastDynamicTargetIdを元に最終ターゲットを取得する。
  */
 Game_Interpreter.prototype.getLastDynamicTarget = function() {
@@ -684,6 +994,12 @@ function getCommandValue(value) {
  */
 function makeTargetsAndSubjects(targetId) {
     const targets = [];
+    
+    // 無効なら処理しない。
+    if (targetId === undefined || targetId === null || targetId === "") {
+        return targets;
+    }
+
     // カンマ区切りでループ
     for (let id of targetId.split(",")) {
         // 空白除去
@@ -1829,7 +2145,7 @@ Spriteset_Map.prototype.createAnimations = function() {
         }
     }
 
-    // DynamicAnimationがリクエストが存在する。
+    // DynamicAnimationのリクエストが存在する。
     if ($gameTemp.animationsMap && $gameTemp.animationsMap.size > 0) {
         // 対象ＩＤを元に対象のスプライトへ、アニメーションの順次実行情報を再設定する。
         for (const targetId of $gameTemp.animationsMap.keys()) {

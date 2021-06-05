@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV
- * @plugindesc v1.091 Call DynamicAnimation on the map.
+ * @plugindesc v1.10 Call DynamicAnimation on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimation
  * @url http://newrpg.seesaa.net/article/477639171.html
@@ -152,7 +152,7 @@
 
 /*:ja
  * @target MV
- * @plugindesc v1.091 DynamicAnimationをマップ上から起動します。
+ * @plugindesc v1.10 DynamicAnimationをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimation
  * @url http://newrpg.seesaa.net/article/477639171.html
@@ -482,6 +482,157 @@ function showMapAnimation(mapAnimationParams) {
 }
 
 /**
+ * ●アニメーションの削除
+ */
+PluginManager.registerCommand(PLUGIN_NAME, "removeAnimation", function(args) {
+    // 戦闘中は無効
+    if ($gameParty.inBattle()) {
+        return;
+    }
+
+    const skillId = getCommandValue(args.skillId);
+    const targetId = getCommandValue(args.target);
+    const startPointId = getCommandValue(args.startPoint);
+
+    const targets = makeTargetsAndSubjects.bind(this)(targetId);
+    const startPoints = makeTargetsAndSubjects.bind(this)(startPointId);
+
+    const spriteset = getSpriteset();
+
+    // 再生中の全アニメーションでループ
+    for (const animationSprite of spriteset._animationSprites.clone()) {
+        const dynamicAnimation = animationSprite.dynamicAnimation;
+        // DynamicAnimationでないなら処理しない。
+        if (!dynamicAnimation) {
+            continue;
+        }
+
+        const baseAnimation = dynamicAnimation.baseAnimation;
+
+        // スキルＩＤが条件に設定されている。
+        if (skillId) {
+            const id = baseAnimation.action.item().id;
+
+            // スキルＩＤが一致していないなら処理しない
+            if (skillId != id) {
+                continue;
+            }
+        }
+
+        // 行動主体が条件に設定されている。
+        if (startPoints.length > 0) {
+            // 行動主体が一致していないなら処理しない
+            if (!startPoints.includes(baseAnimation.getSubject())) {
+                continue;
+            }
+        }
+
+        let removeFlg = false;
+
+        // アニメーションの対象毎にループ
+        for (const targetSprite of animationSprite._targets) {
+            // 対象が不一致ならば削除しない。
+            if (targets.length > 0
+                    && !targets.includes(targetSprite._character)) {
+                continue;
+            }
+
+            //------------------------------------------------
+            // ここまで来たならば、条件に一致しているということ。
+            //------------------------------------------------
+
+            // 予約されているアニメーションを削除
+            targetSprite._animations = [];
+            removeFlg = true;
+        }
+
+        if (removeFlg) {
+            // 再生中のアニメーションを削除
+            spriteset.removeAnimation(animationSprite);
+        }
+    }
+});
+
+/**
+ * ●アニメーションの削除（戦闘）
+ */
+PluginManager.registerCommand(PLUGIN_NAME, "removeAnimationBattle", function(args) {
+    // 戦闘中以外は無効
+    if (!$gameParty.inBattle()) {
+        return;
+    }
+
+    const skillId = eval(getCommandValue(args.skillId));
+    const targetCondition = getCommandValue(args.targetCondition);
+    const subjectCondition = getCommandValue(args.subjectCondition);
+
+    // 行動主体を取得
+    let subject = undefined;
+    if (subjectCondition) {
+        subject = BattleManager.allBattleMembers().find(a => eval(subjectCondition));
+    }
+    // 対象を取得
+    let targets = undefined;
+    if (targetCondition) {
+        targets = BattleManager.allBattleMembers().filter(a => eval(targetCondition));
+    }
+
+    const spriteset = getSpriteset();
+
+    // 再生中の全アニメーションでループ
+    for (const animationSprite of spriteset._animationSprites.clone()) {
+        const dynamicAnimation = animationSprite.dynamicAnimation;
+        // DynamicAnimationでないなら処理しない。
+        if (!dynamicAnimation) {
+            continue;
+        }
+
+        const baseAnimation = dynamicAnimation.baseAnimation;
+
+        // スキルＩＤが条件に設定されている。
+        if (skillId) {
+            const id = baseAnimation.action.item().id;
+
+            // スキルＩＤが一致していないなら処理しない
+            if (skillId != id) {
+                continue;
+            }
+        }
+
+        // 行動主体が条件に設定されている。
+        if (subject) {
+            // 行動主体が一致していないなら処理しない
+            if (subject != baseAnimation.getSubject()) {
+                continue;
+            }
+        }
+
+        let removeFlg = false;
+
+        // アニメーションの対象毎にループ
+        for (const targetSprite of animationSprite._targets) {
+            // 対象が不一致ならば削除しない。
+            if (targets && targets.length > 0
+                    && !targets.includes(targetSprite._battler)) {
+                continue;
+            }
+
+            //------------------------------------------------
+            // ここまで来たならば、条件に一致しているということ。
+            //------------------------------------------------
+            // 予約されているアニメーションを削除
+            targetSprite._battler._animations = [];
+            removeFlg = true;
+        }
+
+        if (removeFlg) {
+            // 再生中のアニメーションを削除
+            spriteset.removeAnimation(animationSprite);
+        }
+    }
+});
+
+/**
  * ●lastDynamicTargetIdを元に最終ターゲットを取得する。
  */
 Game_Interpreter.prototype.getLastDynamicTarget = function() {
@@ -598,6 +749,12 @@ function getCommandValue(value) {
  */
 function makeTargetsAndSubjects(targetId) {
     const targets = [];
+    
+    // 無効なら処理しない。
+    if (targetId === undefined || targetId === null || targetId === "") {
+        return targets;
+    }
+
     // カンマ区切りでループ
     for (let id of targetId.split(",")) {
         // 空白除去
@@ -1063,7 +1220,7 @@ Sprite_Character.prototype.setDynamicAnimation = function(dynamicAnimation) {
     let delay = dynamicAnimation.targetDelay;
 
     const mapAnimation = dynamicAnimation.baseAnimation.mapAnimation;
-    // 開始時間が設定されている場合
+    // 開始時間が設定されている場合、始動を早める。
     if (mapAnimation && mapAnimation.startTiming) {
         const startDuration = mapAnimation.startTiming * pCalculationRate;
         delay -= startDuration;
@@ -1743,7 +1900,7 @@ Spriteset_Map.prototype.createAnimations = function() {
         }
     }
 
-    // DynamicAnimationがリクエストが存在する。
+    // DynamicAnimationのリクエストが存在する。
     if ($gameTemp.animationsMap && $gameTemp.animationsMap.size > 0) {
         // 対象ＩＤを元に対象のスプライトへ、アニメーションの順次実行情報を再設定する。
         for (const targetId of $gameTemp.animationsMap.keys()) {
@@ -1831,7 +1988,7 @@ Game_Event.prototype.setupPageSettings = function() {
         for (const line of list) {
             // 108:注釈開始, 408:注釈続き
             if (line.code == 108 || line.code == 408) {
-                // メモ欄から<D-Skill:*>を取得
+                // 注釈から<D-Skill:*>を取得
                 let skillId = getDynamicSkill(line.parameters[0]);
                 // 取得できれば実行スキルに設定
                 if (skillId != undefined) {
