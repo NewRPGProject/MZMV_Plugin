@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.161 Automate & super-enhance battle animations.
+ * @plugindesc v1.162 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -490,7 +490,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.161 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.162 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -2979,11 +2979,11 @@ DynamicAnimation.prototype.setLimitEffect = function (baseAnimation) {
  */
 DynamicAnimation.prototype.makeAfterimage = function (baseAnimation, dynamicAnimationList, spriteAnimation) {
     // 残像の作成
-    var afterimage = this.afterimage;
+    const afterimage = this.afterimage;
     // 設定数分ループ
     for (var i = 0; i < afterimage; i++) {
         // DynamicAnimationを作成（値はほぼ空で問題ない）
-        var afterimageData = new DynamicAnimation(baseAnimation, this.target, this.r, spriteAnimation, null);
+        const afterimageData = new DynamicAnimation(baseAnimation, this.target, this.r, spriteAnimation, null);
         // 本体をコピー
         afterimageData.setProperties(this);
         // 親への参照
@@ -2993,7 +2993,7 @@ DynamicAnimation.prototype.makeAfterimage = function (baseAnimation, dynamicAnim
         // 残像は各種演出を行わない。
         afterimageData.isLimitEffect = true;
         // 残像間隔
-        var afterimageInterval = this.afterimageInterval;
+        const afterimageInterval = this.afterimageInterval;
         afterimageData.targetDelay += afterimageInterval * this.rate * (i + 1);
         // 残像の数で透明度を分割
         // この時点では本体に対する割合のみを設定する。
@@ -3049,7 +3049,7 @@ DynamicAnimation.prototype.setProperties = function (source) {
     // プロパティをコピー
     Object.keys(source).forEach(function(key) {
         // 値が存在する場合に設定
-        if (source[key] != undefined && source[key] != null && source[key] != "") {
+        if (source[key] !== undefined && source[key] !== null && source[key] !== "") {
             this[key] = source[key];
         }
     }, this);

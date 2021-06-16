@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.241 Automate & super-enhance battle animations.
+ * @plugindesc v1.242 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help Call battle animations freely from skills (items).
@@ -452,7 +452,7 @@
  */
 
 /*:ja
- * @plugindesc v1.241 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.242 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在に戦闘アニメーションを呼び出します。
@@ -2800,7 +2800,7 @@ DynamicAnimation.prototype.setProperties = function (source) {
     // プロパティをコピー
     Object.keys(source).forEach(function(key) {
         // 値が存在する場合に設定
-        if (source[key] != undefined && source[key] != null && source[key] != "") {
+        if (source[key] !== undefined && source[key] !== null && source[key] !== "") {
             this[key] = source[key];
         }
     }, this);
