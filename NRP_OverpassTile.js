@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Realize a high-performance overpass.
+ * @plugindesc v1.001 Realize a high-performance overpass.
  * @author Takeshi Sunagawa (original triacontane & Yoji Ojima)
  * @orderAfter NRP_EventCollisionEX
  * @orderAfter NRP_BushEX
@@ -15,6 +15,9 @@
  * the official RPG Maker MZ plugin "OverpassTile.js".
  * It allows you to create overpasses with a higher degree of freedom
  * by allowing you to place tiles on the overpass that prohibit passage.
+ * 
+ * It can also be used as a hidden passage
+ * that can be slipped through on maps that do not use overpass.
  * 
  * You can also switch the layer where the player or event exists
  * by using the event's note field or plugin commands.
@@ -145,7 +148,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 高機能な立体交差を実現します。
+ * @plugindesc v1.001 高機能な立体交差を実現します。
  * @author 砂川赳 (original トリアコンタン & Yoji Ojima)
  * @orderAfter NRP_EventCollisionEX
  * @orderAfter NRP_BushEX
@@ -156,6 +159,9 @@
  * ツクールＭＺ公式プラグイン『OverpassTile.js』の機能強化版です。
  * 立体交差上に通行禁止のタイルを配置できるため、
  * より自由度の高い立体交差を作成できます。
+ * 
+ * 立体交差を使わないマップでも、
+ * すり抜け可能な隠し通路として利用することもできます。
  * 
  * また、イベントのメモ欄やプラグインコマンドによって、
  * プレイヤーやイベントが存在する層を切替できます。
@@ -412,8 +418,9 @@ Game_CharacterBase.prototype.isMapPassableOnOverPath = function(x, y, d) {
             $gameMap.setPassableSubject(this);
         }
 
-        // 移動元の移動判定だけを参照
-        return $gameMap.isPassable(x, y, d);
+        // 移動元の移動判定と下層（レイヤー３～４）の通行判定を参照
+        return $gameMap.isPassable(x, y, d)
+            && $gameMap.isPassableLowerLayer(advancedX, advancedY, d2);
     }
 
     return undefined;
