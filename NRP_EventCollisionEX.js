@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Extends the collision detection for events.
+ * @plugindesc v1.01 Extends the collision detection for events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481944599.html
  *
@@ -103,7 +103,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 イベントの当たり判定を拡張する。
+ * @plugindesc v1.01 イベントの当たり判定を拡張する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481944599.html
  *
@@ -607,10 +607,17 @@ if (pConsiderMove) {
     };
 
     /**
-     * 【独自】イベントからマップへの当たり判定
-     * ※Game_CharacterBaseの関数をオーバーライド
+     * ●イベントからマップへの当たり判定
+     * ※イベント限定の機能なのでGame_Eventにしたかったけど、
+     * 　『OverpassTile.js』辺りと併用できなくなるのでここに実装。
      */
-    Game_Event.prototype.isMapPassable = function(x, y, d) {
+    const _Game_CharacterBase_isMapPassable = Game_CharacterBase.prototype.isMapPassable;
+    Game_CharacterBase.prototype.isMapPassable = function(x, y, d) {
+        // イベント以外は元の処理を使用
+        if (!this.event) {
+            return _Game_CharacterBase_isMapPassable.apply(this, arguments);
+        }
+
         // 先端座標を取得
         const tipX = this.collisionTipX(x, d);
         const tipY = this.collisionTipY(y, d);
@@ -627,7 +634,7 @@ if (pConsiderMove) {
      * 【独自】イベントがタイルを通過できるか？
      * ※イベントの進路に対する水平サイズを考慮
      */
-    Game_Event.prototype.isPassableWide = function(x, y, d) {
+    Game_CharacterBase.prototype.isPassableWide = function(x, y, d) {
         // 上下
         if (d === 2 || d === 8) {
             const startX = x - this._collisionLeft;
@@ -667,7 +674,7 @@ if (pConsiderMove) {
 /**
  * 【独自】衝突時の先端となるＸ座標
  */
-Game_Event.prototype.collisionTipX = function(x, d) {
+Game_CharacterBase.prototype.collisionTipX = function(x, d) {
     // 左
     if (d === 4) {
         x -= this._collisionLeft;
@@ -682,7 +689,7 @@ Game_Event.prototype.collisionTipX = function(x, d) {
 /**
  * 【独自】衝突時の先端となるＹ座標
  */
-Game_Event.prototype.collisionTipY = function(y, d) {
+Game_CharacterBase.prototype.collisionTipY = function(y, d) {
     // 下
     if (d === 2) {
         y += this._collisionDown;
