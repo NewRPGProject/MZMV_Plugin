@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.001 Extend the weather function.
+ * @plugindesc v1.002 Extend the weather function.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481701865.html
  *
@@ -445,7 +445,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.001 天候機能を拡張します。
+ * @plugindesc v1.002 天候機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481701865.html
  *
@@ -1308,7 +1308,7 @@ if (pMaxSpritesByPower != undefined) {
  * 独自の天候クラス
  */
 function OriginalWeather() {
-    this.initialize(...arguments);
+    this.initialize.apply(this, arguments);
 }
 
 OriginalWeather.prototype = Object.create(Weather.prototype);
