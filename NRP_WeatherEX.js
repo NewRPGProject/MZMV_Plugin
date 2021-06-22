@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Extend the weather function.
+ * @plugindesc v1.001 Extend the weather function.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481701865.html
  *
@@ -445,7 +445,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 天候機能を拡張します。
+ * @plugindesc v1.001 天候機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481701865.html
  *
@@ -972,6 +972,32 @@
 
 (function() {
 "use strict";
+
+/**
+ * バージョン互換対応
+ */
+if (!Array.prototype.find) {
+    Array.prototype.find = function (predicate) {
+        if (this === null) {
+            throw new TypeError('Array.prototype.find called on null or undefined');
+        }
+        if (typeof predicate !== 'function') {
+            throw new TypeError('predicate must be a function');
+        }
+        var list = Object(this);
+        var length = list.length >>> 0;
+        var thisArg = arguments[1];
+        var value;
+
+        for (var i = 0; i < length; i++) {
+            value = list[i];
+            if (predicate.call(thisArg, value, i, list)) {
+                return value;
+            }
+        }
+        return undefined;
+    };
+}
 
 /**
  * ●構造体（二重配列）をJSで扱えるように変換
