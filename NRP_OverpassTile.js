@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.001 Realize a high-performance overpass.
+ * @plugindesc v1.01 Realize a high-performance overpass.
  * @author Takeshi Sunagawa (original triacontane & Yoji Ojima)
  * @orderAfter NRP_EventCollisionEX
  * @orderAfter NRP_BushEX
@@ -144,11 +144,16 @@
  * @desc Terrain tag set for overpass entrances, such as both ends of a bridge.
  * @default 0
  * @type number
+ * 
+ * @param ConsiderLadder
+ * @desc If the character is on the overpass, ignore the ladder attribute below.
+ * @default true
+ * @type boolean
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.001 高機能な立体交差を実現します。
+ * @plugindesc v1.01 高機能な立体交差を実現します。
  * @author 砂川赳 (original トリアコンタン & Yoji Ojima)
  * @orderAfter NRP_EventCollisionEX
  * @orderAfter NRP_BushEX
@@ -293,6 +298,13 @@
  * @desc 橋の両端など、立体交差の入り口部分に設定するリージョンIDです。
  * @default 0
  * @type number
+ * 
+ * @param ConsiderLadder
+ * @text ハシゴ属性に対応
+ * @desc ハシゴ属性を立体交差に対応させます。
+ * 立体交差上にいる場合、下のハシゴ属性を無視します。
+ * @default true
+ * @type boolean
  */
 
 (function() {
@@ -323,6 +335,7 @@ const pOverPathRegion = toNumber(parameters["OverPathRegion"]);
 const pOverPathTerrainTag = toNumber(parameters["OverPathTerrainTag"]);
 const pGatewayRegion = toNumber(parameters["GatewayRegion"]);
 const pGatewayTerrainTag = toNumber(parameters["GatewayTerrainTag"]);
+const pConsiderLadder = toBoolean(parameters["ConsiderLadder"], true);
 
 /**
  * Game_CharacterBase
@@ -748,5 +761,46 @@ Game_Interpreter.prototype.pluginCommand = function(command, args) {
         }
     }
 };
+
+//----------------------------------------
+// ハシゴ処理
+//----------------------------------------
+
+if (pConsiderLadder) {
+    /**
+     * ●ハシゴ上にいるかどうか？
+     */
+    Game_CharacterBase.prototype.isOnLadder = function() {
+        // キャラクターが上層にいる場合
+        if (this._higher) {
+            return $gameMap.isLadderHigher(this._x, this._y);
+        }
+
+        return $gameMap.isLadder(this._x, this._y);
+    };
+
+    /**
+     * 【独自】上層がハシゴかどうか？
+     */
+    Game_Map.prototype.isLadderHigher = function(x, y) {
+        if (!this.isValid(x, y)) {
+            return false;
+        }
+
+        // 各タイルが保有するフラグ情報
+        const flags = this.tilesetFlags();
+
+        // 上層（３～４）だけを確認
+        for (let i = 0; i < 2; i++) {
+            const tileId = this.tileId(x, y, 3 - i);
+            // ハシゴ（0x20）ならばハシゴとして判定
+            if ((flags[tileId] & 0x20) !== 0) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+}
 
 })();
