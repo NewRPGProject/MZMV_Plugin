@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.05 Place enemy groups automatically and randomly.
+ * @plugindesc v1.051 Place enemy groups automatically and randomly.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475049887.html
  *
@@ -70,7 +70,7 @@
  * @text startHeadY(up)
  * @parent <Formation Range>
  * @type string
- * @default Utils.RPGMAKER_NAME == "MZ" ? 20 : 0
+ * @default 0
  * @desc Y-coordinate at the head of the enemy's starting position.
  * This will adjust to prevent taller enemies from hiding.
  * 
@@ -85,7 +85,7 @@
  * @text endY(down)
  * @parent <Formation Range>
  * @type string
- * @default 440
+ * @default 420
  * @desc Y-coordinate to end the enemy's placement.
  * 
  * @param gridSize
@@ -169,7 +169,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.05 敵グループを自動でランダム配置します。
+ * @plugindesc v1.051 敵グループを自動でランダム配置します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475049887.html
  *
@@ -235,7 +235,7 @@
  * @text 開始頭上Ｙ座標（上）
  * @parent <Formation Range>
  * @type string
- * @default Utils.RPGMAKER_NAME == "MZ" ? 20 : 0
+ * @default 0
  * @desc 敵の配置範囲の頭上開始Ｙ座標です。
  * 背の高い敵が隠れないように調整するための値です。
  * 
@@ -250,7 +250,7 @@
  * @text 終了Ｙ座標（下）
  * @parent <Formation Range>
  * @type string
- * @default 440
+ * @default 420
  * @desc 敵の配置範囲の終了Ｙ座標です。
  * 
  * @param gridSize
@@ -364,7 +364,7 @@ var pExclusionCondition = parameters["exclusionCondition"];
 var pStartX = setDefault(parameters["startX"], 0);
 var pEndX = parameters["endX"];
 var pStartHeadY = setDefault(parameters["startHeadY"], 0);
-var pStartFootY = setDefault(parameters["startFootY"], 240);
+var pStartFootY = setDefault(parameters["startFootY"], 250);
 var pEndY = parameters["endY"];
 var pGridSize = toNumber(parameters["gridSize"], 1);
 // ＜敵の並び順＞
