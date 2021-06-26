@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.002 Extends the functionality of the bushes attribute.
+ * @plugindesc v1.01 Extends the functionality of the bushes attribute.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore OverpassTile
  * @url http://newrpg.seesaa.net/article/481013577.html
@@ -66,6 +66,10 @@
  * @type boolean
  * @default true
  * @desc If there are other tiles on the layer above the bushes, the bush attribute will not be applied.
+ * 
+ * @param ExcludedTerrain
+ * @type string
+ * @desc Specify the terrain tags (1~7) to be excluded for "LimitBushLayer". Multiple allowed (e.g. 1,3).
  * 
  * @param BushDepth
  * @type number
@@ -147,7 +151,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.002 茂み属性の機能を拡張します。
+ * @plugindesc v1.01 茂み属性の機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore OverpassTile
  * @url http://newrpg.seesaa.net/article/481013577.html
@@ -203,6 +207,11 @@
  * @type boolean
  * @default true
  * @desc 茂みの上のレイヤーに他のタイルがある場合、茂み属性を無効化します。
+ * 
+ * @param ExcludedTerrain
+ * @text 除外する地形タグ
+ * @type string
+ * @desc 『茂みレイヤーの限定』について除外する地形タグ（1~7）を指定します。複数指定可。（例：1,3）
  * 
  * @param BushDepth
  * @text 茂みの深さ
@@ -373,6 +382,7 @@ function makeArray(values) {
 const PLUGIN_NAME = "NRP_BushEX";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pLimitBushLayer = toBoolean(parameters["LimitBushLayer"], true);
+const pExcludedTerrain = makeArray(parameters["ExcludedTerrain"]);
 const pBushDepth = toNumber(parameters["BushDepth"]);
 const pBushOpacity = toNumber(parameters["BushOpacity"]);
 const pSettingList = parseStruct2(parameters["SettingList"]);
@@ -407,16 +417,25 @@ if (pLimitBushLayer) {
 
         // 上のレイヤーから順番にループ
         for (const tileId of this.layeredTiles(x, y)) {
+            const flag = flags[tileId];
+
             // 通行判定☆（0x10）を除く最初のタイルが対象
-            if ((flags[tileId] & 0x10) === 0) {
+            if ((flag & 0x10) === 0) {
                 // 二進数でデバッグ出力する場合は注釈解除
-                // console.log(flags[tileId].toString(2));
+                // console.log(flag.toString(2));
 
                 // 茂み（0x40）ならば茂みとして判定
-                if ((flags[tileId] & 0x40) !== 0) {
+                if ((flag & 0x40) !== 0) {
                     return true;
                 }
-                // 茂み以外のタイルがあったならば対象外
+
+                // 対象の地形タグならば無視して次へ
+                if (isExcludedTerrain(flag)) {
+                    // ※タイルが存在しない場合と同じ処理
+                    continue;
+                }
+
+                // それ以外のタイルがあったならば対象外
                 // その下に茂みがあったとしても無効とする。
                 return false;
             }
@@ -703,7 +722,7 @@ function getMatchSetting(x, y) {
 
         // タイルＩＤの一致を確認
         if  (setting.tileIds && setting.tileIds.length > 0) {
-            // 未取得ならタイルＩｄを取得
+            // 未取得ならタイルＩＤを取得
             if (tileId === undefined) {
                 const layerNo = getStepLayer(x, y);
                 tileId = $gameMap.tileId(x, y, layerNo);
@@ -737,14 +756,39 @@ function getStepLayer(x, y) {
     for (let i = 0; i < 4; i++) {
         const tileId = tiles[i];
         const layerNo = 3 - i;
+        const flag = flags[tileId];
 
         // 通行判定☆（0x10）を除く最初のタイルが対象
-        if ((flags[tileId] & 0x10) === 0) {
+        if ((flag & 0x10) === 0) {
+            // ただし、対象の地形タグならば無視して次へ
+            if (isExcludedTerrain(flag)) {
+                // ※タイルが存在しない場合と同じ処理
+                continue;
+            }
+
             return layerNo;
         }
     }
     // 無効の場合は-1
     return -1;
+}
+
+/**
+ * ●除外する地形タグ
+ */
+function isExcludedTerrain(flag) {
+    // 茂み(0x40)は除外しない。
+    if (flag & 0x40) {
+        return false;
+    }
+
+    // 地形タグを取得
+    const tag = flag >> 12;
+    // 対象の地形タグならばtrue
+    if (tag > 0 && pExcludedTerrain && pExcludedTerrain.includes(tag)) {
+        return true;
+    }
+    return false;
 }
 
 /**
