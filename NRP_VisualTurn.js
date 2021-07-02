@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.12 The order of actions is displayed on the battle screen.
+ * @plugindesc v1.121 The order of actions is displayed on the battle screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -229,7 +229,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.12 行動順序を戦闘画面へ表示します。
+ * @plugindesc v1.121 行動順序を戦闘画面へ表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -698,7 +698,7 @@ Scene_Battle.prototype.createCtbWindow = function(){
     this._ctbWindow.hide(); // 非表示しておく
     this._ctbWindow.close(); // 閉じておく
     
-    this.addWindow(this._ctbWindow);
+    this.addChild(this._ctbWindow);
 };
 
 /**
