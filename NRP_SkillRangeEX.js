@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @target MZ
+ * @target MV MZ
  * @plugindesc v1.043 Extends the effective range of skills and items.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_VisualTurn
@@ -78,7 +78,7 @@
  */
 
 /*:ja
- * @target MZ
+ * @target MV MZ
  * @plugindesc v1.043 スキル及びアイテムの効果範囲を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_VisualTurn
