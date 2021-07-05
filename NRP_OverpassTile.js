@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Realize a high-performance overpass.
+ * @plugindesc v1.02 Realize a high-performance overpass.
  * @author Takeshi Sunagawa (original triacontane & Yoji Ojima)
  * @orderAfter NRP_EventCollisionEX
  * @orderAfter NRP_BushEX
@@ -153,7 +153,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 高機能な立体交差を実現します。
+ * @plugindesc v1.02 高機能な立体交差を実現します。
  * @author 砂川赳 (original トリアコンタン & Yoji Ojima)
  * @orderAfter NRP_EventCollisionEX
  * @orderAfter NRP_BushEX
@@ -410,7 +410,7 @@ Game_CharacterBase.prototype.isMapPassableOnOverPath = function(x, y, d) {
             } else if (advancedOverPath) {
                 // 下層（レイヤー３～４）の通行判定
                 // 上層は☆として扱うため無視
-                return $gameMap.isPassableLowerLayer(advancedX, advancedY, d2);
+                return isPassableLowerLayer(this, advancedX, advancedY, d2);
 
             // →立体交差外に移動（追加）
             } else {
@@ -420,7 +420,7 @@ Game_CharacterBase.prototype.isMapPassableOnOverPath = function(x, y, d) {
                 }
 
                 // 移動先の移動判定だけを参照
-                return $gameMap.isPassable(advancedX, advancedY, d2);
+                return isPassable(this, advancedX, advancedY, d2);
             }
         }
 
@@ -432,8 +432,8 @@ Game_CharacterBase.prototype.isMapPassableOnOverPath = function(x, y, d) {
         }
 
         // 移動元の移動判定と下層（レイヤー３～４）の通行判定を参照
-        return $gameMap.isPassable(x, y, d)
-            && $gameMap.isPassableLowerLayer(advancedX, advancedY, d2);
+        return isPassable(this, x, y, d)
+            && isPassableLowerLayer(this, advancedX, advancedY, d2);
     }
 
     return undefined;
@@ -578,6 +578,20 @@ Game_Map.prototype.isGatewayOverPath = function(x, y) {
  */
 Game_Map.prototype.isPassableLowerLayer = function(x, y, d) {
     return this.checkPassageLowerLayer(x, y, (1 << (d / 2 - 1)) & 0x0f);
+};
+
+/**
+ * 【独自】下層（レイヤー３～４）の通行判定（小型船）
+ */
+Game_Map.prototype.isBoatPassableLowerLayer = function(x, y) {
+    return this.checkPassageLowerLayer(x, y, 0x0200);
+};
+
+/**
+ * 【独自】下層（レイヤー３～４）の通行判定（大型船）
+ */
+Game_Map.prototype.isShipPassableLowerLayer = function(x, y) {
+    return this.checkPassageLowerLayer(x, y, 0x0400);
 };
 
 /**
@@ -801,6 +815,89 @@ if (pConsiderLadder) {
 
         return false;
     };
+}
+
+//----------------------------------------
+// 乗物対応
+//----------------------------------------
+
+/**
+ * ●乗物のマップ通行判定
+ */
+const _Game_Vehicle_isMapPassable = Game_Vehicle.prototype.isMapPassable;
+Game_Vehicle.prototype.isMapPassable = function(x, y, d) {
+    // 小型船、大型船
+    if (this.isBoat() || this.isShip()) {
+        // 立体交差の通行判定
+        const passable = this.isMapPassableOnOverPath(x, y, d);
+        if (passable !== undefined) {
+            return passable;
+        }
+    }
+
+    return _Game_Vehicle_isMapPassable.apply(this, arguments);
+};
+
+/**
+ * RegionBaseで定義されている関数をオーバライド
+ * ※RegionBase.jsとの競合対策
+ */
+Game_Vehicle.prototype.findCollisionData = function(x, y) {
+    // プレイヤーの情報を参照
+    return $gameMap.findArrayDataRegionAndTerrain(x, y, 'collisionForPlayer');
+};
+
+/**
+ * ●乗り物の乗降時の判定
+ * ※RegionBase.jsとの競合対策
+ */
+const _Game_Vehicle_isLandOk = Game_Vehicle.prototype.isLandOk;
+Game_Vehicle.prototype.isLandOk = function(x, y, d) {
+    // RegionBaseの関数が有効な場合
+    if ($gameMap.setPassableSubject) {
+        // ロード直後、一度もsetPassableSubjectが呼ばれないまま、
+        // 乗降を実行するとエラーになるので対処
+        $gameMap.setPassableSubject(this);
+    }
+    return _Game_Vehicle_isLandOk.apply(this, arguments);
+}
+
+/**
+ * ●通行判定
+ */
+function isPassable(character, x, y, d) {
+    // 乗物の場合
+    if (character.constructor === Game_Vehicle) {
+        // 小型船
+        if (character.isBoat()) {
+            return $gameMap.isBoatPassable(x, y);
+
+        // 大型船
+        } else if (character.isShip()) {
+            return $gameMap.isShipPassable(x, y);
+        }
+    }
+
+    return $gameMap.isPassable(x, y, d);
+}
+
+/**
+ * ●通行判定
+ */
+function isPassableLowerLayer(character, x, y, d) {
+    // 乗物の場合
+    if (character.constructor === Game_Vehicle) {
+        // 小型船
+        if (character.isBoat()) {
+            return $gameMap.isBoatPassableLowerLayer(x, y);
+
+        // 大型船
+        } else if (character.isShip()) {
+            return $gameMap.isShipPassableLowerLayer(x, y);
+        }
+    }
+
+    return $gameMap.isPassableLowerLayer(x, y, d);
 }
 
 })();
