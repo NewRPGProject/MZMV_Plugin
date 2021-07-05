@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Sets the settings for shadows on the map.
+ * @plugindesc v1.01 Sets the settings for shadows on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/479088201.html
  *
@@ -57,7 +57,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 マップの影に関する設定を行います。
+ * @plugindesc v1.01 マップの影に関する設定を行います。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/479088201.html
  *
@@ -207,6 +207,11 @@ Tilemap.prototype._addShadow = function(layer, shadowBits, dx, dy) {
  * ※影の情報は以下のように４分割されて管理されている。
  * 01
  * 23
+ * 
+ * dx: 開始位置Ｘ座標
+ * dy: 開始位置Ｙ座標
+ * w1: タイルの横幅
+ * h1: タイルの縦幅
  */
 function makeDiagonalShadow(layer, shadowBits, dx, dy, w1, h1) {
     /*
@@ -274,7 +279,7 @@ function makeDiagonalShadow(layer, shadowBits, dx, dy, w1, h1) {
                 if (i == 1 || i == 2) {
                     // 影を斜めに描画
                     for (let j = 0; j < h1; j++) {
-                        layer.addRect(-1, 0, 0, dx1 + w1 - j, dy1 + j, 1 + j, 1);
+                        layer.addRect(-1, 0, 0, dx1 + w1 - j - 1, dy1 + j, 1 + j, 1);
                     }
                 } else {
                     layer.addRect(-1, 0, 0, dx1, dy1, w1, h1);
