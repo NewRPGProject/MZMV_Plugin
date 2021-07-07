@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Change the character's movement speed in detail.
+ * @plugindesc v1.01 Change the character's movement speed in detail.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481254085.html
  *
@@ -102,7 +102,7 @@
  * @decimals 3
  * 
  * @param PlusSpeedDash
- * @desc The speed that the player adds when dashing. The default value is 1.
+ * @desc The speed that the player adds when dashing. The default value is 1. If 0, disable dash.
  * @type number
  * @decimals 3
  * 
@@ -140,7 +140,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 キャラクターの移動速度を細かく変更します。
+ * @plugindesc v1.01 キャラクターの移動速度を細かく変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481254085.html
  *
@@ -244,7 +244,7 @@
  * @param PlusSpeedDash
  * @text ダッシュ時の加算速度
  * @desc プレイヤーがダッシュ時に加算される速度です。初期値は1です。
- * 小数も指定可能です。
+ * 小数も指定可能です。0ならダッシュ無効化。
  * @type number
  * @decimals 3
  * 
@@ -310,6 +310,9 @@ function toBoolean(val, def) {
     return val.toLowerCase() == "true";
 }
 function toNumber(str, def) {
+    if (str == undefined || str == "") {
+        return def;
+    }
     return isNaN(str) ? def : +(str || def);
 }
 function setDefault(str, def) {
@@ -532,7 +535,7 @@ if (pPlayerSpeed) {
 /**
  * ●ダッシュ時の加算速度が設定されている場合
  */
-if (pPlusSpeedDash) {
+if (pPlusSpeedDash !== undefined) {
     /**
      * ●ダッシュを考慮した実移動速度の取得
      */
