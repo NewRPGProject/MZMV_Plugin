@@ -262,11 +262,11 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 戦闘時、対象選択時にカーソルを表示
+ * @plugindesc v1.00 戦闘時、選択中の対象にカーソルを表示
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482370647.html
  *
- * @help 戦闘時、対象選択時にカーソルを表示します。
+ * @help 戦闘時、選択中の対象にカーソルを表示します。
  * それに伴い、様々な調整が可能です。
  * 
  * 初期値ではサイドビューを想定していますが、
