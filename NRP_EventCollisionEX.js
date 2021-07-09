@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Extends the collision detection for events.
+ * @plugindesc v1.011 Extends the collision detection for events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481944599.html
  *
@@ -103,7 +103,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 イベントの当たり判定を拡張する。
+ * @plugindesc v1.011 イベントの当たり判定を拡張する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481944599.html
  *
@@ -447,6 +447,26 @@ Game_CharacterBase.prototype.posNtCollisionEX = function(x, y) {
 Game_CharacterBase.prototype.posCollisionEX = function(x, y) {
     return this._x + this._collisionRight >= x && this.x - this._collisionLeft <= x
             && this._y + this._collisionDown >= y && this._y - this._collisionUp <= y;
+};
+
+//--------------------------------------------------------------
+// 飛行船の着陸判定
+//--------------------------------------------------------------
+
+/**
+ * ●乗降判定
+ */
+const _Game_Vehicle_isLandOk = Game_Vehicle.prototype.isLandOk;
+Game_Vehicle.prototype.isLandOk = function(x, y, d) {
+    // 飛行船の場合
+    if (this.isAirship()) {
+        // イベントが存在する場合は着陸禁止
+        if ($gameMap.eventsXyCollisionEX(x, y).length > 0) {
+            return false;
+        }
+    }
+
+    return _Game_Vehicle_isLandOk.apply(this, arguments);
 };
 
 //--------------------------------------------------------------
