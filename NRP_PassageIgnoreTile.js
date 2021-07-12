@@ -3,8 +3,9 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Ignore the traffic judgment of a specific tile.
+ * @plugindesc v1.01 Ignore the traffic judgment of a specific tile.
  * @orderBefore NRP_PassageAutoTileTop
+ * @orderAfter TF_Billboard
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/480883215.html
  *
@@ -59,8 +60,9 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 特定タイルの通行判定を無視します。
+ * @plugindesc v1.01 特定タイルの通行判定を無視します。
  * @orderBefore NRP_PassageAutoTileTop
+ * @orderAfter TF_Billboard
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/480883215.html
  *
@@ -202,19 +204,19 @@ Game_Map.prototype.changeTileset = function(tilesetId) {
 
 /**
  * ●移動判定チェック
- * ※ほぼ上書き
  */
 const _Game_Map_checkPassage = Game_Map.prototype.checkPassage;
 Game_Map.prototype.checkPassage = function(x, y, bit) {
-    const tileset = $gameMap.tileset();
+    // 処理対象の地形かどうか？
+    if (isPassageIgnoreTerrains(x, y, bit)) {
+        const tileset = this.tileset();
 
-    if (tileset.passageIgnoreTerrains) {
         const flags = this.tilesetFlags();
         const tiles = this.allTiles(x, y);
         for (const tile of tiles) {
             const flag = flags[tile];
 
-            // タイルが存在しない
+            // ☆属性
             if ((flag & 0x10) !== 0) {
                 // [*] No effect on passage
                 continue;
@@ -240,8 +242,46 @@ Game_Map.prototype.checkPassage = function(x, y, bit) {
         return false;
     }
 
-    // 設定がない場合は元の結果
+    // 該当の地形以外は元の処理
     return _Game_Map_checkPassage.apply(this, arguments);
 };
+
+/**
+ * ●対象の地形ＩＤかどうかを取得
+ */
+function isPassageIgnoreTerrains(x, y, bit) {
+    const tileset = $gameMap.tileset();
+
+    if (tileset.passageIgnoreTerrains) {
+        const flags = $gameMap.tilesetFlags();
+        const tiles = $gameMap.allTiles(x, y);
+        for (const tile of tiles) {
+            const flag = flags[tile];
+
+            // ☆属性
+            if ((flag & 0x10) !== 0) {
+                continue;
+            }
+
+            // 地形タグを取得
+            const tag = flag >> 12;
+            // 対象の地形タグならばtrue
+            if (tag > 0 && tileset.passageIgnoreTerrains.includes(tag)) {
+                return true;
+            }
+
+            if ((flag & bit) === 0) {
+                // [o] Passable
+                return false;
+            }
+            if ((flag & bit) === bit) {
+                // [x] Impassable
+                return false;
+            }
+        }
+    }
+
+    return false;
+}
 
 })();
