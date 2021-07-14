@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Display the cursor when selecting a target in battle.
+ * @plugindesc v1.01 Display the cursor when selecting a target in battle.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482370647.html
  *
@@ -258,11 +258,17 @@
  * @type string
  * @default Graphics.height
  * @desc The Y coordinate that is the lower limit of the cursor display. Default: Bottom edge of the screen (Graphics.height).
+ * 
+ * @param UpdateCursorPosition
+ * @parent <Common>
+ * @type boolean
+ * @default false
+ * @desc Updates the cursor position every frame. For use with battle systems where the position changes in real time.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 戦闘時、選択中の対象にカーソルを表示
+ * @plugindesc v1.01 戦闘時、選択中の対象にカーソルを表示
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482370647.html
  *
@@ -549,6 +555,14 @@
  * @default Graphics.height
  * @desc カーソル表示の下限界となるＹ座標です。
  * 初期値は画面下端（Graphics.height）
+ * 
+ * @param UpdateCursorPosition
+ * @parent <Common>
+ * @text カーソル位置を常時更新
+ * @type boolean
+ * @default false
+ * @desc カーソル位置を毎フレーム更新します。
+ * リアルタイムで位置が変動する戦闘システムとの併用に。
  */
 
 (function() {
@@ -644,6 +658,7 @@ const pLeftLimitX = setDefault(parameters["LeftLimitX"], "0");
 const pRightLimitX = setDefault(parameters["RightLimitX"], "Graphics.width");
 const pUpLimitY = setDefault(parameters["UpLimitY"], "0");
 const pDownLimitY = setDefault(parameters["DownLimitY"], "Graphics.height");
+const pUpdateCursorPosition = toBoolean(parameters["UpdateCursorPosition"], false);
 
 // 敵名リストを非表示
 if (pHideEnemyNameList) {
@@ -835,7 +850,33 @@ Window_BattleEnemyName.prototype.setEnemy = function(enemy) {
     return this._enemy = enemy;
 };
 
+if (pUpdateCursorPosition) {
+    /**
+     * ●更新
+     */
+    Window_BattleEnemyName.prototype.update = function() {
+        Window_Selectable.prototype.update.call(this);
+
+        // 表示されている場合
+        if (this.visible) {
+            // 対象名を更新
+            // ※外部プラグインによって、リアルタイムで位置が変更されることを考慮
+            this.showTargetName();
+        }
+    };
+}
+
+/**
+ * ●選択時（カーソル移動時）
+ */
 Window_BattleEnemyName.prototype.select = function(index) {
+    this.showTargetName();
+};
+
+/**
+ * ●対象名を表示
+ */
+Window_BattleEnemyName.prototype.showTargetName = function() {
     const enemy = this._enemy;
     if (enemy) {
         // 指定があればフォントサイズを設定
@@ -1002,10 +1043,33 @@ Window_BattleActorName.prototype.setActor = function(actor) {
     return this._actor = actor;
 };
 
+if (pUpdateCursorPosition) {
+    /**
+     * ●更新
+     */
+    Window_BattleActorName.prototype.update = function() {
+        Window_Selectable.prototype.update.call(this);
+
+        // 表示されている場合
+        if (this.visible) {
+            // 対象名を更新
+            // ※外部プラグインによって、リアルタイムで位置が変更されることを考慮
+            this.showTargetName();
+        }
+    };
+}
+
 /**
  * ●選択時（カーソル移動時）
  */
 Window_BattleActorName.prototype.select = function(index) {
+    this.showTargetName();
+};
+
+/**
+ * ●対象名を表示
+ */
+Window_BattleActorName.prototype.showTargetName = function() {
     const actor = this._actor;
     if (actor) {
         // 指定があればフォントサイズを設定
@@ -1067,7 +1131,7 @@ Window_BattleActorName.prototype.select = function(index) {
             dispCursorSprite(spriteset._actorCursorSprite, spriteset._actorSprites);
         }
     }
-};
+}
 
 /**
  * ●項目の描画
@@ -1396,7 +1460,7 @@ function getSpriteset() {
 /**
  * 指定したバトラーのスプライトを取得する。
  */
- function getSprite(battler) {
+function getSprite(battler) {
     if (!battler) {
         return undefined;
     }
