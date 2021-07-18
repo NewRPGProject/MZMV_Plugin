@@ -41,6 +41,8 @@
  *   the action will not be reselected.
  * - Also, when you re-select an action,
  *   you will not select a speed compensation skill.
+ * - In the case of "Force Action", if the target is "Random",
+ *   the control will also be performed.
  * 
  * [Terms]
  * There are no restrictions.
@@ -160,6 +162,7 @@
  * ・タイプがＨＰダメージ・吸収に該当するスキルは使用効果に依らず制御しません。
  * ・ターン制かつターン開始時に速度補正技が選ばれた場合、行動再選択を行いません。
  * ・また、行動再選択時に速度補正技を選ぶこともありません。
+ * ・『戦闘行動の強制』を使用した場合も、対象がランダムだと制御が行われます。
  * 
  * ■利用規約
  * 特に制約はありません。
