@@ -220,15 +220,15 @@
  * @desc ONならば戦闘不能者を対象にしたスキルの制御を行います。
  * 
  * @param <MP Drain>
- * @text ＜ＭＰ吸収関連＞
+ * @text ＜MP吸収関連＞
  * @desc 見出しです。
  * 
  * @param controlMpDrain
- * @text ＭＰ吸収の制御
+ * @text MP吸収の制御
  * @parent <MP Drain>
  * @type boolean
  * @default true
- * @desc ONならばＭＰ吸収／ダメージスキルに関する制御を行います。
+ * @desc ONならばMP吸収／ダメージスキルに関する制御を行います。
  * 
  * @param <Effect>
  * @text ＜使用効果関連＞
