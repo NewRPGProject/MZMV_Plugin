@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.03 Extends the functionality of battle events.
+ * @plugindesc v1.04 Extends the functionality of battle events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_EnemyRoutineKai
  * @url http://newrpg.seesaa.net/article/477489099.html
@@ -210,7 +210,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.03 バトルイベントの機能を拡張します。
+ * @plugindesc v1.04 バトルイベントの機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_EnemyRoutineKai
  * @url http://newrpg.seesaa.net/article/477489099.html
@@ -641,15 +641,15 @@ BattleManager.getNextSubject = function() {
 /**
  * ●行動開始
  */
-var _BattleManager_startAction = BattleManager.startAction;
+const _BattleManager_startAction = BattleManager.startAction;
 BattleManager.startAction = function() {
-    var subject = this._subject;
+    const subject = this._subject;
     // aで行動主体を参照できるようにする。
     if (pAIsSubject) {
         a = subject;
     }
 
-    var action = subject.currentAction();
+    const action = subject.currentAction();
     
     // 行動が取得できなかったり、敵味方が全滅していれば終了
     // ※戦闘行動の強制などで味方の全滅後に敵が行動した場合など
@@ -728,9 +728,18 @@ Game_Action.prototype.isForceValid = function() {
 /**
  * ●アクション開始メッセージ＆演出
  */
-var _Window_BattleLog_startAction = Window_BattleLog.prototype.startAction;
+const _Window_BattleLog_startAction = Window_BattleLog.prototype.startAction;
 Window_BattleLog.prototype.startAction = function(subject, action, targets) {
-    var item = action.item();
+    // 対象制限時
+    if (action._forcing && plTargetLimit) {
+        // 対象が存在しなければ処理をしない。
+        // ただし、範囲が『なし』の場合は除く。
+        if (targets.length == 0 && action.item().scope != 0) {
+            return;
+        }
+    }
+
+    const item = action.item();
     // スキルメモ欄に<NoStartAction>が設定されているなら開始演出を省略
     if (item.meta.NoStartAction) {
         // アニメーションとウェイトだけを残す
@@ -929,7 +938,7 @@ Game_Unit.prototype.forceTgrSum = function() {
 /**
  * ●狙われ率を考慮して、ランダムにターゲットを取得する。
  */
-var _Game_Unit_randomTarget = Game_Unit.prototype.randomTarget;
+const _Game_Unit_randomTarget = Game_Unit.prototype.randomTarget;
 Game_Unit.prototype.randomTarget = function() {
     /*
      * 強制対象リストの指定があれば、そちらで判定を行う。
@@ -963,7 +972,7 @@ Game_Unit.prototype.randomTarget = function() {
 /**
  * ●ターゲット不能時に補正を行う
  */
-var _Game_Unit_smoothTarget = Game_Unit.prototype.smoothTarget;
+const _Game_Unit_smoothTarget = Game_Unit.prototype.smoothTarget;
 Game_Unit.prototype.smoothTarget = function(index) {
     /*
      * 強制対象リストの指定があれば、そちらで判定を行う。
