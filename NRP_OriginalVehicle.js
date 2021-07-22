@@ -1449,6 +1449,50 @@ Game_Player.prototype.getOnVehicle = function() {
 };
 
 /**
+ * ●マウスタッチ時（飛行船用）
+ */
+const _Game_Player_triggerTouchActionD1 = Game_Player.prototype.triggerTouchActionD1;
+Game_Player.prototype.triggerTouchActionD1 = function(x1, y1) {
+    // 有効なオリジナル乗物を確認
+    for (const vehicle of $gameMap.validOriginalVehicles()) {
+        // 指定位置に一致する乗物があるかの判定
+        // ※元の処理では飛行船専用だが、あえて小型船や大型船も対象とする。
+        //   そうしないと通行と乗降が同時にできる地形が対象の場合に、
+        //   降りる手段がなくなってしまう。
+        if (vehicle.pos(x1, y1)) {
+            if (TouchInput.isTriggered() && this.getOnOffVehicle()) {
+                return true;
+            }
+        }
+    }
+
+    return _Game_Player_triggerTouchActionD1.apply(this, arguments);
+};
+
+/**
+ * ●マウスタッチ時（小型船／大型船用）
+ */
+const _Game_Player_triggerTouchActionD2 = Game_Player.prototype.triggerTouchActionD2;
+Game_Player.prototype.triggerTouchActionD2 = function(x2, y2) {
+    // 有効なオリジナル乗物を確認
+    for (const vehicle of $gameMap.validOriginalVehicles()) {
+        // 小型船／大型船以外は無視
+        if (!vehicle.isShip() && !vehicle.isBoat()) {
+            continue;
+        }
+
+        // 指定位置に一致する小型船／大型船があるか
+        if (vehicle.pos(x2, y2)) {
+            if (TouchInput.isTriggered() && this.getOnVehicle()) {
+                return true;
+            }
+        }
+    }
+
+    return _Game_Player_triggerTouchActionD2.apply(this, arguments);
+};
+
+/**
  * ●タイプを元に乗物を取得
  */
 const _Game_Map_vehicle = Game_Map.prototype.vehicle;
