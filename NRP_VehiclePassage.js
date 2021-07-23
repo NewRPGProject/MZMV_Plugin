@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Extends the passage & get on/off decision for vehicles.
+ * @plugindesc v1.01 Extends the passage & get on/off decision for vehicles.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482385836.html
  *
@@ -139,7 +139,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 乗物の通行＆乗降判定を拡張します。
+ * @plugindesc v1.01 乗物の通行＆乗降判定を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/482385836.html
  *
@@ -217,6 +217,12 @@
  * @min 0 @max 999
  * @desc 飛行船の高度です。
  * デフォルトは48となります。
+ * 
+ * @param AirshipSameAsCharacters
+ * @text 飛行船を通常キャラと同じに
+ * @type boolean
+ * @default false
+ * @desc 飛行船のプライオリティタイプを『通常キャラと同じ』に変更します。
  */
 /*~struct~Setting:ja
  * @param SettingId
@@ -371,6 +377,7 @@ const pBoatNoGetOff = toBoolean(parameters["BoatNoGetOff"], false);
 const pShipNoGetOff = toBoolean(parameters["ShipNoGetOff"], false);
 const pAirshipNoGetOff = toBoolean(parameters["AirshipNoGetOff"], false);
 const pAirshipAltitude = toNumber(parameters["AirshipAltitude"]);
+const pAirshipSameAsCharacters = toBoolean(parameters["AirshipSameAsCharacters"], false);
 
 /**
  * ●通行リストを使用できる形式に設定
@@ -598,7 +605,7 @@ function isValidSetting(settingId, tileset) {
 }
 
 //----------------------------------------
-// その他設定
+// 飛行船の最大高度
 //----------------------------------------
 
 if (pAirshipAltitude !== undefined) {
@@ -625,6 +632,32 @@ if (pAirshipAltitude !== undefined) {
                 this.setPriorityType(0);
                 this.setStepAnime(false);
             }
+        }
+    };
+}
+
+//----------------------------------------
+// 飛行船のプライオリティタイプ
+//----------------------------------------
+
+if (pAirshipSameAsCharacters) {
+    const _Game_Vehicle_refresh = Game_Vehicle.prototype.refresh;
+    Game_Vehicle.prototype.refresh = function() {
+        _Game_Vehicle_refresh.apply(this, arguments);
+
+        if (this.isAirship() && !this._driving) {
+            // 飛行中でない場合は通常キャラと同じに
+            this.setPriorityType(1);
+        }
+    };
+
+    const _Game_Vehicle_updateAirship = Game_Vehicle.prototype.updateAirship;
+    Game_Vehicle.prototype.updateAirship = function() {
+        _Game_Vehicle_updateAirship.apply(this, arguments);
+
+        if (this.isLowest()) {
+            // 飛行中でない場合は通常キャラと同じに
+            this.setPriorityType(1);
         }
     };
 }
