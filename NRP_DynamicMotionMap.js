@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.06 Call DynamicMotion on the map.
+ * @plugindesc v1.07 Call DynamicMotion on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicMotionMZ
  * @base NRP_DynamicAnimationMapMZ
@@ -88,7 +88,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.06 DynamicMotionをマップ上から起動します。
+ * @plugindesc v1.07 DynamicMotionをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicMotionMZ
  * @base NRP_DynamicAnimationMapMZ
@@ -608,11 +608,6 @@ Sprite_Character.prototype.updateDynamicMove = function() {
         character._realX = character._x;
         character._realY = character._y;
 
-        // プレイヤーの場合はスクロール位置を調整
-        if (pPlayerOnScroll && character == $gamePlayer) {
-            character.center(this.decimalMapX(), this.decimalMapY());
-        }
-
         // DynamicMotion用の移動終了
         this.onDynamicMoveEnd();
 
@@ -624,8 +619,8 @@ Sprite_Character.prototype.updateDynamicMove = function() {
 /**
  * ●移動更新
  */
-const _Game_CharacterBase_updateMove = Game_CharacterBase.prototype.updateMove;
-Game_CharacterBase.prototype.updateMove = function() {
+const _Game_Player_updateMove = Game_Player.prototype.updateMove;
+Game_Player.prototype.updateMove = function() {
     // 実行中フラグがオンの場合のみ処理
     // ※この処理は重いので制限
     if (pPlayerOnScroll && this._onDynamicMotion) {
@@ -643,7 +638,7 @@ Game_CharacterBase.prototype.updateMove = function() {
         }
     }
 
-    _Game_CharacterBase_updateMove.apply(this, arguments);
+    _Game_Player_updateMove.apply(this, arguments);
 };
 
 /**
@@ -657,9 +652,17 @@ Sprite_Character.prototype.decimalMapX = function() {
  * 【独自】マップＹ座標を小数で取得する。
  */
 Sprite_Character.prototype.decimalMapY = function() {
+    // ＭＶの場合
+    if (Utils.RPGMAKER_NAME == "MV") {
+        return $gameMap.canvasToDecimalMapY(this.y
+                - $gameMap.tileHeight()
+                + 6 // なぜか６ピクセルずれるので調整（数値根拠不明）
+                + this._character.jumpHeight());
+    }
+
+    // ＭＺの場合
     return $gameMap.canvasToDecimalMapY(this.y
         - $gameMap.tileHeight()
-        + 6 // なぜか６ピクセルずれるので調整（数値根拠不明）
         + this._character.jumpHeight());
 }
 
