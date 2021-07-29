@@ -65,12 +65,12 @@
  * @param BeforeCommonEvent
  * @type common_event
  * @desc A common event to be executed before the transfer.
- * To be precise, it will be executed before the fade-out.
+ * To be precise, it will be executed before the default fade-out.
  * 
  * @param AfterCommonEvent
  * @type common_event
  * @desc A common event to be executed after the transfer.
- * To be precise, it will be executed before the fade-in.
+ * To be precise, it will be executed before the default fade-in.
  */
 
 /*:ja
@@ -136,13 +136,13 @@
  * @text 移動前コモンイベント
  * @type common_event
  * @desc 場所移動前に実行するコモンイベントです。
- * 正確にはフェードアウト前に実行されます。
+ * 正確にはデフォルトのフェードアウト前に実行されます。
  * 
  * @param AfterCommonEvent
  * @text 移動後コモンイベント
  * @type common_event
  * @desc 場所移動後に実行するコモンイベントです。
- * 正確にはフェードイン後に実行されます。
+ * 正確にはデフォルトのフェードイン後に実行されます。
  */
 (function() {
 "use strict";
