@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Display the cursor when selecting a target in battle.
+ * @plugindesc v1.02 Display the cursor when selecting a target in battle.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482370647.html
  *
@@ -268,7 +268,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 戦闘時、選択中の対象にカーソルを表示
+ * @plugindesc v1.02 戦闘時、選択中の対象にカーソルを表示
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482370647.html
  *
@@ -690,16 +690,19 @@ if (pHideEnemyNameList) {
         this.move(-100, -100, 0, 0);
     };
 
-    /**
-     * ●敵選択開始
-     */
-    const _Scene_Battle_startEnemySelection = Scene_Battle.prototype.startEnemySelection;
-    Scene_Battle.prototype.startEnemySelection = function() {
-        _Scene_Battle_startEnemySelection.apply(this, arguments);
+    // ＭＺにしか存在しない関数なので考慮
+    if (Scene_Battle.prototype.startEnemySelection) {
+        /**
+         * ●敵選択開始
+         */
+        const _Scene_Battle_startEnemySelection = Scene_Battle.prototype.startEnemySelection;
+        Scene_Battle.prototype.startEnemySelection = function() {
+            _Scene_Battle_startEnemySelection.apply(this, arguments);
 
-        // ステータスウィンドウを非表示しない。
-        this._statusWindow.show();
-    };
+            // ステータスウィンドウを非表示しない。
+            this._statusWindow.show();
+        };
+    }
 }
 
 /**
@@ -742,11 +745,15 @@ const _Window_BattleEnemy_select = Window_BattleEnemy.prototype.select;
 Window_BattleEnemy.prototype.select = function(index) {
     _Window_BattleEnemy_select.apply(this, arguments);
 
-    const enemy = this.enemy();
-    if (enemy && this._enemyNameWindow) {
-        this._enemyNameWindow.setEnemy(enemy);
-        this._enemyNameWindow.select(index);
-    }
+    if (this._enemyNameWindow) {
+        const enemy = this.enemy();
+        if (enemy) {
+            this._enemyNameWindow.setEnemy(enemy);
+            this._enemyNameWindow.select(index);
+        } else {
+            this._enemyNameWindow.hide();
+        }
+    } 
 };
 
 /**
@@ -768,10 +775,14 @@ const _Window_BattleActor_select = Window_BattleActor.prototype.select;
 Window_BattleActor.prototype.select = function(index) {
     _Window_BattleActor_select.apply(this, arguments);
 
-    const actor = this.actor(index);
-    if (actor && this._actorNameWindow) {
-        this._actorNameWindow.setActor(actor);
-        this._actorNameWindow.select(index);
+    if (this._actorNameWindow) {
+        const actor = this.actor(index);
+        if (actor) {
+            this._actorNameWindow.setActor(actor);
+            this._actorNameWindow.select(index);
+        } else {
+            this._actorNameWindow.hide();
+        }
     }
 };
 
@@ -928,7 +939,7 @@ Window_BattleEnemyName.prototype.showTargetName = function() {
         // 敵のカーソル画像描画
         const spriteset = getSpriteset();
         if (spriteset) {
-            dispCursorSprite(spriteset._enemyCursorSprite, spriteset._enemySprites);
+            dispCursorSprite(spriteset._enemyCursorSprite, sprite);
         }
     }
 };
@@ -973,7 +984,7 @@ Window_BattleEnemyName.prototype.hide = function() {
     // 敵のカーソル画像描画（消去）
     const spriteset = getSpriteset();
     if (spriteset) {
-        dispCursorSprite(spriteset._enemyCursorSprite, spriteset._enemySprites);
+        hideCursorSprite(spriteset._enemyCursorSprite);
     }
 };
 
@@ -1128,7 +1139,7 @@ Window_BattleActorName.prototype.showTargetName = function() {
         // アクターのカーソル画像描画
         const spriteset = getSpriteset();
         if (spriteset) {
-            dispCursorSprite(spriteset._actorCursorSprite, spriteset._actorSprites);
+            dispCursorSprite(spriteset._actorCursorSprite, sprite);
         }
     }
 }
@@ -1173,7 +1184,7 @@ Window_BattleActorName.prototype.hide = function() {
     // アクターのカーソル画像描画（消去）
     const spriteset = getSpriteset();
     if (spriteset) {
-        dispCursorSprite(spriteset._actorCursorSprite, spriteset._actorSprites);
+        hideCursorSprite(spriteset._actorCursorSprite);
     }
 };
 
@@ -1308,7 +1319,9 @@ Spriteset_Battle.prototype.createLowerLayer = function() {
         this._enemyCursorSprite = new Sprite();
         this._enemyCursorSprite.bitmap = ImageManager.loadPicture(pEnemyTargetCursor);
         this._baseSprite.addChild(this._enemyCursorSprite);
-        this._enemyCursorSprite.hide();
+
+        // カーソル非表示
+        hideCursorSprite(this._enemyCursorSprite)
 
         // アクターカーソル画像が空白の場合、敵カーソル画像を適用
         if (!pActorTargetCursor) {
@@ -1317,7 +1330,9 @@ Spriteset_Battle.prototype.createLowerLayer = function() {
             // 画像を左右反転（scaleX = -1）する。
             this._actorCursorSprite.scale.x = -1;
             this._baseSprite.addChild(this._actorCursorSprite);
-            this._actorCursorSprite.hide();
+
+            // カーソル非表示
+            hideCursorSprite(this._actorCursorSprite)
             return;
         }
     }
@@ -1327,23 +1342,20 @@ Spriteset_Battle.prototype.createLowerLayer = function() {
         this._actorCursorSprite = new Sprite();
         this._actorCursorSprite.bitmap = ImageManager.loadPicture(pActorTargetCursor);
         this._baseSprite.addChild(this._actorCursorSprite);
-        this._actorCursorSprite.hide();
+
+        // カーソル非表示
+        hideCursorSprite(this._actorCursorSprite)
     }
 };
 
 /**
  * ●カーソル画像の表示制御
  */
-function dispCursorSprite(cursorSprite, battlerSprites) {
+function dispCursorSprite(cursorSprite, battlerSprite) {
     // 画像がなければ処理終了
     if (!cursorSprite) {
         return;
     }
-
-    // 選択中のバトラースプライトを取得
-    const battlerSprite = battlerSprites.find(function(sprite) {
-        return sprite._battler && sprite._battler.isSelected();
-    });
 
     // 対象が存在する場合は表示
     if (battlerSprite) {
@@ -1406,11 +1418,34 @@ function dispCursorSprite(cursorSprite, battlerSprites) {
         cursorSprite.y = y;
         cursorSprite.anchor.x = 0.5;
         cursorSprite.anchor.y = 0.5;
-        cursorSprite.show();
+
+        // ＭＺにしか存在しない関数なので考慮
+        if (cursorSprite.show) {
+            cursorSprite.show();
+        } else {
+            cursorSprite.opacity = 255;
+        }
 
     // 対象が存在しない場合は非表示
     } else {
+        hideCursorSprite(cursorSprite);
+    }
+}
+
+/**
+ * ●カーソル画像を非表示に
+ */
+function hideCursorSprite(cursorSprite) {
+    // 画像がなければ処理終了
+    if (!cursorSprite) {
+        return;
+    }
+    
+    // ＭＺにしか存在しない関数なので考慮
+    if (cursorSprite.hide) {
         cursorSprite.hide();
+    } else {
+        cursorSprite.opacity = 0;
     }
 }
 
