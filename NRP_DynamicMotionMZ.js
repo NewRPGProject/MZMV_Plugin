@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.12 When executing skills, call motion freely.
+ * @plugindesc v1.13 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -543,7 +543,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.12 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.13 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -1191,11 +1191,17 @@ if (!existNRP_DynamicAnimationMZ) {
     return;
 }
 
-function toBoolean(str) {
-    if (str == true) {
-        return true;
+function toBoolean(val, def) {
+    // 空白なら初期値を返す
+    if (val === "" || val === undefined) {
+        return def;
+        
+    // 既にboolean型なら、そのまま返す
+    } else if (typeof val === "boolean") {
+        return val;
     }
-    return (str == "true") ? true : false;
+    // 文字列ならboolean型に変換して返す
+    return val.toLowerCase() == "true";
 }
 function toNumber(str, def) {
     return isNaN(str) ? def : +(str || def);
@@ -1228,6 +1234,9 @@ var pImmortalState = toNumber(parameters["immortalState"]);
 var pUsePriority = toBoolean(parameters["usePriority"], true);
 var pBattlerZ = toNumber(parameters["battlerZ"], 3);
 var pOpponentSideZ = toNumber(parameters["opponentSideZ"]);
+
+const animatinParameters = PluginManager.parameters("NRP_DynamicAnimationMZ");
+const pNoMirrorForFriend = toBoolean(animatinParameters["noMirrorForFriend"], true);
 
 const TAG_NAME = "D-Motion";
 const SETTING_TAG_NAME = "D-Setting";
@@ -2082,7 +2091,7 @@ DynamicMotion.prototype.initialize = function (baseMotion, performer, target, r)
     this.noShadow = eval(baseMotion.noShadow);
 
     // 判定設定の取得（スキルの対象者が基準）
-    var mirroring = getMirroring(target);
+    const mirroring = this.getMirroring();
     this.mirroring = mirroring;
 
     /*
@@ -3593,6 +3602,56 @@ DynamicMotion.prototype.random = function(key) {
 }
 
 /**
+ * ●座標反転するかどうかを判定する。
+ * ※反転時は-1を返す。
+ */
+DynamicMotion.prototype.getMirroring = function() {
+    const subject = this.referenceSubject;
+    const target = this.referenceTarget;
+
+    // 対象が取得できない場合はそのまま
+    if (!target) {
+        return 1;
+    }
+
+    // サイドが同じなら反転しない場合
+    if (this.isNoMirrorForFriend()) {
+        // アクター同士の場合は反転しない。
+        if (subject.isActor() && target.isActor()) {
+            return 1;
+        // 敵同士の場合は反転する。
+        } else if (subject.isEnemy() && target.isEnemy()) {
+            return -1;
+        }
+    }
+
+    if (target.isActor()) {
+        // 反転
+        return -1;
+    }
+    return 1;
+}
+
+/**
+ * ●味方同士の場合、左右反転しないかどうか？
+ */
+DynamicMotion.prototype.isNoMirrorForFriend = function() {
+    const action = this.baseMotion.action;
+
+    // 左右反転しない。
+    if (action.existDynamicSetting("NoMirrorForFriend")) {
+        return true;
+
+    // 左右反転する。
+    } else if (action.existDynamicSetting("MirrorForFriend")) {
+        return false;
+    }
+
+    // それ以外はパラメータの設定
+    return pNoMirrorForFriend;
+}
+
+/**
  * ●バトラースプライトの初期化
  */
 var _Sprite_Battler_initMembers = Sprite_Battler.prototype.initMembers;
@@ -3758,17 +3817,6 @@ function compareZ(a, b) {
 //------------------------------------------
 // 共通関数
 //------------------------------------------
-
-/**
- * ●座標反転するかどうかを判定する。
- * 反転時は-1を返す。
- */
-function getMirroring(battler) {
-    if (battler && battler.isActor()) {
-        return -1;
-    }
-    return 1;
-}
 
 /**
  * ●参照用のバトラーを取得する

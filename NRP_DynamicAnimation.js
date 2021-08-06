@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.242 Automate & super-enhance battle animations.
+ * @plugindesc v1.25 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help Call battle animations freely from skills (items).
@@ -109,6 +109,12 @@
  * @parent <Animation Position>
  * @type string
  * @desc When the target is an actor, adjust the value of screenY.
+ * 
+ * @param noMirrorForFriend
+ * @parent <Animation Position>
+ * @type boolean
+ * @default true
+ * @desc Animations for friends should not be flipped left or right.
  * 
  * @param randomAdjust
  * @parent <Animation Position>
@@ -452,7 +458,7 @@
  */
 
 /*:ja
- * @plugindesc v1.242 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.25 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在に戦闘アニメーションを呼び出します。
@@ -568,6 +574,13 @@
  * @type string
  * @desc 対象が味方のアニメーション位置を反転する際、
  * 画面アニメの表示Ｙ座標を数値分だけずらします。
+ * 
+ * @param noMirrorForFriend
+ * @text 仲間向けは反転しない
+ * @parent <Animation Position>
+ * @type boolean
+ * @default true
+ * @desc 仲間同士でかけ合うアニメーションは、左右反転しないようにします。
  * 
  * @param randomAdjust
  * @text バラマキ調整
@@ -1079,6 +1092,7 @@ var pAllRangeX = setDefault(parameters["allRangeX"], "($gameSystem.isSideView() 
 var pAllRangeY = setDefault(parameters["allRangeY"], "($gameSystem.isSideView() ? Graphics.boxHeight / 4 : Graphics.boxHeight / 6)");
 var pMirrorAdjustX = parameters["mirrorAdjustX"];
 var pMirrorAdjustY = parameters["mirrorAdjustY"];
+const pNoMirrorForFriend = toBoolean(parameters["noMirrorForFriend"], true);
 var pRandomAdjust = toNumber(parameters["randomAdjust"], 0);
 var pConsiderTargetScale = toBoolean(parameters["considerTargetScale"], true);
 // フロントビュー関連
@@ -2408,7 +2422,7 @@ DynamicAnimation.prototype.evaluate = function (spriteAnimation) {
 
     var position = this.position; // 位置
     // 判定設定の取得
-    var mirroring = getMirroring(this.target);
+    const mirroring = this.getMirroring();
     this.mirroring = mirroring;
 
     /*
@@ -3070,21 +3084,17 @@ Game_Battler.prototype.performActionEnd = function() {
 };
 
 /**
- * 【独自定義】動的アニメーションをアクターにセットする。
- */
-Game_Actor.prototype.setDynamicAnimation = function(dynamicAnimation) {
-    // 対象がアクターなら左右反転を行う。
-    // ただし、反転無効化時を除く。
-    if (!dynamicAnimation.noMirror) {
-        dynamicAnimation.mirror = !dynamicAnimation.mirror;
-    }
-    Game_Battler.prototype.setDynamicAnimation.call(this, dynamicAnimation);
-};
-
-/**
  * 【独自定義】動的アニメーションをバトラーにセットする。
  */
 Game_Battler.prototype.setDynamicAnimation = function(dynamicAnimation) {
+    // 対象がアクターなら左右反転を行う。
+    if (!dynamicAnimation.noMirror) {
+        const mirroring = dynamicAnimation.getMirroring();
+        if (mirroring == -1) {
+            dynamicAnimation.mirror = !dynamicAnimation.mirror;
+        }
+    }
+
     let delay = dynamicAnimation.targetDelay;
 
     const mapAnimation = dynamicAnimation.baseAnimation.mapAnimation;
@@ -3644,6 +3654,51 @@ DynamicAnimation.prototype.diffScreenY = function () {
 };
 
 /**
+ * ●座標反転するかどうかを判定する。
+ * ※反転時は-1を返す。
+ */
+DynamicAnimation.prototype.getMirroring = function() {
+    const subject = this.referenceSubject;
+    const target = this.referenceTarget;
+
+    // サイドが同じなら反転しない場合
+    if (this.isNoMirrorForFriend()) {
+        // アクター同士の場合は反転しない。
+        if (subject.isActor() && target.isActor()) {
+            return 1;
+        // 敵同士の場合は反転する。
+        } else if (subject.isEnemy() && target.isEnemy()) {
+            return -1;
+        }
+    }
+
+    if (target.isActor()) {
+        // 反転
+        return -1;
+    }
+    return 1;
+}
+
+/**
+ * ●味方同士の場合、左右反転しないかどうか？
+ */
+DynamicAnimation.prototype.isNoMirrorForFriend = function() {
+    const action = this.baseAnimation.action;
+
+    // 左右反転しない。
+    if (action.existDynamicSetting("NoMirrorForFriend")) {
+        return true;
+
+    // 左右反転する。
+    } else if (action.existDynamicSetting("MirrorForFriend")) {
+        return false;
+    }
+
+    // それ以外はパラメータの設定
+    return pNoMirrorForFriend;
+}
+
+/**
  * ●アニメーションセルの更新
  */
 var _Sprite_Animation_updateCellSprite = Sprite_Animation.prototype.updateCellSprite;
@@ -3886,17 +3941,6 @@ Game_Actor.prototype.onBattleEnd = function() {
     this._actor = undefined;
     this._animations = [];
 };
-
-/**
- * ●座標反転するかどうかを判定する。
- * 反転時は-1を返す。
- */
-function getMirroring(battler) {
-    if (battler.isActor()) {
-        return -1;
-    }
-    return 1;
-}
 
 /**
  * ●調整ランダム値の取得
