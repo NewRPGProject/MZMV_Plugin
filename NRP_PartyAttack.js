@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Realize changes in the target side (such as friendly fire).
+ * @plugindesc v1.001 Realize changes in the target side (such as friendly fire).
  * @orderAfter NRP_BattleTargetCursor
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482791611.html
@@ -83,7 +83,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 対象サイドの変更（パーティアタックなど）を実現します。
+ * @plugindesc v1.001 対象サイドの変更（パーティアタックなど）を実現します。
  * @orderAfter NRP_BattleTargetCursor
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482791611.html
@@ -381,6 +381,20 @@ Scene_Battle.prototype.startActorCommandSelection = function() {
 
     // ウィンドウの移動禁止を解除
     mNoUpdateStatusWindowPosition = false;
+};
+
+/**
+ * ●コマンドキャンセル時
+ */
+const _Scene_Battle_commandCancel = Scene_Battle.prototype.commandCancel;
+Scene_Battle.prototype.commandCancel = function() {
+    _Scene_Battle_commandCancel.apply(this, arguments);
+
+    // 対象の反転状態をクリア
+    const action = BattleManager.inputtingAction();
+    if (action) {
+        action.clearReverseTargetSide();
+    }
 };
 
 //----------------------------------------
