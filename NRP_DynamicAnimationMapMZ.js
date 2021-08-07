@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.10 Call DynamicAnimationMZ on the map.
+ * @plugindesc v1.11 Call DynamicAnimationMZ on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -260,7 +260,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.10 DynamicAnimationMZをマップ上から起動します。
+ * @plugindesc v1.11 DynamicAnimationMZをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -1075,6 +1075,11 @@ function makeMapAnimation(interpreter, subject, wait, noScroll, action) {
     mapAnimation.interpreter = interpreter;
     mapAnimation.noWait = !toBoolean(wait); // 反転させておく
     mapAnimation.onScroll = !toBoolean(noScroll); // 反転させておく
+    // 呼出元が並列処理（trigger:4）かどうか？
+    const event = $gameMap.event(interpreter.eventId());
+    if (event && event._trigger == 4) {
+        mapAnimation.isParallel = true;
+    }
     // 開始時間の設定
     const startTimingTarget = getStartTimingTarget(interpreter);
     setStartTiming(mapAnimation, action, startTimingTarget);
@@ -2333,6 +2338,7 @@ function makeMapAnimationEvent(event, skillId, action) {
     mapAnimation.onScroll = true;
     mapAnimation.isDynamicAuto = true;
     mapAnimation.skillId = skillId;
+    mapAnimation.isParallel = true;
     // 開始時間の設定
     setStartTiming(mapAnimation, action, event);
 
