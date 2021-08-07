@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.19 When executing skills, call motion freely.
+ * @plugindesc v1.191 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help When executing skills(items), call motion freely.
@@ -537,7 +537,7 @@
  */
 
 /*:ja
- * @plugindesc v1.19 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.191 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在にモーションを呼び出します。
@@ -3526,7 +3526,8 @@ DynamicMotion.prototype.random = function(key) {
  * ※反転時は-1を返す。
  */
 DynamicMotion.prototype.getMirroring = function() {
-    const subject = this.referenceSubject;
+    // 常にスキルの使用者を参照
+    const subject = this.baseMotion.getReferenceSubject();
     const target = this.referenceTarget;
 
     // 対象が取得できない場合はそのまま
