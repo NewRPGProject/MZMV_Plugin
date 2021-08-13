@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.05 Extends the effective range of skills and items.
+ * @plugindesc v1.06 Extends the effective range of skills and items.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_VisualTurn
  * @orderBefore NRP_DynamicAnimationMZ
@@ -79,7 +79,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.05 スキル及びアイテムの効果範囲を拡張します。
+ * @plugindesc v1.06 スキル及びアイテムの効果範囲を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_VisualTurn
  * @orderBefore NRP_DynamicAnimationMZ
@@ -176,15 +176,12 @@ function toBoolean(val) {
     return (val == true || val == "true") ? true : false;
 }
 
-var parameters = PluginManager.parameters("NRP_SkillRangeEX");
+const parameters = PluginManager.parameters("NRP_SkillRangeEX");
     
-var pRangeList = parseStruct(parameters["rangeList"]);
+const pRangeList = parseStruct(parameters["rangeList"]);
 
 // 主対象保持用
 var mainTarget;
-
-// 重複処理を排除するための対象index
-var keepTargetIndex = -1;
 
 /**
  * ●効果範囲の拡張
@@ -455,7 +452,7 @@ function setActorSpriteSize(sprite) {
  * ●本来は連続効果を処理するための関数っぽいですが、
  * 競合の関係でここの前方に、範囲拡張処理を記述します。
  */
-var _Game_Action_repeatTargets = Game_Action.prototype.repeatTargets;
+const _Game_Action_repeatTargets = Game_Action.prototype.repeatTargets;
 Game_Action.prototype.repeatTargets = function(targets) {
     // 範囲拡張処理
     targets = rangeEx(this, targets);
@@ -466,7 +463,7 @@ Game_Action.prototype.repeatTargets = function(targets) {
 /**
  * ●アニメーション準備
  */
-var _Sprite_Animation_setup = Sprite_Animation.prototype.setup;
+const _Sprite_Animation_setup = Sprite_Animation.prototype.setup;
 Sprite_Animation.prototype.setup = function(target, animation, mirror, delay) {
     _Sprite_Animation_setup.call(this, target, animation, mirror, delay);
 
@@ -502,7 +499,7 @@ Sprite_Animation.prototype.setup = function(target, animation, mirror, delay) {
 /**
  * ●アニメーション表示位置の設定
  */
-var _Sprite_Animation_updatePosition = Sprite_Animation.prototype.updatePosition;
+const _Sprite_Animation_updatePosition = Sprite_Animation.prototype.updatePosition;
 Sprite_Animation.prototype.updatePosition = function() {
     _Sprite_Animation_updatePosition.apply(this);
 
@@ -523,103 +520,87 @@ Sprite_Animation.prototype.updatePosition = function() {
  */
 const _Window_BattleActor_prototype_select = Window_BattleActor.prototype.select;
 Window_BattleActor.prototype.select = function(index) {
-    // 対象の選択が有効なら選択対象拡張
-    // このselect処理はなぜか重複して呼ばれるので、対象が変わった時のみ実行する
-    if (index != keepTargetIndex) {
-        _Window_BattleActor_prototype_select.apply(this, arguments);
+    _Window_BattleActor_prototype_select.apply(this, arguments);
 
-        keepTargetIndex = index; // 対象を保持
-
-        if (index >= 0) {
-            var subject = BattleManager.actor();
-            // 【MZ対応】subjectが取得できなければ終了
-            if (!subject) {
-                return;
-            }
-            const action = subject.currentAction();
-            const selectActor = $gameParty.members()[this.index()];
-            // アクションと現在の選択対象を元に拡張された対象を取得
-            const targets = rangeEx(action, [selectActor]);
-            // 範囲拡張なしなら終了
-            if (targets.length == 1 && targets[0] == selectActor) {
-                return;
-            }
-
-            // 一旦、全対象候補を解除
-            $gameParty.select(null);
-            $gameTroop.select(null);
-
-            // 拡張された対象を選択表示
-            targets.forEach(function(target) {
-                target.select();
-            });
+    if (index >= 0) {
+        var subject = BattleManager.actor();
+        // 【MZ対応】subjectが取得できなければ終了
+        if (!subject) {
+            return;
         }
+        const action = subject.currentAction();
+        const selectActor = $gameParty.members()[this.index()];
+        // アクションと現在の選択対象を元に拡張された対象を取得
+        const targets = rangeEx(action, [selectActor]);
+        // 範囲拡張なしなら終了
+        if (targets.length == 1 && targets[0] == selectActor) {
+            return;
+        }
+
+        // 一旦、全対象候補を解除
+        $gameParty.select(null);
+        $gameTroop.select(null);
+
+        // 拡張された対象を選択表示
+        targets.forEach(function(target) {
+            target.select();
+        });
     }
 };
 
 /**
  * ●味方の選択ウィンドウ消去時
  */
-var _Window_BattleActor_hide = Window_BattleActor.prototype.hide;
+const _Window_BattleActor_hide = Window_BattleActor.prototype.hide;
 Window_BattleActor.prototype.hide = function() {
     _Window_BattleActor_hide.apply(this);
 
     // 無差別技を想定し、敵側の選択も解除しておく
     $gameTroop.select(null);
-    // 保持対象クリア
-    keepTargetIndex = -1;
 };
 
 /**
  * ●敵の選択時
  */
-var _Window_BattleEnemy_prototype_select = Window_BattleEnemy.prototype.select;
+const _Window_BattleEnemy_prototype_select = Window_BattleEnemy.prototype.select;
 Window_BattleEnemy.prototype.select = function(index) {
-    // 対象の選択が有効なら選択対象拡張
-    // このselect処理はなぜか重複して呼ばれるので、対象が変わった時のみ実行する
-    if (index != keepTargetIndex) {
-        _Window_BattleEnemy_prototype_select.apply(this, arguments);
-        
-        keepTargetIndex = index; // 対象を保持
+    _Window_BattleEnemy_prototype_select.apply(this, arguments);
 
-        if (index >= 0) {
-            var subject = BattleManager.actor();
-            // 【MZ対応】subjectが取得できなければ終了
-            if (!subject) {
-                return;
-            }
-            var action = subject.currentAction();
-
-            // アクションと現在の選択対象を元に拡張された対象を取得
-            var targets = rangeEx(action, [this.enemy()]);
-            // 範囲拡張なしなら終了
-            if (targets.length == 1 && targets[0] == this.enemy()) {
-                return;
-            }
-
-            // 一旦、全対象候補を解除
-            $gameParty.select(null);
-            $gameTroop.select(null);
-
-            // 拡張された対象を選択表示
-            targets.forEach(function(target) {
-                target.select();
-            });
+    if (index >= 0) {
+        var subject = BattleManager.actor();
+        // 【MZ対応】subjectが取得できなければ終了
+        if (!subject) {
+            return;
         }
+        var action = subject.currentAction();
+
+        // アクションと現在の選択対象を元に拡張された対象を取得
+        var targets = rangeEx(action, [this.enemy()]);
+        // 範囲拡張なしなら終了
+        if (targets.length == 1 && targets[0] == this.enemy()) {
+            return;
+        }
+
+        // 一旦、全対象候補を解除
+        $gameParty.select(null);
+        $gameTroop.select(null);
+
+        // 拡張された対象を選択表示
+        targets.forEach(function(target) {
+            target.select();
+        });
     }
 };
 
 /**
  * ●敵の選択ウィンドウ消去時
  */
-var _Window_BattleEnemy_hide =  Window_BattleEnemy.prototype.hide;
+const _Window_BattleEnemy_hide =  Window_BattleEnemy.prototype.hide;
 Window_BattleEnemy.prototype.hide = function() {
     _Window_BattleEnemy_hide.apply(this);
 
     // 無差別技を想定し、味方側の選択も解除しておく
     $gameParty.select(null);
-    // 保持対象クリア
-    keepTargetIndex = -1;
 };
 
 })();

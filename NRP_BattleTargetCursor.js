@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Display the cursor when selecting a target in battle.
+ * @plugindesc v1.03 Display the cursor when selecting a target in battle.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482370647.html
  *
@@ -268,7 +268,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 戦闘時、選択中の対象にカーソルを表示
+ * @plugindesc v1.03 戦闘時、選択中の対象にカーソルを表示
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482370647.html
  *
@@ -716,10 +716,17 @@ Scene_Battle.prototype.createAllWindows = function() {
     // 敵ウィンドウ生成
     //--------------------------------------
     if (pShowTargetEnemyName) {
-        // この時点ではサイズ不明なので、とりあえずGraphicsの全領域を確保
-        // ※確保しておかないと文字が表示できない。
-        this._enemyNameWindow = new Window_BattleEnemyName(new Rectangle(0, 0, Graphics.boxWidth, Graphics.boxHeight));
-        // this.addWindow(this._enemyNameWindow);
+        // MV
+        if (Utils.RPGMAKER_NAME == "MV") {
+            this._enemyNameWindow = new Window_BattleEnemyName(0, 0, this._enemyWindow);
+        // MZ
+        } else {
+            // この時点ではサイズ不明なので、とりあえずGraphicsの全領域を確保
+            // ※確保しておかないと文字が表示できない。
+            this._enemyNameWindow = new Window_BattleEnemyName(
+                new Rectangle(0, 0, Graphics.boxWidth, Graphics.boxHeight), this._enemyWindow);
+        }
+
         this.addChild(this._enemyNameWindow);
 
         // 追加ウィンドウへアクセスできるように設定
@@ -730,11 +737,23 @@ Scene_Battle.prototype.createAllWindows = function() {
     // アクターウィンドウ生成
     //--------------------------------------
     if (pShowTargetActorName) {
-        this._actorNameWindow = new Window_BattleActorName(new Rectangle(0, 0, Graphics.boxWidth, Graphics.boxHeight));
+        // MV
+        if (Utils.RPGMAKER_NAME == "MV") {
+            this._actorNameWindow = new Window_BattleActorName(0, 0, this._actorWindow);
+        // MZ
+        } else {
+            // この時点ではサイズ不明なので、とりあえずGraphicsの全領域を確保
+            // ※確保しておかないと文字が表示できない。
+            this._actorNameWindow = new Window_BattleActorName(
+                new Rectangle(0, 0, Graphics.boxWidth, Graphics.boxHeight), this._actorWindow);
+        }
+
         this.addChild(this._actorNameWindow);
 
         // 追加ウィンドウへアクセスできるように設定
         this._actorWindow._actorNameWindow = this._actorNameWindow;
+        // 追加ウィンドウから親ウィンドウへアクセスできるように設定
+        this._actorNameWindow._parentWindow = this._actorWindow;
     }
 };
 
@@ -769,6 +788,33 @@ Window_BattleEnemy.prototype.hide = function() {
 };
 
 /**
+ * ●タッチ操作
+ */
+const _Window_BattleEnemy_processTouch = Window_BattleEnemy.prototype.processTouch;
+Window_BattleEnemy.prototype.processTouch = function() {
+    // カーソル移動禁止の場合
+    if (!this.isCursorMovable()) {
+        Window_Selectable.prototype.processTouch.call(this);
+        if (this.isOpenAndActive()) {
+            const target = $gameTemp.touchTarget();
+            if (target) {
+                if (this._enemies.includes(target)) {
+                    // 選択しない
+                    // this.select(this._enemies.indexOf(target));
+                    if ($gameTemp.touchState() === "click") {
+                        this.processOk();
+                    }
+                }
+                $gameTemp.clearTouchState();
+            }
+        }
+        return;
+    }
+
+    _Window_BattleEnemy_processTouch.apply(this, arguments);
+}
+
+/**
  * ●アクター選択
  */
 const _Window_BattleActor_select = Window_BattleActor.prototype.select;
@@ -798,6 +844,34 @@ Window_BattleActor.prototype.hide = function() {
     }
 };
 
+/**
+ * ●タッチ操作
+ */
+const _Window_BattleActor_processTouch = Window_BattleActor.prototype.processTouch;
+Window_BattleActor.prototype.processTouch = function() {
+    // カーソル移動禁止の場合
+    if (!this.isCursorMovable()) {
+        Window_BattleStatus.prototype.processTouch.call(this);
+        if (this.isOpenAndActive()) {
+            const target = $gameTemp.touchTarget();
+            if (target) {
+                const members = $gameParty.battleMembers();
+                if (members.includes(target)) {
+                    // 選択しない
+                    // this.select(members.indexOf(target));
+                    if ($gameTemp.touchState() === "click") {
+                        this.processOk();
+                    }
+                }
+                $gameTemp.clearTouchState();
+            }
+        }
+        return;
+    }
+
+    _Window_BattleActor_processTouch.apply(this, arguments);
+};
+
 //-----------------------------------------------------------------------------
 // 敵名表示用の追加ウィンドウ
 //-----------------------------------------------------------------------------
@@ -811,10 +885,13 @@ Window_BattleEnemyName.prototype.constructor = Window_BattleEnemyName;
 
 // MV
 if (Utils.RPGMAKER_NAME == "MV") {
-    Window_BattleEnemyName.prototype.initialize = function(x, y) {
+    Window_BattleEnemyName.prototype.initialize = function(x, y, parentWindow) {
         this._enemy = undefined;
         const width = Graphics.boxWidth;
         const height = pEnemyNameWindowHeight;
+
+        // 親ウィンドウへアクセスできるように設定
+        this._parentWindow = parentWindow;
 
         Window_Selectable.prototype.initialize.call(this, x, y, width, height);
 
@@ -830,8 +907,11 @@ if (Utils.RPGMAKER_NAME == "MV") {
 
 // MZ
 } else {
-    Window_BattleEnemyName.prototype.initialize = function(rect) {
+    Window_BattleEnemyName.prototype.initialize = function(rect, parentWindow) {
         this._enemy = undefined;
+        // 親ウィンドウへアクセスできるように設定
+        this._parentWindow = parentWindow;
+
         Window_Selectable.prototype.initialize.call(this, rect);
 
         // 暗くするかどうか。
@@ -888,59 +968,67 @@ Window_BattleEnemyName.prototype.select = function(index) {
  * ●対象名を表示
  */
 Window_BattleEnemyName.prototype.showTargetName = function() {
+    // 全体選択時は非表示
+    if (this.cursorAll()) {
+        this.hide();
+        return;
+    }
+    
     const enemy = this._enemy;
-    if (enemy) {
-        // 指定があればフォントサイズを設定
-        if (pEnemyNameFontSize) {
-            this.contents.fontSize = pEnemyNameFontSize;
-        }
+    if (!enemy) {
+        return;
+    }
 
-        const sprite = getSprite(enemy);
+    // 指定があればフォントサイズを設定
+    if (pEnemyNameFontSize) {
+        this.contents.fontSize = pEnemyNameFontSize;
+    }
 
-        // ウィンドウ幅を求める。
-        const textWidth = this.textWidth(this.convertEscapeCharacters(enemy.name()));
-        // ウィンドウの余白と文字の余白を加算
-        let textPaddingWidth = textWidth + this.padding * 2 + itemPadding(this) * 2;
-        // 根拠不明だが調整
-        // ※加算しないと文字が小さい……。
-        textPaddingWidth += 16;
+    const sprite = getSprite(enemy);
 
-        // ウィンドウの高さ
-        const windowHeight = pEnemyNameWindowHeight;
+    // ウィンドウ幅を求める。
+    const textWidth = this.textWidth(this.convertEscapeCharacters(enemy.name()));
+    // ウィンドウの余白と文字の余白を加算
+    let textPaddingWidth = textWidth + this.padding * 2 + itemPadding(this) * 2;
+    // 根拠不明だが調整
+    // ※加算しないと文字が小さい……。
+    textPaddingWidth += 16;
 
-        // Ｘ座標
-        let x = sprite.x - textPaddingWidth / 2;
-        x += eval(pEnemyNameWindowAdjustX);
+    // ウィンドウの高さ
+    const windowHeight = pEnemyNameWindowHeight;
 
-        // Ｙ座標
-        let y = sprite.y;
-        // 頭上
-        if (pEnemyCursorPosition == "head") {
-            y -= sprite.height;
-        // 中央
-        } else if (pEnemyCursorPosition == "center") {
-            y -= (sprite.height / 2 + windowHeight / 2);
-        // 足元
-        } else {
-            y -= windowHeight;
-        }
+    // Ｘ座標
+    let x = sprite.x - textPaddingWidth / 2;
+    x += eval(pEnemyNameWindowAdjustX);
 
-        // 調整Ｙ座標
-        y += eval(pEnemyNameWindowAdjustY);
+    // Ｙ座標
+    let y = sprite.y;
+    // 頭上
+    if (pEnemyCursorPosition == "head") {
+        y -= sprite.height;
+    // 中央
+    } else if (pEnemyCursorPosition == "center") {
+        y -= (sprite.height / 2 + windowHeight / 2);
+    // 足元
+    } else {
+        y -= windowHeight;
+    }
 
-        // 上下左右の限界を考慮
-        x = limitedX(x);
-        y = limitedY(y);
+    // 調整Ｙ座標
+    y += eval(pEnemyNameWindowAdjustY);
 
-        // ウィンドウ位置を設定（Ｘ座標、Ｙ座標、幅、高さ）
-        this.move(x, y, textPaddingWidth, windowHeight);
-        this.show();
+    // 上下左右の限界を考慮
+    x = limitedX(x);
+    y = limitedY(y);
 
-        // 敵のカーソル画像描画
-        const spriteset = getSpriteset();
-        if (spriteset) {
-            dispCursorSprite(spriteset._enemyCursorSprite, sprite);
-        }
+    // ウィンドウ位置を設定（Ｘ座標、Ｙ座標、幅、高さ）
+    this.move(x, y, textPaddingWidth, windowHeight);
+    this.show();
+
+    // 敵のカーソル画像描画
+    const spriteset = getSpriteset();
+    if (spriteset) {
+        dispCursorSprite(spriteset._enemyCursorSprite, sprite);
     }
 };
 
@@ -970,11 +1058,6 @@ Window_BattleEnemyName.prototype.drawItem = function(index) {
 Window_BattleEnemyName.prototype.show = function() {
     this.refresh();
 
-    // MZにしかない関数なので考慮
-    if ($gameTemp.clearTouchState) {
-        $gameTemp.clearTouchState();
-    }
-
     Window_Selectable.prototype.show.call(this);
 };
 
@@ -1001,6 +1084,14 @@ Window_BattleEnemyName.prototype.drawItemBackground = function(index) {
     // this.drawBackgroundRect(rect);
 };
 
+/**
+ * ●カーソルが全体選択かどうか？
+ */
+Window_BattleEnemyName.prototype.cursorAll = function() {
+    // 親ウィンドウの値をそのまま返す
+    return this._parentWindow.cursorAll();
+};
+
 //-----------------------------------------------------------------------------
 // アクター名表示用の追加ウィンドウ
 //-----------------------------------------------------------------------------
@@ -1014,10 +1105,13 @@ Window_BattleActorName.prototype.constructor = Window_BattleActorName;
 
 // MV
 if (Utils.RPGMAKER_NAME == "MV") {
-    Window_BattleActorName.prototype.initialize = function(x, y) {
+    Window_BattleActorName.prototype.initialize = function(x, y, parentWindow) {
         this._actor = undefined;
         const width = Graphics.boxWidth;
         const height = pActorNameWindowHeight;
+
+        // 親ウィンドウへアクセスできるように設定
+        this._parentWindow = parentWindow;
 
         Window_Selectable.prototype.initialize.call(this, x, y, width, height);
 
@@ -1030,8 +1124,11 @@ if (Utils.RPGMAKER_NAME == "MV") {
 
 // MZ
 } else {
-    Window_BattleActorName.prototype.initialize = function(rect) {
+    Window_BattleActorName.prototype.initialize = function(rect, parentWindow) {
         this._actor = undefined;
+        // 親ウィンドウへアクセスできるように設定
+        this._parentWindow = parentWindow;
+
         Window_Selectable.prototype.initialize.call(this, rect);
 
         this.refresh();
@@ -1081,66 +1178,74 @@ Window_BattleActorName.prototype.select = function(index) {
  * ●対象名を表示
  */
 Window_BattleActorName.prototype.showTargetName = function() {
+    // 全体選択時は非表示
+    if (this.cursorAll()) {
+        this.hide();
+        return;
+    }
+
     const actor = this._actor;
-    if (actor) {
-        // 指定があればフォントサイズを設定
-        if (pActorNameFontSize) {
-            this.contents.fontSize = pActorNameFontSize;
-        }
+    if (!actor) {
+        return;
+    }
 
-        const sprite = getSprite(actor);
+    // 指定があればフォントサイズを設定
+    if (pActorNameFontSize) {
+        this.contents.fontSize = pActorNameFontSize;
+    }
 
-        // ウィンドウ幅を求める。
-        const textWidth = this.textWidth(this.convertEscapeCharacters(actor.name()));
-        // ウィンドウの余白と文字の余白を加算
-        let textPaddingWidth = textWidth + this.padding * 2 + itemPadding(this) * 2;
-        // 根拠不明だが調整
-        // ※加算しないと文字が小さい……。
-        textPaddingWidth += 16;
+    const sprite = getSprite(actor);
 
-        const windowHeight = pActorNameWindowHeight;
+    // ウィンドウ幅を求める。
+    const textWidth = this.textWidth(this.convertEscapeCharacters(actor.name()));
+    // ウィンドウの余白と文字の余白を加算
+    let textPaddingWidth = textWidth + this.padding * 2 + itemPadding(this) * 2;
+    // 根拠不明だが調整
+    // ※加算しないと文字が小さい……。
+    textPaddingWidth += 16;
 
-        // Ｘ座標
-        let x = sprite.x - textPaddingWidth / 2;
+    const windowHeight = pActorNameWindowHeight;
 
-        // Ｘ座標の調整
-        let actorNameWindowAdjustX;
-        // 値が存在しない場合は敵の値を参照し、左右反転
-        if (isBlank(pActorNameWindowAdjustX)) {
-            actorNameWindowAdjustX = eval(pEnemyNameWindowAdjustX) * -1;
-        } else {
-            actorNameWindowAdjustX = eval(pActorNameWindowAdjustX);
-        }
-        x += actorNameWindowAdjustX;
+    // Ｘ座標
+    let x = sprite.x - textPaddingWidth / 2;
 
-        // Ｙ座標
-        let y = sprite.y;
-        // 頭上
-        if (pActorCursorPosition == "head") {
-            y -= sprite.height;
-        // 中央
-        } else if (pActorCursorPosition == "center") {
-            y -= (sprite.height / 2 + windowHeight / 2);
-        // 足元
-        } else {
-            y -= windowHeight;
-        }
+    // Ｘ座標の調整
+    let actorNameWindowAdjustX;
+    // 値が存在しない場合は敵の値を参照し、左右反転
+    if (isBlank(pActorNameWindowAdjustX)) {
+        actorNameWindowAdjustX = eval(pEnemyNameWindowAdjustX) * -1;
+    } else {
+        actorNameWindowAdjustX = eval(pActorNameWindowAdjustX);
+    }
+    x += actorNameWindowAdjustX;
 
-        // 調整Ｙ座標
-        y += eval(pActorNameWindowAdjustY);
+    // Ｙ座標
+    let y = sprite.y;
+    // 頭上
+    if (pActorCursorPosition == "head") {
+        y -= sprite.height;
+    // 中央
+    } else if (pActorCursorPosition == "center") {
+        y -= (sprite.height / 2 + windowHeight / 2);
+    // 足元
+    } else {
+        y -= windowHeight;
+    }
 
-        // 上下左右の限界を考慮
-        x = limitedX(x);
-        y = limitedY(y);
+    // 調整Ｙ座標
+    y += eval(pActorNameWindowAdjustY);
 
-        this.move(x, y, textPaddingWidth, windowHeight);
-        this.show();
+    // 上下左右の限界を考慮
+    x = limitedX(x);
+    y = limitedY(y);
 
-        // アクターのカーソル画像描画
-        const spriteset = getSpriteset();
-        if (spriteset) {
-            dispCursorSprite(spriteset._actorCursorSprite, sprite);
-        }
+    this.move(x, y, textPaddingWidth, windowHeight);
+    this.show();
+
+    // アクターのカーソル画像描画
+    const spriteset = getSpriteset();
+    if (spriteset) {
+        dispCursorSprite(spriteset._actorCursorSprite, sprite);
     }
 }
 
@@ -1170,11 +1275,6 @@ Window_BattleActorName.prototype.drawItem = function(index) {
 Window_BattleActorName.prototype.show = function() {
     this.refresh();
     
-    // MZにしかない関数なので考慮
-    if ($gameTemp.clearTouchState) {
-        $gameTemp.clearTouchState();
-    }
-
     Window_Selectable.prototype.show.call(this);
 };
 
@@ -1199,6 +1299,14 @@ Window_BattleActorName.prototype.drawItemBackground = function(index) {
     // 非表示
     // const rect = this.itemRect(index);
     // this.drawBackgroundRect(rect);
+};
+
+/**
+ * ●カーソルが全体選択かどうか？
+ */
+Window_BattleActorName.prototype.cursorAll = function() {
+    // 親ウィンドウの値をそのまま返す
+    return this._parentWindow.cursorAll();
 };
 
 //-----------------------------------------------------------------------------

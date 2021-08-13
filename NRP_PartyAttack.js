@@ -4,8 +4,9 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.001 Realize changes in the target side (such as friendly fire).
+ * @plugindesc v1.01 Realize changes in the target side (such as friendly fire).
  * @orderAfter NRP_BattleTargetCursor
+ * @orderBefore NRP_VisualTurn
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482791611.html
  *
@@ -18,6 +19,11 @@
  * Just by installing it, switching the target side will be enabled.
  * In the initial state, the target side is switched by PageUp/Down.
  * (This is equivalent to the LR button on a gamepad.)
+ * 
+ * By default, skills with a range of All or Random will not show
+ * the target selection window, so you cannot change the side.
+ * By turning on the "AlwaysSelection" parameter,
+ * you can make those skills switch the target side as well.
  * 
  * ■Note on skills (items)
  * You can disable or enable changes to the target side for each skill.
@@ -57,24 +63,52 @@
  * @desc Enable target side change for all skills.
  * You can specify exceptions in the Notes field.
  * 
+ * @param <Selection>
+ * 
+ * @param AlwaysSelection
+ * @parent <Selection>
+ * @type boolean
+ * @default false
+ * @desc Show the target selection even for skills with a range such as whole. This will enable target side switching.
+ * 
+ * @param UserSelection
+ * @parent <Selection>
+ * @type boolean
+ * @default false
+ * @desc Displays a selection of targets, even for skills with a User range.
+ * 
+ * @param EveryoneSelection
+ * @parent <Selection>
+ * @type boolean
+ * @default false
+ * @desc Displays a selection of targets, even for skills with a range of Everyone.
+ * 
+ * @param <ChangeSideKey>
+ * 
  * @param ChangeSideByPageUpDown
+ * @parent <ChangeSideKey>
  * @type boolean
  * @default true
  * @desc The target side can be switched by PageUp/Down.
  *
  * @param ChangeSideByLeftRight
+ * @parent <ChangeSideKey>
  * @type boolean
  * @default false
  * @desc The target side can be switched by Left/Right.
  * Combination with NRP_BattleTargetCursor is recommended.
  *
  * @param ChangeSideByUpDown
+ * @parent <ChangeSideKey>
  * @type boolean
  * @default false
  * @desc The target side can be switched by Up/Down.
  * Combination with NRP_BattleTargetCursor is recommended.
  * 
+ * @param <Other>
+ * 
  * @param KeepWindow
+ * @parent <Other>
  * @type boolean
  * @default false
  * @desc Keeps the window visible.
@@ -83,8 +117,9 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.001 対象サイドの変更（パーティアタックなど）を実現します。
+ * @plugindesc v1.01 対象サイドの変更（パーティアタックなど）を実現します。
  * @orderAfter NRP_BattleTargetCursor
+ * @orderBefore NRP_VisualTurn
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482791611.html
  *
@@ -97,6 +132,11 @@
  * 導入するだけで対象サイドの切替が有効となります。
  * 初期状態ではPageUp/Downで対象サイドを切り替えます。
  * （ゲームパッドではいわゆるＬＲボタンに相当）
+ * 
+ * 初期状態では範囲が全体やランダムのスキルは、
+ * 対象選択のウィンドウが表示されないため、サイドを変更できません。
+ * 『常に選択を表示』のパラメータをオンにすることで、
+ * それらのスキルも対象サイドを切り替えられるようにできます。
  * 
  * ■スキル（アイテム）のメモ欄
  * スキル毎に対象サイドの変更を無効化または有効化できます。
@@ -134,13 +174,43 @@
  * @desc 全てのスキルで対象サイドの変更を有効とします。
  * メモ欄で例外を指定できます。
  * 
+ * @param <Selection>
+ * @text ＜選択の表示＞
+ * 
+ * @param AlwaysSelection
+ * @parent <Selection>
+ * @text 常に選択を表示
+ * @type boolean
+ * @default false
+ * @desc 範囲が全体などのスキルにおいても、対象の選択を表示します。
+ * これにより、対象サイドの切替を有効とします。
+ * 
+ * @param UserSelection
+ * @parent <Selection>
+ * @text 使用者も選択を表示
+ * @type boolean
+ * @default false
+ * @desc 範囲が使用者のスキルにおいても、対象の選択を表示します。
+ * 
+ * @param EveryoneSelection
+ * @parent <Selection>
+ * @text 敵味方全体も選択を表示
+ * @type boolean
+ * @default false
+ * @desc 範囲が敵味方全体のスキルにおいても、対象の選択を表示します。
+ * 
+ * @param <ChangeSideKey>
+ * @text ＜対象サイドの切替キー＞
+ * 
  * @param ChangeSideByPageUpDown
+ * @parent <ChangeSideKey>
  * @text PageUp/Downでサイド切替
  * @type boolean
  * @default true
  * @desc PageUp/Downによって対象サイドの切り替えを行います。
  *
  * @param ChangeSideByLeftRight
+ * @parent <ChangeSideKey>
  * @text 左右でサイド切替
  * @type boolean
  * @default false
@@ -148,13 +218,18 @@
  * NRP_BattleTargetCursorとの組み合わせを推奨します。
  *
  * @param ChangeSideByUpDown
+ * @parent <ChangeSideKey>
  * @text 上下でサイド切替
  * @type boolean
  * @default false
  * @desc 上下キーによって対象サイドの切り替えを行います。
  * NRP_BattleTargetCursorとの組み合わせを推奨します。
  * 
+ * @param <Other>
+ * @text ＜その他＞
+ * 
  * @param KeepWindow
+ * @parent <Other>
  * @text ウィンドウ表示を維持
  * @type boolean
  * @default false
@@ -216,6 +291,9 @@ function setDefault(str, def) {
 const parameters = PluginManager.parameters("NRP_PartyAttack");
 
 const pEnableAllSkills = toBoolean(parameters["EnableAllSkills"], true);
+const pAlwaysSelection = toBoolean(parameters["AlwaysSelection"], false);
+const pUserSelection = toBoolean(parameters["UserSelection"], false);
+const pEveryoneSelection = toBoolean(parameters["EveryoneSelection"], false);
 const pChangeSideByPageUpDown = toBoolean(parameters["ChangeSideByPageUpDown"], true);
 const pChangeSideByLeftRight = toBoolean(parameters["ChangeSideByLeftRight"], false);
 const pChangeSideByUpDown = toBoolean(parameters["ChangeSideByUpDown"], false);
@@ -242,7 +320,7 @@ Scene_Battle.prototype.targetSideChangeToActor = function() {
 
     // 対象サイドを反転
     action.setReverseTargetSide();
-
+    
     this._enemyWindow.hide();
     this._enemyWindow.select(null);
     this._enemyWindow.deactivate();
@@ -426,6 +504,15 @@ Game_Action.prototype.clearReverseTargetSide = function() {
  * 【独自】対象サイドを変更できるか？
  */
 Game_Action.prototype.isTargetSideChangeOk = function() {
+    // 対象が自分、敵味方全体ならば無効
+    if (this.isForUser() || this.isForEveryone()) {
+        return false;
+
+    // NRP_SkillRangeEX連携時（mainTargetAllIfを想定）ならば無効
+    } else if (existMainTargetAllIf(this)) {
+        return false;
+    }
+
     // スキル（アイテム）のメモ欄にある<PermitSideChange>を参照
     const permitSideChange = toBoolean(this.item().meta.PermitSideChange);
     if (permitSideChange === true) {
@@ -493,6 +580,15 @@ Game_Action.prototype.isForAliveFriend = function() {
     return _Game_Action_isForAliveFriend.apply(this, arguments);
 };
 
+/**
+ * ●ＭＶには存在しない関数なので追加
+ */
+if (!Game_Action.prototype.isForEveryone) {
+    Game_Action.prototype.isForEveryone = function() {
+        return this.checkItemScope([14]);
+    };
+}
+
 //----------------------------------------
 // PageUp/Downによる切替
 //----------------------------------------
@@ -551,7 +647,7 @@ if (pChangeSideByUpDown) {
     /**
      * 【上書】カーソル下移動
      */
-    Window_BattleEnemy.prototype.cursorDown = function() {
+    Window_BattleEnemy.prototype.cursorDown = function(wrap) {
         // 対象サイドを変更
         SceneManager._scene.targetSideChangeToActor();
     };
@@ -559,10 +655,295 @@ if (pChangeSideByUpDown) {
     /**
      * 【上書】カーソル上移動
      */
-    Window_BattleActor.prototype.cursorUp = function() {
+    Window_BattleActor.prototype.cursorUp = function(wrap) {
         // 対象サイドを変更
         SceneManager._scene.targetSideChangeToEnemy();
     };
+}
+
+//----------------------------------------
+// 常に選択を表示
+//----------------------------------------
+
+if (pAlwaysSelection) {
+    /**
+     * 【上書】選択が必要かどうか？
+     */
+    Game_Action.prototype.needsSelection = function() {
+        // 防御は除外
+        if (this.isGuard()) {
+            return false;
+
+        // 使用者を除外する場合
+        } else if (!pUserSelection && this.isForUser()) {
+            return false;
+
+        // 敵味方全体を除外する場合
+        } else if (!pEveryoneSelection && this.isForEveryone()) {
+            return false;
+        }
+
+        // それ以外は要選択
+        return true;
+    };
+
+    /**
+     * 【ＭＺ】アクターの選択開始
+     */
+    if (Scene_Battle.prototype.startActorSelection) {
+        const _Scene_Battle_startActorSelection2 = Scene_Battle.prototype.startActorSelection;
+        Scene_Battle.prototype.startActorSelection = function() {
+            this._actorWindow.setCursorAll(false);
+
+            _Scene_Battle_startActorSelection2.apply(this, arguments);
+
+            selectActorEX(this._actorWindow);
+        };
+
+    /**
+     * 【ＭＶ】アクターの選択開始
+     */
+    } else if (Scene_Battle.prototype.selectActorSelection) {
+        const _Scene_Battle_selectActorSelection2 = Scene_Battle.prototype.selectActorSelection;
+        Scene_Battle.prototype.selectActorSelection = function() {
+            this._actorWindow.setCursorAll(false);
+
+            _Scene_Battle_selectActorSelection2.apply(this, arguments);
+
+            selectActorEX(this._actorWindow);
+        };
+    }
+
+    /**
+     * 【ＭＺ】エネミーの選択開始
+     */
+    if (Scene_Battle.prototype.startEnemySelection) {
+        const _Scene_Battle_startEnemySelection2 = Scene_Battle.prototype.startEnemySelection;
+        Scene_Battle.prototype.startEnemySelection = function() {
+            this._enemyWindow.setCursorAll(false);
+
+            _Scene_Battle_startEnemySelection2.apply(this, arguments);
+
+            selectEnemyEX(this._enemyWindow);
+        };
+
+    /**
+     * 【ＭＶ】エネミーの選択開始
+     */
+    } else if (Scene_Battle.prototype.selectEnemySelection) {
+        const _Scene_Battle_selectEnemySelection2 = Scene_Battle.prototype.selectEnemySelection;
+        Scene_Battle.prototype.selectEnemySelection = function() {
+            this._enemyWindow.setCursorAll(false);
+
+            _Scene_Battle_selectEnemySelection2.apply(this, arguments);
+
+            selectEnemyEX(this._enemyWindow);
+        };
+    }
+
+    /**
+     * ●味方の選択時
+     */
+    const _Window_BattleActor_prototype_select = Window_BattleActor.prototype.select;
+    Window_BattleActor.prototype.select = function(index) {
+        _Window_BattleActor_prototype_select.apply(this, arguments);
+
+        selectActorEX(this);
+    }
+    
+    /**
+     * ●敵の選択時
+     */
+    const _Window_BattleEnemy_prototype_select = Window_BattleEnemy.prototype.select;
+    Window_BattleEnemy.prototype.select = function(index) {
+        _Window_BattleEnemy_prototype_select.apply(this, arguments);
+
+        selectEnemyEX(this);
+    }
+
+    /**
+     * ●カーソル移動を許可するか？
+     */
+    const _Window_BattleActor_isCursorMovable = Window_BattleActor.prototype.isCursorMovable;
+    Window_BattleActor.prototype.isCursorMovable = function() {
+        const action = BattleManager.inputtingAction();
+        if (action && action.item()) {
+            // 対象が自分の場合は無効
+            if (action.isForUser()) {
+                return false;
+            // NRP_SkillRangeEX連携時（mainTargetAllIfを想定）
+            } else if (existMainTargetAllIf(action)) {
+                return false;
+            }
+        }
+        
+        // 全体選択時
+        if (this._cursorAll) {
+            // 一時的に解除
+            this._cursorAll = false;
+            const isCursorMovable = _Window_BattleActor_isCursorMovable.apply(this, arguments);
+            this._cursorAll = true;
+            return isCursorMovable;
+        }
+
+        return _Window_BattleActor_isCursorMovable.apply(this, arguments);
+    };
+
+    /**
+     * ●カーソル移動を許可するか？
+     */
+    const _Window_BattleEnemy_isCursorMovable = Window_BattleEnemy.prototype.isCursorMovable;
+    Window_BattleEnemy.prototype.isCursorMovable = function() {
+        const action = BattleManager.inputtingAction();
+        if (action && action.item()) {
+            // 対象が自分の場合は無効
+            if (action.isForUser()) {
+                return false;
+            // NRP_SkillRangeEX連携時（mainTargetAllIfを想定）
+            } else if (existMainTargetAllIf(action)) {
+                return false;
+            }
+        }
+        
+        // 全体選択時
+        if (this._cursorAll) {
+            // 一時的に解除
+            this._cursorAll = false;
+            const isCursorMovable = _Window_BattleEnemy_isCursorMovable.apply(this, arguments);
+            this._cursorAll = true;
+            return isCursorMovable;
+        }
+
+        return _Window_BattleEnemy_isCursorMovable.apply(this, arguments);
+    };
+
+    /**
+     * ●全体時のカーソル表示
+     * ※Window_Selectableの関数をオーバライド
+     * ※通常、この関数は一列のリストしか想定していないらしく、
+     * 　二列のウィンドウに適用すると正しく表示されない。
+     * 　そこで修正を行う。
+     */
+    Window_BattleEnemy.prototype.refreshCursorForAll = function() {
+        const maxItems = this.maxItems();
+        if (maxItems > 0) {
+            const rect = this.itemRect(0);
+
+            // 選択位置の末尾を求める
+            let lastIndex = maxItems;
+            // 列数の倍数（標準は二列）に拡張する。
+            if (lastIndex % this.maxCols() != 0) {
+                lastIndex = lastIndex - lastIndex % this.maxCols() + this.maxCols();
+            }
+            lastIndex -= 1;
+
+            rect.enlarge(this.itemRect(lastIndex));
+            this.setCursorRect(rect.x, rect.y, rect.width, rect.height);
+        } else {
+            this.setCursorRect(0, 0, 0, 0);
+        }
+    };
+}
+
+/**
+ * ●敵の選択拡張
+ */
+function selectEnemyEX(window) {
+    const action = BattleManager.inputtingAction();
+    if (!action || !action.item()) {
+        return;
+    }
+
+    // 対象が敵味方全体の場合
+    if (action.isForEveryone()) {
+        window.setCursorAll(true);
+        // 全バトラーを選択し、白点滅状態に
+        for (const member of BattleManager.allBattleMembers()) {
+            member.select();
+        }
+
+    // NRP_SkillRangeEX連携時（mainTargetAllIfを想定）
+    } else if (existMainTargetAllIf(action)) {
+        // メインターゲットを選択し、白点滅状態に
+        window._index = BattleManager._mainTarget.index();
+        if (window.refreshCursor) {
+            window.refreshCursor();
+        }
+        window.callUpdateHelp();
+        return;
+
+    // 対象が全体／ランダムの場合
+    } else if (action.isForAll() || action.isForRandom()) {
+        window.setCursorAll(true);
+        // バトラーを選択し、白点滅状態に
+        for (const member of $gameTroop.members()) {
+            member.select();
+        }
+        for (const member of $gameParty.members()) {
+            member.deselect();
+        }
+    }
+}
+
+/**
+ * ●アクターの選択拡張
+ */
+function selectActorEX(window) {
+    const action = BattleManager.inputtingAction();
+    if (!action || !action.item()) {
+        return;
+    }
+
+    // 対象が自分の場合
+    if (action.isForUser()) {
+        // 自分を選択し、白点滅状態に
+        window._index = action.subject().index();
+        if (window.refreshCursor) {
+            window.refreshCursor();
+        }
+        window.callUpdateHelp();
+        action.subject().select();
+
+    // 対象が敵味方全体の場合
+    } else if (action.isForEveryone()) {
+        window.setCursorAll(true);
+        // 全バトラーを選択し、白点滅状態に
+        for (const member of BattleManager.allBattleMembers()) {
+            member.select();
+        }
+
+    // NRP_SkillRangeEX連携時（mainTargetAllIfを想定）
+    } else if (existMainTargetAllIf(action)) {
+        // メインターゲットを選択し、白点滅状態に
+        window._index = BattleManager._mainTarget.index();
+        if (window.refreshCursor) {
+            window.refreshCursor();
+        }
+        window.callUpdateHelp();
+        return;
+
+    // 対象が全体／ランダムの場合
+    } else if (action.isForAll() || action.isForRandom()) {
+        window.setCursorAll(true);
+        // バトラーを選択し、白点滅状態に
+        for (const member of $gameParty.members()) {
+            member.select();
+        }
+        for (const member of $gameTroop.members()) {
+            member.deselect();
+        }
+    }
+}
+
+/**
+ * ●NRP_SkillRangeEX連携用（mainTargetAllIfを想定）
+ * ※対象の自動選択時
+ */
+function existMainTargetAllIf(action) {
+    if (action.isForAll() && BattleManager._mainTarget) {
+        return true;
+    }
+    return false;
 }
 
 })();
