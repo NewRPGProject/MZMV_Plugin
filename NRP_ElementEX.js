@@ -3,31 +3,28 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Extended element resistance, absorption, etc.
+ * @plugindesc v1.00 Extended element rate, absorption, etc.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482915499.html
  *
  * @help When the plugin is applied,
- * the element resistance is changed to an additive method.
- * This makes it possible to achieve over 100% resistance,
- * which is normally impossible.
+ * the element rate is changed to an additive method.
+ * This allows for a negative element rate,
+ * which is not normally possible.
  * 
- * Points in excess of 100% are reversed positive and negative.
+ * Points below 0% will be reversed positive and negative.
  * This means that you can achieve behaviors such as absorbing element attacks,
  * or undead taking damage from healing magic.
  * 
- * Element resistance is determined by the "Element Rate" set in the database traits.
- * If the Element Rate is 30%, it will be considered 70% resistant.
+ * To set a negative element rate, set multiple lines to traits.
  * 
- *  * To set a resistance of exceeding 100%,
- * set the multi-line Element Rate to the traits.
- * 
- * eg. 0% Element Rate + 60% Element Rate would give 140% resistance.
- *     This means 40% absorption.
+ * e.g.: A combination of 0% element rate and 60% element rate
+ *       will result in an element rate of -40%.
+ *       This means 40% absorption.
  * 
  * The traits you set are valid for Actor, Class, Enemy, and Equipment.
  * A combination of different items, such as "Actor and Equipment",
- * will work the same way if they exceed 100% by addition.
+ * will work the same way if the addition brings the value below 0%.
  * 
  * [Terms]
  * There are no restrictions.
@@ -51,29 +48,25 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 属性耐性を拡張し、吸収などを実現
+ * @plugindesc v1.00 属性有効度を拡張し、吸収などを実現
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/482915499.html
  *
- * @help プラグインを適用すると、属性耐性が加算方式に変更されます。
- * これにより通常は不可能な100%超の耐性を可能とします。
+ * @help プラグインを適用すると、属性有効度が加算方式に変更されます。
+ * これにより通常は不可能なマイナスの属性有効度を可能とします。
  * 
- * 100%を超過した分のポイントは正負が反転します。
+ * 0%を下回った分のポイントは正負が反転します。
  * つまり、属性攻撃を吸収したり、あるいはアンデッドが
  * 回復魔法を受けてダメージを受けるといった挙動を実現できます。
  * 
- * なお、属性耐性はデータベースの特徴に設定した『属性有効度』により決定されます。
- * 属性有効度が30%なら、70%の耐性とみなします。
+ * マイナスの属性有効度を設定するには、複数行を特徴に設定してください。
  * 
- * 100%超の耐性を設定するには、
- * 複数行の属性有効度を特徴に設定してください。
- * 
- * 例：属性有効度0%＋属性有効度60%ならば、140%の耐性
+ * 例：属性有効度0%と属性有効度60%の組ならば、-40%の属性有効度
  * 　　つまり40%の吸収となります。
  * 
  * 設定する特徴はアクター、職業、敵キャラ、装備などいずれも有効です。
  * 「アクターと装備」など異なる項目の組み合わせでも、
- * 加算によって100%を超えた場合は同じように機能します。
+ * 加算によって0%を下回った場合は同じように機能します。
  * 
  * ■利用規約
  * 特に制約はありません。
