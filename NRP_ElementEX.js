@@ -40,13 +40,13 @@
  * @type number
  * @max 999 @decimals 2
  * @desc The maximum Element Rate. 1.0 equals 100%.
- * If 2.0, the damage will be twice the normal maximum.
+ * If -2.0, the maximum damage is double the normal value.
  * 
  * @param ElementRateMin
  * @type number
  * @min -999 @decimals 2
  * @desc The minimum Element Rate. 1.0 equals 100%.
- * If -2.0, the minimum damage is minus two times normal.
+ * If -2.0, then the minimum damage will be minus two times normal.
  */
 
 /*:ja
@@ -85,14 +85,14 @@
  * @type number
  * @max 999 @decimals 2
  * @desc 属性有効度の最大値です。1.0が100%に相当します。
- * 2.0ならば、ダメージが通常の二倍が最大になります。
+ * 2.0ならば、通常の二倍がダメージの最大値になります。
  * 
  * @param ElementRateMin
  * @text 属性有効度の最小値
  * @type number
  * @min -999 @decimals 2
  * @desc 属性有効度の最小値です。1.0が100%に相当します。
- * -2.0ならば、ダメージが通常のマイナス二倍が最小になります。
+ * -2.0ならば、通常のマイナス二倍がダメージの最小値になります。
  */
 (function() {
 "use strict";
