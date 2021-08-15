@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Displays tile information in debug mode.
+ * @plugindesc v1.01 Displays tile information in debug mode.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481013577.html
  *
@@ -43,7 +43,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 タイル情報をデバッグ表示します。
+ * @plugindesc v1.01 タイル情報をデバッグ表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481013577.html
  *
@@ -122,7 +122,12 @@ if (Utils.RPGMAKER_NAME == "MZ") {
         }
 
         // まだ準備できていない場合があるのでチェック
-        if (this._boxDiv && $dataMap && $gamePlayer) {
+        if (this._boxDiv && $dataMap && $gamePlayer && $gameParty) {
+            // 戦闘中は終了
+            if ($gameParty.inBattle()) {
+                return;
+            }
+
             // 表示領域を拡張
             this._boxDiv.style.width = "500px";
 
@@ -151,10 +156,15 @@ if (Utils.RPGMAKER_NAME == "MV") {
             return;
         }
 
-        const modeBox = Graphics._modeBox;
-
         // まだ準備できていない場合があるのでチェック
-        if ($dataMap && $gamePlayer) {
+        if ($dataMap && $gamePlayer && $gameParty) {
+            // 戦闘中は終了
+            if ($gameParty.inBattle()) {
+                return;
+            }
+
+            const modeBox = Graphics._modeBox;
+
             // 表示領域を拡張
             modeBox.style.width = "170px";
             modeBox.style.height = "90px";
