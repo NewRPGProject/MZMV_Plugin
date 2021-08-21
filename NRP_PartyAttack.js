@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Realize changes in the target side (such as friendly fire).
+ * @plugindesc v1.011 Realize changes in the target side (such as friendly fire).
  * @orderAfter NRP_BattleTargetCursor
  * @orderBefore NRP_VisualTurn
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
@@ -117,7 +117,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 対象サイドの変更（パーティアタックなど）を実現します。
+ * @plugindesc v1.011 対象サイドの変更（パーティアタックなど）を実現します。
  * @orderAfter NRP_BattleTargetCursor
  * @orderBefore NRP_VisualTurn
  * @author 砂川赳 (http://newrpg.seesaa.net/)
@@ -578,6 +578,20 @@ Game_Action.prototype.isForAliveFriend = function() {
     }
 
     return _Game_Action_isForAliveFriend.apply(this, arguments);
+};
+
+/**
+ * ●仲間向けの対象取得
+ */
+const _Game_Action_targetsForFriends = Game_Action.prototype.targetsForFriends;
+Game_Action.prototype.targetsForFriends = function() {
+    // 仲間向けはランダム対象が存在しないので追加
+    if (this.isForRandom()) {
+        const unit = this.friendsUnit();
+        return this.randomTargets(unit);
+    }
+
+    return _Game_Action_targetsForFriends.apply(this, arguments);
 };
 
 /**
