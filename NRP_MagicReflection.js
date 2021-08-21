@@ -17,6 +17,7 @@
  * - Reflections can be set for each skill type.
  * 　※RPG Maker's standard specification is that skills
  *     with a hit type of "Magic Attack" will be reflected.
+ * - Can create skills that disable reflection.
  * 
  * For example, it is possible to perform the famous FF series trick
  * of attacking an enemy by reflecting the overall magic cast on your friends.
@@ -147,6 +148,7 @@
  * ・反射先をスキル使用者ではなく、別サイドに変更可
  * ・スキルタイプ毎に反射の設定をすることが可能
  * 　※ツクールの標準仕様では、命中タイプが『魔法攻撃』のスキルを反射
+ * ・反射無効のスキルを作成可
  * 
  * 例えば、ＦＦシリーズで有名な
  * 「仲間にかけた全体魔法を敵に反射して攻撃」
