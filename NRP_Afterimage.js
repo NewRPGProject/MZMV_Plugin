@@ -722,6 +722,7 @@ Sprite_Battler.prototype.createAfterimage = function() {
     afterimage.setBitmap();
     afterimage.setSetFrame();
     afterimage.scale = this.scale;
+    afterimage.rotation = this.rotation;
     // 色調設定
     const colorTone = afterimageManage.color()
     if (colorTone) {
