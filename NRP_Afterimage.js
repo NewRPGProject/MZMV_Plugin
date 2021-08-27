@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Gives an afterimage effect to the battler.
+ * @plugindesc v1.001 Gives an afterimage effect to the battler.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483120023.html
  *
@@ -121,7 +121,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 バトラーに残像効果を付与します。
+ * @plugindesc v1.001 バトラーに残像効果を付与します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483120023.html
  *
@@ -612,21 +612,21 @@ Sprite_EnemyAfterimage.prototype.setSetFrame = function() {
 //-----------------------------------------------------------------------------
 
 /**
- * ●初期化
- */
-const _Game_Battler_initMembers = Game_Battler.prototype.initMembers;
-Game_Battler.prototype.initMembers = function() {
-    _Game_Battler_initMembers.apply(this, arguments);
-
-    this._afterimage = new Battler_Afterimage(this);
-};
-
-/**
  * 【独自】残像管理情報の取得
  */
 Game_Battler.prototype.afterimage = function() {
     return this._afterimage;
 };
+
+/**
+ * ●戦闘開始時
+ */
+const _Game_Battler_onBattleStart = Game_Battler.prototype.onBattleStart;
+Game_Battler.prototype.onBattleStart = function(advantageous) {
+    this._afterimage = new Battler_Afterimage(this);
+
+    _Game_Battler_onBattleStart.apply(this, arguments);
+}
 
 /**
  * ●アクション実行終了（バトラー共通）
