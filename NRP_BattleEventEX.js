@@ -2,7 +2,7 @@
 // NRP_BattleEventEX.js
 //=============================================================================
 /*:
- * @plugindesc v1.05 Extends the functionality of battle events.
+ * @plugindesc v1.051 Extends the functionality of battle events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help The following enhancements have been made to the battle Event.
@@ -86,7 +86,7 @@
  */
 
 /*:ja
- * @plugindesc v1.05 バトルイベントの機能を拡張します。
+ * @plugindesc v1.051 バトルイベントの機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help 以下の調整によって、バトルイベントの機能を拡張します。
@@ -577,6 +577,8 @@ const _Game_Battler_onAllActionsEnd = Game_Battler.prototype.onAllActionsEnd;
 Game_Battler.prototype.onAllActionsEnd = function() {
     // コモンイベントに対する終了処理を行わない。
     if (BattleManager._ignoreAllActionsEnd) {
+        // 結果のクリアのみ実行
+        this.clearResult();
         return;
     }
 
