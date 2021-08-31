@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.04 Extends the functionality of battle events.
+ * @plugindesc v1.041 Extends the functionality of battle events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_EnemyRoutineKai
  * @url http://newrpg.seesaa.net/article/477489099.html
@@ -210,7 +210,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.04 バトルイベントの機能を拡張します。
+ * @plugindesc v1.041 バトルイベントの機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_EnemyRoutineKai
  * @url http://newrpg.seesaa.net/article/477489099.html
@@ -1073,6 +1073,8 @@ const _Game_Battler_onAllActionsEnd = Game_Battler.prototype.onAllActionsEnd;
 Game_Battler.prototype.onAllActionsEnd = function() {
     // コモンイベントに対する終了処理を行わない。
     if (BattleManager._ignoreAllActionsEnd) {
+        // 結果のクリアのみ実行
+        this.clearResult();
         return;
     }
 
