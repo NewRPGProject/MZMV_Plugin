@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Display the cursor when selecting a target in battle.
+ * @plugindesc v1.031 Display the cursor when selecting a target in battle.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482370647.html
  *
@@ -268,7 +268,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 戦闘時、選択中の対象にカーソルを表示
+ * @plugindesc v1.031 戦闘時、選択中の対象にカーソルを表示
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482370647.html
  *
@@ -715,46 +715,42 @@ Scene_Battle.prototype.createAllWindows = function() {
     //--------------------------------------
     // 敵ウィンドウ生成
     //--------------------------------------
-    if (pShowTargetEnemyName) {
-        // MV
-        if (Utils.RPGMAKER_NAME == "MV") {
-            this._enemyNameWindow = new Window_BattleEnemyName(0, 0, this._enemyWindow);
-        // MZ
-        } else {
-            // この時点ではサイズ不明なので、とりあえずGraphicsの全領域を確保
-            // ※確保しておかないと文字が表示できない。
-            this._enemyNameWindow = new Window_BattleEnemyName(
-                new Rectangle(0, 0, Graphics.boxWidth, Graphics.boxHeight), this._enemyWindow);
-        }
-
-        this.addChild(this._enemyNameWindow);
-
-        // 追加ウィンドウへアクセスできるように設定
-        this._enemyWindow._enemyNameWindow = this._enemyNameWindow;
+    // MV
+    if (Utils.RPGMAKER_NAME == "MV") {
+        this._enemyNameWindow = new Window_BattleEnemyName(0, 0, this._enemyWindow);
+    // MZ
+    } else {
+        // この時点ではサイズ不明なので、とりあえずGraphicsの全領域を確保
+        // ※確保しておかないと文字が表示できない。
+        this._enemyNameWindow = new Window_BattleEnemyName(
+            new Rectangle(0, 0, Graphics.boxWidth, Graphics.boxHeight), this._enemyWindow);
     }
+
+    this.addChild(this._enemyNameWindow);
+
+    // 追加ウィンドウへアクセスできるように設定
+    this._enemyWindow._enemyNameWindow = this._enemyNameWindow;
 
     //--------------------------------------
     // アクターウィンドウ生成
     //--------------------------------------
-    if (pShowTargetActorName) {
-        // MV
-        if (Utils.RPGMAKER_NAME == "MV") {
-            this._actorNameWindow = new Window_BattleActorName(0, 0, this._actorWindow);
-        // MZ
-        } else {
-            // この時点ではサイズ不明なので、とりあえずGraphicsの全領域を確保
-            // ※確保しておかないと文字が表示できない。
-            this._actorNameWindow = new Window_BattleActorName(
-                new Rectangle(0, 0, Graphics.boxWidth, Graphics.boxHeight), this._actorWindow);
-        }
-
-        this.addChild(this._actorNameWindow);
-
-        // 追加ウィンドウへアクセスできるように設定
-        this._actorWindow._actorNameWindow = this._actorNameWindow;
-        // 追加ウィンドウから親ウィンドウへアクセスできるように設定
-        this._actorNameWindow._parentWindow = this._actorWindow;
+    // MV
+    if (Utils.RPGMAKER_NAME == "MV") {
+        this._actorNameWindow = new Window_BattleActorName(0, 0, this._actorWindow);
+    // MZ
+    } else {
+        // この時点ではサイズ不明なので、とりあえずGraphicsの全領域を確保
+        // ※確保しておかないと文字が表示できない。
+        this._actorNameWindow = new Window_BattleActorName(
+            new Rectangle(0, 0, Graphics.boxWidth, Graphics.boxHeight), this._actorWindow);
     }
+
+    this.addChild(this._actorNameWindow);
+
+    // 追加ウィンドウへアクセスできるように設定
+    this._actorWindow._actorNameWindow = this._actorNameWindow;
+    // 追加ウィンドウから親ウィンドウへアクセスできるように設定
+    this._actorNameWindow._parentWindow = this._actorWindow;
 };
 
 /**
@@ -979,12 +975,22 @@ Window_BattleEnemyName.prototype.showTargetName = function() {
         return;
     }
 
+    // 敵のカーソル画像描画
+    const sprite = getSprite(enemy);
+    const spriteset = getSpriteset();
+    if (spriteset) {
+        dispCursorSprite(spriteset._enemyCursorSprite, sprite);
+    }
+
+    // 対象名を表示しない場合は終了
+    if (!pShowTargetEnemyName) {
+        return;
+    }
+
     // 指定があればフォントサイズを設定
     if (pEnemyNameFontSize) {
         this.contents.fontSize = pEnemyNameFontSize;
     }
-
-    const sprite = getSprite(enemy);
 
     // ウィンドウ幅を求める。
     const textWidth = this.textWidth(this.convertEscapeCharacters(enemy.name()));
@@ -1024,12 +1030,6 @@ Window_BattleEnemyName.prototype.showTargetName = function() {
     // ウィンドウ位置を設定（Ｘ座標、Ｙ座標、幅、高さ）
     this.move(x, y, textPaddingWidth, windowHeight);
     this.show();
-
-    // 敵のカーソル画像描画
-    const spriteset = getSpriteset();
-    if (spriteset) {
-        dispCursorSprite(spriteset._enemyCursorSprite, sprite);
-    }
 };
 
 /**
@@ -1189,12 +1189,22 @@ Window_BattleActorName.prototype.showTargetName = function() {
         return;
     }
 
+    // アクターのカーソル画像描画
+    const sprite = getSprite(actor);
+    const spriteset = getSpriteset();
+    if (spriteset) {
+        dispCursorSprite(spriteset._actorCursorSprite, sprite);
+    }
+
+    // 対象名を表示しない場合は終了
+    if (!pShowTargetActorName) {
+        return;
+    }
+
     // 指定があればフォントサイズを設定
     if (pActorNameFontSize) {
         this.contents.fontSize = pActorNameFontSize;
     }
-
-    const sprite = getSprite(actor);
 
     // ウィンドウ幅を求める。
     const textWidth = this.textWidth(this.convertEscapeCharacters(actor.name()));
@@ -1241,12 +1251,6 @@ Window_BattleActorName.prototype.showTargetName = function() {
 
     this.move(x, y, textPaddingWidth, windowHeight);
     this.show();
-
-    // アクターのカーソル画像描画
-    const spriteset = getSpriteset();
-    if (spriteset) {
-        dispCursorSprite(spriteset._actorCursorSprite, sprite);
-    }
 }
 
 /**
