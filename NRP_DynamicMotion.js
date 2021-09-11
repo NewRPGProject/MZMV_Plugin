@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.191 When executing skills, call motion freely.
+ * @plugindesc v1.20 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help When executing skills(items), call motion freely.
@@ -289,6 +289,19 @@
  * @type string
  * @desc Runs the specified plugin command.
  * 
+ * @param <Starting Point>
+ * @desc Start point related parameters.
+ * 
+ * @param sx
+ * @parent <Starting Point>
+ * @type string
+ * @desc The X coordinate of the starting point.
+ * 
+ * @param sy
+ * @parent <Starting Point>
+ * @type string
+ * @desc The Y coordinate of the starting point.
+ * 
  * @param <End Point>
  * @desc End point related parameters.
  * 
@@ -537,7 +550,7 @@
  */
 
 /*:ja
- * @plugindesc v1.191 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.20 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在にモーションを呼び出します。
@@ -863,6 +876,22 @@
  * @parent <Repeat>
  * @type string
  * @desc 指定したプラグインコマンドを実行します。
+ * 
+ * @param <Starting Point>
+ * @text ＜始点＞
+ * @desc 始点関連のパラメータです。
+ * 
+ * @param sx
+ * @text 始点Ｘ座標
+ * @parent <Starting Point>
+ * @type string
+ * @desc 始点のＸ座標です。
+ * 
+ * @param sy
+ * @text 始点Ｙ座標
+ * @parent <Starting Point>
+ * @type string
+ * @desc 始点のＹ座標です。
  * 
  * @param <End Point>
  * @text ＜終点＞
@@ -2139,6 +2168,8 @@ DynamicMotion.prototype.initialize = function (baseMotion, performer, target, r)
     }
 
     // 以下の項目はそのまま数式として渡す
+    this.sx = baseMotion.sx;
+    this.sy = baseMotion.sy;
     this.ex = baseMotion.ex;
     this.ey = baseMotion.ey;
     this.airY = baseMotion.airY;
@@ -2598,13 +2629,24 @@ Sprite.prototype.startDynamicMotion = function(dynamicMotion) {
             this.y -= motion._addY;
         }
 
-       /*
-        * 始点座標
-        * ※パラメータとしては存在しないがeval参照用に設定
-        */
+        /*
+         * 始点座標
+         */
         // 現在地を初期値に設定
-        var sx = this.x;
-        var sy = this.y - this.rollAirY(); // 空中座標は除外
+        let sx = this.x;
+        let sy = this.y - this.rollAirY(); // 空中座標は除外
+
+        // 指定があれば始点座標を設定
+        if (dm.sx != undefined) {
+            sx = eval(dm.sx);
+            // 差分を調整して現在座標に反映
+            this._offsetX += sx - this.x;
+        }
+        if (dm.sy != undefined) {
+            sy = eval(dm.sy);
+            // 差分を調整して現在座標に反映
+            this._offsetY += sy - this.y;
+        }
 
         motion._sx = sx;
         motion._sy = sy;
@@ -2625,7 +2667,7 @@ Sprite.prototype.startDynamicMotion = function(dynamicMotion) {
             const gridEx = eval(dm.gridEx);
             ex += (gridEx - this._character._x) * $gameMap.tileWidth();
 
-        } else if (dm.ex) {
+        } else if (dm.ex != undefined) {
             ex = eval(dm.ex);
         }
         // 終点Ｘ座標ランダム幅を加算
