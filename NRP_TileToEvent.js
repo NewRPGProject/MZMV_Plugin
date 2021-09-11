@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Automatically generate events on tiles.
+ * @plugindesc v1.01 Automatically generate events on tiles.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481496398.html
  *
@@ -186,7 +186,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 タイル上に自動でイベントを生成します。
+ * @plugindesc v1.01 タイル上に自動でイベントを生成します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481496398.html
  *
@@ -1011,6 +1011,10 @@ Game_TileEvent.prototype.setSpritePrepared = function() {
     this._spritePrepared = true;
 };
 
+Game_TileEvent.prototype.setEventId = function(eventId) {
+    this._eventId = eventId;
+};
+
 //=============================================================================
 // Spriteset_Map
 //  タイルイベントのスプライトを管理します。
@@ -1083,14 +1087,35 @@ DataManager.onLoad = function(object) {
     }
 };
 
+/**
+ * ●$dataMap.eventsにイベント情報を再登録
+ */
 Game_Map.prototype.restoreLinkTileEvents = function() {
     if (!this.isSameMapReload()) return;
 
+    //------------------------------------------------------------
+    // マップデータの変化を想定し、イベントＩＤを振り直す。
+    //------------------------------------------------------------
+    // $dataMap.events上で有効なイベント数+1を取得
+    const dataMapEvents = $dataMap.events.filter(function(event) {
+        return event && event.id;
+    });
+
+    let newEventId = dataMapEvents.length + 1 || 1;
+
     for (const event of this.getTileEvents()) {
+        // イベントＩＤを設定
+        event.setEventId(newEventId);
+        // $dataMap.eventsにイベント情報を登録する。
         event.linkEventData();
+
+        newEventId++;
     }
 };
 
+/**
+ * ●タイルイベントを取得する。
+ */
 Game_Map.prototype.getTileEvents = function() {
     return this.events().filter(function(event) {
         return event._tileEventFlg;
