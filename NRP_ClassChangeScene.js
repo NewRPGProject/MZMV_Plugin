@@ -15,9 +15,8 @@
  * - Can set up an advanced class that can change classes
  *   when the conditions are met.
  * - Class change commands can be added to the menu screen.
- * - Different images (face gradients, pictures) can be specified
- *   for each class and actor.
- * - The new face can be reflected in the menu and in battle.
+ * - Different images can be specified for different professions and actors.
+ *   (Face, Character, Battler)
  * 
  * ------------------------------------------
  * ■Usage
@@ -350,8 +349,8 @@
  * ・転職後の能力変化や習得スキルを表示
  * ・条件を満たした場合に転職できる上級職などを設定可
  * ・メニュー画面に転職用のコマンドを追加可
- * ・職業やアクター毎に異なる画像（顔グラ、ピクチャー）を指定可
- * ・変更した顔グラは戦闘やメニューにも反映可
+ * ・職業やアクター毎に異なる画像を指定可
+ * 　（顔グラ、キャラグラ、バトラー）
  * 
  * ------------------------------------------
  * ■使用方法
