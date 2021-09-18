@@ -9,10 +9,15 @@
  *
  * @help Display the class change screen.
  * 
- * You will be able to change classes
- * while displaying the ability changes after the class change.
- * It is also possible to add commands
- * for class change to the menu screen.
+ * ◆Main Features
+ * - The ability to change classes while displaying the changes
+ *   in abilities after a class change.
+ * - Can set up an advanced class that can change classes
+ *   when the conditions are met.
+ * - Class change commands can be added to the menu screen.
+ * - Different images (face gradients, pictures) can be specified
+ *   for each class and actor.
+ * - The new face can be reflected in the menu and in battle.
  * 
  * ------------------------------------------
  * ■Usage
@@ -313,8 +318,12 @@
  *
  * @help 転職画面を表示します。
  * 
- * 転職後の能力変化などを表示しながら、転職の実行ができるようになります。
- * メニュー画面に転職用のコマンドを追加することも可能です。
+ * ◆主な機能
+ * ・転職後の能力変化などを表示しながら転職できる
+ * ・条件を満たした場合に転職できる上級職などを設定可
+ * ・メニュー画面に転職用のコマンドを追加可
+ * ・職業やアクター毎に異なる画像（顔グラ、ピクチャー）を指定可
+ * ・変更した顔グラは戦闘やメニューにも反映可
  * 
  * ------------------------------------------
  * ■使用方法
