@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.121 The order of actions is displayed on the battle screen.
+ * @plugindesc v1.13 The order of actions is displayed on the battle screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -229,7 +229,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.121 行動順序を戦闘画面へ表示します。
+ * @plugindesc v1.13 行動順序を戦闘画面へ表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -974,8 +974,8 @@ Window_BattleCtb.prototype.loadBitmap = function(battler) {
     // 1:顔グラ表示
     } else if (graphicMode == 1) {
         if (battler.isActor()) {
-            imageName = battler._faceName;
-            imageIndex = battler._faceIndex;
+            imageName = battler.faceName();
+            imageIndex = battler.faceIndex();
         } else {
             imageName = paramEnemyFileName;
             imageIndex = paramEnemyFileIndex;
@@ -985,8 +985,8 @@ Window_BattleCtb.prototype.loadBitmap = function(battler) {
     // 2:キャラグラ表示
     } else if (graphicMode == 2) {
         if (battler.isActor()) {
-            imageName = battler._characterName;
-            imageIndex = battler._characterIndex;
+            imageName = battler.characterName();
+            imageIndex = battler.characterIndex();
         } else {
             imageName = paramEnemyFileName;
             imageIndex = paramEnemyFileIndex;
@@ -1616,7 +1616,7 @@ Window_BattleActor.prototype.select = function(index) {
 };
 
 /**
- * ●敵の選択を閉じる
+ * ●アクターの選択を閉じる
  */
 const _Window_BattleActor_hide = Window_BattleActor.prototype.hide;
 Window_BattleActor.prototype.hide = function() {
