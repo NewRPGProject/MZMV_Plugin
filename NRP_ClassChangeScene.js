@@ -284,26 +284,35 @@
  */
 
 /*~struct~ClassImage:
+ * @param <Target>
+ * 
  * @param Class
+ * @parent <Target>
  * @type class
  * @desc This is the target class.
  * 
  * @param Actor
+ * @parent <Target>
  * @type actor
  * @desc This is the target actor.
  * 
+ * @param <Image>
+ * 
  * @param Face
+ * @parent <Image>
  * @type file
  * @dir img/faces
  * @desc This is the file of the face graphic to be displayed.
  * Use this file in combination with the index below.
  *
  * @param FaceIndex
+ * @parent <Image>
  * @type number
  * @desc Index of the face graphic.
  * If the face graphic is omitted, the current file is used.
  * 
  * @param Picture
+ * @parent <Image>
  * @type file
  * @dir img/pictures
  * @desc Specify the picture to be displayed.
@@ -625,17 +634,26 @@
  */
 
 /*~struct~ClassImage:ja
+ * @param <Target>
+ * @text ＜設定対象＞
+ * 
  * @param Class
+ * @parent <Target>
  * @text 職業
  * @type class
  * @desc 対象の職業です。
  * 
  * @param Actor
+ * @parent <Target>
  * @text アクター
  * @type actor
  * @desc 対象のアクターです。
  * 
+ * @param <Image>
+ * @text ＜画像＞
+ * 
  * @param Face
+ * @parent <Image>
  * @text 顔グラフィック
  * @type file
  * @dir img/faces
@@ -643,12 +661,14 @@
  * 下のインデックスと組み合わせてください。
  *
  * @param FaceIndex
+ * @parent <Image>
  * @text 顔インデックス
  * @type number
  * @desc 顔グラフィックのインデックスです。
  * 顔グラフィックを省略すると現在のファイルを使用します。
  * 
  * @param Picture
+ * @parent <Image>
  * @text ピクチャー
  * @type file
  * @dir img/pictures
