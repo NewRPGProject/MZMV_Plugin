@@ -147,11 +147,11 @@
  * @type struct<ClassImage>[]
  * @desc This is a list for setting images for each class and actor.
  * 
- * @param UseClassFace
+ * @param UseClassImage
  * @parent <Layout Image>
  * @type boolean
- * @default false
- * @desc The face graphics set in the ClassImageList will also be reflected in the battle, status, and other screens.
+ * @default true
+ * @desc The images (other than pictures) set in ClassImageList will be reflected in the battle, menu, and other.
  * 
  * @param ReverseImagePos
  * @parent <Layout Image>
@@ -317,6 +317,25 @@
  * @dir img/pictures
  * @desc Specify the picture to be displayed.
  * Overrides the face graphic.
+ * 
+ * @param Character
+ * @parent <Image>
+ * @type file
+ * @dir img/characters
+ * @desc The file of the character image to be used.
+ * Use this file in combination with the index below.
+ *
+ * @param CharacterIndex
+ * @parent <Image>
+ * @type number
+ * @desc Index of the character graphic.
+ * If the character graphic is omitted, the current file is used.
+ * 
+ * @param Battler
+ * @parent <Image>
+ * @type file
+ * @dir img/sv_actors
+ * @desc The file of the SV actor image to be used.
  */
 
 /*:ja
@@ -470,14 +489,14 @@
  * @parent <Layout Image>
  * @text 職業画像一覧
  * @type struct<ClassImage>[]
- * @desc 職業やアクター毎に画像を設定するリストです。
+ * @desc 職業やアクター毎の画像を設定するリストです。
  * 
- * @param UseClassFace
+ * @param UseClassImage
  * @parent <Layout Image>
- * @text 顔グラを他画面に反映
+ * @text 画像を他画面に反映
  * @type boolean
- * @default false
- * @desc 職業画像一覧に設定した顔グラフィックを、戦闘やステータスなどの画面にも反映します。
+ * @default true
+ * @desc 職業画像一覧に設定した画像（ピクチャー以外）を、戦闘やメニューなどにも反映します。
  * 
  * @param ReverseImagePos
  * @parent <Layout Image>
@@ -674,6 +693,28 @@
  * @dir img/pictures
  * @desc 表示するピクチャーを指定します。
  * 顔グラフィックよりも優先されます。
+ * 
+ * @param Character
+ * @parent <Image>
+ * @text キャラクター画像
+ * @type file
+ * @dir img/characters
+ * @desc 使用するキャラクター画像のファイルです。
+ * 下のインデックスと組み合わせてください。
+ *
+ * @param CharacterIndex
+ * @parent <Image>
+ * @text キャラクターｲﾝﾃﾞｯｸｽ
+ * @type number
+ * @desc キャラクター画像のインデックスです。
+ * キャラクター画像を省略すると現在のファイルを使用します。
+ * 
+ * @param Battler
+ * @parent <Image>
+ * @text ＳＶアクター画像
+ * @type file
+ * @dir img/sv_actors
+ * @desc 使用するＳＶアクター画像のファイルです。
  */
 
 (function() {
@@ -734,7 +775,7 @@ const pClassListWidth = toNumber(parameters["ClassListWidth"], 280);
 const pDisplayListLevel = toBoolean(parameters["DisplayListLevel"], true);
 const pMessageFontSize = toNumber(parameters["MessageFontSize"]);
 const pClassImageList = parseStruct2(parameters["ClassImageList"]);
-const pUseClassFace = toBoolean(parameters["UseClassFace"], false);
+const pUseClassImage = toBoolean(parameters["UseClassImage"], true);
 const pReverseImagePos = toBoolean(parameters["ReverseImagePos"], false);
 const pPictureOnScroll = toBoolean(parameters["PictureOnScroll"], true);
 const pPictureAdjustX = toNumber(parameters["PictureAdjustX"], 0);
@@ -1127,6 +1168,11 @@ Scene_ClassChange.prototype.onClassChangeCancel = function() {
  * ●転職確定後の終了処理
  */
 Scene_ClassChange.prototype.classChangeEnd = function() {
+    // 画像反映を行う場合はリフレッシュ
+    if (pUseClassImage) {
+        $gamePlayer.refresh();
+    }
+
     // アクターの選択を行う場合
     if (this._isSelectActor) {
         // アクター選択へ戻る
@@ -2302,9 +2348,12 @@ if (pShowMenuCommand) {
 }
 
 //-----------------------------------------------------------------------------
-// 顔グラの反映
+// 画像の反映
 //-----------------------------------------------------------------------------
-if (pUseClassFace) {
+if (pUseClassImage) {
+    /**
+     * ●顔グラ
+     */
     const _Game_Actor_faceName = Game_Actor.prototype.faceName;
     Game_Actor.prototype.faceName = function() {
         const classImage = findClassImage(this);
@@ -2315,6 +2364,9 @@ if (pUseClassFace) {
         return _Game_Actor_faceName.apply(this, arguments);
     };
 
+    /**
+     * ●顔グラ（インデックス）
+     */
     const _Game_Actor_faceIndex = Game_Actor.prototype.faceIndex;
     Game_Actor.prototype.faceIndex = function() {
         const classImage = findClassImage(this);
@@ -2323,6 +2375,45 @@ if (pUseClassFace) {
         }
 
         return _Game_Actor_faceIndex.apply(this, arguments);
+    };
+
+    /**
+     * ●キャラクター
+     */
+    const _Game_Actor_characterName = Game_Actor.prototype.characterName;
+    Game_Actor.prototype.characterName = function() {
+        const classImage = findClassImage(this);
+        if (classImage && classImage.Character) {
+            return classImage.Character;
+        }
+
+        return _Game_Actor_characterName.apply(this, arguments);
+    };
+
+    /**
+     * ●キャラクター（インデックス）
+     */
+    const _Game_Actor_characterIndex = Game_Actor.prototype.characterIndex;
+    Game_Actor.prototype.characterIndex = function() {
+        const classImage = findClassImage(this);
+        if (classImage && classImage.CharacterIndex) {
+            return classImage.CharacterIndex;
+        }
+
+        return _Game_Actor_characterIndex.apply(this, arguments);
+    };
+
+    /**
+     * ●ＳＶアクター
+     */
+    const _Game_Actor_battlerName = Game_Actor.prototype.battlerName;
+    Game_Actor.prototype.battlerName = function() {
+        const classImage = findClassImage(this);
+        if (classImage && classImage.Battler) {
+            return classImage.Battler;
+        }
+
+        return _Game_Actor_battlerName.apply(this, arguments);
     };
 }
 
