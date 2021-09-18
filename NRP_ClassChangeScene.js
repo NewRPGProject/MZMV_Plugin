@@ -3,11 +3,11 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Display the class change screen.
+ * @plugindesc v1.00 A class change system will be implemented.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
- * @help Display the class change screen.
+ * @help A class change system will be implemented.
  * 
  * ◆Main Features
  * - Displays parameter changes
@@ -312,11 +312,11 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 転職画面を表示する。
+ * @plugindesc v1.00 転職システムを実装する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
- * @help 転職画面を表示します。
+ * @help 転職システムを実装します。
  * 
  * ◆主な機能
  * ・転職後の能力変化や習得スキルを表示
