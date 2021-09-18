@@ -10,8 +10,8 @@
  * @help Display the class change screen.
  * 
  * ◆Main Features
- * - The ability to change classes while displaying the changes
- *   in abilities after a class change.
+ * - Displays parameter changes
+ *   and learnable skills after class change.
  * - Can set up an advanced class that can change classes
  *   when the conditions are met.
  * - Class change commands can be added to the menu screen.
@@ -319,7 +319,7 @@
  * @help 転職画面を表示します。
  * 
  * ◆主な機能
- * ・転職後の能力変化などを表示しながら転職できる
+ * ・転職後の能力変化や習得スキルを表示
  * ・条件を満たした場合に転職できる上級職などを設定可
  * ・メニュー画面に転職用のコマンドを追加可
  * ・職業やアクター毎に異なる画像（顔グラ、ピクチャー）を指定可
