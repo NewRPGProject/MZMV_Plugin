@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 A class change system will be implemented.
+ * @plugindesc v1.01 A class change system will be implemented.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -230,6 +230,12 @@
  * @default Class Change
  * @desc Sets the display command name for the class change.
  * 
+ * @param MenuCommandSwitch
+ * @parent <Menu Command>
+ * @type switch
+ * @desc Displays the command only when the switch is on.
+ * If it is blank, it will always be displayed.
+ * 
  * @param ClassChangeSymbol
  * @parent <Menu Command>
  * @type text
@@ -339,7 +345,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 転職システムを実装する。
+ * @plugindesc v1.01 転職システムを実装する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -589,6 +595,13 @@
  * @default 転職
  * @desc 転職の表示コマンド名を設定します。
  * 
+ * @param MenuCommandSwitch
+ * @parent <Menu Command>
+ * @text 表示許可するスイッチ
+ * @type switch
+ * @desc スイッチがオンの時のみコマンドを表示します。
+ * 空白なら常に表示します。
+ * 
  * @param ClassChangeSymbol
  * @parent <Menu Command>
  * @text [上級]転職記号
@@ -786,6 +799,7 @@ const pSkillFontSize = toNumber(parameters["SkillFontSize"]);
 const pShowMenuCommand = toBoolean(parameters["ShowMenuCommand"], false);
 const pShowMenuCommandPosition = toNumber(parameters["ShowMenuCommandPosition"], 3);
 const pClassChangeName = parameters["ClassChangeName"];
+const pMenuCommandSwitch = toNumber(parameters["MenuCommandSwitch"]);
 const pClassChangeSymbol = parameters["ClassChangeSymbol"];
 
 //----------------------------------------
@@ -799,6 +813,8 @@ if (!PluginManager.registerCommand) {
 
 /** 転職対象となる職業一覧 */
 let mClassList = null;
+/** アクターの変更禁止 */
+let mActorNoChange = false;
 
 /**
  * ●シーン開始
@@ -809,9 +825,11 @@ PluginManager.registerCommand(PLUGIN_NAME, "SceneStart", function(args) {
     // 対象に設定
     if (actor) {
         $gameParty.setMenuActor(actor);
+        mActorNoChange = true;
     // 指定がない場合はクリア
     } else {
         $gameParty._menuActorId = 0;
+        mActorNoChange = false;
     }
 
     // 職業一覧の生成
@@ -964,6 +982,11 @@ Scene_ClassChange.prototype.create = function() {
     this._selectWindow = new Windows_SelectClasses(new Rectangle(wx, wy, ww, wh));
     this._selectWindow.setHandler("ok", this.onClassChangeConfirm.bind(this));
     this._selectWindow.setHandler('cancel', this.onClassChangeSelectCancel.bind(this));
+    // アクターが指定されている場合は切替禁止
+    if (!mActorNoChange) {
+        this._selectWindow.setHandler("pagedown", this.nextActor.bind(this));
+        this._selectWindow.setHandler("pageup", this.previousActor.bind(this));
+    }
     this.addWindow(this._selectWindow);
 
     // 情報用ウィンドウ
@@ -1034,6 +1057,7 @@ Scene_ClassChange.prototype.start = function() {
     if (this.isNoActor()) {
         // アクター選択を行うモード
         this._isSelectActor = true;
+        // 選択開始
         this.selectActorStart();
         return;
     }
@@ -1181,6 +1205,38 @@ Scene_ClassChange.prototype.classChangeEnd = function() {
     } else {
         this.popScene();
     }
+};
+
+//----------------------------------------
+// 以下アクター切替用
+//----------------------------------------
+
+/**
+ * ●アクターの変更
+ */
+Scene_ClassChange.prototype.onActorChange = function() {
+    Scene_MenuBase.prototype.onActorChange.call(this);
+    this.refreshActor();
+    this._selectWindow.activate();
+};
+
+/**
+ * ●ページボタンが必要かどうか？
+ */
+Scene_ClassChange.prototype.needsPageButtons = function() {
+    return true;
+};
+
+/**
+ * ●ページボタンの表示制御
+ */
+Scene_ClassChange.prototype.arePageButtonsEnabled = function() {
+    // アクターが指定されている場合は切替禁止
+    // アクター選択中は切替禁止
+    if (mActorNoChange || this._statusWindow.active) {
+        return false;
+    }
+    return true;
 };
 
 //----------------------------------------
@@ -1396,32 +1452,6 @@ Windows_SelectClasses.prototype.drawItem = function(index) {
         this.changePaintOpacity(1);
     }
 };
-
-// /**
-//  * ●選択中の項目が選択可能かどうか？
-//  */
-// Windows_SelectClasses.prototype.isCurrentItemEnabled = function() {
-//     return isClassEnabled(this.item(), this._actor);
-// };
-
-// /**
-//  * ●項目が選択可能かどうか？
-//  */
-// Windows_SelectClasses.prototype.isEnabled = function(item) {
-//     // 既に就いている職業の場合は無効
-//     if (item.id == this._actor._classId) {
-//         return false;
-
-//     // 職業の重複禁止
-//     } else if (pNoDuplicate) {
-//         // 誰かが既にその職業へ就いている場合
-//         if ($gameActors._data.some(actor => actor._classId == item.id)) {
-//             return false;
-//         }
-//     }
-
-//     return true;
-// };
 
 /**
  * ●選択中の項目を取得
@@ -2038,8 +2068,6 @@ Windows_ClassInfo.prototype.processCancel = function() {
  * ●カーソル下
  */
 Windows_ClassInfo.prototype.cursorDown = function(wrap) {
-    // this.scrollTo(this._scrollX, this._scrollY + this._scrollInterval);
-    // this.smoothScrollTo(this._scrollX, this._scrollY + this._scrollInterval);
     this.smoothScrollDown(1);
 };
 
@@ -2047,17 +2075,26 @@ Windows_ClassInfo.prototype.cursorDown = function(wrap) {
  * ●カーソル上
  */
 Windows_ClassInfo.prototype.cursorUp = function(wrap) {
-    // this.scrollTo(this._scrollX, this._scrollY - this._scrollInterval);
-    // this.smoothScrollTo(this._scrollX, this._scrollY - this._scrollInterval);
     this.smoothScrollUp(1);
 };
 
-// Windows_ClassInfo.prototype.smoothScrollTo = function(x, y) {
-//     this._scrollTargetX = x.clamp(0, this.maxScrollX());
-//     this._scrollTargetY = y.clamp(0, this.maxScrollY());
-//     // this._scrollDuration = Input.keyRepeatInterval;
-//     this._scrollDuration = 6;
-// };
+/**
+ * ●タッチが有効かどうか？
+ */
+Windows_ClassInfo.prototype.isTouchOkEnabled = function() {
+    return this.isOkEnabled();
+};
+
+/**
+ * ●当たり判定
+ */
+Windows_ClassInfo.prototype.hitTest = function(x, y) {
+    // 要素内なら有効と判定
+    if (this.innerRect.contains(x, y)) {
+        return 1;
+    }
+    return -1;
+};
 
 /**
  * ●スクロールを含めた縦幅を計算
@@ -2311,6 +2348,11 @@ if (pShowMenuCommand) {
         // 元処理実行
         _Window_MenuCommand_addMainCommands.call(this);
 
+        // 非表示スイッチが存在かつオフの場合は無効
+        if (pMenuCommandSwitch && !$gameSwitches.value(pMenuCommandSwitch)) {
+            return;
+        }
+
         // 指定位置に転職コマンドを挿入
         // ※標準では装備の下
         this._list.splice(pShowMenuCommandPosition, 0,
@@ -2340,6 +2382,8 @@ if (pShowMenuCommand) {
         if (this._commandWindow.currentSymbol() == pClassChangeSymbol) {
             // 職業一覧の生成
             mClassList = pClassList;
+            // アクターの変更許可
+            mActorNoChange = false;
             // 転職画面起動
             SceneManager.push(Scene_ClassChange);
         }
