@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 A class change system will be implemented.
+ * @plugindesc v1.011 A class change system will be implemented.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -345,7 +345,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 転職システムを実装する。
+ * @plugindesc v1.011 転職システムを実装する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -1454,6 +1454,14 @@ Windows_SelectClasses.prototype.drawItem = function(index) {
 };
 
 /**
+ * ●選択中の項目が選択可能かどうか？
+ */
+Windows_SelectClasses.prototype.isCurrentItemEnabled = function() {
+    // 対象項目が存在するかどうか？
+    return !!this.item();
+};
+
+/**
  * ●選択中の項目を取得
  */
 Windows_SelectClasses.prototype.item = function() {
@@ -1507,10 +1515,14 @@ Windows_SelectClasses.prototype.select = function(index) {
     const classItem = this.itemAt(index);
 
     // 比較用に転職後アクター情報を設定
-    if (this._actor && classItem) {
-        const tempActor = JsonEx.makeDeepCopy(this._actor);
-        tempActor.changeClass(classItem.id, pKeepExp);
-        this._infoWindow.setTempActor(tempActor);
+    if (this._actor) {
+        if (classItem) {
+            const tempActor = JsonEx.makeDeepCopy(this._actor);
+            tempActor.changeClass(classItem.id, pKeepExp);
+            this._infoWindow.setTempActor(tempActor);
+        } else {
+            this._infoWindow.setTempActor(null);
+        }
     }
 };
 
