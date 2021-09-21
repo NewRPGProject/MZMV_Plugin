@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.012 A class change system will be implemented.
+ * @plugindesc v1.013 A class change system will be implemented.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -345,7 +345,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.012 転職システムを実装する。
+ * @plugindesc v1.013 転職システムを実装する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -1078,6 +1078,8 @@ Scene_ClassChange.prototype.selectActorStart = function() {
     // 転職用ウィンドウは非表示
     this._selectWindow.hide();
     this._infoWindow.hide();
+    // スキルページを解除
+    this._infoWindow._isSkillPage = false;
     // さらにアクター選択用ウィンドウを表示＆フォーカス
     this._statusWindow.show();
     this._statusWindow.activate();
@@ -1219,6 +1221,9 @@ Scene_ClassChange.prototype.classChangeEnd = function() {
 Scene_ClassChange.prototype.onActorChange = function() {
     Scene_MenuBase.prototype.onActorChange.call(this);
     this.refreshActor();
+    // スキルページを解除
+    this._infoWindow._isSkillPage = false;
+    // 職業選択ウィンドウに合わせる。
     this._selectWindow.activate();
 };
 
@@ -1588,6 +1593,8 @@ Windows_ClassInfo.prototype.setActor = function(actor) {
  */
 Windows_ClassInfo.prototype.changePage = function() {
     this._isSkillPage = !this._isSkillPage;
+    // スクロール位置を先頭に戻す。
+    this.scrollTo(this._scrollX, 0);
     this.refresh();
 };
 
@@ -1627,7 +1634,7 @@ Windows_ClassInfo.prototype.getClass = function() {
 Windows_ClassInfo.prototype.drawAllItems = function() {
     if (this._actor && this._tempActor) {
         if (this._isSkillPage) {
-            this.drawLearnSkills(this.itemPadding(), this.itemPadding());
+            this.drawLearnSkills(this.itemPadding(), -this._scrollY + this.itemPadding());
             return;
         }
 
@@ -1909,9 +1916,15 @@ Windows_ClassInfo.prototype.drawClassMessage = function(x, y) {
         this.contents.fontSize = pMessageFontSize;
     }
 
-    this.drawTextEx(this.getClassMessage(), x, y);
+    const classMessage = this.getClassMessage();
+    this.drawTextEx(classMessage, x, y);
+    const textHeight = this.getTextHeight(classMessage);
+
     // フォント設定をリセット（\c[]などを初期化）
     this.resetFontSettings();
+
+    // 終了地点を保持しておく
+    this._classMessageEndY = y + textHeight + this.lineHeight() / 2;
 };
 
 /**
@@ -1942,7 +1955,7 @@ Windows_ClassInfo.prototype.classSkillY = function() {
         return Math.floor(this.classMessageY()) + 8;
     }
     // 職業説明の下に接続（8はマージン）
-    return Math.floor(this.classMessageY() + this.getTextHeight(classMessage)) + 8;
+    return Math.floor(this._classMessageEndY) + 8;
 };
 
 /**
@@ -1950,6 +1963,18 @@ Windows_ClassInfo.prototype.classSkillY = function() {
  */
 Windows_ClassInfo.prototype.getTextHeight = function(text) {
     return this.textSizeEx(text).height;
+};
+
+/**
+ * ●文章サイズの取得
+ */
+Windows_ClassInfo.prototype.textSizeEx = function(text) {
+    // 正確を期すためフォントサイズをリセットしない。
+    // this.resetFontSettings();
+    const textState = this.createTextState(text, 0, 0, 0);
+    textState.drawing = false;
+    this.processAllText(textState);
+    return { width: textState.outputWidth, height: textState.outputHeight };
 };
 
 /**
@@ -2452,6 +2477,11 @@ if (pUseClassImage) {
  * ●独自の職業画像が存在すればロードする。
  */
 function loadClassImage() {
+    // 画像設定がない場合は処理終了
+    if (!pClassImageList) {
+        return;
+    }
+
     // 画像の設定がある場合
     for (const classImage of pClassImageList) {
         if (classImage.Picture) {
@@ -2460,6 +2490,12 @@ function loadClassImage() {
         } else if (classImage.Face) {
             ImageManager.loadFace(classImage.Face);
         }
+    }
+
+    // 転職解除用に元の顔グラも読み込んでおく。
+    for (const actor of $gameParty.members()) {
+        // ※あえて_faceNameを直接参照
+        ImageManager.loadFace(actor._faceName);
     }
 };
 
