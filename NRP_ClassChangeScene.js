@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.011 A class change system will be implemented.
+ * @plugindesc v1.012 A class change system will be implemented.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -345,7 +345,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.011 転職システムを実装する。
+ * @plugindesc v1.012 転職システムを実装する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -963,6 +963,8 @@ Scene_ClassChange.prototype.initialize = function() {
 
     // アクターの選択を行うかどうか？
     this._isSelectActor = false;
+    // 職業画像の読込
+    loadClassImage();
 };
 
 /**
@@ -1577,7 +1579,6 @@ Windows_ClassInfo.prototype.initialize = function(rect) {
 Windows_ClassInfo.prototype.setActor = function(actor) {
     if (this._actor !== actor) {
         this._actor = actor;
-        this.loadClassImage(this._actor);
         this.refresh();
     }
 };
@@ -1642,10 +1643,10 @@ Windows_ClassInfo.prototype.drawAllItems = function() {
         this.drawActorName(this._actor, nameRect.x, -this._scrollY + this.itemPadding(), nameRect.width);
 
         if (pReverseImagePos) {
-            this.drawClassImage(this._actor, this.paramX() + 170, this.paramY(0));
+            this.drawClassImage(this._tempActor, this.paramX() + 170, this.paramY(0));
             this.drawAllParams();
         } else {
-            this.drawClassImage(this._actor, nameRect.x, this.paramY(0));
+            this.drawClassImage(this._tempActor, nameRect.x, this.paramY(0));
             this.drawAllParams();
         }
 
@@ -1666,7 +1667,7 @@ Windows_ClassInfo.prototype.drawClassImage = function(
     let faceIndex = actor.faceIndex();
 
     // 独自の職業画像が存在すれば取得する。
-    const classImage = findClassImage(this._tempActor);
+    const classImage = findClassImage(actor);
     if (classImage) {
         // ピクチャー
         if (classImage.Picture) {
@@ -1715,35 +1716,6 @@ Windows_ClassInfo.prototype.drawPicture = function(
     this.contents.paintOpacity = pPictureOpacity;
     this.contents.blt(bitmap, sx, sy, sw, sh, dx, dy);
     this.contents.paintOpacity = 255;
-};
-
-/**
- * ●独自の職業画像が存在すればロードする。
- */
-Windows_ClassInfo.prototype.loadClassImage = function(actor) {
-    // 画像の設定がある場合
-    for (const classImage of pClassImageList) {
-        // アクターの指定がある場合
-        if (classImage.Actor) {
-            if (classImage.Actor == actor.actorId()) {
-                if (classImage.Picture) {
-                    ImageManager.loadPicture(classImage.Picture);
-
-                } else if (classImage.Face) {
-                    ImageManager.loadFace(classImage.Face);
-                }
-            }
-
-        // アクターの指定がない場合
-        } else {
-            if (classImage.Picture) {
-                ImageManager.loadPicture(classImage.Picture);
-
-            } else if (classImage.Face) {
-                ImageManager.loadFace(classImage.Face);
-            }
-        }
-    }
 };
 
 /**
@@ -2475,6 +2447,21 @@ if (pUseClassImage) {
 //-----------------------------------------------------------------------------
 // 共通関数
 //-----------------------------------------------------------------------------
+
+/**
+ * ●独自の職業画像が存在すればロードする。
+ */
+function loadClassImage() {
+    // 画像の設定がある場合
+    for (const classImage of pClassImageList) {
+        if (classImage.Picture) {
+            ImageManager.loadPicture(classImage.Picture);
+
+        } else if (classImage.Face) {
+            ImageManager.loadFace(classImage.Face);
+        }
+    }
+};
 
 /**
  * ●独自の職業画像が存在すれば取得する。
