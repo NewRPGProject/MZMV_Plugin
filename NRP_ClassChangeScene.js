@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.02 A class change system will be implemented.
+ * @plugindesc v1.021 A class change system will be implemented.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -365,7 +365,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.02 転職システムを実装する。
+ * @plugindesc v1.021 転職システムを実装する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -1868,7 +1868,7 @@ Windows_ClassInfo.prototype.drawAllParams = function() {
         for (const dispParam of displayParameters) {
             i++;
             const y = this.paramY(i);
-            this.drawItem(x, y, dispParam);
+            this.drawItem(x, y, toNumber(dispParam));
         }
     }
 
