@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.013 A class change system will be implemented.
+ * @plugindesc v1.02 A class change system will be implemented.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -137,6 +137,26 @@
  * @type number
  * @desc This is the font size of the class description.
  * If not specified, use the system setting.
+ * 
+ * @param DisplayParameters
+ * @parent <Layout>
+ * @type string
+ * @default 0,1,2,3,4,5,6,7
+ * @desc The parameter to display. Default: 0,1,2,3,4,5,6,7
+ * 0: MHP to 7: Luck.
+ * 
+ * @param ParamFontSize
+ * @parent <Layout>
+ * @type number
+ * @desc This is the font size of the class parameters.
+ * If not specified, use the system setting.
+ * 
+ * @param ParamLineHeight
+ * @parent <Layout>
+ * @type number
+ * @default 36
+ * @desc The height of a single line of the class parameters.
+ * Default:36
  * 
  * @param <Layout Image>
  * @desc This item is used to set the image for the class change screen.
@@ -345,7 +365,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.013 転職システムを実装する。
+ * @plugindesc v1.02 転職システムを実装する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -485,6 +505,29 @@
  * @type number
  * @desc 職業の説明文のフォントサイズです。
  * 未指定ならシステム設定を使います。
+ * 
+ * @param DisplayParameters
+ * @parent <Layout>
+ * @text 表示するパラメータ
+ * @type string
+ * @default 0,1,2,3,4,5,6,7
+ * @desc 表示するパラメータです。初期値：0,1,2,3,4,5,6,7
+ * 0:最大ＨＰ～7:運となります。
+ * 
+ * @param ParamFontSize
+ * @parent <Layout>
+ * @text パラメータのﾌｫﾝﾄｻｲｽﾞ
+ * @type number
+ * @desc 職業のパラメータのフォントサイズです。
+ * 未指定ならシステム設定を使います。
+ * 
+ * @param ParamLineHeight
+ * @parent <Layout>
+ * @text パラメータの一行縦幅
+ * @type number
+ * @default 36
+ * @desc 職業のパラメータの一行の縦幅です。
+ * 初期値は36。
  * 
  * @param <Layout Image>
  * @text ＜レイアウト画像関連＞
@@ -786,6 +829,9 @@ const pSortClassId = toBoolean(parameters["SortClassId"], false);
 const pClassListWidth = toNumber(parameters["ClassListWidth"], 280);
 const pDisplayListLevel = toBoolean(parameters["DisplayListLevel"], true);
 const pMessageFontSize = toNumber(parameters["MessageFontSize"]);
+const pDisplayParameters = setDefault(parameters["DisplayParameters"], "");
+const pParamFontSize = toNumber(parameters["ParamFontSize"]);
+const pParamLineHeight = toNumber(parameters["ParamLineHeight"], 36);
 const pClassImageList = parseStruct2(parameters["ClassImageList"]);
 const pUseClassImage = toBoolean(parameters["UseClassImage"], true);
 const pReverseImagePos = toBoolean(parameters["ReverseImagePos"], false);
@@ -968,6 +1014,26 @@ Scene_ClassChange.prototype.initialize = function() {
 };
 
 /**
+ * ●更新処理
+ */
+Scene_ClassChange.prototype.update = function() {
+    Scene_MenuBase.prototype.update.call(this);
+
+    if (this._isMessageClosing) {
+        // メッセージが完全に閉じてからシーン終了
+        if (this._messageWindow.isClosed()) {
+            this.classChangeEnd();
+        }
+        return;
+    }
+
+    // メッセージのクローズ開始を検出
+    if (this.isMessageWindowClosing()) {
+        this._isMessageClosing = true;
+    }
+};
+
+/**
  * ●ウィンドウの生成
  */
 Scene_ClassChange.prototype.create = function() {
@@ -1006,48 +1072,6 @@ Scene_ClassChange.prototype.create = function() {
 };
 
 /**
- * ●アクター選択用ウィンドウの作成
- */
-Scene_ClassChange.prototype.createStatusWindow = function() {
-    const rect = this.statusWindowRect();
-    this._statusWindow = new Window_MenuStatus(rect);
-    this._statusWindow.setHandler("ok", this.onClassChangeSelectStart.bind(this));
-    this._statusWindow.setHandler('cancel', this.popScene.bind(this));
-    this.addWindow(this._statusWindow);
-};
-
-/**
- * ●ステータスウィンドウ用の領域を確保
- */
-Scene_ClassChange.prototype.statusWindowRect = function() {
-    const ww = Graphics.boxWidth;
-    const wh = this.mainAreaHeight();
-    const wx = this.isRightInputMode() ? 0 : Graphics.boxWidth - ww;
-    const wy = this.mainAreaTop();
-    return new Rectangle(wx, wy, ww, wh);
-};
-
-/**
- * ●更新処理
- */
-Scene_ClassChange.prototype.update = function() {
-    Scene_MenuBase.prototype.update.call(this);
-
-    if (this._isMessageClosing) {
-        // メッセージが完全に閉じてからシーン終了
-        if (this._messageWindow.isClosed()) {
-            this.classChangeEnd();
-        }
-        return;
-    }
-
-    // メッセージのクローズ開始を検出
-    if (this.isMessageWindowClosing()) {
-        this._isMessageClosing = true;
-    }
-};
-
-/**
  * ●処理開始
  */
 Scene_ClassChange.prototype.start = function() {
@@ -1069,27 +1093,6 @@ Scene_ClassChange.prototype.start = function() {
     // 職業選択ウィンドウにフォーカス
     this._selectWindow.activate();
     this._infoWindow.deactivate();
-};
-
-/**
- * ●アクター選択開始
- */
-Scene_ClassChange.prototype.selectActorStart = function() {
-    // 転職用ウィンドウは非表示
-    this._selectWindow.hide();
-    this._infoWindow.hide();
-    // スキルページを解除
-    this._infoWindow._isSkillPage = false;
-    // さらにアクター選択用ウィンドウを表示＆フォーカス
-    this._statusWindow.show();
-    this._statusWindow.activate();
-    // インデックスがない場合(-1)は先頭を選択
-    // インデックスがある場合（キャンセルで転職ウィンドウから戻った）は維持
-    if (this._statusWindow.index() < 0) {
-        this._statusWindow.select(0);
-    }
-    // 描画更新（顔グラ）
-    this._statusWindow.refresh();
 };
 
 /**
@@ -1115,6 +1118,57 @@ Scene_ClassChange.prototype.refreshActor = function() {
 Scene_ClassChange.prototype.isNoActor = function() {
     return !$gameParty._menuActorId;
 };
+
+//----------------------------------------
+// アクター選択用ウィンドウ
+//----------------------------------------
+
+/**
+ * ●アクター選択用ウィンドウの作成
+ */
+Scene_ClassChange.prototype.createStatusWindow = function() {
+    const rect = this.statusWindowRect();
+    this._statusWindow = new Window_MenuStatus(rect);
+    this._statusWindow.setHandler("ok", this.onClassChangeSelectStart.bind(this));
+    this._statusWindow.setHandler('cancel', this.popScene.bind(this));
+    this.addWindow(this._statusWindow);
+};
+
+/**
+ * ●ステータスウィンドウ用の領域を確保
+ */
+Scene_ClassChange.prototype.statusWindowRect = function() {
+    const ww = Graphics.boxWidth;
+    const wh = this.mainAreaHeight();
+    const wx = this.isRightInputMode() ? 0 : Graphics.boxWidth - ww;
+    const wy = this.mainAreaTop();
+    return new Rectangle(wx, wy, ww, wh);
+};
+
+/**
+ * ●アクター選択開始
+ */
+Scene_ClassChange.prototype.selectActorStart = function() {
+    // 転職用ウィンドウは非表示
+    this._selectWindow.hide();
+    this._infoWindow.hide();
+    // スキルページを解除
+    this._infoWindow._isSkillPage = false;
+    // さらにアクター選択用ウィンドウを表示＆フォーカス
+    this._statusWindow.show();
+    this._statusWindow.activate();
+    // インデックスがない場合(-1)は先頭を選択
+    // インデックスがある場合（キャンセルで転職ウィンドウから戻った）は維持
+    if (this._statusWindow.index() < 0) {
+        this._statusWindow.select(0);
+    }
+    // 描画更新（顔グラ）
+    this._statusWindow.refresh();
+};
+
+//----------------------------------------
+// 転職選択用ウィンドウ
+//----------------------------------------
 
 /**
  * ●転職の選択開始
@@ -1212,7 +1266,7 @@ Scene_ClassChange.prototype.classChangeEnd = function() {
 };
 
 //----------------------------------------
-// 以下アクター切替用
+// ボタンによるアクター切替用
 //----------------------------------------
 
 /**
@@ -1502,7 +1556,7 @@ Windows_SelectClasses.prototype.drawItemName = function(item, x, y) {
         }
         const itemWidth = Math.max(0, this.innerWidth - textMargin - levelWidth);
         this.resetTextColor();
-        this.drawText(item.name, x + textMargin, y, itemWidth);
+        this.drawTextEx(item.name, x + textMargin, y, itemWidth);
     }
 };
 
@@ -1797,17 +1851,39 @@ Windows_ClassInfo.prototype.levelX = function() {
  * ●各パラメータを表示
  */
 Windows_ClassInfo.prototype.drawAllParams = function() {
+    if (pParamFontSize) {
+        this.contents.fontSize = pParamFontSize;
+    }
+
     let x = this.itemPadding();
     if (!pReverseImagePos) {
         x += ImageManager.faceWidth + 16;
     }
 
-    for (let i = 0; i < 6; i++) {
-        const y = this.paramY(i);
-        this.drawItem(x, y, 2 + i);
+    // パラメータの候補を取得
+    let i = -1;
+    if (pDisplayParameters) {
+        const displayParameters = pDisplayParameters.split(",");
+
+        for (const dispParam of displayParameters) {
+            i++;
+            const y = this.paramY(i);
+            this.drawItem(x, y, dispParam);
+        }
     }
 
+    // パラメータの終了Ｙ座標を取得
+    this._parameterEndY = this.paramY(i);
+
     this.resetTextColor();
+    this.resetFontSettings();
+};
+
+/**
+ * ●パラメータの横幅
+ */
+Windows_ClassInfo.prototype.paramWidth = function() {
+    return 64;
 };
 
 /**
@@ -1828,7 +1904,7 @@ Windows_ClassInfo.prototype.paramX = function() {
  * ●パラメータのＹ座標取得
  */
 Windows_ClassInfo.prototype.paramY = function(index) {
-    return -this._scrollY + Math.floor(this.lineHeight() + this.lineHeight() * (index + 1.5));
+    return -this._scrollY + Math.floor(this.lineHeight() * 2.5) + pParamLineHeight * index;
 };
 
 /**
@@ -1942,7 +2018,7 @@ Windows_ClassInfo.prototype.drawTextEx = function(text, x, y, width) {
  */
 Windows_ClassInfo.prototype.classMessageY = function() {
     // パラメータの下に接続（8はマージン）
-    return Math.floor(this.paramY(6)) + 8;
+    return this._parameterEndY + this.lineHeight() + 8;
 };
 
 /**
