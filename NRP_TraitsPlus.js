@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Change the traits (regular parameter and element rate) to an additive method.
+ * @plugindesc v1.01 Change the traits (regular parameter and element rate) to an additive method.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483215411.html
  *
@@ -157,7 +157,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 特徴（能力補正や属性有効度）を加算方式に変更する。
+ * @plugindesc v1.01 特徴（能力補正や属性有効度）を加算方式に変更する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483215411.html
  *
@@ -357,9 +357,13 @@ if (pRegularParameterPlus) {
      * ※バトラー本体と職業を合わせたオブジェクト
      */
     Game_Actor.prototype.traitBattlerObjects = function() {
-        const objects = [];
+        let objects = [];
         // アクター＆通常職業
         objects.push(this.actor(), this.currentClass());
+        // SimplePassiveSkillMZ.jsに対応
+        if (this.passiveSkills) {
+            objects = objects.concat(this.passiveSkills());
+        }
         return objects;
     };
 
@@ -454,7 +458,9 @@ if (pRegularParameterPlus) {
      * 【独自】オブジェクト配列を指定して、その特徴を取得
      */
     Game_BattlerBase.prototype.allTraitsAtObjects = function(traitObjects) {
-        return traitObjects.reduce((r, obj) => r.concat(obj.traits), []);
+        // 空白除去
+        const newTraitObjects = traitObjects.filter(obj => obj);
+        return newTraitObjects.reduce((r, obj) => r.concat(obj.traits), []);
     };
 
     /**
