@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Multiple classes allow for a highly flexible growth system.
+ * @plugindesc v1.001 Multiple classes allow for a highly flexible growth system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -322,15 +322,18 @@
  * @arg <Condition>
  * 
  * @arg Actor
+ * @parent <Condition>
  * @type actor
  * @desc The target actor.
  * 
  * @arg VariableActor
+ * @parent <Condition>
  * @type variable
  * @desc Specify the target actor as a variable.
  * This one has priority.
  * 
  * @arg Index
+ * @parent <Condition>
  * @type number
  * @default 0
  * @desc This is the registration position of the target class.
@@ -427,7 +430,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 多重職業によって自由度の高い成長システムを実現。
+ * @plugindesc v1.001 多重職業によって自由度の高い成長システムを実現。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -768,20 +771,20 @@
  * @text ＜取得条件＞
  * 
  * @arg Actor
- * @parent Condition
+ * @parent <Condition>
  * @text アクター
  * @type actor
  * @desc 対象とするアクターです。
  * 
  * @arg VariableActor
- * @parent Condition
+ * @parent <Condition>
  * @text アクター（変数指定）
  * @type variable
  * @desc 対象とするアクターを変数で指定します。
  * こちらのほうが優先されます。
  * 
  * @arg Index
- * @parent Condition
+ * @parent <Condition>
  * @text インデックス
  * @type number
  * @default 0
@@ -1547,6 +1550,17 @@ Game_Actor.prototype.additionalClass = function(classId, targetAll) {
 };
 
 /**
+ * 【独自】メインの追加職業を取得（AdditionalClass型）
+ */
+Game_Actor.prototype.mainAdditionalClass = function() {
+    const classId = this._additionalClassIds[0];
+    if (classId) {
+        return new AdditionalClass(this, classId);
+    }
+    return undefined;
+};
+
+/**
  * 【独自】指定したインデックスの追加職業を取得（AdditionalClass型）
  */
 Game_Actor.prototype.currentAdditionalClass = function(index) {
@@ -1997,7 +2011,7 @@ if (pOverwriteClassField) {
      */
     Window_StatusBase.prototype.drawActorClass = function(actor, x, y, width) {
         // 追加職業の名称を表示し、元の職業は表示しない。
-        const additionalClass = actor.additionalClasses()[0];
+        const additionalClass = actor.mainAdditionalClass();
         if (additionalClass) {
             width = width || 168;
             this.resetTextColor();
@@ -2058,7 +2072,7 @@ if (pShowLevelOnStatus) {
         // this.drawExpInfo(456, y);
 
         // 追加職業の情報
-        this.drawClassInfo(this._actor.additionalClasses()[0], 0, y);
+        this.drawClassInfo(this._actor.mainAdditionalClass(), 0, y);
         // サブ職の情報
         this.drawClassInfo(this._actor.additionalClasses()[1], 0, y + this.lineHeight() * 2 + 8);
     };
