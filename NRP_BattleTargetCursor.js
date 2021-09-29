@@ -791,7 +791,7 @@ Window_BattleEnemy.prototype.processTouch = function() {
     // カーソル移動禁止の場合
     if (!this.isCursorMovable()) {
         Window_Selectable.prototype.processTouch.call(this);
-        if (this.isOpenAndActive()) {
+        if (this.isOpenAndActive() && $gameTemp.touchTarget) {
             const target = $gameTemp.touchTarget();
             if (target) {
                 if (this._enemies.includes(target)) {
@@ -848,7 +848,7 @@ Window_BattleActor.prototype.processTouch = function() {
     // カーソル移動禁止の場合
     if (!this.isCursorMovable()) {
         Window_BattleStatus.prototype.processTouch.call(this);
-        if (this.isOpenAndActive()) {
+        if (this.isOpenAndActive() && $gameTemp.touchTarget) {
             const target = $gameTemp.touchTarget();
             if (target) {
                 const members = $gameParty.battleMembers();
