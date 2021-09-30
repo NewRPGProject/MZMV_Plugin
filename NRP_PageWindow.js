@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.03 The windows can be page-turned left and right.
+ * @plugindesc v1.04 The windows can be page-turned left and right.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475347742.html
  *
@@ -121,6 +121,16 @@
  * @desc Sets whether the equipment list will be paged.
  * Ignore the above settings and force override them.
  * 
+ * @param pagingSaveList
+ * @parent <Setting Exceptions>
+ * @type select
+ * @option @value
+ * @option ON @value ON
+ * @option OFF @value OFF
+ * @default OFF
+ * @desc Sets whether the save/load screen is paged.
+ * Ignore the above settings and force override them.
+ * 
  * @param pagingBattleCommand
  * @parent <Setting Exceptions>
  * @type select
@@ -129,11 +139,23 @@
  * @option OFF @value OFF
  * @default
  * @desc Sets whether battle commands(actor/party) will be paged. Ignore the above settings and force override them.
+ * 
+ * @param pagingWindowList
+ * @parent <Setting Exceptions>
+ * @type string[]
+ * @desc List of additional window names to be paged.
+ * e.g.: "Window_MenuCommand"
+ * 
+ * @param noPagingWindowList
+ * @parent <Setting Exceptions>
+ * @type string[]
+ * @desc List of additional window names that should not be paged.
+ * e.g.: "Window_MenuCommand"
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 各種ウィンドウを左右でページ切替できるようにします。
+ * @plugindesc v1.04 各種ウィンドウを左右でページ切替できるようにします。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475347742.html
  *
@@ -263,6 +285,17 @@
  * @desc 装備一覧をページ化するかを設定します。
  * 上記の設定を無視して、強制的に設定を上書きします。
  * 
+ * @param pagingSaveList
+ * @text セーブ画面のページ化
+ * @parent <Setting Exceptions>
+ * @type select
+ * @option @value
+ * @option ON @value ON
+ * @option OFF @value OFF
+ * @default OFF
+ * @desc セーブ・ロード画面をページ化するかを設定します。
+ * 上記の設定を無視して、強制的に設定を上書きします。
+ * 
  * @param pagingBattleCommand
  * @text 戦闘コマンドのページ化
  * @parent <Setting Exceptions>
@@ -272,11 +305,39 @@
  * @option OFF @value OFF
  * @default
  * @desc 戦闘コマンド（アクター／パーティ）をページ化するかを設定します。上記の設定を無視して、強制的に設定を上書きします。
+ * 
+ * @param pagingWindowList
+ * @text ページ化ウィンドウ一覧
+ * @parent <Setting Exceptions>
+ * @type string[]
+ * @desc 追加でページ化するウィンドウ名の一覧です。
+ * 例："Window_MenuCommand"など。
+ * 
+ * @param noPagingWindowList
+ * @text 非ページ化ウィンドウ一覧
+ * @parent <Setting Exceptions>
+ * @type string[]
+ * @desc 追加でページ化を禁止するウィンドウ名の一覧です。
+ * 例："Window_MenuCommand"など。
  */
 
 (function() {
 "use strict";
 
+/**
+ * ●構造体をJSで扱えるように変換
+ */
+function parseStruct1(arg) {
+    var ret = [];
+
+    if (arg) {
+        JSON.parse(arg).forEach(function(str) {
+            ret.push(str);
+        });
+    }
+
+    return ret;
+}
 function toBoolean(str) {
     if (str == true) {
         return true;
@@ -290,23 +351,26 @@ function setDefault(str, def) {
     return str ? str : def;
 }
 
-var parameters = PluginManager.parameters("NRP_PageWindow");
-var pUsePageCol1 = toBoolean(parameters["usePageCol1"]);
-var pCursorReverse = toBoolean(parameters["cursorReverse"], false);
-var pNoStopCursor = toBoolean(parameters["noStopCursor"], false);
-var pSelectOverLastSpace = toBoolean(parameters["selectOverLastSpace"], false);
+const parameters = PluginManager.parameters("NRP_PageWindow");
+const pUsePageCol1 = toBoolean(parameters["usePageCol1"]);
+const pCursorReverse = toBoolean(parameters["cursorReverse"], false);
+const pNoStopCursor = toBoolean(parameters["noStopCursor"], false);
+const pSelectOverLastSpace = toBoolean(parameters["selectOverLastSpace"], false);
 // ページカーソル関連
-var pPageCursorHorizontal = setDefault(parameters["pageCursorHorizontal"], "right");
-var pPageCursorVertical = setDefault(parameters["pageCursorVertical"], "bottom");
-var pPageCursorLeftImage = parameters["pageCursorLeftImage"];
-var pPageCursorRightImage = parameters["pageCursorRightImage"];
-var pPageCursorLeftAdjustX = toNumber(parameters["pageCursorLeftAdjustX"], 0);
-var pPageCursorLeftAdjustY = toNumber(parameters["pageCursorLeftAdjustY"], 0);
-var pPageCursorRightAdjustX = toNumber(parameters["pageCursorRightAdjustX"], 0);
-var pPageCursorRightAdjustY = toNumber(parameters["pageCursorRightAdjustY"], 0);
+const pPageCursorHorizontal = setDefault(parameters["pageCursorHorizontal"], "right");
+const pPageCursorVertical = setDefault(parameters["pageCursorVertical"], "bottom");
+const pPageCursorLeftImage = parameters["pageCursorLeftImage"];
+const pPageCursorRightImage = parameters["pageCursorRightImage"];
+const pPageCursorLeftAdjustX = toNumber(parameters["pageCursorLeftAdjustX"], 0);
+const pPageCursorLeftAdjustY = toNumber(parameters["pageCursorLeftAdjustY"], 0);
+const pPageCursorRightAdjustX = toNumber(parameters["pageCursorRightAdjustX"], 0);
+const pPageCursorRightAdjustY = toNumber(parameters["pageCursorRightAdjustY"], 0);
 // 例外設定
-var pPagingEquipList = parameters["pagingEquipList"];
-var pPagingBattleCommand = parameters["pagingBattleCommand"];
+const pPagingEquipList = parameters["pagingEquipList"];
+const pPagingSaveList = parameters["pagingSaveList"];
+const pPagingBattleCommand = parameters["pagingBattleCommand"];
+const pPagingWindowList = parseStruct1(parameters["pagingWindowList"]);
+const pNoPagingWindowList = parseStruct1(parameters["noPagingWindowList"]);
 
 /**
  * 【独自】選択領域の合計
@@ -361,6 +425,16 @@ Window_Selectable.prototype.maxIndex = function() {
  * 【独自】ページ処理の対象とするかどうか？
  */
 Window_Selectable.prototype.isUsePage = function() {
+    const thisName = this.constructor.name;
+    // ページ化リストに一致するウィンドウ名が存在する場合
+    if (pPagingWindowList.some(function(name){return name == thisName})) {
+        return true;
+
+    // 非ページ化リストに一致するウィンドウ名が存在する場合
+    } else if (pNoPagingWindowList.some(function(name){return name == thisName})) {
+        return false;
+    }
+
     // 一行の場合は対象外
     if (this.isHorizontal()) {
         return false;
@@ -378,6 +452,7 @@ Window_Selectable.prototype.isUsePage = function() {
  */
 Window_Options.prototype.isUsePage = function() {
     // オプションは常に対象外
+    // 左右での切替があるので適用するとおかしくなる。
     return false;
 }
 
@@ -389,6 +464,19 @@ if (pPagingEquipList) {
         if (pPagingEquipList == "ON") {
             return true;
         } else if (pPagingEquipList == "OFF") {
+            return false;
+        }
+    };
+}
+
+/**
+ * 【独自】セーブ・ロード画面をページ処理の対象とするかどうか？
+ */
+if (pPagingSaveList) {
+    Window_SavefileList.prototype.isUsePage = function() {
+        if (pPagingSaveList == "ON") {
+            return true;
+        } else if (pPagingSaveList == "OFF") {
             return false;
         }
     };
