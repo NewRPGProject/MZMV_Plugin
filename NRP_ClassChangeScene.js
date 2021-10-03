@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.021 A class change system will be implemented.
+ * @plugindesc v1.022 A class change system will be implemented.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -365,7 +365,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.021 転職システムを実装する。
+ * @plugindesc v1.022 転職システムを実装する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -942,11 +942,18 @@ function getClassLevel(actor, classId) {
     // exp >= this.expForLevel(50); みたいな感じで
 
     // 再帰的に現在のレベルを求める。
-    while (!actor.isMaxLevel() && exp >= nextLevelExp(actor, classId, level)) {
+    while (!isMaxLevel(actor, level) && exp >= nextLevelExp(actor, classId, level)) {
         level++;
     }
 
     return level;
+};
+
+/**
+ * ●職業がアクターの最大レベルになっているか？
+ */
+function isMaxLevel(actor, level) {
+    return level >= actor.maxLevel();
 };
 
 /**
@@ -1805,7 +1812,7 @@ Windows_ClassInfo.prototype.drawExpInfo = function(x, y) {
     const faceWidth = ImageManager.faceWidth;
 
     this.changeTextColor(ColorManager.systemColor());
-    this.drawText(TextManager.expA, faceWidth + this.itemPadding() + 16, y, 270);
+    this.drawText(TextManager.exp, faceWidth + this.itemPadding(), y, 270);
     this.resetTextColor();
     // 現在の経験値
     this.drawText(this.expTotalValue(), x - 125, y, this.innerWidth - this.itemPadding(), "right");

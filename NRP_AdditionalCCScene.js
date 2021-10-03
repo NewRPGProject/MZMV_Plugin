@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Implemented a class change screen for multiple classes.
+ * @plugindesc v1.001 Implemented a class change screen for multiple classes.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -417,7 +417,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 多重職業用の転職画面を実装。
+ * @plugindesc v1.001 多重職業用の転職画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -2286,7 +2286,7 @@ Windows_ClassInfo.prototype.drawExpInfo = function(x, y) {
     const faceWidth = ImageManager.faceWidth;
 
     this.changeTextColor(ColorManager.systemColor());
-    this.drawText(expName, faceWidth + this.itemPadding() + 16, y, 270);
+    this.drawText(expName, faceWidth + this.itemPadding(), y, 270);
     this.resetTextColor();
     // 現在の経験値
     this.drawText(this.expTotalValue(), x - 125, y, this.innerWidth - this.itemPadding(), "right");
