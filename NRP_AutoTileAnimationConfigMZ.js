@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Changes the animation speed of auto tiles (water, falls, etc.).
+ * @plugindesc v1.011 Changes the animation speed of auto tiles (water, falls, etc.).
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/480713311.html
  *
@@ -56,7 +56,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 オートタイル（水、滝など）のアニメーション速度を変更します。
+ * @plugindesc v1.011 オートタイル（水、滝など）のアニメーション速度を変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/480713311.html
  *
@@ -248,6 +248,11 @@ Game_Map.prototype.changeTileset = function(tilesetId) {
  * ●タイルセットに情報を設定
  */
 function setTilesetInfo() {
+    // 読み込まれていない場合は処理しない。
+    if (!$gameMap || !$gameMap.tileset()) {
+        return;
+    }
+
     // 個別倍率を設定
     // ※常駐処理は避けて、極力処理はこちらでやっておく。
     const tileset = $gameMap.tileset();
@@ -292,9 +297,7 @@ const _DataManager_onLoad = DataManager.onLoad;
 DataManager.onLoad = function(object) {
     _DataManager_onLoad.apply(this, arguments);
 
-    if ($gameMap) {
-        setTilesetInfo();
-    }
+    setTilesetInfo();
 };
 
 })();

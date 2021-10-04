@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Ignore the traffic judgment of a specific tile.
+ * @plugindesc v1.021 Ignore the traffic judgment of a specific tile.
  * @orderBefore NRP_PassageAutoTileTop
  * @orderAfter TF_Billboard
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
@@ -60,7 +60,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 特定タイルの通行判定を無視します。
+ * @plugindesc v1.021 特定タイルの通行判定を無視します。
  * @orderBefore NRP_PassageAutoTileTop
  * @orderAfter TF_Billboard
  * @author 砂川赳（http://newrpg.seesaa.net/）
@@ -189,6 +189,11 @@ Game_Map.prototype.changeTileset = function(tilesetId) {
  * ●タイルセットに情報を設定
  */
 function setTilesetInfo() {
+    // 読み込まれていない場合は処理しない。
+    if (!$gameMap || !$gameMap.tileset()) {
+        return;
+    }
+
     // 対象とする地形ＩＤの配列を設定
     const tileset = $gameMap.tileset();
 
@@ -290,9 +295,7 @@ const _DataManager_onLoad = DataManager.onLoad;
 DataManager.onLoad = function(object) {
     _DataManager_onLoad.apply(this, arguments);
 
-    if ($gameMap) {
-        setTilesetInfo();
-    }
+    setTilesetInfo();
 };
 
 })();
