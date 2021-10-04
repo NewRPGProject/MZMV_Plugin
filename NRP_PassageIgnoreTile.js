@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Ignore the traffic judgment of a specific tile.
+ * @plugindesc v1.02 Ignore the traffic judgment of a specific tile.
  * @orderBefore NRP_PassageAutoTileTop
  * @orderAfter TF_Billboard
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
@@ -60,7 +60,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 特定タイルの通行判定を無視します。
+ * @plugindesc v1.02 特定タイルの通行判定を無視します。
  * @orderBefore NRP_PassageAutoTileTop
  * @orderAfter TF_Billboard
  * @author 砂川赳（http://newrpg.seesaa.net/）
@@ -188,7 +188,7 @@ Game_Map.prototype.changeTileset = function(tilesetId) {
 /**
  * ●タイルセットに情報を設定
  */
- function setTilesetInfo() {
+function setTilesetInfo() {
     // 対象とする地形ＩＤの配列を設定
     const tileset = $gameMap.tileset();
 
@@ -251,7 +251,6 @@ Game_Map.prototype.checkPassage = function(x, y, bit) {
  */
 function isPassageIgnoreTerrains(x, y, bit) {
     const tileset = $gameMap.tileset();
-
     if (tileset.passageIgnoreTerrains) {
         const flags = $gameMap.tilesetFlags();
         const tiles = $gameMap.allTiles(x, y);
@@ -283,5 +282,17 @@ function isPassageIgnoreTerrains(x, y, bit) {
 
     return false;
 }
+
+/**
+ * ●マップデータのロード完了時にタイルイベントのリンク先を復元
+ */
+const _DataManager_onLoad = DataManager.onLoad;
+DataManager.onLoad = function(object) {
+    _DataManager_onLoad.apply(this, arguments);
+
+    if ($gameMap) {
+        setTilesetInfo();
+    }
+};
 
 })();

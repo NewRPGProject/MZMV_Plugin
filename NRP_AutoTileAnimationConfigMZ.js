@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Changes the animation speed of auto tiles (water, falls, etc.).
+ * @plugindesc v1.01 Changes the animation speed of auto tiles (water, falls, etc.).
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/480713311.html
  *
@@ -56,7 +56,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 オートタイル（水、滝など）のアニメーション速度を変更します。
+ * @plugindesc v1.01 オートタイル（水、滝など）のアニメーション速度を変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/480713311.html
  *
@@ -284,5 +284,17 @@ function getFallsMagnification(tileset) {
     // 指定がなければ設定値
     return pFallsMagnification;
 }
+
+/**
+ * ●マップデータのロード完了時にタイルイベントのリンク先を復元
+ */
+const _DataManager_onLoad = DataManager.onLoad;
+DataManager.onLoad = function(object) {
+    _DataManager_onLoad.apply(this, arguments);
+
+    if ($gameMap) {
+        setTilesetInfo();
+    }
+};
 
 })();
