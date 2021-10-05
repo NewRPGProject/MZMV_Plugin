@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.11 Call DynamicAnimationMZ on the map.
+ * @plugindesc v1.12 Call DynamicAnimationMZ on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -260,7 +260,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.11 DynamicAnimationMZをマップ上から起動します。
+ * @plugindesc v1.12 DynamicAnimationMZをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -1992,9 +1992,16 @@ SceneManager.changeScene = function() {
     if (this.isSceneChanging() && !this.isCurrentSceneBusy()) {
         // Scene_Mapから移動する場合
         if (this._scene && this._scene instanceof Scene_Map) {
-            // 場所移動時は保存データクリア
+            // 場所移動時
             if ($gamePlayer.isTransferring()) {
-                clearTempData();
+                // 同一マップの場合はアニメーション状態を保持
+                if ($gamePlayer.newMapId() == $gameMap.mapId()) {
+                    this._scene._spriteset.saveAnimationTempData();
+                // マップが変化した場合は保存データクリア
+                } else {
+                    clearTempData();
+                }
+                
             // アニメーション状態を保持
             } else {
                 this._scene._spriteset.saveAnimationTempData();

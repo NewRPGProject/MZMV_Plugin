@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV
- * @plugindesc v1.10 Call DynamicAnimation on the map.
+ * @plugindesc v1.12 Call DynamicAnimation on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimation
  * @url http://newrpg.seesaa.net/article/477639171.html
@@ -152,7 +152,7 @@
 
 /*:ja
  * @target MV
- * @plugindesc v1.10 DynamicAnimationをマップ上から起動します。
+ * @plugindesc v1.12 DynamicAnimationをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimation
  * @url http://newrpg.seesaa.net/article/477639171.html
@@ -830,6 +830,11 @@ function makeMapAnimation(interpreter, subject, wait, noScroll, action) {
     mapAnimation.interpreter = interpreter;
     mapAnimation.noWait = !toBoolean(wait); // 反転させておく
     mapAnimation.onScroll = !toBoolean(noScroll); // 反転させておく
+    // 呼出元が並列処理（trigger:4）かどうか？
+    const event = $gameMap.event(interpreter.eventId());
+    if (event && event._trigger == 4) {
+        mapAnimation.isParallel = true;
+    }
     // 開始時間の設定
     const startTimingTarget = getStartTimingTarget(interpreter);
     setStartTiming(mapAnimation, action, startTimingTarget);
@@ -1742,9 +1747,16 @@ SceneManager.changeScene = function() {
     if (this.isSceneChanging() && !this.isCurrentSceneBusy()) {
         // Scene_Mapから移動する場合
         if (this._scene && this._scene instanceof Scene_Map) {
-            // 場所移動時は保存データクリア
+            // 場所移動時
             if ($gamePlayer.isTransferring()) {
-                clearTempData();
+                // 同一マップの場合はアニメーション状態を保持
+                if ($gamePlayer.newMapId() == $gameMap.mapId()) {
+                    this._scene._spriteset.saveAnimationTempData();
+                // マップが変化した場合は保存データクリア
+                } else {
+                    clearTempData();
+                }
+
             // アニメーション状態を保持
             } else {
                 this._scene._spriteset.saveAnimationTempData();
@@ -2088,6 +2100,7 @@ function makeMapAnimationEvent(event, skillId, action) {
     mapAnimation.onScroll = true;
     mapAnimation.isDynamicAuto = true;
     mapAnimation.skillId = skillId;
+    mapAnimation.isParallel = true;
     // 開始時間の設定
     setStartTiming(mapAnimation, action, event);
 
