@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Expanded calling of map events and common events.
+ * @plugindesc v1.01 Expanded calling of map events and common events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482150579.html
  *
@@ -104,7 +104,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 マップイベントやコモンイベントの呼び出しを拡張。
+ * @plugindesc v1.01 マップイベントやコモンイベントの呼び出しを拡張。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/482150579.html
  *
@@ -607,16 +607,16 @@ const callMapEventByName = function(param) {
     const changeThisEventId = param.changeThisEventId;
     const interpreter = param.interpreter;
 
-    const event = searchDataItem($dataMap.events, 'name', eventName);
-    if (event) {
-        let eventId = event.id;
+    const eventData = searchDataItem($dataMap.events, 'name', eventName);
+    if (eventData) {
+        let eventId = eventData.id;
         // 指定がある場合は『このイベント』の対象とするイベントＩＤを書き換える。
         if (changeThisEventId) {
             eventId = changeThisEventId;
         }
-
+        const event = $gameMap.event(eventId);
         const pageNo = getCallPage.bind(event)(param.pageNo);
-        setupAnotherList(eventId, event.pages, pageNo, interpreter);
+        setupAnotherList(eventId, eventData.pages, pageNo, interpreter);
     }
 };
 
