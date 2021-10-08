@@ -3,12 +3,19 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Resolved conflict with GALV_LayerGraphicsMZ & added functions.
+ * @plugindesc v1.01 Resolved conflict with GALV_LayerGraphicsMZ & added functions.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
+ * @base GALV_LayerGraphicsMZ
+ * @orderAfter GALV_LayerGraphicsMZ
  * @url http://newrpg.seesaa.net/article/482187330.html
  *
  * @help Resolve conflicts between NRP plugins and GALV_LayerGraphicsMZ.
  * In addition, I've added a few features, such as support for loop maps.
+ * 
+ * ※Operation has been confirmed with GALV_LayerGraphicsMZ ver1.2.
+ * ※Galv's terms of use prohibit the modification and distribution of plugins & scripts.
+ *   For this reason, we have created plugins
+ *   using a method that does not reuse the original source.
  * 
  * ■Additional explanation of plugin parameters
  * ◆ForDynamicMotion
@@ -48,14 +55,18 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 GALV_LayerGraphicsMZとの競合を解消＆機能追加
+ * @plugindesc v1.01 GALV_LayerGraphicsMZとの競合を解消＆機能追加
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base GALV_LayerGraphicsMZ
  * @orderAfter GALV_LayerGraphicsMZ
  * @url http://newrpg.seesaa.net/article/482187330.html
  *
- * @help NRP系プラグインとGALV_LayerGraphicsMZとの競合を解消します。
+ * @help NRP系プラグインとGALV_LayerGraphicsMZ（Galv様）との競合を解消します。
  * ついでにループマップへの対応など、ちょっとした機能追加を行います。
+ * 
+ * ※GALV_LayerGraphicsMZ ver1.2で動作確認しています。
+ * ※Galv様の利用規約ではプラグイン＆スクリプトを改変して配布するのは禁止となっています。
+ * 　そのため、元のソースは流用しない方式でプラグインを作成しています。
  * 
  * ■プラグインパラメータの補足説明
  * ◆DynamicMotionとの競合解消
@@ -125,6 +136,9 @@ const pForDynamicMotion = toBoolean(parameters["ForDynamicMotion"], true);
 // ループ対応
 //--------------------------------------------------------
 if (pSupportLoopMap) {
+    let mBeforeDisplayScreenX = 0;
+    let mBeforeDisplayScreenY = 0;
+
     /**
      * 現在位置ではなくスクロール量を参照するよう変更
      */
@@ -138,8 +152,8 @@ if (pSupportLoopMap) {
         _Sprite_LayerGraphic_updatePosition.apply(this, arguments);
 
         // スクロール量を取得
-        this.scrollX = (this.scrollX ?? 0) + $gameMap.moveScreenX();
-        this.scrollY = (this.scrollY ?? 0) + $gameMap.moveScreenY();
+        this.scrollX = (this.scrollX ?? 0) + moveScreenX.bind($gameMap)();
+        this.scrollY = (this.scrollY ?? 0) + moveScreenY.bind($gameMap)();
 
         // 原点に加算
         this.origin.x = 0 + this.scrollX + preCurrentx + this.xOffset();
@@ -148,12 +162,12 @@ if (pSupportLoopMap) {
 
     /**
      * 【独自】１フレームでスクロールしたスクリーンＸ座標
-     * ※NRP_DynamicAnimationMapMZと全く同じ関数
+     * ※NRP_DynamicAnimationMapMZとほぼ同じ関数
      */
-    Game_Map.prototype.moveScreenX = function() {
+    function moveScreenX() {
         // 現在の座標と前回の座標を比較し差分を求める。
         const displayScreenX = this.displayX() * this.tileWidth();
-        let moveScreenX = displayScreenX - this._beforeDisplayScreenX;
+        let moveScreenX = displayScreenX - mBeforeDisplayScreenX;
 
         // マップ全体の横幅（ピクセル）
         const mapWidth = this.width() * this.tileWidth();
@@ -169,12 +183,12 @@ if (pSupportLoopMap) {
 
     /**
      * 【独自】１フレームでスクロールしたスクリーンＹ座標
-     * ※NRP_DynamicAnimationMapMZと全く同じ関数
+     * ※NRP_DynamicAnimationMapMZとほぼ同じ関数
      */
-    Game_Map.prototype.moveScreenY = function() {
+    function moveScreenY() {
         // 現在の座標と前回の座標を比較し差分を求める。
         const displayScreenY = this.displayY() * this.tileHeight();
-        let moveScreenY = displayScreenY - this._beforeDisplayScreenY;
+        let moveScreenY = displayScreenY - mBeforeDisplayScreenY;
 
         // マップ全体の縦幅（ピクセル）
         const mapHeight = this.height() * this.tileHeight();
@@ -186,6 +200,29 @@ if (pSupportLoopMap) {
         }
 
         return moveScreenY;
+    };
+
+    /**
+     * ●初期化
+     */
+    const _Game_Map_initialize = Game_Map.prototype.initialize;
+    Game_Map.prototype.initialize = function() {
+        _Game_Map_initialize.apply(this, arguments);
+
+        mBeforeDisplayScreenX = this.displayX() * this.tileWidth();
+        mBeforeDisplayScreenY = this.displayY() * this.tileHeight();
+    };
+
+    /**
+     * ●更新処理
+     */
+    const _Game_Map_update = Game_Map.prototype.update;
+    Game_Map.prototype.update = function(sceneActive) {
+        // 画面座標を保持
+        mBeforeDisplayScreenX = this.displayX() * this.tileWidth();
+        mBeforeDisplayScreenY = this.displayY() * this.tileHeight();
+        
+        _Game_Map_update.apply(this, arguments);
     };
 }
 
