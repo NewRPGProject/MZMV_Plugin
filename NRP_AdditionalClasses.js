@@ -155,6 +155,22 @@
  * 
  * "ExpName" is used to indicate when a battle is over.
  * 
+ * ------------------------------------------
+ * [Script]]
+ * ------------------------------------------
+ * ◆actor.currentAdditionalClass(0);
+ * Get additional class information for the actor.
+ * 
+ * If there are subclasses, you can increase the number (0 is the first).
+ * For example, you can get the class name and class level
+ * of the first actor with the following.
+ * 
+ * $gameParty.members()[0].currentAdditionalClass(0).name;
+ * $gameParty.members()[0].currentAdditionalClass(0).level;
+ * 
+ * ※"actor" is an object of the Game_Actor class.
+ * ※If the actor is not in the additional class, an error will occur.
+ * 
  * [Terms]
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
@@ -571,6 +587,21 @@
  * 独自の熟練度のようなものを実装できます。
  * 
  * 戦闘終了時の表示には『EXPの表示名』が使用されます。
+ * 
+ * ------------------------------------------
+ * ■スクリプト
+ * ------------------------------------------
+ * ◆actor.currentAdditionalClass(0);
+ * アクターの追加職業情報を取得します。
+ * 
+ * サブ職業が存在する場合は、数値（0が先頭）を増やせばＯＫです。
+ * 例えば、以下で先頭のアクターの職業名や職業レベルを取得できます。
+ * 
+ * $gameParty.members()[0].currentAdditionalClass(0).name;
+ * $gameParty.members()[0].currentAdditionalClass(0).level;
+ * 
+ * ※actorはGame_Actorクラスのオブジェクトです。
+ * ※追加職業に就いてない場合はエラーになります。
  * 
  * ■利用規約
  * 特に制約はありません。
@@ -1275,7 +1306,7 @@ function allPartyAdditionalClasses() {
 // 追加職業を保有するクラス
 
 /**
- * JSONオブジェクト間隔でアクセスできるようにしておく。
+ * JSONオブジェクト感覚でアクセスできるようにしておく。
  */
 Object.defineProperties(AdditionalClass.prototype, {
     id: {
