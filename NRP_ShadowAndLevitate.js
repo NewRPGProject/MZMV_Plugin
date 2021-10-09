@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Setting the battler's shadow & adding the levitation effect
+ * @plugindesc v1.02 Setting the battler's shadow & adding the levitation effect
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base animatedSVEnemies
  * @base NRP_DynamicMotionMZ
@@ -254,7 +254,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 バトラーの影を設定＆浮遊効果の追加
+ * @plugindesc v1.02 バトラーの影を設定＆浮遊効果の追加
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @orderAfter animatedSVEnemies
  * @orderAfter NRP_DynamicMotionMZ
@@ -653,8 +653,8 @@ Spriteset_Battle.prototype.createEnemies = function() {
         // 中身がSprite_Enemyでない場合があるので考慮。
         if (sprite.isUseEnemyShadow && sprite.isUseEnemyShadow()) {
             // 影を本体の後ろへ追加
-            const bodyIndex = this.children.indexOf(sprite);
-            this._battleField.addChildAt(sprite._shadowSprite, bodyIndex + 1);
+            const bodyIndex = this._battleField.children.indexOf(sprite);
+            this._battleField.addChildAt(sprite._shadowSprite, bodyIndex);
         }
     }
 };
