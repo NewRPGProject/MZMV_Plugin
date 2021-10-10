@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Setting the battler's shadow & adding the levitation effect
+ * @plugindesc v1.021 Setting the battler's shadow & adding the levitation effect
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base animatedSVEnemies
  * @base NRP_DynamicMotionMZ
@@ -250,11 +250,16 @@
  * @type text
  * @default 120
  * @desc The period of the amplitude of the actor floating effect. Formulae allowed. 60 equals 1 second.
+ * 
+ * @param RandomStartFloatHeight
+ * @type boolean
+ * @default true
+ * @desc Randomize the height at the start of floating and make it naturally uneven.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 バトラーの影を設定＆浮遊効果の追加
+ * @plugindesc v1.021 バトラーの影を設定＆浮遊効果の追加
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @orderAfter animatedSVEnemies
  * @orderAfter NRP_DynamicMotionMZ
@@ -515,6 +520,12 @@
  * @default 120
  * @desc アクターの浮遊効果の振幅の周期です。数式可。
  * 60が1秒に相当します。
+ * 
+ * @param RandomStartFloatHeight
+ * @text 浮遊開始位置をランダム化
+ * @type boolean
+ * @default true
+ * @desc 浮遊開始時の高さをランダム化し、自然バラつかせます。
  */
 
 (function() {
@@ -579,7 +590,6 @@ const pEnemyShadowOpacity = toNumber(parameters["EnemyShadowOpacity"], 255);
 const pEnemyFloatHeight = setDefault(parameters["EnemyFloatHeight"], "48");
 const pEnemyFloatAmplitude = setDefault(parameters["EnemyFloatAmplitude"], "5");
 const pEnemyFloatPeriodicTime = setDefault(parameters["EnemyFloatPeriodicTime"], "120");
-
 // アクター
 const pActorShadowImage = setDefault(parameters["ActorShadowImage"]);
 const pActorShadowScaleX = setDefault(parameters["ActorShadowScaleX"]);
@@ -591,6 +601,8 @@ const pActorShadowOpacity = toNumber(parameters["ActorShadowOpacity"], 255);
 const pActorFloatHeight = setDefault(parameters["ActorFloatHeight"], "24");
 const pActorFloatAmplitude = setDefault(parameters["ActorFloatAmplitude"], "5");
 const pActorFloatPeriodicTime = setDefault(parameters["ActorFloatPeriodicTime"], "120");
+// 共通
+const pRandomStartFloatHeight = toBoolean(parameters["RandomStartFloatHeight"], true);
 
 // DynamicMotionのパラメータ
 const dMotionParams = getDynamicMotionParameters();
@@ -1064,6 +1076,10 @@ function setFloat(sprite, meta) {
 
     // 浮遊時間制御用
     sprite._floatTime = 0;
+    // 開始時間をランダム化することでバラつかせる。
+    if (pRandomStartFloatHeight) {
+        sprite._floatTime = Math.randomInt(sprite._floatPeriodicTime);
+    }
 
     // ホームポジションのＹ座標を調整
     if (battler.isEnemy()) {
