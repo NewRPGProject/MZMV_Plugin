@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Extends the functionality of the bushes attribute.
+ * @plugindesc v1.02 Extends the functionality of the bushes attribute.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore OverpassTile
  * @url http://newrpg.seesaa.net/article/481013577.html
@@ -147,11 +147,22 @@
  * @type string
  * @desc The color to apply to the lower body on the bushes.
  * e.g.: [255,255,255,255]
+ * 
+ * @param FloatAmplitude
+ * @parent <ExtraSetting>
+ * @type text
+ * @desc The amplitude of the floating effect on the bushes.
+ * Formula is available.
+ * 
+ * @param FloatPeriodicTime
+ * @parent <ExtraSetting>
+ * @type text
+ * @desc The period of the amplitude of the floating effect on the bushes. Default 120.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 茂み属性の機能を拡張します。
+ * @plugindesc v1.02 茂み属性の機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore OverpassTile
  * @url http://newrpg.seesaa.net/article/481013577.html
@@ -307,6 +318,19 @@
  * @type string
  * @desc 茂み上でキャラクターの下半身に適用する色です。
  * 例：[255,255,255,255]
+ * 
+ * @param FloatAmplitude
+ * @text 浮遊効果の振幅
+ * @parent <ExtraSetting>
+ * @type text
+ * @desc 茂み上での浮遊効果の振幅です。数式可。
+ * 
+ * @param FloatPeriodicTime
+ * @text 浮遊効果の周期
+ * @parent <ExtraSetting>
+ * @type text
+ * @desc 茂み上での浮遊効果の振幅の周期です。数式可。
+ * 60が1秒に相当します。既定値は120。
  */
 (function() {
 "use strict";
@@ -320,7 +344,13 @@ function toBoolean(str, def) {
     return def;
 }
 function toNumber(str, def) {
+    if (str == undefined || str == "") {
+        return def;
+    }
     return isNaN(str) ? def : +(str || def);
+}
+function setDefault(str, def) {
+    return str ? str : def;
 }
 
 /**
@@ -401,6 +431,8 @@ for (const setting of pSettingList) {
     setting.bushDepth = toNumber(setting.BushDepth);
     setting.bushOpacity = toNumber(setting.BushOpacity);
     setting.bushColor = setting.BushColor;
+    setting.floatAmplitude = setting.FloatAmplitude;
+    setting.floatPeriodicTime = setDefault(setting.FloatPeriodicTime, "120");
 }
 
 if (pLimitBushLayer) {
@@ -468,6 +500,18 @@ Game_Map.prototype.isBush = function(x, y) {
 };
 
 /**
+ * ●変数初期化
+ */
+const _Game_CharacterBase_initMembers = Game_CharacterBase.prototype.initMembers;
+Game_CharacterBase.prototype.initMembers = function() {
+    _Game_CharacterBase_initMembers.apply(this, arguments);
+
+    this._bushFloatTime = 0;
+    this._bushFloatPeriodicTime = 0;
+    this._bushFloatAmplitude = 0;
+}
+
+/**
  * 【上書】茂みの深さ
  */
 Game_CharacterBase.prototype.refreshBushDepth = function() {
@@ -500,11 +544,21 @@ Game_CharacterBase.prototype.refreshBushDepth = function() {
                         this._bushDepth = 12;
                     }
 
+                    // 振幅が設定されている場合、浮遊設定
+                    if (setting.floatAmplitude && !this._bushFloatTime) {
+                        const a = this; // eval用
+                        this._bushFloatTime = Math.randomInt(this._bushFloatPeriodicTime);
+                        this._bushFloatPeriodicTime = eval(setting.floatPeriodicTime);
+                        this._bushFloatAmplitude = eval(setting.floatAmplitude);
+                    }
+
                     return;
                 }
                 // 条件設定が取得できない場合
                 // →設定初期化
                 this.bushSetting = undefined;
+                // 浮遊設定をクリア
+                clearFloat.bind(this)();
             }
 
             // 条件設定はないが、全体設定がある場合
@@ -517,8 +571,19 @@ Game_CharacterBase.prototype.refreshBushDepth = function() {
         }
     } else {
         this._bushDepth = 0;
+        // 浮遊設定をクリア
+        clearFloat.bind(this)();
     }
 };
+
+/**
+ * ●浮遊設定をクリア
+ */
+function clearFloat() {
+    this._bushFloatTime = 0;
+    this._bushFloatPeriodicTime = 0;
+    this._bushFloatAmplitude = 0;
+}
 
 /**
  * ●茂み時の半身の不透明度
@@ -545,7 +610,7 @@ Sprite_Character.prototype.createHalfBodySprites = function() {
         character.changeBushOpacityFlg = undefined;
 
         // 条件設定が取得できた場合
-        if (character.bushSetting && character.bushSetting.bushOpacity) {
+        if (character.bushSetting && character.bushSetting.bushOpacity != undefined) {
             this._lowerBody.opacity = character.bushSetting.bushOpacity;
             return;
         }
@@ -578,17 +643,39 @@ Sprite_Character.prototype.updateHalfBodySprites = function() {
 };
 
 //----------------------------------------
+// 浮遊機能
+//----------------------------------------
+
+const _Game_CharacterBase_screenY = Game_CharacterBase.prototype.screenY;
+Game_CharacterBase.prototype.screenY = function() {
+    let screenY = _Game_CharacterBase_screenY.apply(this, arguments);
+
+    // 浮遊設定がされている場合、浮遊時間に応じて上下させる。
+    if (this._bushFloatAmplitude) {
+        // 変動幅を設定し、Ｙ座標に加算
+        this.bushFloatSwing =
+            Math.sin(this._bushFloatTime / this._bushFloatPeriodicTime * Math.PI * 2) * this._bushFloatAmplitude;
+        screenY += this.bushFloatSwing;
+        // 時間を進める。
+        this._bushFloatTime++;
+    }
+
+    return screenY;
+};
+
+//----------------------------------------
 // マップ切替時
 //----------------------------------------
 
 /**
- * ●マップ情報の設定
+ * ●イベント設定
+ * ※イベント初期化前に設定する必要があるので、このタイミングしかない。
  */
-const _Game_Map_setup = Game_Map.prototype.setup;
-Game_Map.prototype.setup = function(mapId) {
-    _Game_Map_setup.apply(this, arguments);
-
+const _Game_Map_setupEvents = Game_Map.prototype.setupEvents;
+Game_Map.prototype.setupEvents = function() {
     setTilesetInfo();
+
+    _Game_Map_setupEvents.apply(this, arguments);
 };
 
 /**
@@ -657,6 +744,9 @@ function isValidSetting(settingId, tileset) {
  * ●現在のキャラクター位置に一致する茂み設定を取得する。
  */
 function getMatchSetting(x, y) {
+    x = Math.round(x);
+    y = Math.round(y);
+
     const tileset = $gameMap.tileset();
 
     // 設定がなければundefined
