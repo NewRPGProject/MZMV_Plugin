@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.172 Automate & super-enhance battle animations.
+ * @plugindesc v1.173 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -496,7 +496,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.172 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.173 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -3601,9 +3601,9 @@ Game_Battler.prototype.onBattleStart = function(advantageous) {
 /**
  * ●戦闘終了時
  */
-const _Game_Actor_onBattleEnd = Game_Actor.prototype.onBattleEnd;
-Game_Actor.prototype.onBattleEnd = function() {
-    _Game_Actor_onBattleEnd.apply(this, arguments);
+const _Game_Battler_onBattleEnd = Game_Battler.prototype.onBattleEnd;
+Game_Battler.prototype.onBattleEnd = function() {
+    _Game_Battler_onBattleEnd.apply(this, arguments);
 
     // 不要変数の初期化
     // ※マップ版では消化されず残ってしまうため
