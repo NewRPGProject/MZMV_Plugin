@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.17 Automate & super-enhance battle animations.
+ * @plugindesc v1.171 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -496,7 +496,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.17 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.171 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -3575,7 +3575,10 @@ Game_Battler.prototype.shiftAnimation = function() {
     return this._animations.shift();
 };
 
-var _Game_Battler_initMembers = Game_Battler.prototype.initMembers;
+/**
+ * ●変数初期化
+ */
+const _Game_Battler_initMembers = Game_Battler.prototype.initMembers;
 Game_Battler.prototype.initMembers = function() {
     _Game_Battler_initMembers.apply(this, arguments);
 
@@ -3583,9 +3586,22 @@ Game_Battler.prototype.initMembers = function() {
 };
 
 /**
+ * ●戦闘開始時
+ */
+const _Game_Actor_onBattleStart = Game_Actor.prototype.onBattleStart;
+Game_Actor.prototype.onBattleStart = function(advantageous) {
+    // ※initMembersだと途中導入の場合に支障が出るのでこちらでも初期化
+    if (!this._animations) {
+        this._animations = [];
+    }
+
+    _Game_Actor_onBattleStart.apply(this, arguments);
+};
+
+/**
  * ●戦闘終了時
  */
-var _Game_Actor_onBattleEnd = Game_Actor.prototype.onBattleEnd;
+const _Game_Actor_onBattleEnd = Game_Actor.prototype.onBattleEnd;
 Game_Actor.prototype.onBattleEnd = function() {
     _Game_Actor_onBattleEnd.apply(this, arguments);
 
