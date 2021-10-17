@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Change the traits (regular parameter and element rate) to an additive method.
+ * @plugindesc v1.02 Change the traits (regular parameter and element rate) to an additive method.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483215411.html
  *
@@ -153,11 +153,17 @@
  * @type boolean
  * @default false
  * @desc Changed the hit formula to address the issue of hit and evade being judged separately.
+ * 
+ * @param ConsiderNegativeEva
+ * @parent FixHitFormula
+ * @type boolean
+ * @default true
+ * @desc If the evasion rate is negative, modify it so that it has a higher chance of hitting than it should.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 特徴（能力補正や属性有効度）を加算方式に変更する。
+ * @plugindesc v1.02 特徴（能力補正や属性有効度）を加算方式に変更する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483215411.html
  *
@@ -308,6 +314,13 @@
  * @type boolean
  * @default false
  * @desc 命中計算式を変更し、命中と回避が別々に判定される問題に対処します。
+ * 
+ * @param ConsiderNegativeEva
+ * @parent FixHitFormula
+ * @text マイナスの回避率を考慮
+ * @type boolean
+ * @default true
+ * @desc 回避率がマイナスの場合、本来の命中率よりも高確率で命中するように修正します。
  */
 
 (function() {
@@ -347,6 +360,7 @@ const pStateRatePlus = toBoolean(parameters["StateRatePlus"], false);
 const pDebuffRatePlus = toBoolean(parameters["DebuffRatePlus"], false);
 const pSpParameterPlus = toBoolean(parameters["SpParameterPlus"], false);
 const pFixHitFormula = toBoolean(parameters["FixHitFormula"], false);
+const pConsiderNegativeEva = toBoolean(parameters["ConsiderNegativeEva"], true);
 
 //----------------------------------------
 // 通常能力値を加算
@@ -603,11 +617,26 @@ if (pFixHitFormula) {
             // 命中率
             let hitValue = action.itemHit(target);
             // ミス乱数 >= 命中率の場合はミス
-            result.missed = (result.used && missValue >= hitValue);
+            let missed = (result.used && missValue >= hitValue);
             // 命中率からミス乱数を減算
             hitValue -= missValue;
             // 残りの命中率 < 回避値なら回避
-            result.evaded = (!result.missed && hitValue < action.itemEva(target));
+            let evaded = (result.used && hitValue < action.itemEva(target));
+
+            // ミス＆回避ならば、ミスのみ有効
+            if (missed && evaded) {
+                evaded = false;
+
+            // ミスなのに回避失敗ならば、ミスも解除
+            // ※マイナスの回避補正によって発生
+            // ※マイナスの回避率を考慮がオンの場合のみ
+            } else if (pConsiderNegativeEva && missed && !evaded) {
+                missed = false;
+            }
+
+            result.missed = missed;
+            result.evaded = evaded;
+
 
             // 命中状況を確定
             this._isHitConfirm = true;
