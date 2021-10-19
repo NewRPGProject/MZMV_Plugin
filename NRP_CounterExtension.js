@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Extends the effective range of the counter attribute.
+ * @plugindesc v1.001 Extends the effective range of the counter attribute.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483969944.html
  *
@@ -25,15 +25,11 @@
  * and rights indication are also optional.
  * The author is not responsible,
  * but will deal with defects to the extent possible.
- * 
- * @param PassageIgnoreTerrain
- * @type string
- * @desc Specify the terrain tag (1~7) to ignore the passage judgment. Multiple tags can be specified. (e.g.:1,3)
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 カウンター属性の有効範囲を延長する。
+ * @plugindesc v1.001 カウンター属性の有効範囲を延長する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483969944.html
  *
