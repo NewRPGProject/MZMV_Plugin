@@ -10,7 +10,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.00 Set events' custom move by common event
+ * @plugindesc v1.001 Set events' custom move by common event
  * @author Sasuke KANNAZUKI(Thx to terunon)
  *
  * @command set
@@ -189,7 +189,7 @@
  */
 /*:ja
  * @target MZ
- * @plugindesc v1.00 複数イベントの移動ルートをひとつのコモンイベントで制御可能
+ * @plugindesc v1.001 複数イベントの移動ルートをひとつのコモンイベントで制御可能
  * @author 砂川赳 (神無月サスケ/terunon)
  *
  * @command set
@@ -586,27 +586,37 @@ function toBoolean(str, def) {
 
   Game_Character.prototype.updateMoveRouteInterpreter = function () {
     if (this._moveRouteInterpreter) {
-      this._moveRouteInterpreter.update();
+      if (!this.isMoveRouteForcing()) {
+        this._moveRouteInterpreter.update();
+      }
     }
+  };
+
+  const _Game_Event_updateStop = Game_Event.prototype.updateStop;
+  Game_Event.prototype.updateStop = function() {
+    _Game_Event_updateStop.call(this);
+
+    this.updateMoveRouteInterpreter();
   };
 
   const _Game_Character_updateRoutineMove =
     Game_Character.prototype.updateRoutineMove;
   Game_Character.prototype.updateRoutineMove = function() {
-    // 実行中のイベントは処理停止
-    if (pLockRunningEvent && this._locked) {
-      return;
-    // 他のイベントが実行中でも処理停止
-    } else if (pLockOtherEvents && $gameMap.isEventRunning()) {
-      return;
-    }
-
     if (this._moveRouteInterpreter) {
+      // 実行中のイベントは処理停止
+      if (pLockRunningEvent && this._locked) {
+        return;
+      // 他のイベントが実行中でも処理停止
+      } else if (pLockOtherEvents && $gameMap.isEventRunning()) {
+        return;
+      }
+
       const interpreter = this._moveRouteInterpreter;
       if (!interpreter.isRunning()) {
         this._moveRouteInterpreter = null;
       }
     }
+
     _Game_Character_updateRoutineMove.call(this);
   };
 
