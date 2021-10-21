@@ -592,13 +592,6 @@ function toBoolean(str, def) {
     }
   };
 
-  const _Game_Event_updateStop = Game_Event.prototype.updateStop;
-  Game_Event.prototype.updateStop = function() {
-    _Game_Event_updateStop.call(this);
-
-    this.updateMoveRouteInterpreter();
-  };
-
   const _Game_Character_updateRoutineMove =
     Game_Character.prototype.updateRoutineMove;
   Game_Character.prototype.updateRoutineMove = function() {
