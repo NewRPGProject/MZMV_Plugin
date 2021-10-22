@@ -12,7 +12,7 @@
  * ------------------------------------------
  * [Functions]
  * ------------------------------------------
- * ◆File Alias Function
+ * ◆Audio Alias Function
  * For example, if you want to set the boss battle music in Maker,
  * you may use the "Change Battle BGM" command
  * to set the boss battle music, and then change it back
@@ -45,7 +45,7 @@
  * You can eliminate unnatural space by moving back
  * the start point of ogg that contain long space at the beginning.
  * 
- * ※If you use this function together with the File Alias Function,
+ * ※If you use this function together with the Audio Alias Function,
  *   please set it for the file after the replacement.
  * 
  * ------------------------------------------
@@ -295,7 +295,7 @@
  * ------------------------------------------
  * ■機能
  * ------------------------------------------
- * ◆ファイル置換機能
+ * ◆音声置換機能
  * 例えば、ツクールでボス戦曲を設定する場合、
  * 『戦闘ＢＧＭの変更』コマンドによって、
  * ボス戦曲を設定し、戦闘後に通常戦闘曲に戻す
@@ -325,7 +325,7 @@
  * 先頭に長めの空白が含まれているoggの開始時点を後ろにすれば、
  * 不自然な空白をなくすことができます。
  * 
- * ※ファイル置換機能機能と併用する場合は、
+ * ※音声置換機能機能と併用する場合は、
  * 　置換後のファイルに対して設定してください。
  * 
  * ------------------------------------------
