@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Resolved conflict with GALV_LayerGraphicsMZ & added functions.
+ * @plugindesc v1.02 Resolved conflict with GALV_LayerGraphicsMZ & added functions.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base GALV_LayerGraphicsMZ
  * @orderAfter GALV_LayerGraphicsMZ
@@ -55,7 +55,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 GALV_LayerGraphicsMZとの競合を解消＆機能追加
+ * @plugindesc v1.02 GALV_LayerGraphicsMZとの競合を解消＆機能追加
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base GALV_LayerGraphicsMZ
  * @orderAfter GALV_LayerGraphicsMZ
@@ -152,12 +152,12 @@ if (pSupportLoopMap) {
         _Sprite_LayerGraphic_updatePosition.apply(this, arguments);
 
         // スクロール量を取得
-        this.scrollX = (this.scrollX ?? 0) + moveScreenX.bind($gameMap)();
-        this.scrollY = (this.scrollY ?? 0) + moveScreenY.bind($gameMap)();
+        this.lValue().scrollX = (this.lValue().scrollX ?? 0) + moveScreenX.bind($gameMap)();
+        this.lValue().scrollY = (this.lValue().scrollY ?? 0) + moveScreenY.bind($gameMap)();
 
         // 原点に加算
-        this.origin.x = 0 + this.scrollX + preCurrentx + this.xOffset();
-        this.origin.y = 0 + this.scrollY + preCurrenty + this.yOffset();
+        this.origin.x = 0 + this.lValue().scrollX + preCurrentx + this.xOffset();
+        this.origin.y = 0 + this.lValue().scrollY + preCurrenty + this.yOffset();
     };
 
     /**
