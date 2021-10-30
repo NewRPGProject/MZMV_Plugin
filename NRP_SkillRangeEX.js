@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.06 Extends the effective range of skills and items.
+ * @plugindesc v1.061 Extends the effective range of skills and items.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_VisualTurn
  * @orderBefore NRP_DynamicAnimationMZ
@@ -79,7 +79,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.06 スキル及びアイテムの効果範囲を拡張します。
+ * @plugindesc v1.061 スキル及びアイテムの効果範囲を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_VisualTurn
  * @orderBefore NRP_DynamicAnimationMZ
