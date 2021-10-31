@@ -30,6 +30,10 @@
  * to switch within the "BeforeCommonEvent".
  * 
  * [Plugin Command (MZ)]
+ * ◆DisableCommonEvent
+ * Temporarily disable the common event on change transfer.
+ * Return to the original with false.
+ * 
  * ◆ChangeTransferInfo
  * You can change the fade-in type.
  * Specify it in BeforeCommonEvent, etc.
@@ -37,6 +41,9 @@
  * 
  * [Plugin Command (MV)]
  * ※No distinction is made between individual capital letters. Also, do not include [].
+ * 
+ * ◆DisableCommonEvent
+ * NRP.TransferCommonEvent.DisableCommonEvent [true/false]
  * 
  * ◆ChangeTransferInfo
  * NRP.TransferCommonEvent.ChangeTransferInfo [Fade Type]
