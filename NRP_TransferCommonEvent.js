@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Call common events before and after the Transfer Player.
+ * @plugindesc v1.01 Call common events before and after the Transfer Player.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482680388.html
  *
@@ -51,6 +51,16 @@
  * The author is not responsible,
  * but will deal with defects to the extent possible.
  * 
+ * @command DisableCommonEvent
+ * @desc Temporarily disable the common event on change transfer.
+ * 
+ * @arg Disable
+ * @desc Temporarily disable the common event on change transfer.
+ * Return to the original with false.
+ * @type boolean
+ * @default true
+ * 
+ * 
  * @command ChangeTransferInfo
  * @desc Change the information about Transfer Player.
  * 
@@ -75,7 +85,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 場所移動前後にコモンイベントを実行
+ * @plugindesc v1.01 場所移動前後にコモンイベントを実行
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/482680388.html
  *
@@ -99,6 +109,10 @@
  * 移動前コモンイベント内で切り替えればＯＫです。
  * 
  * ■プラグインコマンド（ＭＺ）
+ * ◆コモンイベントの無効化
+ * 一時的に場所移動時のコモンイベントを無効化します。
+ * falseなら元に戻ります。
+ * 
  * ◆場所移動情報の変更
  * フェードインの方法を変更できます。
  * 移動前コモンイベントなどで指定してください。
@@ -106,6 +120,9 @@
  * 
  * ■プラグインコマンド（ＭＶ）
  * ※大文字個別は区別しません。また[]は含まないでください。
+ * 
+ * ◆コモンイベントの無効化
+ * NRP.TransferCommonEvent.DisableCommonEvent [true/false]
  * 
  * ◆場所移動情報の変更
  * NRP.TransferCommonEvent.ChangeTransferInfo [フェード方法]
@@ -118,6 +135,18 @@
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
+ * 
+ * @command DisableCommonEvent
+ * @text コモンイベントの無効化
+ * @desc 一時的に場所移動時のコモンイベントを無効化します。
+ * 
+ * @arg Disable
+ * @text 無効化
+ * @desc 一時的に場所移動時のコモンイベントを無効化します。
+ * falseで元に戻ります。
+ * @type boolean
+ * @default true
+ * 
  * 
  * @command ChangeTransferInfo
  * @text 場所移動情報の変更
@@ -147,6 +176,18 @@
 (function() {
 "use strict";
 
+function toBoolean(val, def) {
+    // 空白なら初期値を返す
+    if (val === "" || val === undefined) {
+        return def;
+        
+    // 既にboolean型なら、そのまま返す
+    } else if (typeof val === "boolean") {
+        return val;
+    }
+    // 文字列ならboolean型に変換して返す
+    return val.toLowerCase() == "true";
+}
 function toNumber(str, def) {
     if (str == "") {
         return def;
@@ -159,8 +200,10 @@ const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pBeforeCommonEvent = toNumber(parameters["BeforeCommonEvent"]);
 const pAfterCommonEvent = toNumber(parameters["AfterCommonEvent"]);
 
+// 場所移動時のコモンイベント無効
+let mDisableCommonEvent = false;
 // フェード対応の変更用
-let changeFadeType = undefined;
+let mChangeFadeType = undefined;
 
 //----------------------------------------
 // ＭＺ用プラグインコマンド
@@ -172,10 +215,17 @@ if (!PluginManager.registerCommand) {
 }
 
 /**
+ * ●【ＭＺ用プラグインコマンド】コモンイベントの無効化
+ */
+PluginManager.registerCommand(PLUGIN_NAME, "DisableCommonEvent", function(args) {
+    mDisableCommonEvent = toBoolean(args.Disable);
+});
+
+/**
  * ●【ＭＺ用プラグインコマンド】場所移動情報の変更
  */
 PluginManager.registerCommand(PLUGIN_NAME, "ChangeTransferInfo", function(args) {
-    changeFadeType = toNumber(args.FadeType);
+    mChangeFadeType = toNumber(args.FadeType);
 });
 
 //----------------------------------------
@@ -190,10 +240,16 @@ Game_Interpreter.prototype.pluginCommand = function(command, args) {
     const lowerCommand = command.toLowerCase();
     
     /**
+     * ●コモンイベントの無効化
+     */
+    if (lowerCommand === "nrp.transfercommonevent.disablecommonevent") {
+        mDisableCommonEvent = toBoolean(args[0]);
+
+    /**
      * ●場所移動情報の変更
      */
-    if (lowerCommand === "nrp.transfercommonevent.changetransferinfo") {
-        changeFadeType = toNumber(args[0]);
+    } else if (lowerCommand === "nrp.transfercommonevent.changetransferinfo") {
+        mChangeFadeType = toNumber(args[0]);
     }
 };
 
@@ -206,6 +262,12 @@ Game_Interpreter.prototype.pluginCommand = function(command, args) {
  */
 const _Game_Interpreter_executeCommand = Game_Interpreter.prototype.executeCommand;
 Game_Interpreter.prototype.executeCommand = function() {
+    // 無効化されている場合は元処理を呼び出し。
+    if (mDisableCommonEvent) {
+        return _Game_Interpreter_executeCommand.apply(this, arguments);
+    }
+
+
     // 場所移動後
     if (this._transferCommonEventMode == 2) {
         // 場所移動後のコモンイベントを実行
@@ -260,9 +322,9 @@ if (Utils.RPGMAKER_NAME == "MV") {
     const _Game_Interpreter_command201 = Game_Interpreter.prototype.command201;
     Game_Interpreter.prototype.command201 = function() {
         // フェードタイプの変更が指定されている場合
-        if (changeFadeType !== undefined) {
-            this._params[5] = changeFadeType;
-            changeFadeType = undefined;
+        if (mChangeFadeType !== undefined) {
+            this._params[5] = mChangeFadeType;
+            mChangeFadeType = undefined;
         }
 
         return _Game_Interpreter_command201.call(this);
@@ -273,9 +335,9 @@ if (Utils.RPGMAKER_NAME == "MV") {
     const _Game_Interpreter_command201 = Game_Interpreter.prototype.command201;
     Game_Interpreter.prototype.command201 = function(params) {
         // フェードタイプの変更が指定されている場合
-        if (changeFadeType !== undefined) {
-            params[5] = changeFadeType;
-            changeFadeType = undefined;
+        if (mChangeFadeType !== undefined) {
+            params[5] = mChangeFadeType;
+            mChangeFadeType = undefined;
         }
 
         return _Game_Interpreter_command201.call(this, params);
