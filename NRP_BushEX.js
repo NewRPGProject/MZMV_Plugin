@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Extends the functionality of the bushes attribute.
+ * @plugindesc v1.021 Extends the functionality of the bushes attribute.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore OverpassTile
  * @url http://newrpg.seesaa.net/article/481013577.html
@@ -162,7 +162,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 茂み属性の機能を拡張します。
+ * @plugindesc v1.021 茂み属性の機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore OverpassTile
  * @url http://newrpg.seesaa.net/article/481013577.html
@@ -550,6 +550,10 @@ Game_CharacterBase.prototype.refreshBushDepth = function() {
                         this._bushFloatTime = Math.randomInt(this._bushFloatPeriodicTime);
                         this._bushFloatPeriodicTime = eval(setting.floatPeriodicTime);
                         this._bushFloatAmplitude = eval(setting.floatAmplitude);
+
+                    // 前回の浮遊設定が残っている場合はクリア
+                    } else if (!setting.floatAmplitude && this._bushFloatAmplitude) {
+                        clearFloat.bind(this)();
                     }
 
                     return;
