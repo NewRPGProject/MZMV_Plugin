@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.021 Extends the functionality of the bushes attribute.
+ * @plugindesc v1.022 Extends the functionality of the bushes attribute.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore OverpassTile
  * @url http://newrpg.seesaa.net/article/481013577.html
@@ -162,7 +162,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.021 茂み属性の機能を拡張します。
+ * @plugindesc v1.022 茂み属性の機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore OverpassTile
  * @url http://newrpg.seesaa.net/article/481013577.html
@@ -698,6 +698,10 @@ Game_Map.prototype.changeTileset = function(tilesetId) {
  */
 function setTilesetInfo() {
     const tileset = $gameMap.tileset();
+    // イベントテスト時は存在しないので終了
+    if (!tileset) {
+        return;
+    }
 
     // 設定リスト
     const bushSettingList = [];
@@ -754,7 +758,7 @@ function getMatchSetting(x, y) {
     const tileset = $gameMap.tileset();
 
     // 設定がなければundefined
-    if (!tileset.bushSettingList) {
+    if (!tileset || !tileset.bushSettingList) {
         return undefined;
     }
 
