@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Automatically generate events on tiles.
+ * @plugindesc v1.011 Automatically generate events on tiles.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481496398.html
  *
@@ -186,7 +186,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 タイル上に自動でイベントを生成します。
+ * @plugindesc v1.011 タイル上に自動でイベントを生成します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481496398.html
  *
@@ -619,6 +619,10 @@ function makeTileEvents(createFlg) {
     }
 
     const tileset = $gameMap.tileset();
+    // イベントテスト時は存在しないので終了
+    if (!tileset) {
+        return;
+    }
 
     // 設定リスト
     const settingList = [];
