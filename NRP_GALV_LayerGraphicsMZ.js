@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.02 Resolved conflict with GALV_LayerGraphicsMZ & added functions.
+ * @plugindesc v1.021 Resolved conflict with GALV_LayerGraphicsMZ & added functions.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base GALV_LayerGraphicsMZ
  * @orderAfter GALV_LayerGraphicsMZ
@@ -55,7 +55,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.02 GALV_LayerGraphicsMZとの競合を解消＆機能追加
+ * @plugindesc v1.021 GALV_LayerGraphicsMZとの競合を解消＆機能追加
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base GALV_LayerGraphicsMZ
  * @orderAfter GALV_LayerGraphicsMZ
@@ -241,6 +241,18 @@ if (pSupportStaticLayerDefaultMap) {
 
         _Galv_LG_createLayerS.call(this, config);
     }
+}
+
+//--------------------------------------------------------
+// イベントテストでエラーになる不具合修正
+//--------------------------------------------------------
+const _Game_Map_createNoteLayers = Game_Map.prototype.createNoteLayers;
+Game_Map.prototype.createNoteLayers = function(mapId) {
+    if (!$dataMap.note) {
+        return;
+    }
+
+    _Game_Map_createNoteLayers.apply(this, arguments);
 }
 
 //--------------------------------------------------------
