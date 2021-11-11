@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Sets the settings for shadows on the map.
+ * @plugindesc v1.011 Sets the settings for shadows on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/479088201.html
  *
@@ -57,7 +57,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 マップの影に関する設定を行います。
+ * @plugindesc v1.011 マップの影に関する設定を行います。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/479088201.html
  *
@@ -336,6 +336,10 @@ Game_Map.prototype.setup = function(mapId) {
     // 影を斜めにするかを設定
     // ※影の描画は常駐処理なので、極力処理はこちらでやっておく。
     const tileset = this.tileset();
+    if (!tileset) {
+        return;
+    }
+
     tileset.isDiagonalShadow = getDiagonalShadow(tileset);
 };
 
@@ -348,6 +352,10 @@ Game_Map.prototype.changeTileset = function(tilesetId) {
 
     // 影を斜めにするかを設定
     const tileset = this.tileset();
+    if (!tileset) {
+        return;
+    }
+
     tileset.isDiagonalShadow = getDiagonalShadow(tileset);
 };
 
