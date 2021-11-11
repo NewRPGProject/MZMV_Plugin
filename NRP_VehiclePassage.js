@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Extends the passage & get on/off decision for vehicles.
+ * @plugindesc v1.011 Extends the passage & get on/off decision for vehicles.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482385836.html
  *
@@ -139,7 +139,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 乗物の通行＆乗降判定を拡張します。
+ * @plugindesc v1.011 乗物の通行＆乗降判定を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/482385836.html
  *
@@ -562,6 +562,9 @@ Game_Map.prototype.changeTileset = function(tilesetId) {
  */
 function setTilesetInfo() {
     const tileset = $gameMap.tileset();
+    if (!tileset) {
+        return;
+    }
 
     // 設定リスト
     const vehiclePassageSettingList = [];
