@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Set detailed settings for battleback and encounter rates.
+ * @plugindesc v1.001 Set detailed settings for battleback and encounter rates.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481820874.html
  *
@@ -142,7 +142,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 戦闘背景やエンカウント率を詳細設定。
+ * @plugindesc v1.001 戦闘背景やエンカウント率を詳細設定。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481820874.html
  *
@@ -491,7 +491,11 @@ Game_Map.prototype.changeTileset = function(tilesetId) {
  */
 function setTilesetInfo() {
     const tileset = $gameMap.tileset();
-
+    // イベントテスト時は存在しないので終了
+    if (!tileset) {
+        return;
+    }
+    
     // 設定リスト
     const settingList = [];
 
@@ -542,7 +546,10 @@ function isValidSetting(settingId, tileset) {
  */
 function getMatchSetting(x, y) {
     const tileset = $gameMap.tileset();
-
+    // イベントテスト時は存在しないので終了
+    if (!tileset) {
+        return;
+    }
     // 設定がなければundefined
     if (!tileset.terrainSettingList) {
         return undefined;
