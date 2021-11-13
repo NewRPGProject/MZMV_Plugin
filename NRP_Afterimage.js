@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.001 Gives an afterimage effect to the battler.
+ * @plugindesc v1.01 Gives an afterimage effect to the battler.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483120023.html
  *
@@ -75,7 +75,7 @@
  * <D-Motion:return/>
  * ---------------------------------
  * 
- * [Reference].
+ * [Reference]
  * The following plugin was used as a reference in the creation of this plugin.
  * 
  * SAN_ResidualSprites.js (Sanshiro)
@@ -121,7 +121,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.001 バトラーに残像効果を付与します。
+ * @plugindesc v1.01 バトラーに残像効果を付与します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483120023.html
  *
@@ -615,6 +615,12 @@ Sprite_EnemyAfterimage.prototype.setSetFrame = function() {
  * 【独自】残像管理情報の取得
  */
 Game_Battler.prototype.afterimage = function() {
+    // 外部プラグインなどでonBattleStartを経由しなかった場合、
+    // undefinedの可能性があるので初期化する。
+    if (!this._afterimage) {
+        this._afterimage = new Battler_Afterimage(this);
+    }
+
     return this._afterimage;
 };
 
