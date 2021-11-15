@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc ver1.02 Enable formulas and control characters in plugin commands.
+ * @plugindesc v1.03 Enable formulas and control characters in plugin commands.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475509661.html
  *
@@ -42,7 +42,7 @@
  */
 /*:ja
  * @target MV MZ
- * @plugindesc ver1.02 プラグインコマンドで数式や制御文字を使用可能に
+ * @plugindesc v1.03 プラグインコマンドで数式や制御文字を使用可能に
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475509661.html
  *
@@ -213,24 +213,33 @@ function convertParam(param) {
 /**
  * ●Window_Baseの関数を切り離し
  */
-function convertEscapeCharacters(text) {
+function convertEscapeCharacters(originalText) {
+    let tmpText = originalText;
     /* eslint no-control-regex: 0 */
-    text = text.replace(/\\/g, "\x1b");
-    text = text.replace(/\x1b\x1b/g, "\\");
-    text = text.replace(/\x1bV\[(\d+)\]/gi, (_, p1) =>
+    tmpText = tmpText.replace(/\\/g, "\x1b");
+    tmpText = tmpText.replace(/\x1b\x1b/g, "\\");
+    tmpText = tmpText.replace(/\x1bV\[(\d+)\]/gi, (_, p1) =>
         $gameVariables.value(parseInt(p1))
     );
-    text = text.replace(/\x1bV\[(\d+)\]/gi, (_, p1) =>
+    tmpText = tmpText.replace(/\x1bV\[(\d+)\]/gi, (_, p1) =>
         $gameVariables.value(parseInt(p1))
     );
-    text = text.replace(/\x1bN\[(\d+)\]/gi, (_, p1) =>
+    tmpText = tmpText.replace(/\x1bN\[(\d+)\]/gi, (_, p1) =>
         actorName(parseInt(p1))
     );
-    text = text.replace(/\x1bP\[(\d+)\]/gi, (_, p1) =>
+    tmpText = tmpText.replace(/\x1bP\[(\d+)\]/gi, (_, p1) =>
         partyMemberName(parseInt(p1))
     );
-    text = text.replace(/\x1bG/gi, TextManager.currencyUnit);
-    return text;
+    tmpText = tmpText.replace(/\x1bG/gi, TextManager.currencyUnit);
+
+    // 変換不能のコードが残っていた場合は、エラーになるので処理しない。
+    // ※note型のパラメータが渡った際を想定
+    if (tmpText.match(/\x1b/)) {
+        // 元の値を返す。
+        return originalText;
+    }
+
+    return tmpText;
 }
 
 /**
