@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.022 A class change system will be implemented.
+ * @plugindesc v1.03 A class change system will be implemented.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -365,7 +365,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.022 転職システムを実装する。
+ * @plugindesc v1.03 転職システムを実装する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -998,6 +998,23 @@ Game_Actor.prototype.currentClass = function() {
     return _Game_Actor_currentClass.apply(this, arguments);
 };
 
+// リフレッシュ防止フラグ
+let mNoRefresh = false;
+
+/**
+ * ●リフレッシュ
+ */
+const _Game_Actor_refresh = Game_Actor.prototype.refresh;
+Game_Actor.prototype.refresh = function() {
+    // フラグが立っている時は禁止
+    // ※以降で装備解除処理が行われるので防止するため
+    if (mNoRefresh) {
+        return;
+    }
+
+    _Game_Actor_refresh.apply(this, arguments);
+};
+
 //-----------------------------------------------------------------------------
 // Scene_ClassChange
 //
@@ -1485,7 +1502,11 @@ Windows_SelectClasses.prototype.isClassConditionOK = function(jsonConditions) {
     const tempActor = JsonEx.makeDeepCopy(this._actor);
 
     for (const condition of conditions) {
+        // 一時アクターを転職させる。
+        // ただし、転職時の装備解除を防ぐためリフレッシュを禁止
+        mNoRefresh = true;
         tempActor.changeClass(condition.Class, pKeepExp);
+        mNoRefresh = false;
 
         // レベル条件を満たさないならfalse
         if (tempActor.level < condition.Level) {
@@ -1586,7 +1607,13 @@ Windows_SelectClasses.prototype.select = function(index) {
     if (this._actor) {
         if (classItem) {
             const tempActor = JsonEx.makeDeepCopy(this._actor);
+            
+            // 一時アクターを転職させる。
+            // ただし、転職時の装備解除を防ぐためリフレッシュを禁止
+            mNoRefresh = true;
             tempActor.changeClass(classItem.id, pKeepExp);
+            mNoRefresh = false;
+
             this._infoWindow.setTempActor(tempActor);
         } else {
             this._infoWindow.setTempActor(null);
