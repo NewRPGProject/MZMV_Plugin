@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Manage audio files.
+ * @plugindesc v1.01 Manage audio files.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483999181.html
  *
@@ -286,7 +286,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 音声ファイルの管理を行う。
+ * @plugindesc v1.01 音声ファイルの管理を行う。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483999181.html
  *
@@ -696,6 +696,29 @@ AudioManager.updateBgmParameters = function(bgm) {
     _AudioManager_updateBgmParameters.call(this, newBgm);
 };
 
+/**
+ * ●現在ＢＧＭかどうかの判定
+ */
+const _AudioManager_isCurrentBgm = AudioManager.isCurrentBgm;
+AudioManager.isCurrentBgm = function(bgm) {
+    const ret = _AudioManager_isCurrentBgm.apply(this, arguments);
+    if (ret) {
+        return ret;
+    }
+
+    //------------------------------------
+    // falseの場合はさらに判定追加
+    //------------------------------------
+    // 別名があれば変換
+    const aliasName = getAlias(bgm, pBgmAliases);
+
+    return (
+        this._currentBgm &&
+        this._bgmBuffer &&
+        this._currentBgm.name === aliasName
+    );
+};
+
 //----------------------------------------
 // ＢＧＳ
 //----------------------------------------
@@ -744,6 +767,29 @@ AudioManager.updateBgsParameters = function(bgs) {
     setAudioAdjust(newBgs, pBgsSettings);
 
     _AudioManager_updateBgsParameters.call(this, newBgs);
+};
+
+/**
+ * ●現在ＢＧＳかどうかの判定
+ */
+const _AudioManager_isCurrentBgs = AudioManager.isCurrentBgs;
+AudioManager.isCurrentBgs = function(bgs) {
+    const ret = _AudioManager_isCurrentBgs.apply(this, arguments);
+    if (ret) {
+        return ret;
+    }
+
+    //------------------------------------
+    // falseの場合はさらに判定追加
+    //------------------------------------
+    // 別名があれば変換
+    const aliasName = getAlias(bgs, pBgsAliases);
+
+    return (
+        this._currentBgs &&
+        this._bgsBuffer &&
+        this._currentBgs.name === aliasName
+    );
 };
 
 //----------------------------------------
