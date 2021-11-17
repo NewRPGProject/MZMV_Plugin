@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.20 When executing skills, call motion freely.
+ * @plugindesc v1.21 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help When executing skills(items), call motion freely.
@@ -550,7 +550,7 @@
  */
 
 /*:ja
- * @plugindesc v1.20 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.21 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在にモーションを呼び出します。
@@ -2908,6 +2908,8 @@ Sprite_Actor.prototype.refreshMotion = function() {
  */
 Game_Battler.prototype.performAttackDynamicMotion = function(weaponId, weaponType) {
     var wtypeId;
+    // 武器ＩＤをクリア
+    this.setWeaponId(null);
 
     // weaponTypeの指定がある場合は優先
     if (weaponType != undefined) {
@@ -2918,6 +2920,7 @@ Game_Battler.prototype.performAttackDynamicMotion = function(weaponId, weaponTyp
         // 武器IDの指定があれば取得
         if (weaponId != undefined) {
             weapons = [$dataWeapons[weaponId]];
+            this.setWeaponId(weaponId);
         } else {
             weapons = this.weapons();
         }
@@ -2938,10 +2941,34 @@ Game_Battler.prototype.performAttackDynamicMotion = function(weaponId, weaponTyp
 };
 
 /**
+ * 【独自】武器ＩＤの設定
+ */
+Game_Battler.prototype.setWeaponId = function(weaponId) {
+    this._weaponId = weaponId;
+}
+
+/**
+ * 【独自】武器ＩＤの設定
+ */
+Sprite_Weapon.prototype.setWeaponId = function(weaponId) {
+    this._weaponId = weaponId;
+}
+
+/**
  * ●武器の表示準備
  */
 var _Sprite_Weapon_setup = Sprite_Weapon.prototype.setup;
 Sprite_Weapon.prototype.setup = function(weaponImageId) {
+    this._weaponId = 0;
+    
+    // アクターに武器ＩＤが設定されている場合は反映
+    const actor = this.parent._actor;
+    if (actor._weaponId) {
+        this._weaponId = actor._weaponId;
+        // アクター側はクリア
+        actor._weaponId = null;
+    }
+
     // 開始モーションの指定がある場合
     if (this.parent._motionStartPattern) {
         this._weaponImageId = weaponImageId;
