@@ -4,11 +4,11 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Adjusts the display of weapons.
+ * @plugindesc v1.00 Extends the weapon display.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484348477.html
  *
- * @help Adjust the display of weapons in side-view battle.
+ * @help Extends the display of weapons in side-view battle.
  * 
  * ◆Features
  * - Adjust the display position of weapons.
@@ -79,11 +79,11 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 武器の表示を調整します。
+ * @plugindesc v1.00 武器の表示を拡張します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484348477.html
  *
- * @help サイドビュー戦闘における武器の表示を調整します。
+ * @help サイドビュー戦闘における武器の表示を拡張します。
  * 
  * ◆機能
  * ・武器の表示位置を調整。
