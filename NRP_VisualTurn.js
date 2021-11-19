@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.14 The order of actions is displayed on the battle screen.
+ * @plugindesc v1.141 The order of actions is displayed on the battle screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -229,7 +229,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.14 行動順序を戦闘画面へ表示します。
+ * @plugindesc v1.141 行動順序を戦闘画面へ表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -1495,7 +1495,6 @@ Window_BattleCtb.prototype.drawWindowBackImage = function() {
  * ●アクター・バトラーの背景に表示するピクチャー描画
  */
 Window_BattleCtb.prototype.drawPersonalBackImage = function(battler, x, y) {
-    var win = this;
     var bitmap = null;
     
     // 味方／敵に対応する背景画像があれば読み込む
@@ -1505,17 +1504,11 @@ Window_BattleCtb.prototype.drawPersonalBackImage = function(battler, x, y) {
         bitmap = ImageManager.loadPicture(paramEnemyBackImage);
     // どちらもなければ処理しない。
     } else {
-        return true;
+        return;
     }
 
-    // 描画成功なら終了
-    if (ImageManager.isReady()) {
-        win.contents.paintOpacity = 255;
-        win.contents.blt(bitmap, 0, 0, bitmap.width, bitmap.height, x, y);
-        return true;
-    }
-    
-    return false;
+    this.contents.paintOpacity = 255;
+    this.contents.blt(bitmap, 0, 0, bitmap.width, bitmap.height, x, y);
 };
 
 /**
