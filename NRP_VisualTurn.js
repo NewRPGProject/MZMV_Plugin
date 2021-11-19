@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.13 The order of actions is displayed on the battle screen.
+ * @plugindesc v1.14 The order of actions is displayed on the battle screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -229,7 +229,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.13 行動順序を戦闘画面へ表示します。
+ * @plugindesc v1.14 行動順序を戦闘画面へ表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -815,22 +815,11 @@ NrpVisualTurn.drawCtbBattler = function(battler, x, y, battlersLength, i) {
     } else {
         opacity = 255; // 通常
     }
-    
+
     // 背景描画
-    if (win.drawPersonalBackImage(battler, x, y)) {
-        // 背景描画に成功したら。シンボル画像表示
-        win.drawInterval(battler, x, y, paramWidth, paramHeight, opacity);
-        return;
-    }
-    
-    // 失敗なら、背景描画の成功を待ってから、シンボル画像表示を行う。
-    // この調整をしておかないと、稀に表示が前後する。
-    var interval = setInterval(function(){
-        if (win.drawPersonalBackImage(battler, x, y)) {
-            win.drawInterval(battler, x, y, paramWidth, paramHeight, opacity);
-            clearInterval(interval);
-        }
-    }, 1000); //1秒間隔
+    win.drawPersonalBackImage(battler, x, y);
+    // 背景描画に成功したら。シンボル画像表示
+    win.drawInterval(battler, x, y, paramWidth, paramHeight, opacity);
 }
 
 /**
@@ -878,8 +867,6 @@ Window_BattleCtb.prototype.drawName = function(battler, x, y, width, height, opa
  * ●clearIntervalによって、準備完了を待って描画を行う。
  */
 Window_BattleCtb.prototype.drawInterval = function(battler, x, y, width, height, opacity) {
-    var win = this;
-    
     // 表示モードによって判断し、bitmapを読み込む。
     var bitmap = this.loadBitmap(battler);
     
@@ -892,26 +879,11 @@ Window_BattleCtb.prototype.drawInterval = function(battler, x, y, width, height,
     
     // 名前表示なら制御せずそのまま描画
     if (graphicMode == 0) {
-        win.drawName(battler, x, y, paramWidth, paramHeight, opacity);
+        this.drawName(battler, x, y, paramWidth, paramHeight, opacity);
         return;
     }
-    
-    // 描画成功なら終了
-    if (ImageManager.isReady()) {
-        win.drawSymbol(
-            bitmap, imageIndex, isBigCharacter, battler, x, y, width, height, opacity, graphicMode);
-        return;
-    }
-    
-    // 失敗した場合、準備完了を待って描画を行う。（念のため）
-    var interval = setInterval(function(){
-        if (ImageManager.isReady()) {
-            win.drawSymbol(
-                bitmap, imageIndex, isBigCharacter, battler, x, y, width, height, opacity, graphicMode);
-            
-            clearInterval(interval);
-        }
-    }, 1000); //1秒間隔
+
+    this.drawSymbol(bitmap, imageIndex, isBigCharacter, battler, x, y, width, height, opacity, graphicMode);    
 };
 
 /**
@@ -1513,24 +1485,10 @@ Window_BattleCtb.prototype.drawWindowBackImage = function() {
         return;
     }
 
-    var win = this;
     var bitmap = ImageManager.loadPicture(paramWindowBackImage);
-    
-    // 描画成功なら終了
-    if (ImageManager.isReady()) {
-        win.contents.paintOpacity = 255;
-        win.contents.blt(bitmap, 0, 0, bitmap.width, bitmap.height, 0, 0);
-        return;
-    }
-    
-    // 準備完了を待って描画を行う。
-    var interval = setInterval(function(){
-        if (ImageManager.isReady()) {
-            win.contents.paintOpacity = 255;
-            win.contents.blt(bitmap, 0, 0, bitmap.width, bitmap.height, 0, 0);
-            clearInterval(interval);
-        }
-    }, 10); //0.01秒間隔
+
+    this.contents.paintOpacity = 255;
+    this.contents.blt(bitmap, 0, 0, bitmap.width, bitmap.height, 0, 0);
 };
 
 /**
