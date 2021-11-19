@@ -4,17 +4,64 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.141 The order of actions is displayed on the battle screen.
+ * @plugindesc v1.142 The order of actions is displayed on the battle screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
  * @help This plugin performs the same screen display process as CTB and CTTB.
  * Be sure to place this plugin below the plugins that control those turns.
  *
+ * ------------------------------------------
+ * [Note]
+ * ------------------------------------------
+ * You can specify individual images
+ * by writing the following in the actor and enemy's note.
+ * 
+ * <CtbFace:[FileName],[Index],[SwitchNo]>
+ * <CtbCharacter:[FileName],[Index],[SwitchNo]>
+ * <CtbSvActor:[FileName],[SwitchNo]>
+ * <CtbPicture:[FileName],[SwitchNo]>
+ *
+ * If the specified switch is ON,
+ * it will take precedence over the plugin parameter specification.
+ * Note that, as usual, the index starts at 0.
+ * Note that the switch number can be omitted.
+ * If it is omitted, the switch number is displayed from the beginning.
+ * 
+ * <CtbPicture:boss>
+ * Displays the images in the "pictures/boss.png" file.
+ * When you want to change the display only for boss enemies.
+ * This is probably the most orthodox usage.
+ * 
+ * <CtbFace:Monster,2>
+ * Display the third image in "faces/Monster.png".
+ *
+ * <CtbCharacter:Monster,5,10>
+ * The sixth image in "characters/Monster.png"
+ * will be displayed when switch No. 10 is ON.
+ *
+ * You can specify multiple settings if you want
+ * to change the display of the actor many times as the story progresses.
+ *
+ * <CtbPicture:aaa>
+ * <CtbPicture1:bbb,11>
+ * <CtbPicture2:ccc,12>
+ *
+ * Sequential numbering as shown above.
+ * In the example above, when switch 11 is turned on,
+ * the display changes to image bbb,
+ * and when switch 12 is turned on, it changes to image ccc.
+ * The order of up and down is not important,
+ * but the one with the larger number has priority.
+ * Note that the order is unmarked -> 1 -> 2...
+ * If you make a mistake, it will not work.
+ *
  * For more information, please see below.
  * http://newrpg.seesaa.net/article/472840225.html
  * 
+ * ------------------------------------------
  * [Terms]
+ * ------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
@@ -229,17 +276,61 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.141 行動順序を戦闘画面へ表示します。
+ * @plugindesc v1.142 行動順序を戦闘画面へ表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
  * @help CTBやCTTBに共通した画面表示処理を行います。
  * このプラグインは必ずターン制御を行うプラグインよりも下に配置してください。
  *
- * 細かい仕様については、以下をご覧ください。
+ * ------------------------------------------
+ * ■メモ欄
+ * ------------------------------------------
+ * アクター、敵キャラのメモ欄に以下を記述すれば、
+ * 画像の個別指定が可能です。
+ * 
+ * <CtbFace:[ファイル名],[インデックス],[スイッチ番号]>
+ * <CtbCharacter:[ファイル名],[インデックス],[スイッチ番号]>
+ * <CtbSvActor:[ファイル名],[スイッチ番号]>
+ * <CtbPicture:[ファイル名],[スイッチ番号]>
+ *
+ * 指定したスイッチがONの場合、
+ * プラグインパラメータの指定よりも優先して表示されます。
+ * 例によって、インデックスは0始まりなので注意です。
+ * なお、スイッチ番号は省略可能です。
+ * 省略した場合は最初から表示されます。
+ * 
+ * <CtbPicture:boss>
+ * pictures/bossファイルの画像を表示します。
+ * ボス敵だけ表示を変更したい場合など。
+ * たぶんこれが一番オーソドックスな使い方です。
+ * 
+ * <CtbFace:Monster,2>
+ * faces/Monsterの３番目の画像を表示します。
+ *
+ * <CtbCharacter:Monster,5,10>
+ * characters/Monsterの６番目の画像を、スイッチ１０番がONの時に表示します。
+ *
+ * 物語の進行によって、アクターの表示を
+ * 何度も変えたいような場合は複数指定も可能です。
+ *
+ * <CtbPicture:aaa>
+ * <CtbPicture1:bbb,11>
+ * <CtbPicture2:ccc,12>
+ *
+ * というように連番をつけます。
+ * 上の例だとスイッチ11番がONの時に、画像bbbに表示が変更、
+ * さらに12番がONの時に画像cccに変更されます。
+ * 上下の順番は問いませんが、番号が大きいほうが優先されます。
+ * 無印→1→2...という順番であることに注意してください。
+ * 間違えると機能しません。
+ *
+ * その他、細かい仕様については、以下をご覧ください。
  * http://newrpg.seesaa.net/article/472840225.html
  * 
+ * ------------------------------------------
  * ■利用規約
+ * ------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
