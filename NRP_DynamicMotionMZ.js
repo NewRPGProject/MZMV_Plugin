@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.15 When executing skills, call motion freely.
+ * @plugindesc v1.151 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -556,7 +556,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.15 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.151 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -3991,13 +3991,16 @@ const _BattleManager_endAction = BattleManager.endAction;
 BattleManager.endAction = function() {
     // 不死身設定の場合、全員の不死身化解除
     if (this._action && this._action.existDynamicSetting("Immortal")) {
-        this.allBattleMembers().forEach(function(battler) {
-            battler.removeState(pImmortalState);
-            // 既に死んでいる場合は演出実行
-            if (battler.isStateAffected(battler.deathStateId())) {
-                this._logWindow.displayAddedStates(battler);
+        for (const battler of this.allBattleMembers()) {
+            // 不死身状態なら解除
+            if (battler.isStateAffected(pImmortalState)) {
+                battler.removeState(pImmortalState);
+                // 既に死んでいる場合は演出実行
+                if (battler.isStateAffected(battler.deathStateId())) {
+                    this._logWindow.displayAddedStates(battler);
+                }
             }
-        }, this);
+        }
     }
 
     _BattleManager_endAction.apply(this, arguments);
