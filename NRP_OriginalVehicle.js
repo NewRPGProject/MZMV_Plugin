@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Add the original vehicles.
+ * @plugindesc v1.01 Add the original vehicles.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_VehiclePassage
  * @url http://newrpg.seesaa.net/article/482502348.html
@@ -72,6 +72,21 @@
  * The only command that does not exist is "Get on/off Vehicle".
  * You can simply execute the "Get on/off Vehicle" event command.
  * 
+ * In addition, the following additional commands are available.
+ * 
+ * ◆Force Get On
+ * Forces the player to board the vehicle with the specified OriginalId,
+ * regardless of the position of the vehicle.
+ * One step forward processing when boarding a ship, etc. can also be omitted.
+ * This is useful when you want to control the ride during the event.
+ * 
+ * By the way, you can also specify a normal vehicle
+ * by setting the value of "boat", "ship", or "airship" to OriginalId.
+ * 
+ * ◆Force Get Off
+ * Forcibly disembark from the current ride without making a landing decision.
+ * This is useful when you want to control the vehicle during the same event.
+ * 
 * [Plugin Command (MV)]
  * ※No distinction is made between individual capital letters.
  *   Also, do not include [].
@@ -85,6 +100,14 @@
  * ◆Change Vehicle BGM
  * NRP.OriginalVehical.ChangeVehicleBgm [OriginalId] [BgmName] [Volume] [Pitch] [Pan]
  * ※The items after the Volume can be omitted.
+ * 
+ * ◆Force Get On
+ * NRP.OriginalVehical.ForceGetOn [OriginalId] [NoStep(true/false)]
+ * ※『NoStep』は省略可能（trueが標準）です。
+ * 
+ * ◆Force Get Off
+ * NRP.OriginalVehical.ForceGetOff [前進しない(true/false)]
+ * ※『NoStep』は省略可能（trueが標準）です。
  * 
  * [Tilesets Notes]
  * If you want to set the passage and getting on/off judgment for each tileset,
@@ -360,7 +383,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 オリジナルの乗物を追加します。
+ * @plugindesc v1.01 オリジナルの乗物を追加します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_VehiclePassage
  * @url http://newrpg.seesaa.net/article/482502348.html
@@ -420,9 +443,24 @@
  * ◆乗物の画像変更
  * ◆乗物のＢＧＭ変更
  * 
- * 内容は全て通常の乗物用のイベントコマンドと同一です。
- * なお、乗物の乗降のみコマンドが存在しません。
- * 普通にイベントコマンドにある『乗り物の乗降』を実行すればＯＫです。
+ * 上記の内容は全て通常の乗物用のイベントコマンドと同一です。
+ * なお、乗物の乗降については、
+ * イベントコマンドにある『乗り物の乗降』を実行すればＯＫです。
+ * 
+ * さらに追加で以下のコマンドを利用可能です。
+ * 
+ * ◆乗物に乗る（強制）
+ * 乗物の位置に関わらず、指定したオリジナルＩＤの乗物へ強制的に乗ります。
+ * 船に乗る際の一歩前進処理も省略可能です。
+ * イベント中に乗物の制御をしたい場合に便利です。
+ * 
+ * ちなみに、オリジナルＩＤに『boat』『ship』『airship』の値を
+ * 設定すると通常の乗物を指定することもできます、
+ * ※boat=小型船、ship=大型船、airship=飛行船にそれぞれ対応。
+ * 
+ * ◆乗物から降りる（強制）
+ * 上陸・着陸の判定を行わず、現在の乗物から強制的に降ります。
+ * 同じくイベント中に乗物の制御をしたい場合に便利です。
  * 
  * ■プラグインコマンド（ＭＶ）
  * ※大文字個別は区別しません。また[]は含まないでください。
@@ -436,6 +474,14 @@
  * ◆乗物のＢＧＭ変更
  * NRP.OriginalVehical.ChangeVehicleBgm [オリジナルＩＤ] [ＢＧＭ名] [音量] [ピッチ] [位相]
  * ※音量以降は省略可能です。
+ * 
+ * ◆乗物に乗る（強制）
+ * NRP.OriginalVehical.ForceGetOn [オリジナルＩＤ] [前進しない(true/false)]
+ * ※『前進しない』は省略可能（trueが標準）です。
+ * 
+ * ◆乗物から降りる（強制）
+ * NRP.OriginalVehical.ForceGetOff [前進しない(true/false)]
+ * ※『前進しない』は省略可能（trueが標準）です。
  * 
  * ■タイルセットのメモ欄
  * 乗物の通行＆乗降判定をタイルセット毎に設定する場合、
@@ -535,6 +581,35 @@
  * @text ＢＧＭ
  * @type struct<BGM>
  * @desc 搭乗時に演奏されるＢＧＭ情報です。
+ * 
+ * 
+ * @command ForceGetOn
+ * @text 乗物に乗る（強制）
+ * @desc 強制的に指定の乗物に乗ります。
+ * 乗物がその場にある必要はありません。
+ * 
+ * @arg OriginalId
+ * @text オリジナルＩＤ
+ * @type string
+ * @desc 対象とする乗物のＩＤです。
+ * ※boat,ship,airshipで通常の乗物も指定可
+ * 
+ * @arg NoStep
+ * @text 前進しない
+ * @type boolean
+ * @default true
+ * @desc 乗物に乗る際、前進せずにその場で乗ります。
+ * 
+ * 
+ * @command ForceGetOff
+ * @text 乗物から降りる（強制）
+ * @desc 強制的に乗物から降ります。
+ * 
+ * @arg NoStep
+ * @text 前進しない
+ * @type boolean
+ * @default true
+ * @desc 乗物から降りる際、前進せずにその場で降ります。
  * 
  * 
  * @param VehicleList
@@ -986,6 +1061,103 @@ PluginManager.registerCommand(PLUGIN_NAME, "ChangeVehicleBgm", function(args) {
     }
 });
 
+/**
+ * ●乗物に乗る（強制）
+ */
+PluginManager.registerCommand(PLUGIN_NAME, "ForceGetOn", function(args) {
+    const originalId = getCommandValue(args.OriginalId);
+    // 前進するかどうか？
+    const noStep = toBoolean(args.NoStep);
+
+    // 乗物に乗っている場合は強制的に降りる。
+    if ($gamePlayer.isInVehicle() && noStep) {
+        forceGetOffVehicle.bind($gamePlayer)(noStep);
+    }
+
+    forceGetOnVehicle.bind($gamePlayer)(originalId, noStep);
+});
+
+/**
+ * ●乗物から降りる（強制）
+ */
+PluginManager.registerCommand(PLUGIN_NAME, "ForceGetOff", function(args) {
+    // 乗物に乗っていない場合は処理しない。
+    if (!$gamePlayer.isInVehicle()) {
+        return;
+    }
+
+    // 前進するかどうか？
+    const noStep = toBoolean(args.NoStep);
+    forceGetOffVehicle.bind($gamePlayer)(noStep);
+});
+
+/**
+ * ●強制的に乗物へ乗る。
+ */
+function forceGetOnVehicle(originalId, noStep) {
+    const vehicle = $gameMap.vehicle(originalId);
+    // 乗物が取得できなければ終了
+    if (!vehicle) {
+        return;
+    }
+
+    // オリジナルＩＤを設定
+    this._vehicleType = originalId;
+
+    if (this.isInVehicle()) {
+        this._vehicleGettingOn = true;
+        if (!noStep) {
+            if (!this.isInAirship()) {
+                this.forceMoveForward();
+            }
+            this.gatherFollowers();
+        }
+        vehicle.getOn();
+        vehicle.refresh();
+    }
+};
+
+/**
+ * ●強制的に乗物から降りる。
+ * ※乗降判定も行わない。
+ */
+function forceGetOffVehicle(noStep) {
+    if (this.isInAirship()) {
+        this.setDirection(2);
+    }
+
+    // 前進処理を行わない場合
+    if (noStep) {
+        this._followers.synchronize(this.x, this.y, this.direction());
+        this.vehicle().getOff();
+
+        this._vehicleGettingOff = false;
+        this._vehicleType = "walk";
+        this.setTransparent(false);
+
+        this.setMoveSpeed(4);
+        this.setThrough(false);
+        this.makeEncounterCount();
+        return;
+    }
+
+    this._followers.synchronize(this.x, this.y, this.direction());
+    this.vehicle().getOff();
+    if (!this.isInAirship()) {
+        this.forceMoveForward();
+        this.setTransparent(false);
+    }
+
+    this._vehicleGettingOff = true;
+    this._vehicleType = "walk";
+    this.setTransparent(false);
+
+    this.setMoveSpeed(4);
+    this.setThrough(false);
+    this.makeEncounterCount();
+    this.gatherFollowers();
+};
+
 //----------------------------------------
 // ＭＶ用プラグインコマンド
 //----------------------------------------
@@ -1044,6 +1216,34 @@ Game_Interpreter.prototype.pluginCommand = function(command, args) {
             bgm.pan = toNumber(args[4], 0);
             vehicle.setBgm(bgm);
         }
+
+    /**
+     * ●乗物に乗る（強制）
+     */
+    } else if (lowerCommand === "nrp.originalvehical.forcegeton") {
+        const originalId = args[0];
+        // 前進するかどうか？
+        const noStep = toBoolean(args[1], true);
+
+        // 乗物に乗っている場合は強制的に降りる。
+        if ($gamePlayer.isInVehicle() && noStep) {
+            forceGetOffVehicle.bind($gamePlayer)(noStep);
+        }
+
+        forceGetOnVehicle.bind($gamePlayer)(originalId, noStep);
+
+    /**
+     * ●乗物から降りる（強制）
+     */
+    } else if (lowerCommand === "nrp.originalvehical.forcegetoff") {
+        // 乗物に乗っていない場合は処理しない。
+        if (!$gamePlayer.isInVehicle()) {
+            return;
+        }
+
+        // 前進するかどうか？
+        const noStep = toBoolean(args[0], true);
+        forceGetOffVehicle.bind($gamePlayer)(noStep);
     }
 };
 
@@ -2012,5 +2212,28 @@ function getStepLayer(x, y) {
     // 無効の場合は-1
     return -1;
 }
+
+//----------------------------------------
+// RegionBase.jsとの競合対策
+//----------------------------------------
+/**
+ * ●小型船、大型船の乗降判定
+ */
+const _Original_Vehicle_isLandOk = Original_Vehicle.prototype.isLandOk;
+Original_Vehicle.prototype.isLandOk = function(x, y, d) {
+    if ($gameMap.setPassableSubject) {
+        $gameMap.setPassableSubject(this);
+    }
+
+    return _Original_Vehicle_isLandOk.apply(this, arguments);
+};
+
+/**
+ * RegionBaseで定義されている関数をオーバライド
+ */
+Game_Vehicle.prototype.findCollisionData = function(x, y) {
+    // プレイヤーの情報を参照
+    return $gameMap.findArrayDataRegionAndTerrain(x, y, 'collisionForPlayer');
+};
 
 })();
