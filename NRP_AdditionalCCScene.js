@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.001 Implemented a class change screen for multiple classes.
+ * @plugindesc v1.01 Implemented a class change screen for multiple classes.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -417,7 +417,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.001 多重職業用の転職画面を実装。
+ * @plugindesc v1.01 多重職業用の転職画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -1092,6 +1092,23 @@ function getClassLevel(actor, classId) {
         return 1;
     }
     return additionalClass.level;
+};
+
+// リフレッシュ防止フラグ
+let mNoRefresh = false;
+
+/**
+ * ●リフレッシュ
+ */
+const _Game_Actor_refresh = Game_Actor.prototype.refresh;
+Game_Actor.prototype.refresh = function() {
+    // フラグが立っている時は禁止
+    // ※以降で装備解除処理が行われるので防止するため
+    if (mNoRefresh) {
+        return;
+    }
+
+    _Game_Actor_refresh.apply(this, arguments);
 };
 
 //-----------------------------------------------------------------------------
@@ -1820,7 +1837,9 @@ Windows_ClassSlot.prototype.select = function(index) {
     if (this._actor) {
         const tempActor = JsonEx.makeDeepCopy(this._actor);
         if (classItem) {
+            mNoRefresh = true;
             tempActor.changeAdditionalClass(classItem.id, mClassIndex);
+            mNoRefresh = false;
         }
         this._infoWindow.setTempActor(tempActor);
     }
@@ -2017,11 +2036,13 @@ Windows_SelectClasses.prototype.select = function(index) {
     // 比較用に転職後アクター情報を設定
     if (this._actor) {
         const tempActor = JsonEx.makeDeepCopy(this._actor);
+        mNoRefresh = true;
         if (classItem) {
             tempActor.changeAdditionalClass(classItem.id, mClassIndex);
         } else {
             tempActor.changeAdditionalClass(null, mClassIndex);
         }
+        mNoRefresh = false;
         this._infoWindow.setTempActor(tempActor);
     }
 };
