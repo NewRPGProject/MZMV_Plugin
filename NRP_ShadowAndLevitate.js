@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.021 Setting the battler's shadow & adding the levitation effect
+ * @plugindesc v1.03 Setting the battler's shadow & adding the levitation effect
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base animatedSVEnemies
  * @base NRP_DynamicMotionMZ
@@ -259,7 +259,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.021 バトラーの影を設定＆浮遊効果の追加
+ * @plugindesc v1.03 バトラーの影を設定＆浮遊効果の追加
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @orderAfter animatedSVEnemies
  * @orderAfter NRP_DynamicMotionMZ
@@ -630,9 +630,10 @@ function getDynamicMotionParameters() {
  */
 const _Sprite_Enemy_initMembers = Sprite_Enemy.prototype.initMembers;
 Sprite_Enemy.prototype.initMembers = function() {
-    _Sprite_Enemy_initMembers.apply(this, arguments);
-
+    // バトラーの背面に表示するため先に定義
     this.createShadowSprite();
+
+    _Sprite_Enemy_initMembers.apply(this, arguments);
 };
 
 /**
@@ -646,29 +647,8 @@ Sprite_Enemy.prototype.createShadowSprite = function() {
     this._shadowSprite.z = pEnemyShadowZ;
     // とりあえず非表示にしておく。
     this._shadowSprite.visible = false;
-
-    // あえてSprite_EnemyにaddChildはしない。
-    // ※表示優先度を調整するため。
-    // this.addChild(this._shadowSprite);
-};
-
-/**
- * ●敵の作成
- */
-const _Spriteset_Battle_createEnemies = Spriteset_Battle.prototype.createEnemies;
-Spriteset_Battle.prototype.createEnemies = function() {
-    _Spriteset_Battle_createEnemies.apply(this, arguments);
-
-    // 敵の影をDynamicMotionなど表示順序のソート対象にする。
-    for (const sprite of this._enemySprites) {
-        // animatedSVEnemies.jsを使用する場合、
-        // 中身がSprite_Enemyでない場合があるので考慮。
-        if (sprite.isUseEnemyShadow && sprite.isUseEnemyShadow()) {
-            // 影を本体の後ろへ追加
-            const bodyIndex = this._battleField.children.indexOf(sprite);
-            this._battleField.addChildAt(sprite._shadowSprite, bodyIndex);
-        }
-    }
+    // 親に追加
+    this.addChild(this._shadowSprite);
 };
 
 /**
@@ -735,8 +715,8 @@ Sprite_Enemy.prototype.updateShadow = function() {
     // 影の基準位置設定
     const shadowX = getShadowX(this, meta.ShadowX);
     const shadowY = getShadowY(this, meta.ShadowY);
-    this._shadowSprite.x = this.x + shadowX;
-    this._shadowSprite.y = this.y + shadowY;
+    this._shadowSprite.x = shadowX;
+    this._shadowSprite.y = shadowY;
 
     // DynamicMotionとの連携
     if (this.updateDynamicShadow) {
