@@ -25,8 +25,11 @@
  * ------------------------------------------
  * First, set the standard profession for the enemy parameters,
  * and specify it in the plug-in parameters.
+ * ※Not only the parameters, but also the EXP curve
+ *   is used to calculate the acquired EXP.
  * 
  * Next, set the enemy's parameters to a value based on 100.
+ * 100 in this case means 100%.
  * (e.g. 110 for an enemy with a slightly higher attack power.)
  * 
  * In addition, you can set the level for enemies.
@@ -152,9 +155,11 @@
  * ------------------------------------------
  * まず、敵の能力の基準となる職業を設定し、
  * プラグインパラメータで指定します。
+ * ※能力だけでなく経験値曲線も取得経験値の計算に使用します。
  * 
  * 次に敵の能力に１００を基準にした値を設定します。
- * （少し攻撃力が高い敵なら１１０など。）
+ * ここでの１００は１００％の意味になります。
+ * （少し攻撃力が高い敵なら１１０にするなど。）
  * 
  * さらに敵に対してレベルを設定します。
  * プラグインパラメータで指定した変数に値を代入することで、
