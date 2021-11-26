@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.011 Extends the collision detection for events.
+ * @plugindesc v1.02 Extends the collision detection for events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481944599.html
  *
@@ -103,7 +103,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.011 イベントの当たり判定を拡張する。
+ * @plugindesc v1.02 イベントの当たり判定を拡張する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481944599.html
  *
@@ -275,16 +275,29 @@ Game_CharacterBase.prototype.initMembers = function() {
     this._collisionUp = 0;
 }
 
+/*
+ * Game_Event.prototype.setImageが未定義の場合は事前に定義
+ * ※これをしておかないと以後のGame_CharacterBase側への追記が反映されない。
+ */
+if (Game_Event.prototype.setImage == Game_CharacterBase.prototype.setImage) {
+    Game_Event.prototype.setImage = function(
+        characterName,
+        characterIndex
+    ) {
+        Game_CharacterBase.prototype.setImage.apply(this, arguments);
+    }
+}
+
 /**
  * 【独自】画像を設定する。
  * ※Game_CharacterBaseの関数をオーバーライド
  */
-const _Game_CharacterBase_setImage = Game_CharacterBase.prototype.setImage;
+const _Game_Event_setImage = Game_Event.prototype.setImage;
 Game_Event.prototype.setImage = function(
     characterName,
     characterIndex
 ) {
-    _Game_CharacterBase_setImage.apply(this, arguments);
+    _Game_Event_setImage.apply(this, arguments);
 
     // 当たり判定初期化
     this._collisionDown = 0;
