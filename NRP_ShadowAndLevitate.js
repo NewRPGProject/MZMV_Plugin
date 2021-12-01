@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Setting the battler's shadow & adding the levitation effect
+ * @plugindesc v1.04 Setting the battler's shadow & adding the levitation effect
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base animatedSVEnemies
  * @base NRP_DynamicMotionMZ
@@ -259,7 +259,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 バトラーの影を設定＆浮遊効果の追加
+ * @plugindesc v1.04 バトラーの影を設定＆浮遊効果の追加
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @orderAfter animatedSVEnemies
  * @orderAfter NRP_DynamicMotionMZ
@@ -630,10 +630,9 @@ function getDynamicMotionParameters() {
  */
 const _Sprite_Enemy_initMembers = Sprite_Enemy.prototype.initMembers;
 Sprite_Enemy.prototype.initMembers = function() {
-    // バトラーの背面に表示するため先に定義
-    this.createShadowSprite();
-
     _Sprite_Enemy_initMembers.apply(this, arguments);
+
+    this.createShadowSprite();
 };
 
 /**
@@ -647,8 +646,39 @@ Sprite_Enemy.prototype.createShadowSprite = function() {
     this._shadowSprite.z = pEnemyShadowZ;
     // とりあえず非表示にしておく。
     this._shadowSprite.visible = false;
-    // 親に追加
-    this.addChild(this._shadowSprite);
+    // 識別用のフラグを立てる。
+    this._shadowSprite._isEnemyShadow = true;
+
+    // あえてSprite_EnemyにaddChildはしない。
+    // ※表示優先度を調整するため。
+    // this.addChild(this._shadowSprite);
+};
+
+/**
+ * ●敵の作成
+ */
+const _Spriteset_Battle_createEnemies = Spriteset_Battle.prototype.createEnemies;
+Spriteset_Battle.prototype.createEnemies = function() {
+    _Spriteset_Battle_createEnemies.apply(this, arguments);
+
+    // 敵の影は一旦全削除
+    // ※バトラーを追加する外部プラグインの中には、
+    //   createEnemiesを再度実行するものがあるので考慮
+    const enemyShadows = this._battleField.children.filter(child => child._isEnemyShadow);
+    for (const enemyShadow of enemyShadows) {
+        this._battleField.removeChild(enemyShadow);
+    }
+
+    // 敵の影をDynamicMotionなど表示順序のソート対象にする。
+    for (const sprite of this._enemySprites) {
+        // animatedSVEnemies.jsを使用する場合、
+        // 中身がSprite_Enemyでない場合があるので考慮。
+        if (sprite.isUseEnemyShadow && sprite.isUseEnemyShadow()) {
+            // 影を本体の後ろへ追加
+            const bodyIndex = this._battleField.children.indexOf(sprite);
+            this._battleField.addChildAt(sprite._shadowSprite, bodyIndex);
+        }
+    }
 };
 
 /**
@@ -715,8 +745,8 @@ Sprite_Enemy.prototype.updateShadow = function() {
     // 影の基準位置設定
     const shadowX = getShadowX(this, meta.ShadowX);
     const shadowY = getShadowY(this, meta.ShadowY);
-    this._shadowSprite.x = shadowX;
-    this._shadowSprite.y = shadowY;
+    this._shadowSprite.x = this.x + shadowX;
+    this._shadowSprite.y = this.y + shadowY;
 
     // DynamicMotionとの連携
     if (this.updateDynamicShadow) {
@@ -845,6 +875,9 @@ Sprite_Battler.prototype.initBattlerShadow = function() {
         meta = battler.enemy().meta;
     }
 
+    // 浮遊処理の設定
+    setFloat(this, meta);
+    
     // 影を作成しない場合は処理しない。
     if (!isMakeShadow(this, meta.MakeShadow)) {
         this._shadowSprite.scale.x = 0;
@@ -878,9 +911,6 @@ Sprite_Battler.prototype.initBattlerShadow = function() {
     // 影を設定した
     this._isSetShadow = true;
     this._shadowSprite.visible = true;
-
-    // 浮遊処理の設定
-    setFloat(this, meta);
 };
 
 /**
