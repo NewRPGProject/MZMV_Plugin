@@ -9,12 +9,14 @@
  *
  * @help Removes image noise from SV actors and state icons.
  * 
- * When you move SV actors or state icons in RPG Maker MZ,
- * the image may have noise-like lines.
+ * When you move the battler in RPG Maker MZ,
+ * the image may have noises like lines.
  * 
  * This is caused by an internal fractional number calculation
  * that shifts the image cropping position by one pixel.
- * ※The identity of the line seems to be the edge of the adjacent pattern.
+ * ※The identity of the line is the SV actor itself or the state icon.
+ *   The edge of the neighboring image pattern is supposed to be displayed.
+ * 
  * This problem can be solved by switching the settings for the image.
  * 
  * ------------------------------------------
@@ -52,12 +54,14 @@
  *
  * @help ＳＶアクターやステートアイコンの画像ノイズを除去します。
  * 
- * ツクールＭＺにて、ＳＶアクターやステートアイコンを移動させた場合、
+ * ツクールＭＺにて、バトラーを移動させた場合、
  * 画像に線のようなノイズが入ることがあります。
  * 
  * これは内部的な処理における小数値の計算により、
  * 画像を切り抜く位置が１ピクセルズレることによって発生します。
- * ※線の正体は隣のパターンの端と思われます。
+ * ※線の正体はＳＶアクター自身やステートアイコンです。
+ * 　隣の画像パターンの端が表示されていると思われます。
+ * 
  * 画像に対する設定を切り替えることによって、この問題を解決します。
  * 
  * ------------------------------------------
