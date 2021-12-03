@@ -3,11 +3,11 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Removes image noise from SV actors and state icons.
+ * @plugindesc v1.00 Removes image noise generated when the battler is moving.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484654081.html
  *
- * @help Removes image noise from SV actors and state icons.
+ * @help Removes image noise generated when the battler is moving.
  * 
  * When you move the battler in RPG Maker MZ,
  * the image may have noises like lines.
@@ -48,11 +48,11 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 ＳＶアクターやステートアイコンの画像ノイズを除去
+ * @plugindesc v1.00 バトラーの移動時に発生する画像ノイズを除去
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484654081.html
  *
- * @help ＳＶアクターやステートアイコンの画像ノイズを除去します。
+ * @help バトラーの移動時に発生する画像ノイズを除去します。
  * 
  * ツクールＭＺにて、バトラーを移動させた場合、
  * 画像に線のようなノイズが入ることがあります。
