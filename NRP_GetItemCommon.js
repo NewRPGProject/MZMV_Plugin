@@ -47,8 +47,13 @@
  * ◆GetId
  * Stores the ID of the last item gained in a variable.
  * 
- * ◆GetItemType
- * Stores the item type of the last item gained in a variable.
+ * ◆GetType
+ * Stores the type of the last item gained in a variable.
+ * Item, Weapon, and Armor, for each types.
+ * 
+ * For Item, the following applies.
+ *   1: Regular Item, 2: Key Item, 3: Hidden Item A, 4: Hidden Item B
+ * For Weapon and Armor, please refer to the database setting values.
  * 
  * ◆GetMetaValue
  * Stores the meta value of the last item gained in a variable.
@@ -85,6 +90,12 @@
  * 
  * ◆GetId
  * NRP.GetItemCommon.GetId [VariableId]
+ * 
+ * ◆GetType
+ * NRP.GetItemCommon.GetType [VariableId]
+ * 
+ * ◆GetEquipType
+ * NRP.GetItemCommon.GetEquipType [VariableId]
  * 
  * ◆GetMetaValue
  * NRP.GetItemCommon.GetMetaValue [MetaName] [VariableId]
@@ -145,12 +156,20 @@
  * @type variable
  * 
  * 
- * @command GetItemType
+ * @command GetType
  * @desc Stores the type of the last item gained in a variable.
- * 1:Regular 2:Key 3:Hidden A 4:Hidden B
+ * Item, Weapon, and Armor, for each types.
  * 
  * @arg Variable
  * @desc A variable that stores the item type of the item.
+ * @type variable
+ * 
+ * 
+ * @command GetEquipType
+ * @desc Stores the equip type of the last armor gained in a variable.
+ * 
+ * @arg Variable
+ * @desc A variable that stores the equip type of the item.
  * @type variable
  * 
  * 
@@ -231,9 +250,16 @@
  * ◆ＩＤを取得
  * 直前に入手したアイテムＩＤを変数へ格納します。
  * 
- * ◆アイテムタイプを取得
- * 直前に入手したアイテムのアイテムタイプを変数へ格納します。
- * 1:通常アイテム 2:大事なもの 3:隠しアイテムA 4:隠しアイテムB
+ * ◆タイプを取得
+ * 直前に入手したアイテムのタイプを変数へ格納します。
+ * アイテム、武器、防具、それぞれのタイプに対応します。
+ * 
+ * アイテムの場合は以下の通りです。
+ * 　1:通常アイテム、2:大事なもの、3:隠しアイテムA、4:隠しアイテムB
+ * 武器防具についてはデータベースの設定値を参照してください。
+ * 
+ * ◆装備タイプを取得
+ * 直前に入手した防具の装備タイプを変数へ格納します。
  * 
  * ◆メタ値を取得
  * 直前に入手したアイテムのメタ値を変数へ格納します。
@@ -268,8 +294,11 @@
  * ◆ＩＤを取得
  * NRP.GetItemCommon.GetId [変数ＩＤ]
  * 
- * ◆アイテムタイプを取得
- * NRP.GetItemCommon.GetItemType [変数ＩＤ]
+ * ◆タイプを取得
+ * NRP.GetItemCommon.GetType [変数ＩＤ]
+ * 
+ * ◆装備タイプを取得
+ * NRP.GetItemCommon.GetEquipType [変数ＩＤ]
  * 
  * ◆メタ値を取得
  * NRP.GetItemCommon.GetMetaValue [定義名] [変数ＩＤ]
@@ -342,14 +371,24 @@
  * @type variable
  * 
  * 
- * @command GetItemType
- * @text アイテムタイプを取得
- * @desc 直前に入手したアイテムのアイテムタイプを変数へ格納します。
- * 1:通常アイテム 2:大事なもの 3:隠しアイテムA 4:隠しアイテムB
+ * @command GetType
+ * @text タイプを取得
+ * @desc 直前に入手したアイテムのタイプを変数へ格納します。
+ * アイテム、武器、防具、それぞれのタイプに対応します。
  * 
  * @arg Variable
  * @text 変数
- * @desc アイテムタイプを格納する変数です。
+ * @desc タイプを格納する変数です。
+ * @type variable
+ * 
+ * 
+ * @command GetEquipType
+ * @text 装備タイプを取得
+ * @desc 直前に入手した防具の装備タイプを変数へ格納します。
+ * 
+ * @arg Variable
+ * @text 変数
+ * @desc 装備タイプを格納する変数です。
  * @type variable
  * 
  * 
@@ -436,7 +475,8 @@ let mItemDescription = null;
 let mItemIcon = null;
 let mItemCategory = null;
 let mItemId = null;
-let mItemType = null;
+let mType = null;
+let mEquipType = null;
 let mItemMeta = null;
 
 /**
@@ -444,9 +484,8 @@ let mItemMeta = null;
  */
 const _Game_Interpreter_command125 = Game_Interpreter.prototype.command125;
 Game_Interpreter.prototype.command125 = function(params) {
-    const result = _Game_Interpreter_command125.apply(this, arguments);
-
     mItemCategory = 0;
+    const result = _Game_Interpreter_command125.apply(this, arguments);
 
     if (pGoldCommonEvent && canCallCommon()) {
         const commonEvent = $dataCommonEvents[pGoldCommonEvent];
@@ -461,9 +500,8 @@ Game_Interpreter.prototype.command125 = function(params) {
  */
 const _Game_Interpreter_command126 = Game_Interpreter.prototype.command126;
 Game_Interpreter.prototype.command126 = function(params) {
-    const result = _Game_Interpreter_command126.apply(this, arguments);
-
     mItemCategory = 1;
+    const result = _Game_Interpreter_command126.apply(this, arguments);
 
     if (pItemCommonEvent && canCallCommon()) {
         const commonEvent = $dataCommonEvents[pItemCommonEvent];
@@ -478,9 +516,8 @@ Game_Interpreter.prototype.command126 = function(params) {
  */
 const _Game_Interpreter_command127 = Game_Interpreter.prototype.command127;
 Game_Interpreter.prototype.command127 = function(params) {
-    const result = _Game_Interpreter_command127.apply(this, arguments);
-
     mItemCategory = 2;
+    const result = _Game_Interpreter_command127.apply(this, arguments);
 
     if (pWeaponCommonEvent && canCallCommon()) {
         const commonEvent = $dataCommonEvents[pWeaponCommonEvent];
@@ -495,9 +532,8 @@ Game_Interpreter.prototype.command127 = function(params) {
  */
 const _Game_Interpreter_command128 = Game_Interpreter.prototype.command128;
 Game_Interpreter.prototype.command128 = function(params) {
-    const result = _Game_Interpreter_command128.apply(this, arguments);
-
     mItemCategory = 3;
+    const result = _Game_Interpreter_command128.apply(this, arguments);
 
     if (pArmorCommonEvent && canCallCommon()) {
         const commonEvent = $dataCommonEvents[pArmorCommonEvent];
@@ -517,7 +553,18 @@ Game_Party.prototype.gainItem = function(item, amount, includeEquip) {
     mItemDescription = item.description;
     mItemIcon = item.iconIndex;
     mItemId = item.id;
-    mItemType = item.itypeId;
+
+    // アイテム、武器、防具によって分岐
+    mType = null;
+    if (mItemCategory == 1) {
+        mType = item.itypeId;
+    } else if (mItemCategory == 2) {
+        mType = item.wtypeId;
+    } else if (mItemCategory == 3) {
+        mType = item.atypeId;
+    }
+    
+    mEquipType = item.etypeId;
     mItemMeta = item.meta;
 
     _Game_Party_gainItem.apply(this, arguments);
@@ -532,7 +579,8 @@ Game_Party.prototype.gainGold = function(amount) {
     mItemAmount = amount;
     mItemDescription = null;
     mItemId = null;
-    mItemType = null;
+    mType = null;
+    mEquipType = null;
     mItemMeta = null;
 
     _Game_Party_gainGold.apply(this, arguments);
@@ -596,11 +644,19 @@ PluginManager.registerCommand(PLUGIN_NAME, "GetId", function(args) {
 });
 
 /**
- * ●アイテムタイプの取得
+ * ●タイプの取得
  */
-PluginManager.registerCommand(PLUGIN_NAME, "GetItemType", function(args) {
+PluginManager.registerCommand(PLUGIN_NAME, "GetType", function(args) {
     const variableId = toNumber(args.Variable);
-    setVariableValue(variableId, mItemType);
+    setVariableValue(variableId, mType);
+});
+
+/**
+ * ●装備タイプの取得
+ */
+PluginManager.registerCommand(PLUGIN_NAME, "GetEquipType", function(args) {
+    const variableId = toNumber(args.Variable);
+    setVariableValue(variableId, mEquipType);
 });
 
 /**
@@ -666,11 +722,18 @@ Game_Interpreter.prototype.pluginCommand = function(command, args) {
         setVariableValue(variableId, mItemId);
 
     /**
-     * ●アイテムタイプの取得
+     * ●タイプの取得
      */
-    } else if (lowerCommand === "nrp.getitemcommon.getitemtype") {
+    } else if (lowerCommand === "nrp.getitemcommon.gettype") {
         const variableId = toNumber(args[0]);
-        setVariableValue(variableId, mItemType);
+        setVariableValue(variableId, mType);
+
+    /**
+     * ●装備タイプの取得
+     */
+    } else if (lowerCommand === "nrp.getitemcommon.getequiptype") {
+        const variableId = toNumber(args[0]);
+        setVariableValue(variableId, mEquipType);
 
     /**
      * ●メタ値の取得
