@@ -55,6 +55,9 @@
  *   1: Regular Item, 2: Key Item, 3: Hidden Item A, 4: Hidden Item B
  * For Weapon and Armor, please refer to the database setting values.
  * 
+ * ◆GetEquipType
+ * Stores the equip type of the last item gained in a variable.
+ * 
  * ◆GetMetaValue
  * Stores the meta value of the last item gained in a variable.
  * Only this item requires the meta name to be specified.
@@ -563,7 +566,7 @@ Game_Party.prototype.gainItem = function(item, amount, includeEquip) {
     } else if (mItemCategory == 3) {
         mType = item.atypeId;
     }
-    
+
     mEquipType = item.etypeId;
     mItemMeta = item.meta;
 
