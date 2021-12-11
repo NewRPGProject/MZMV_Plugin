@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.173 Automate & super-enhance battle animations.
+ * @plugindesc v1.18 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -496,7 +496,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.173 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.18 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -1985,12 +1985,22 @@ BaseAnimation.prototype.makeAnimation = function (dataA, mirror, dynamicAnimatio
  * MVかMZかを判定
  */
 BaseAnimation.prototype.getAnimation = function (id) {
-    let animation;
-    if (this.mv) {
+    //---------------------------------------
+    // MZ ver1.4.0より$dataAnimations内に
+    // ＭＶデータが含まれるようになったので考慮
+    //---------------------------------------
+    let animation = $dataAnimations[id];
+    // ＭＺエディタでＭＶアニメーションが設定されている。
+    if (isMVAnimation(animation)) {
+        this.mv = true;
+
+    // エディタでの設定はないがメモ欄でＭＶ指定されている。
+    } else if (this.mv) {
         animation = $dataMvAnimations[id];
+
+    // ＭＺ用アニメーション
     } else {
-        animation = $dataAnimations[id];
-        // MZ用アニメーションが空ならMV用アニメーションを取得
+        // ＭＺ用アニメーションが空ならＭＶ用アニメーションを取得
         // ※ただし$dataMvAnimationsが有効な場合のみ
         if (isEmptyAnimation(animation) && typeof $dataMvAnimations !== 'undefined') {
             animation = $dataMvAnimations[id];
@@ -1998,6 +2008,13 @@ BaseAnimation.prototype.getAnimation = function (id) {
         }
     }
     return animation;
+};
+
+/**
+ * ●ＭＶアニメーションかどうかの判定
+ */
+function isMVAnimation(animation) {
+    return animation && !!animation.frames;
 };
 
 /**
