@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.061 Extends the effective range of skills and items.
+ * @plugindesc v1.07 Extends the effective range of skills and items.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_VisualTurn
  * @orderBefore NRP_DynamicAnimationMZ
@@ -14,7 +14,9 @@
  * You can specify various options
  * such as vertical, horizontal, group, and circular.
  * 
- * [How to use it]
+ * -------------------------------------------------------------------
+ * [Usage]
+ * -------------------------------------------------------------------
  * <RangeEx:vertical>
  * The registered range is described in the skill (item) note as.
  * You can also create your own ranges.
@@ -22,18 +24,22 @@
  * For more information, please see below.
  * http://newrpg.seesaa.net/article/473374355.html
  * 
+ * -------------------------------------------------------------------
  * [Notes]
+ * -------------------------------------------------------------------
  * This plugin should be placed above the following plugins.
  * If you don't do so, some functions will not work.
  * - NRP_VisualTurn.js (affects color change target of ordered list).
  * - NRP_DynamicAnimation.js (affects the display position of the animation)
  * 
+ * -------------------------------------------------------------------
  * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
  * The author is not responsible,
- * but we will respond to defects as far as possible.
+ * but will deal with defects to the extent possible.
  * 
  * @param rangeList
  * @type struct<Range>[]
@@ -79,7 +85,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.061 スキル及びアイテムの効果範囲を拡張します。
+ * @plugindesc v1.07 スキル及びアイテムの効果範囲を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_VisualTurn
  * @orderBefore NRP_DynamicAnimationMZ
@@ -88,7 +94,9 @@
  * @help スキル及びアイテムの効果範囲を拡張します。
  * 縦列・横列・グループ・円形など様々な指定が可能です。
  * 
+ * -------------------------------------------------------------------
  * ■使用方法
+ * -------------------------------------------------------------------
  * <RangeEx:vertical>
  * というように登録されている範囲をスキル（アイテム）のメモ欄に記述します。
  * また、独自範囲の追加も可能です。
@@ -96,13 +104,17 @@
  * 詳細は以下のページをご覧ください。
  * http://newrpg.seesaa.net/article/473374355.html
  * 
+ * -------------------------------------------------------------------
  * ■注意点
+ * -------------------------------------------------------------------
  * このプラグインは以下のプラグインよりも、上に配置してください。
  * そうしないと一部の機能が動作しなくなります。
  * ・NRP_VisualTurn.js（順序リストの色変え対象に影響）
  * ・NRP_DynamicAnimation.js（アニメーションの表示位置に影響）
  * 
+ * -------------------------------------------------------------------
  * ■利用規約
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
@@ -177,7 +189,6 @@ function toBoolean(val) {
 }
 
 const parameters = PluginManager.parameters("NRP_SkillRangeEX");
-    
 const pRangeList = parseStruct(parameters["rangeList"]);
 
 // 主対象保持用
@@ -460,41 +471,81 @@ Game_Action.prototype.repeatTargets = function(targets) {
     return _Game_Action_repeatTargets.call(this, targets);
 }
 
-/**
- * ●アニメーション準備
- */
-const _Sprite_Animation_setup = Sprite_Animation.prototype.setup;
-Sprite_Animation.prototype.setup = function(target, animation, mirror, delay) {
-    _Sprite_Animation_setup.call(this, target, animation, mirror, delay);
+if (Utils.RPGMAKER_NAME == "MV") {
+    /**
+     * ●アニメーション準備
+     */
+    const _Sprite_Animation_setup = Sprite_Animation.prototype.setup;
+    Sprite_Animation.prototype.setup = function(target, animation, mirror, delay) {
+        _Sprite_Animation_setup.call(this, target, animation, mirror, delay);
 
-    // 位置が画面かつ複製でない場合
-    // ※画面対象の戦闘アニメは最初の一人だけグラフィックを表示している。
-    // _duplicated==trueなら、グラフィック表示対象外
-    if (this._animation && this._animation.position === 3 && !this._duplicated) {
-        var rangeInfo = getRangeInfo(BattleManager._action);
+        // 位置が画面かつ複製でない場合
+        // ※画面対象の戦闘アニメは最初の一人だけグラフィックを表示している。
+        // _duplicated==trueなら、グラフィック表示対象外
+        if (this._animation && this._animation.position === 3 && !this._duplicated) {
+            const rangeInfo = getRangeInfo(BattleManager._action);
 
-        // かつ、範囲情報を取得できた場合
-        // 必要な情報を準備しておく。
-        if (rangeInfo) {
-            var subject = BattleManager._subject;
+            // かつ、範囲情報を取得できた場合
+            // 必要な情報を準備しておく。
+            if (rangeInfo) {
+                const subject = BattleManager._subject;
 
-            // 範囲情報
-            this._rangeInfo = rangeInfo;
+                // 範囲情報
+                this._rangeInfo = rangeInfo;
 
-            var a = getBattlerSprite(subject); // 行動主体のスプライト
-            var b = getBattlerSprite(mainTarget); // 主対象のスプライト
+                const a = getBattlerSprite(subject); // 行動主体のスプライト
+                const b = getBattlerSprite(mainTarget); // 主対象のスプライト
 
-            // アニメーション位置の調整設定があれば、事前計算
-            // ※updatePositionは毎フレーム呼び出されるため、あちらでは計算しない。
-            if (rangeInfo.screenAnimationX) {
-                this._rangeInfo._animationX = eval(rangeInfo.screenAnimationX);
-            }
-            if (rangeInfo.screenAnimationY) {
-                this._rangeInfo._animationY = eval(rangeInfo.screenAnimationY);
+                // アニメーション位置の調整設定があれば、事前計算
+                // ※updatePositionは毎フレーム呼び出されるため、あちらでは計算しない。
+                if (rangeInfo.screenAnimationX) {
+                    this._rangeInfo._animationX = eval(rangeInfo.screenAnimationX);
+                }
+                if (rangeInfo.screenAnimationY) {
+                    this._rangeInfo._animationY = eval(rangeInfo.screenAnimationY);
+                }
             }
         }
-    }
-};
+    };
+
+// 【MZ対応】
+} else {
+    /**
+     * ●アニメーション準備
+     */
+    const _Sprite_Animation_setup = Sprite_Animation.prototype.setup;
+    Sprite_Animation.prototype.setup = function(
+        targets, animation, mirror, delay, previous
+    ) {
+        _Sprite_Animation_setup.apply(this, arguments);
+
+        // 位置が画面の場合
+        if (this._animation && this._animation.displayType == 2) {
+            const rangeInfo = getRangeInfo(BattleManager._action);
+
+            // かつ、範囲情報を取得できた場合
+            // 必要な情報を準備しておく。
+            if (rangeInfo) {
+                const subject = BattleManager._subject;
+
+                // 範囲情報
+                this._rangeInfo = rangeInfo;
+
+                const a = getBattlerSprite(subject); // 行動主体のスプライト
+                const b = getBattlerSprite(mainTarget); // 主対象のスプライト
+
+                // アニメーション位置の調整設定があれば、事前計算
+                // ※updatePositionは毎フレーム呼び出されるため、あちらでは計算しない。
+                if (rangeInfo.screenAnimationX) {
+                    this._rangeInfo._animationX = eval(rangeInfo.screenAnimationX);
+                }
+                if (rangeInfo.screenAnimationY) {
+                    this._rangeInfo._animationY = eval(rangeInfo.screenAnimationY);
+                }
+            }
+        }
+    };
+}
 
 /**
  * ●アニメーション表示位置の設定
@@ -515,6 +566,90 @@ Sprite_Animation.prototype.updatePosition = function() {
     }
 };
 
+// 【MZ対応】
+if (Utils.RPGMAKER_NAME != "MV") {
+    /**
+     * ●【MZ対応】アニメーション準備（ＭＺのＭＶ互換）
+     */
+    const _Sprite_AnimationMV_setup = Sprite_AnimationMV.prototype.setup;
+    Sprite_AnimationMV.prototype.setup = function(target, animation, mirror, delay) {
+        _Sprite_AnimationMV_setup.call(this, target, animation, mirror, delay);
+
+        // 位置が画面かつ複製でない場合
+        // ※画面対象の戦闘アニメは最初の一人だけグラフィックを表示している。
+        // _duplicated==trueなら、グラフィック表示対象外
+        if (this._animation && this._animation.position === 3 && !this._duplicated) {
+            const rangeInfo = getRangeInfo(BattleManager._action);
+
+            // かつ、範囲情報を取得できた場合
+            // 必要な情報を準備しておく。
+            if (rangeInfo) {
+                const subject = BattleManager._subject;
+
+                // 範囲情報
+                this._rangeInfo = rangeInfo;
+
+                const a = getBattlerSprite(subject); // 行動主体のスプライト
+                const b = getBattlerSprite(mainTarget); // 主対象のスプライト
+
+                // アニメーション位置の調整設定があれば、事前計算
+                // ※updatePositionは毎フレーム呼び出されるため、あちらでは計算しない。
+                if (rangeInfo.screenAnimationX) {
+                    this._rangeInfo._animationX = eval(rangeInfo.screenAnimationX);
+                }
+                if (rangeInfo.screenAnimationY) {
+                    this._rangeInfo._animationY = eval(rangeInfo.screenAnimationY);
+                }
+            }
+        }
+    };
+
+    /**
+     * ●【MZ対応】アニメーション表示位置の設定（ＭＺのＭＶ互換）
+     */
+    const _Sprite_AnimationMV_updatePosition = Sprite_AnimationMV.prototype.updatePosition;
+    Sprite_AnimationMV.prototype.updatePosition = function() {
+        _Sprite_AnimationMV_updatePosition.apply(this);
+
+        // 位置が画面、かつ複製でない、かつ範囲情報を取得できた場合
+        if (this._animation.position === 3 && !this._duplicated && this._rangeInfo) {
+            // アニメーション位置の調整設定があれば位置調整
+            if (this._rangeInfo._animationX) {
+                this.x = this._rangeInfo._animationX;
+            }
+            if (this._rangeInfo._animationY) {
+                this.y = this._rangeInfo._animationY;
+            }
+        }
+    };
+}
+
+/**
+ * ●【MZ対応】アニメーションの表示位置制御
+ */
+const _Sprite_Animation_targetPosition = Sprite_Animation.prototype.targetPosition;
+Sprite_Animation.prototype.targetPosition = function(renderer) {
+    const pos = _Sprite_Animation_targetPosition.apply(this, arguments);
+
+    // 位置が画面、かつ範囲情報を取得できた場合
+    if (this._animation.displayType == 2 && this._rangeInfo) {
+        // アニメーション位置の調整設定があれば位置調整
+        if (this._rangeInfo._animationX) {
+            this.x = this._rangeInfo._animationX;
+        }
+        if (this._rangeInfo._animationY) {
+            this.y = this._rangeInfo._animationY;
+        }
+    }
+
+    // Effekseer用に位置を補正
+    const tpos = this.targetSpritePosition(this);
+    pos.x = tpos.x;
+    pos.y = tpos.y;
+
+    return pos;
+};
+
 /**
  * ●味方の選択時
  */
@@ -523,7 +658,7 @@ Window_BattleActor.prototype.select = function(index) {
     _Window_BattleActor_prototype_select.apply(this, arguments);
 
     if (index >= 0) {
-        var subject = BattleManager.actor();
+        const subject = BattleManager.actor();
         // 【MZ対応】subjectが取得できなければ終了
         if (!subject) {
             return;
@@ -567,15 +702,15 @@ Window_BattleEnemy.prototype.select = function(index) {
     _Window_BattleEnemy_prototype_select.apply(this, arguments);
 
     if (index >= 0) {
-        var subject = BattleManager.actor();
+        const subject = BattleManager.actor();
         // 【MZ対応】subjectが取得できなければ終了
         if (!subject) {
             return;
         }
-        var action = subject.currentAction();
+        const action = subject.currentAction();
 
         // アクションと現在の選択対象を元に拡張された対象を取得
-        var targets = rangeEx(action, [this.enemy()]);
+        const targets = rangeEx(action, [this.enemy()]);
         // 範囲拡張なしなら終了
         if (targets.length == 1 && targets[0] == this.enemy()) {
             return;
