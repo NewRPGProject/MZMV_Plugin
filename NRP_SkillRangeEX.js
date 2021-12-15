@@ -640,12 +640,12 @@ Sprite_Animation.prototype.targetPosition = function(renderer) {
         if (this._rangeInfo._animationY) {
             this.y = this._rangeInfo._animationY;
         }
-    }
 
-    // Effekseer用に位置を補正
-    const tpos = this.targetSpritePosition(this);
-    pos.x = tpos.x;
-    pos.y = tpos.y;
+        // Effekseer用に位置を補正
+        const tpos = this.targetSpritePosition(this);
+        pos.x = tpos.x;
+        pos.y = tpos.y;
+    }
 
     return pos;
 };
