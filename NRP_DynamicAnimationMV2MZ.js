@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.022 It makes MV animations correspond to DynamicAnimationMZ.
+ * @plugindesc v1.023 It makes MV animations correspond to DynamicAnimationMZ.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -14,7 +14,35 @@
  * It is a simple 2D animation,
  * which has the advantage of being light in operation.
  * 
+ * -------------------------------------------------------------------
  * [Introduction procedure for MV animations]
+ * -------------------------------------------------------------------
+ * With the update of MZ ver1.4.0,
+ * you can now use MV Animation on the MZ Editor.
+ *
+ * - Copy the images under "img/animations"
+ *   in the MV to the same folder in MZ.
+ *   Naturally, if there are any sound effects you need,
+ *   you will need to copy them.
+ * - Right-click on the MZ animation editor
+ *   and select "Create MV-compatible data".
+ * - Create animations for MV in the MZ editor.
+ *
+ * This is all you need to do. After that,
+ * just call DynamicAnimation in a very normal way to enable it.
+ * 
+ * In addition, if you want to transfer data already created in MV to MZ,
+ * you can do so by directly copying
+ * and pasting the contents of "data/Animation.json".
+ * ※Make sure to back up Animation.json first, just in case.
+ * 
+ * -------------------------------------------------------------------
+ * [Introduction procedure for MV animations (Old)]
+ * -------------------------------------------------------------------
+ * ※This step is no longer necessary,
+ *   but I'm leaving it in for compatibility.
+ *   The function itself is still valid.
+ * 
  * Copy the animation data of the MV
  * as follows according to the official AnimationMv.js.
  * 
@@ -50,17 +78,19 @@
  * For more information about DynamicAnimationMZ, please refer to the following
  * http://newrpg.seesaa.net/article/477190310.html
  * 
+ * -------------------------------------------------------------------
  * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
  * The author is not responsible,
- * but we will respond to defects as far as possible.
+ * but will deal with defects to the extent possible.
  */
 
 /*:ja
  * @target MZ
- * @plugindesc v1.022 ＭＶ用アニメーションをDynamicAnimationMZに対応させます。
+ * @plugindesc v1.023 ＭＶ用アニメーションをDynamicAnimationMZに対応させます。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -69,7 +99,30 @@
  * @help 旧来のＭＶ用アニメーションをDynamicAnimationMZに対応させます。
  * 単純な２Ｄアニメーションであるため、動作が軽いなどの利点があります。
  * 
+ * -------------------------------------------------------------------
  * ■ＭＶアニメーションの導入手順
+ * -------------------------------------------------------------------
+ * ＭＺ ver1.4.0の更新により、ＭＺエディタ上で
+ * ＭＶアニメを使用できるようになりました。
+ *
+ * ・ＭＶのimg/animations以下の画像をＭＺの同フォルダにコピー。
+ * 　当然ながら、必要な効果音があればコピーが必要です。
+ * ・ＭＺのアニメーションエディタ上で右クリックし『MV互換データの作成』を選択。
+ * ・ＭＺエディタ上でＭＶ用アニメーションを作成。
+ *
+ * これだけでＯＫです。
+ * 後はごく普通にDynamicAnimationを呼び出せば有効になります。
+ * 
+ * また、ＭＶで既に作成したデータをＭＺへ移行したい場合は
+ * data/Animation.jsonの中身を直接コピペすれば可能です。
+ * ※念のため先にAnimation.jsonのバックアップを取るようにしてください。
+ * 
+ * -------------------------------------------------------------------
+ * ■ＭＶアニメーションの導入手順（旧）
+ * -------------------------------------------------------------------
+ * ※こちらの手順は不要になりましたが、互換のため残しておきます。
+ * 　機能自体は引き続き有効です。
+ * 
  * 公式のAnimationMv.jsに従って、
  * 以下の通りＭＶのアニメーションデータをコピーします。
  * 
@@ -104,7 +157,9 @@
  * DynamicAnimationMZについての詳細は以下をご覧ください。
  * http://newrpg.seesaa.net/article/477190310.html
  * 
+ * -------------------------------------------------------------------
  * ■利用規約
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
