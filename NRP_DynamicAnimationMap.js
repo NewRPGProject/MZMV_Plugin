@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV
- * @plugindesc v1.12 Call DynamicAnimation on the map.
+ * @plugindesc v1.121 Call DynamicAnimation on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimation
  * @url http://newrpg.seesaa.net/article/477639171.html
@@ -152,7 +152,7 @@
 
 /*:ja
  * @target MV
- * @plugindesc v1.12 DynamicAnimationをマップ上から起動します。
+ * @plugindesc v1.121 DynamicAnimationをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimation
  * @url http://newrpg.seesaa.net/article/477639171.html
@@ -1859,15 +1859,17 @@ Spriteset_Map.prototype.createAnimations = function() {
             if (Utils.RPGMAKER_NAME == "MV") {
                 // 保存時とは別のオブジェクトになっているのでＩＤから再取得
                 const parentSprite = this.getNewSprite(oldSprite.parentSprite);
-                const sprite = new Sprite_Animation();
-                sprite.dynamicAnimation = oldSprite.dynamicAnimation;
-                sprite.setup(parentSprite._effectTarget, animation, mirror, 0);
+                if (parentSprite) {
+                    const sprite = new Sprite_Animation();
+                    sprite.dynamicAnimation = oldSprite.dynamicAnimation;
+                    sprite.setup(parentSprite._effectTarget, animation, mirror, 0);
 
-                // 時間を進める。
-                sprite._duration = oldSprite._duration;
+                    // 時間を進める。
+                    sprite._duration = oldSprite._duration;
 
-                parentSprite.parent.addChild(sprite);
-                parentSprite._animationSprites.push(sprite);
+                    parentSprite.parent.addChild(sprite);
+                    parentSprite._animationSprites.push(sprite);
+                }
 
             // ＭＺ用（spritesetに保有）
             } else {

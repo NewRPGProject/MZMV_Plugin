@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.25 Automate & super-enhance battle animations.
+ * @plugindesc v1.251 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help Call battle animations freely from skills (items).
@@ -458,7 +458,7 @@
  */
 
 /*:ja
- * @plugindesc v1.25 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.251 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在に戦闘アニメーションを呼び出します。
@@ -2405,6 +2405,12 @@ DynamicAnimation.prototype.evaluate = function (spriteAnimation) {
     if (!$gameParty.inBattle()) {
         this.referenceSubject = baseAnimation.getReferenceSubject();
         this.referenceTarget = getReferenceBattler(this.target);
+
+        // 対象が取得できなければ終了
+        // 普通は来ないはずだが、稀にプラグインの競合などで……。
+        if (!this.referenceSubject || !this.referenceTarget) {
+            return;
+        }
     }
 
     var a = this.referenceSubject;
@@ -4019,7 +4025,7 @@ function getBattlerSprite(battler) {
  * 指定したアクタースプライトのサイズを設定する。
  */
 function setActorSpriteSize(sprite) {
-    if (sprite._battler && sprite._battler.isActor()) {
+    if (sprite && sprite._battler && sprite._battler.isActor()) {
         // Sprite_Actorのサイズが取れないのでeffectTargetのものをセットする。
         // やや強引かも……。
         sprite.width = sprite._effectTarget.width;
