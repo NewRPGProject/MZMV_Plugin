@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Automatically generate events on tiles.
+ * @plugindesc v1.021 Automatically generate events on tiles.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481496398.html
  *
@@ -186,7 +186,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 タイル上に自動でイベントを生成します。
+ * @plugindesc v1.021 タイル上に自動でイベントを生成します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481496398.html
  *
@@ -1130,8 +1130,8 @@ Game_Map.prototype.isSameMapReload = function() {
  */
 const _Scene_Map_create = Scene_Map.prototype.create;
 Scene_Map.prototype.create = function() {
-    // 場所移動時
-    if ($gamePlayer.isTransferring()) {
+    // 場所移動時（マップＩＤが変化した場合のみ）
+    if ($gamePlayer.isTransferring() && $gamePlayer.newMapId() !== $gameMap.mapId()) {
         // 非表示タイルを初期化
         mhiddenTiles = [];
     }
