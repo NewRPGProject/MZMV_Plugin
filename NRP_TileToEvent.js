@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.011 Automatically generate events on tiles.
+ * @plugindesc v1.02 Automatically generate events on tiles.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481496398.html
  *
@@ -186,7 +186,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.011 タイル上に自動でイベントを生成します。
+ * @plugindesc v1.02 タイル上に自動でイベントを生成します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481496398.html
  *
@@ -557,16 +557,8 @@ Game_Interpreter.prototype.pluginCommand = function(command, args) {
 // マップ切替時
 //----------------------------------------
 
-/**
- * ●初期化処理
- */
-const _Game_Temp_prototype_initialize = Game_Temp.prototype.initialize;
-Game_Temp.prototype.initialize = function() {
-    _Game_Temp_prototype_initialize.apply(this, arguments);
-
-    // 消去するタイルのインデックスを保持する配列
-    this._hiddenTiles = [];
-};
+// 消去するタイルのインデックスを保持する配列
+let mhiddenTiles = [];
 
 /**
  * ●マップ情報の設定
@@ -627,7 +619,7 @@ function makeTileEvents(createFlg) {
     // 設定リスト
     const settingList = [];
     // 非表示タイルのリストをクリア
-    $gameTemp._hiddenTiles = [];
+    mhiddenTiles = [];
 
     // 条件に一致する設定を抽出する。
     for (const setting of pSettingList) {
@@ -752,8 +744,8 @@ function tileToEvent(x, y, z, settingList, createFlg) {
 
         // 非表示タイルを保持
         // ※既に含まれているならば追加しない。
-        if (!$gameTemp._hiddenTiles.includes(index)) {
-            $gameTemp._hiddenTiles.push(index);
+        if (!mhiddenTiles.includes(index)) {
+            mhiddenTiles.push(index);
         }
     }
 
@@ -895,6 +887,9 @@ function getAutotileType(tileId) {
     return tileId >= 2048 ? Math.floor((tileId - 2048) / 48) : -1;
 };
 
+// ロード時判定フラグ
+let mTileToEventLoad = false;
+
 /**
  * ●ロード時のデータ展開
  * ※DataManager.loadGameに書いても、
@@ -905,7 +900,7 @@ DataManager.extractSaveContents = function(contents) {
     _DataManager_extractSaveContents.apply(this, arguments);
 
     // ロード時判定フラグ
-    $gameTemp._tileToEventLoad = true;
+    mTileToEventLoad = true;
 };
 
 //=============================================================================
@@ -1061,7 +1056,7 @@ DataManager.onLoad = function(object) {
         $gameMap.restoreLinkTileEvents();
 
         // ゲームロード時
-        if ($gameTemp._tileToEventLoad) {
+        if (mTileToEventLoad) {
             // ロード時にイベント初期化する場合
             if (pInitEventOnLoad) {
                 // タイルイベントを全削除
@@ -1079,12 +1074,12 @@ DataManager.onLoad = function(object) {
             }
 
             // 用済みなのでフラグ初期化
-            $gameTemp._tileToEventLoad = undefined;
+            mTileToEventLoad = false;
 
         // メニューを閉じた際や、戦闘終了時など
         } else {
             // 非表示タイルがあれば再度非表示
-            for (const index of $gameTemp._hiddenTiles) {
+            for (const index of mhiddenTiles) {
                 $dataMap.data[index] = 0;
             }
         }
@@ -1128,6 +1123,19 @@ Game_Map.prototype.getTileEvents = function() {
 
 Game_Map.prototype.isSameMapReload = function() {
     return !$gamePlayer.isTransferring() || this.mapId() === $gamePlayer.newMapId();
+};
+
+/**
+ * ●マップシーンの作成時
+ */
+const _Scene_Map_create = Scene_Map.prototype.create;
+Scene_Map.prototype.create = function() {
+    // 場所移動時
+    if ($gamePlayer.isTransferring()) {
+        // 非表示タイルを初期化
+        mhiddenTiles = [];
+    }
+    _Scene_Map_create.apply(this, arguments);
 };
 
 //---------------------------------------------------
