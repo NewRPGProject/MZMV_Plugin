@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Expanded calling of map events and common events.
+ * @plugindesc v1.011 Expanded calling of map events and common events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482150579.html
  *
@@ -104,7 +104,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 マップイベントやコモンイベントの呼び出しを拡張。
+ * @plugindesc v1.011 マップイベントやコモンイベントの呼び出しを拡張。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/482150579.html
  *
@@ -598,7 +598,7 @@ const callMapEventById = function(param) {
         }
 
         const pageNo = getCallPage.bind(event)(param.pageNo);
-        setupAnotherList(eventId, event.getPages(), pageNo, interpreter);
+        setupAnotherList(eventId, event.event().pages, pageNo, interpreter);
     }
 };
 
