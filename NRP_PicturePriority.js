@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Change the display priority for each picture.
+ * @plugindesc v1.001 Change the display priority for each picture.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/485015972.html
  *
@@ -108,7 +108,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 ピクチャ毎に表示優先度を変更します。
+ * @plugindesc v1.001 ピクチャ毎に表示優先度を変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/485015972.html
  *
@@ -470,7 +470,7 @@ Sprite_Picture.prototype.restoreContainer = function(spriteset) {
     // 標準時
     } else if (spriteset._pictureContainer) {
         // 元のコンテナに戻す。
-        spriteset._pictureContainer.addChild(picture);
+        spriteset._pictureContainer.addChild(this);
     }
 }
 
