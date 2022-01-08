@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.011 Extends the passage & get on/off decision for vehicles.
+ * @plugindesc v1.02 Extends the passage & get on/off decision for vehicles.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482385836.html
  *
@@ -139,7 +139,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.011 乗物の通行＆乗降判定を拡張します。
+ * @plugindesc v1.02 乗物の通行＆乗降判定を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/482385836.html
  *
@@ -664,6 +664,39 @@ if (pAirshipSameAsCharacters) {
         }
     };
 }
+
+//----------------------------------------
+// ゲームロード時
+//----------------------------------------
+
+// ロード時判定フラグ
+let mIsGameLoad = false;
+
+/**
+ * ●ロード時のデータ展開
+ */
+const _DataManager_extractSaveContents = DataManager.extractSaveContents;
+DataManager.extractSaveContents = function(contents) {
+    _DataManager_extractSaveContents.apply(this, arguments);
+    // ロード時判定フラグ
+    mIsGameLoad = true;
+};
+
+/**
+ * ●マップデータのロード完了時にタイルイベントのリンク先を復元
+ */
+const _DataManager_onLoad = DataManager.onLoad;
+DataManager.onLoad = function(object) {
+    _DataManager_onLoad.apply(this, arguments);
+
+    // ゲームロード時
+    if (object === $dataMap && $gameMap && mIsGameLoad) {
+        // 通行情報を反映
+        setTilesetInfo();
+        // 用済みなのでフラグ初期化
+        mIsGameLoad = false;
+    }
+};
 
 //----------------------------------------
 // その他共通関数
