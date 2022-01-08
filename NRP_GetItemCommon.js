@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Commonize the process of gaining items.
+ * @plugindesc v1.01 Commonize the process of gaining items.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484654978.html
  *
@@ -212,7 +212,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 アイテムの入手処理を共通化します。
+ * @plugindesc v1.01 アイテムの入手処理を共通化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484654978.html
  *
@@ -551,24 +551,26 @@ Game_Interpreter.prototype.command128 = function(params) {
  */
 const _Game_Party_gainItem = Game_Party.prototype.gainItem;
 Game_Party.prototype.gainItem = function(item, amount, includeEquip) {
-    mItemName = item.name;
-    mItemAmount = amount;
-    mItemDescription = item.description;
-    mItemIcon = item.iconIndex;
-    mItemId = item.id;
+    if (item) {
+        mItemName = item.name;
+        mItemAmount = amount;
+        mItemDescription = item.description;
+        mItemIcon = item.iconIndex;
+        mItemId = item.id;
 
-    // アイテム、武器、防具によって分岐
-    mType = null;
-    if (mItemCategory == 1) {
-        mType = item.itypeId;
-    } else if (mItemCategory == 2) {
-        mType = item.wtypeId;
-    } else if (mItemCategory == 3) {
-        mType = item.atypeId;
+        // アイテム、武器、防具によって分岐
+        mType = null;
+        if (mItemCategory == 1) {
+            mType = item.itypeId;
+        } else if (mItemCategory == 2) {
+            mType = item.wtypeId;
+        } else if (mItemCategory == 3) {
+            mType = item.atypeId;
+        }
+
+        mEquipType = item.etypeId;
+        mItemMeta = item.meta;
     }
-
-    mEquipType = item.etypeId;
-    mItemMeta = item.meta;
 
     _Game_Party_gainItem.apply(this, arguments);
 }
@@ -759,8 +761,8 @@ function setVariableValue(variableId, value) {
     // 値が無効だった場合はダミーの値を設定
     // ※$gameVariables.value()で数値の0を表示させないため
     if (value === "" || value === undefined || value === null) {
-        // 文字の拡大と縮小を同時に実行して空振りさせる。
-        value = "\\{\\}";
+        // 適当に表示されないコードを設定
+        value = "\u0000";
     }
     $gameVariables.setValue(variableId, value);
 }
