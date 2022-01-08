@@ -683,7 +683,7 @@ DataManager.extractSaveContents = function(contents) {
 };
 
 /**
- * ●マップデータのロード完了時にタイルイベントのリンク先を復元
+ * ●マップデータのロード完了時に通行情報を反映
  */
 const _DataManager_onLoad = DataManager.onLoad;
 DataManager.onLoad = function(object) {
