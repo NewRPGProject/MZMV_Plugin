@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.021 Resolved conflict with GALV_LayerGraphicsMZ & added functions.
+ * @plugindesc v1.03 Resolved conflict with GALV_LayerGraphicsMZ & added functions.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base GALV_LayerGraphicsMZ
  * @orderAfter GALV_LayerGraphicsMZ
@@ -51,11 +51,16 @@
  * @desc Resolve conflicts with NRP_DynamicMotionMZ and NRP_TroopRandomFormation.
  * @type boolean
  * @default true
+ * 
+ * @param SupportZoomOut
+ * @desc Supports zoom out. Addresses the problem that the outside of the screen is not displayed when shrinking.
+ * @type boolean
+ * @default true
  */
 
 /*:ja
  * @target MZ
- * @plugindesc v1.021 GALV_LayerGraphicsMZとの競合を解消＆機能追加
+ * @plugindesc v1.03 GALV_LayerGraphicsMZとの競合を解消＆機能追加
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base GALV_LayerGraphicsMZ
  * @orderAfter GALV_LayerGraphicsMZ
@@ -103,6 +108,12 @@
  * @desc NRP_DynamicMotionMZおよびNRP_TroopRandomFormationとの競合を解消します。
  * @type boolean
  * @default true
+ * 
+ * @param SupportZoomOut
+ * @text ズームアウトに対応
+ * @desc ズームアウト処理に対応します。縮小時に本来の画面外が表示されなくなる問題へ対処します。
+ * @type boolean
+ * @default true
  */
 (function() {
 "use strict";
@@ -131,6 +142,7 @@ const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pSupportLoopMap = toBoolean(parameters["SupportLoopMap"], true);
 const pSupportStaticLayerDefaultMap = toBoolean(parameters["SupportStaticLayerDefaultMap"], true);
 const pForDynamicMotion = toBoolean(parameters["ForDynamicMotion"], true);
+const pSupportZoomOut = toBoolean(parameters["SupportZoomOut"], true);
 
 //--------------------------------------------------------
 // ループ対応
@@ -158,6 +170,12 @@ if (pSupportLoopMap) {
         // 原点に加算
         this.origin.x = 0 + this.lValue().scrollX + preCurrentx + this.xOffset();
         this.origin.y = 0 + this.lValue().scrollY + preCurrenty + this.yOffset();
+
+        // ズームを考慮
+        if (pSupportZoomOut) {
+            this.width = Graphics.width / $gameScreen.zoomScale();
+            this.height = Graphics.height / $gameScreen.zoomScale();
+        }
     };
 
     /**
