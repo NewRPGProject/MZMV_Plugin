@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.142 The order of actions is displayed on the battle screen.
+ * @plugindesc v1.143 The order of actions is displayed on the battle screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -276,7 +276,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.142 行動順序を戦闘画面へ表示します。
+ * @plugindesc v1.143 行動順序を戦闘画面へ表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -1889,15 +1889,15 @@ BattleManager.startTurn = function() {
 /**
  * ●行動開始
  */
-var _BattleManager_startAction = BattleManager.startAction;
+const _BattleManager_startAction = BattleManager.startAction;
 BattleManager.startAction = function() {
     // 元の処理
     _BattleManager_startAction.apply(this);
     
-    var item = this._subject.currentAction().item();
+    const item = this._subject.currentAction().item();
 
     // <CtbHide>の指定があれば、行動順序関連表示を閉じる
-    if (item.meta.CtbHide) {
+    if (item && item.meta.CtbHide) {
         NrpVisualTurn._ctbWindow.close();
     }
 };
@@ -1905,16 +1905,16 @@ BattleManager.startAction = function() {
 /**
  * ●行動終了
  */
-var _BattleManager_endAction = BattleManager.endAction;
+const _BattleManager_endAction = BattleManager.endAction;
 BattleManager.endAction = function() {
     _BattleManager_endAction.call(this);
 
     if (this._action) {
-        var item = this._action.item();
+        const item = this._action.item();
 
         // <CtbHide>の指定があれば、行動順序表示を再開
         // ただし、ウィンドウを隠す設定でない場合のみ
-        if (item.meta.CtbHide && paramAutoHidden == 0) {
+        if (item && item.meta.CtbHide && paramAutoHidden == 0) {
             NrpVisualTurn._ctbWindow.show();
             NrpVisualTurn._ctbWindow.open();
         }
