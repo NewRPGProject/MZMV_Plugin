@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.03 A class change system will be implemented.
+ * @plugindesc v1.031 A class change system will be implemented.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -365,7 +365,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.03 転職システムを実装する。
+ * @plugindesc v1.031 転職システムを実装する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -780,8 +780,10 @@
  */
 function parseStruct1(arg) {
     const ret = [];
-    for (const str of JSON.parse(arg)) {
-        ret.push(str);
+    if (arg) {
+        for (const str of JSON.parse(arg)) {
+            ret.push(str);
+        }
     }
     return ret;
 }
@@ -896,6 +898,9 @@ PluginManager.registerCommand(PLUGIN_NAME, "SceneStart", function(args) {
         mClassList.sort((a, b) => a.Class - b.Class);
     }
 
+    // 職業一覧を編集
+    editClassList(mClassList);
+
     // 選択肢ウィンドウが存在する場合は非表示
     // ※ゴミが残らないようにするため
     if (SceneManager._scene._choiceListWindow) {
@@ -925,6 +930,20 @@ function getActor(args) {
     // アクターを取得
     const actor = $gameActors.actor(actorId);
     return actor;
+}
+
+/**
+ * ●職業一覧を編集する。
+ */
+function editClassList(classList) {
+    for (const classInfo of classList) {
+        classInfo.class = classInfo.Class;
+        classInfo.actors = parseStruct1(classInfo.Actors);
+        classInfo.switch = toNumber(classInfo.Switch);
+        classInfo.item = toNumber(classInfo.Item);
+        classInfo.classInfo = classInfo.ClassInfo;
+        classInfo.script = classInfo.Script;
+    }
 }
 
 //----------------------------------------
@@ -1469,24 +1488,24 @@ Windows_SelectClasses.prototype.makeItemList = function() {
     // 転職条件を満たすか判定
     for (const classInfo of mClassList) {
         // 対象のアクターでない場合
-        if (classInfo.Actors && !classInfo.Actors.includes(this._actor.actorId())) {
+        if (classInfo.actors && classInfo.actors.length && !classInfo.actors.includes(this._actor.actorId())) {
             continue;
         // 対象のスイッチがオンでない場合
-        } else if (classInfo.Switch && !$gameSwitches.value(classInfo.Switch)) {
+        } else if (classInfo.switch && !$gameSwitches.value(classInfo.switch)) {
             continue;
         // 対象のアイテムが持っていない場合
-        } else if (classInfo.Item && !$gameParty.hasItem($dataItems[classInfo.Item])) {
+        } else if (classInfo.item && !$gameParty.hasItem($dataItems[classInfo.item])) {
             continue;
         // 対象の職業情報を満たさない場合
-        } else if (classInfo.ClassInfo && !this.isClassConditionOK(classInfo.ClassInfo)) {
+        } else if (classInfo.classInfo && !this.isClassConditionOK(classInfo.classInfo)) {
             continue;
         // 対象のスクリプトがオンでない場合
-        } else if (classInfo.Script && !eval(classInfo.Script)) {
+        } else if (classInfo.script && !eval(classInfo.script)) {
             continue;
         }
 
         // 条件を満たすなら追加
-        classes.push($dataClasses[classInfo.Class]);
+        classes.push($dataClasses[classInfo.class]);
     }
 
     this._data = classes;
@@ -2500,7 +2519,7 @@ if (pShowMenuCommand) {
         // 転職画面に遷移
         if (this._commandWindow.currentSymbol() == pClassChangeSymbol) {
             // 職業一覧の生成
-            mClassList = pClassList;
+            mClassList = editClassList(pClassList);
             // アクターの変更許可
             mActorNoChange = false;
             // 転職画面起動
@@ -2618,7 +2637,7 @@ function findClassImage(actor) {
         // 職業が一致する場合
         if (classImage.Class == actor.currentClass().id) {
             // アクターの指定がある場合
-            if (classImage.Actor) {
+            if (toNumber(classImage.Actor)) {
                 if (classImage.Actor == actor.actorId()) {
                     return classImage;
                 }
@@ -2630,7 +2649,7 @@ function findClassImage(actor) {
         // 職業の指定がない場合
         } else if (!classImage.Class) {
             // アクターの指定がある場合
-            if (classImage.Actor) {
+            if (toNumber(classImage.Actor)) {
                 if (classImage.Actor == actor.actorId()) {
                     return classImage;
                 }

@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Implemented a class change screen for multiple classes.
+ * @plugindesc v1.011 Implemented a class change screen for multiple classes.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -417,7 +417,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 多重職業用の転職画面を実装。
+ * @plugindesc v1.011 多重職業用の転職画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -897,8 +897,10 @@
  */
 function parseStruct1(arg) {
     const ret = [];
-    for (const str of JSON.parse(arg)) {
-        ret.push(str);
+    if (arg) {
+        for (const str of JSON.parse(arg)) {
+            ret.push(str);
+        }
     }
     return ret;
 }
@@ -1037,6 +1039,9 @@ PluginManager.registerCommand(PLUGIN_NAME, "SceneStart", function(args) {
         mClassList.sort((a, b) => a.Class - b.Class);
     }
 
+    // 職業一覧を編集
+    editClassList(mClassList);
+
     // 選択肢ウィンドウが存在する場合は非表示
     // ※ゴミが残らないようにするため
     if (SceneManager._scene._choiceListWindow) {
@@ -1044,7 +1049,7 @@ PluginManager.registerCommand(PLUGIN_NAME, "SceneStart", function(args) {
     }
 
     // シーン開始
-    SceneManager.push(Scene_ClassChange);
+    SceneManager.push(Scene_AdditionalCC);
 });
 
 //----------------------------------------
@@ -1066,6 +1071,20 @@ function getActor(args) {
     // アクターを取得
     const actor = $gameActors.actor(actorId);
     return actor;
+}
+
+/**
+ * ●職業一覧を編集する。
+ */
+function editClassList(classList) {
+    for (const classInfo of classList) {
+        classInfo.class = classInfo.Class;
+        classInfo.actors = parseStruct1(classInfo.Actors);
+        classInfo.switch = toNumber(classInfo.Switch);
+        classInfo.item = toNumber(classInfo.Item);
+        classInfo.classInfo = classInfo.ClassInfo;
+        classInfo.script = classInfo.Script;
+    }
 }
 
 //----------------------------------------
@@ -1112,18 +1131,18 @@ Game_Actor.prototype.refresh = function() {
 };
 
 //-----------------------------------------------------------------------------
-// Scene_ClassChange
+// Scene_AdditionalCC
 //
 // 転職シーン用クラス
 
-function Scene_ClassChange() {
+function Scene_AdditionalCC() {
     this.initialize(...arguments);
 }
 
-Scene_ClassChange.prototype = Object.create(Scene_MenuBase.prototype);
-Scene_ClassChange.prototype.constructor = Scene_ClassChange;
+Scene_AdditionalCC.prototype = Object.create(Scene_MenuBase.prototype);
+Scene_AdditionalCC.prototype.constructor = Scene_AdditionalCC;
 
-Scene_ClassChange.prototype.initialize = function() {
+Scene_AdditionalCC.prototype.initialize = function() {
     Scene_MenuBase.prototype.initialize.call(this);
     Scene_Message.prototype.initialize.call(this);
 
@@ -1136,7 +1155,7 @@ Scene_ClassChange.prototype.initialize = function() {
 /**
  * ●更新処理
  */
-Scene_ClassChange.prototype.update = function() {
+Scene_AdditionalCC.prototype.update = function() {
     Scene_MenuBase.prototype.update.call(this);
 
     if (this._isMessageClosing) {
@@ -1156,7 +1175,7 @@ Scene_ClassChange.prototype.update = function() {
 /**
  * ●ウィンドウの生成
  */
-Scene_ClassChange.prototype.create = function() {
+Scene_AdditionalCC.prototype.create = function() {
     Scene_MenuBase.prototype.create.call(this);
 
     // アクター選択用ウィンドウ
@@ -1210,7 +1229,7 @@ Scene_ClassChange.prototype.create = function() {
 /**
  * ●処理開始
  */
-Scene_ClassChange.prototype.start = function() {
+Scene_AdditionalCC.prototype.start = function() {
     Scene_MenuBase.prototype.start.call(this);
     Scene_Message.prototype.start.call(this);
 
@@ -1242,14 +1261,14 @@ Scene_ClassChange.prototype.start = function() {
  * ●ヘルプウィンドウの縦幅
  * ※存在しないので0
  */
-Scene_ClassChange.prototype.helpAreaHeight = function() {
+Scene_AdditionalCC.prototype.helpAreaHeight = function() {
     return 0;
 };
 
 /**
  * ●各ウィンドウにアクター情報を設定
  */
-Scene_ClassChange.prototype.refreshActor = function() {
+Scene_AdditionalCC.prototype.refreshActor = function() {
     const actor = this._actor;
     this._slotWindow.setActor(actor);
     this._selectWindow.setActor(actor);
@@ -1259,7 +1278,7 @@ Scene_ClassChange.prototype.refreshActor = function() {
 /**
  * ●アクターが未設定かどうか？
  */
-Scene_ClassChange.prototype.isNoActor = function() {
+Scene_AdditionalCC.prototype.isNoActor = function() {
     return !$gameParty._menuActorId;
 };
 
@@ -1270,7 +1289,7 @@ Scene_ClassChange.prototype.isNoActor = function() {
 /**
  * ●アクター選択用ウィンドウの作成
  */
-Scene_ClassChange.prototype.createStatusWindow = function() {
+Scene_AdditionalCC.prototype.createStatusWindow = function() {
     const rect = this.statusWindowRect();
     this._statusWindow = new Window_MenuStatus(rect);
     this._statusWindow.setHandler("ok", this.onActorOk.bind(this));
@@ -1281,7 +1300,7 @@ Scene_ClassChange.prototype.createStatusWindow = function() {
 /**
  * ●ステータスウィンドウ用の領域を確保
  */
-Scene_ClassChange.prototype.statusWindowRect = function() {
+Scene_AdditionalCC.prototype.statusWindowRect = function() {
     const ww = Graphics.boxWidth;
     const wh = this.mainAreaHeight();
     const wx = this.isRightInputMode() ? 0 : Graphics.boxWidth - ww;
@@ -1292,7 +1311,7 @@ Scene_ClassChange.prototype.statusWindowRect = function() {
 /**
  * ●アクター選択開始
  */
-Scene_ClassChange.prototype.selectActorStart = function() {
+Scene_AdditionalCC.prototype.selectActorStart = function() {
     // 転職用ウィンドウは非表示
     this._slotWindow.hide();
     this._selectWindow.hide();
@@ -1312,7 +1331,7 @@ Scene_ClassChange.prototype.selectActorStart = function() {
 /**
  * ●アクターの選択確定
  */
-Scene_ClassChange.prototype.onActorOk = function() {
+Scene_AdditionalCC.prototype.onActorOk = function() {
     // アクター選択ウィンドウの選択結果を反映
     this._actor = this._statusWindow.actor(this._statusWindow.index());
     // アクター情報の設定
@@ -1336,7 +1355,7 @@ Scene_ClassChange.prototype.onActorOk = function() {
 /**
  * ●スロット選択開始
  */
-Scene_ClassChange.prototype.selectSlotStart = function() {
+Scene_AdditionalCC.prototype.selectSlotStart = function() {
     // アクター選択、職業選択ウィンドウは非表示
     this._statusWindow.hide();
     this._selectWindow.hide();
@@ -1354,7 +1373,7 @@ Scene_ClassChange.prototype.selectSlotStart = function() {
 /**
  * ●入替するスロットを確定
  */
-Scene_ClassChange.prototype.onSlotOk = function() {
+Scene_AdditionalCC.prototype.onSlotOk = function() {
     // スロット番号を更新
     mClassIndex = this._slotWindow.index();
     // 一行表示に変更
@@ -1372,7 +1391,7 @@ Scene_ClassChange.prototype.onSlotOk = function() {
 /**
  * ●スロット画面でキャンセル
  */
-Scene_ClassChange.prototype.onSlotCancel = function() {
+Scene_AdditionalCC.prototype.onSlotCancel = function() {
     this._slotWindow.hide();
 
     // アクターの選択を行う場合
@@ -1393,7 +1412,7 @@ Scene_ClassChange.prototype.onSlotCancel = function() {
 /**
  * ●転職の選択開始
  */
-Scene_ClassChange.prototype.onClassChangeSelectStart = function() {
+Scene_AdditionalCC.prototype.onClassChangeSelectStart = function() {
     // スキルページを解除
     this._infoWindow._isSkillPage = false;
     // アクター選択ウィンドウを非表示
@@ -1411,7 +1430,7 @@ Scene_ClassChange.prototype.onClassChangeSelectStart = function() {
 /**
  * ●転職の選択キャンセル
  */
-Scene_ClassChange.prototype.onClassChangeSelectCancel = function() {
+Scene_AdditionalCC.prototype.onClassChangeSelectCancel = function() {
     // 職業スロットを使用する場合
     if (pUseMultipleClasses) {
         // スロット選択へ戻る
@@ -1431,7 +1450,7 @@ Scene_ClassChange.prototype.onClassChangeSelectCancel = function() {
 /**
  * ●転職確認
  */
-Scene_ClassChange.prototype.onClassChangeConfirm = function() {
+Scene_AdditionalCC.prototype.onClassChangeConfirm = function() {
     this._infoWindow.select(0);
     this._infoWindow.activate();
 };
@@ -1439,7 +1458,7 @@ Scene_ClassChange.prototype.onClassChangeConfirm = function() {
 /**
  * ●転職確定
  */
-Scene_ClassChange.prototype.onClassChangeOk = function() {
+Scene_AdditionalCC.prototype.onClassChangeOk = function() {
     // 選択中の職業を取得
     const classItem = this._selectWindow.item();
     // 職業が存在しない場合（外す）
@@ -1469,7 +1488,7 @@ Scene_ClassChange.prototype.onClassChangeOk = function() {
 /**
  * ●転職キャンセル
  */
-Scene_ClassChange.prototype.onClassChangeCancel = function() {
+Scene_AdditionalCC.prototype.onClassChangeCancel = function() {
     this._infoWindow.deselect();
     // 職業選択ウィンドウに戻る
     this._selectWindow.activate();
@@ -1478,7 +1497,7 @@ Scene_ClassChange.prototype.onClassChangeCancel = function() {
 /**
  * ●転職確定後の終了処理
  */
-Scene_ClassChange.prototype.classChangeEnd = function() {
+Scene_AdditionalCC.prototype.classChangeEnd = function() {
     // 画像反映を行う場合はリフレッシュ
     if (pUseClassImage) {
         $gamePlayer.refresh();
@@ -1507,7 +1526,7 @@ Scene_ClassChange.prototype.classChangeEnd = function() {
 /**
  * ●アクターの変更
  */
-Scene_ClassChange.prototype.onActorChange = function() {
+Scene_AdditionalCC.prototype.onActorChange = function() {
     Scene_MenuBase.prototype.onActorChange.call(this);
     this.refreshActor();
     // スキルページを解除
@@ -1534,14 +1553,14 @@ Scene_ClassChange.prototype.onActorChange = function() {
 /**
  * ●ページボタンが必要かどうか？
  */
-Scene_ClassChange.prototype.needsPageButtons = function() {
+Scene_AdditionalCC.prototype.needsPageButtons = function() {
     return true;
 };
 
 /**
  * ●ページボタンの表示制御
  */
-Scene_ClassChange.prototype.arePageButtonsEnabled = function() {
+Scene_AdditionalCC.prototype.arePageButtonsEnabled = function() {
     // アクターが指定されている場合は切替禁止
     // アクター選択中は切替禁止
     if (mActorNoChange || this._statusWindow.active) {
@@ -1557,28 +1576,28 @@ Scene_ClassChange.prototype.arePageButtonsEnabled = function() {
 /**
  * ●停止
  */
-Scene_ClassChange.prototype.stop = function() {
+Scene_AdditionalCC.prototype.stop = function() {
     Scene_Message.prototype.stop.call(this);
 };
 
 /**
  * ●終了時
  */
-Scene_ClassChange.prototype.terminate = function() {
+Scene_AdditionalCC.prototype.terminate = function() {
     Scene_Message.prototype.terminate.call(this);
 };
 
 /**
  * ●メッセージが閉じている最中か？
  */
-Scene_ClassChange.prototype.isMessageWindowClosing = function() {
+Scene_AdditionalCC.prototype.isMessageWindowClosing = function() {
     return this._messageWindow.isClosing();
 };
 
 /**
  * ●ウィンドウ生成
  */
-Scene_ClassChange.prototype.createMessageWindows = function() {
+Scene_AdditionalCC.prototype.createMessageWindows = function() {
     this.createMessageWindow();
     this.createScrollTextWindow();
     this.createNameBoxWindow();
@@ -1592,43 +1611,43 @@ Scene_ClassChange.prototype.createMessageWindows = function() {
     this.addChild(this._windowLayer.removeChild(this._scrollTextWindow));
 };
 
-Scene_ClassChange.prototype.createMessageWindow = function() {
+Scene_AdditionalCC.prototype.createMessageWindow = function() {
     Scene_Message.prototype.createMessageWindow.call(this);
 };
 
-Scene_ClassChange.prototype.createScrollTextWindow = function() {
+Scene_AdditionalCC.prototype.createScrollTextWindow = function() {
     Scene_Message.prototype.createScrollTextWindow.call(this);
 };
 
-Scene_ClassChange.prototype.createNameBoxWindow = function() {
+Scene_AdditionalCC.prototype.createNameBoxWindow = function() {
     Scene_Message.prototype.createNameBoxWindow.call(this);
 };
 
-Scene_ClassChange.prototype.createChoiceListWindow = function() {
+Scene_AdditionalCC.prototype.createChoiceListWindow = function() {
     Scene_Message.prototype.createChoiceListWindow.call(this);
 };
 
-Scene_ClassChange.prototype.createNumberInputWindow = function() {
+Scene_AdditionalCC.prototype.createNumberInputWindow = function() {
     Scene_Message.prototype.createNumberInputWindow.call(this);
 };
 
-Scene_ClassChange.prototype.createEventItemWindow = function() {
+Scene_AdditionalCC.prototype.createEventItemWindow = function() {
     Scene_Message.prototype.createEventItemWindow.call(this);
 };
 
-Scene_ClassChange.prototype.messageWindowRect = function() {
+Scene_AdditionalCC.prototype.messageWindowRect = function() {
     return Scene_Message.prototype.messageWindowRect.call(this);
 };
 
-Scene_ClassChange.prototype.scrollTextWindowRect = function() {
+Scene_AdditionalCC.prototype.scrollTextWindowRect = function() {
     return Scene_Message.prototype.scrollTextWindowRect.call(this);
 };
 
-Scene_ClassChange.prototype.eventItemWindowRect = function() {
+Scene_AdditionalCC.prototype.eventItemWindowRect = function() {
     return Scene_Message.prototype.eventItemWindowRect.call(this);
 };
 
-Scene_ClassChange.prototype.associateWindows = function() {
+Scene_AdditionalCC.prototype.associateWindows = function() {
     const messageWindow = this._messageWindow;
 
     // 余計な表示がされるので、ダミーのウィンドウを設定
@@ -1649,7 +1668,7 @@ Scene_ClassChange.prototype.associateWindows = function() {
 /**
  * ●成功メッセージの追加
  */
-Scene_ClassChange.prototype.showMessage = function(message) {
+Scene_AdditionalCC.prototype.showMessage = function(message) {
     // メッセージが有効な場合
     if (message) {
         const window = this._messageWindow;
@@ -1896,24 +1915,24 @@ Windows_SelectClasses.prototype.makeItemList = function() {
     // 転職条件を満たすか判定
     for (const classInfo of mClassList) {
         // 対象のアクターでない場合
-        if (classInfo.Actors && !classInfo.Actors.includes(this._actor.actorId())) {
+        if (classInfo.actors && classInfo.actors.length && !classInfo.actors.includes(this._actor.actorId())) {
             continue;
         // 対象のスイッチがオンでない場合
-        } else if (classInfo.Switch && !$gameSwitches.value(classInfo.Switch)) {
+        } else if (classInfo.switch && !$gameSwitches.value(classInfo.switch)) {
             continue;
         // 対象のアイテムが持っていない場合
-        } else if (classInfo.Item && !$gameParty.hasItem($dataItems[classInfo.Item])) {
+        } else if (classInfo.item && !$gameParty.hasItem($dataItems[classInfo.item])) {
             continue;
         // 対象の職業情報を満たさない場合
-        } else if (classInfo.ClassInfo && !this.isClassConditionOK(classInfo.ClassInfo)) {
+        } else if (classInfo.classInfo && !this.isClassConditionOK(classInfo.classInfo)) {
             continue;
         // 対象のスクリプトがオンでない場合
-        } else if (classInfo.Script && !eval(classInfo.Script)) {
+        } else if (classInfo.script && !eval(classInfo.script)) {
             continue;
         }
 
         // 条件を満たすなら追加
-        classes.push($dataClasses[classInfo.Class]);
+        classes.push($dataClasses[classInfo.class]);
     }
 
     this._data = classes;
@@ -3097,7 +3116,7 @@ if (pShowMenuCommand) {
         // 転職画面に遷移
         if (this._commandWindow.currentSymbol() == pClassChangeSymbol) {
             // 職業一覧の生成
-            mClassList = pClassList;
+            mClassList = editClassList(pClassList);
             // アクターの変更許可
             mActorNoChange = false;
             // 読取専用の場合
@@ -3108,7 +3127,7 @@ if (pShowMenuCommand) {
             }
 
             // 転職画面起動
-            SceneManager.push(Scene_ClassChange);
+            SceneManager.push(Scene_AdditionalCC);
         }
     };
 }
@@ -3229,7 +3248,7 @@ function findClassImage(actor, index) {
         // 職業が一致する場合
         if (classImage.Class == currentClass.id) {
             // アクターの指定がある場合
-            if (classImage.Actor) {
+            if (toNumber(classImage.Actor)) {
                 if (classImage.Actor == actor.actorId()) {
                     return classImage;
                 }
@@ -3241,7 +3260,7 @@ function findClassImage(actor, index) {
         // 職業の指定がない場合
         } else if (!classImage.Class) {
             // アクターの指定がある場合
-            if (classImage.Actor) {
+            if (toNumber(classImage.Actor)) {
                 if (classImage.Actor == actor.actorId()) {
                     return classImage;
                 }
