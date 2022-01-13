@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Change the target of the event command.
+ * @plugindesc v1.01 Change the target of the event command.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482259070.html
  *
@@ -79,6 +79,7 @@
  * @option -1 #Player
  * @option -2 #Follower
  * @option this._eventId + 1
+ * @option followerIdByActorId(1)
  * @option 0 #Set the release
  * 
  * 
@@ -100,7 +101,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 イベントコマンドの対象を変更する。
+ * @plugindesc v1.01 イベントコマンドの対象を変更する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/482259070.html
  *
@@ -176,6 +177,7 @@
  * @option -1 #プレイヤー
  * @option -2 #フォロワー
  * @option this._eventId + 1 #このイベント+1
+ * @option followerIdByActorId(1) #アクターＩＤのフォロワー
  * @option 0 #設定解除
  * 
  * 
@@ -468,5 +470,13 @@ Game_Follower.prototype.chasePreceding = function() {
     // ※chaseCharacterという関数もあるけど斜め移動するのでうまくいかない。
     // this.chaseCharacter(precedingCharacter);
 };
+
+/**
+ * ●アクターＩＤを元にフォロワーＩＤを取得
+ * ※対象ＩＤのコンボボックスからeval参照
+ */
+function followerIdByActorId(actorId) {
+    return ($gameParty.members().indexOf($gameActors.actor(actorId)) + 1) * -1;
+}
 
 })();
