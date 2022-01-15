@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.031 A class change system will be implemented.
+ * @plugindesc v1.032 A class change system will be implemented.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -365,7 +365,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.031 転職システムを実装する。
+ * @plugindesc v1.032 転職システムを実装する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -899,7 +899,7 @@ PluginManager.registerCommand(PLUGIN_NAME, "SceneStart", function(args) {
     }
 
     // 職業一覧を編集
-    editClassList(mClassList);
+    mClassList = editClassList(mClassList);
 
     // 選択肢ウィンドウが存在する場合は非表示
     // ※ゴミが残らないようにするため
@@ -944,6 +944,7 @@ function editClassList(classList) {
         classInfo.classInfo = classInfo.ClassInfo;
         classInfo.script = classInfo.Script;
     }
+    return classList;
 }
 
 //----------------------------------------

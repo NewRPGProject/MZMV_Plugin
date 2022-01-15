@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.011 Implemented a class change screen for multiple classes.
+ * @plugindesc v1.012 Implemented a class change screen for multiple classes.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -417,7 +417,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.011 多重職業用の転職画面を実装。
+ * @plugindesc v1.012 多重職業用の転職画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -1040,7 +1040,7 @@ PluginManager.registerCommand(PLUGIN_NAME, "SceneStart", function(args) {
     }
 
     // 職業一覧を編集
-    editClassList(mClassList);
+    mClassList = editClassList(mClassList);
 
     // 選択肢ウィンドウが存在する場合は非表示
     // ※ゴミが残らないようにするため
@@ -1085,6 +1085,7 @@ function editClassList(classList) {
         classInfo.classInfo = classInfo.ClassInfo;
         classInfo.script = classInfo.Script;
     }
+    return classList;
 }
 
 //----------------------------------------
