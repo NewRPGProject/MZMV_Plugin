@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.021 Automatically generate events on tiles.
+ * @plugindesc v1.03 Automatically generate events on tiles.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481496398.html
  *
@@ -186,7 +186,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.021 タイル上に自動でイベントを生成します。
+ * @plugindesc v1.03 タイル上に自動でイベントを生成します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481496398.html
  *
@@ -1057,6 +1057,15 @@ DataManager.onLoad = function(object) {
 
         // ゲームロード時
         if (mTileToEventLoad) {
+            // フラグ初期化
+            mTileToEventLoad = false;
+
+            // バージョン変更時は処理しない。
+            // ※通常のマップ遷移時と同様の扱い。
+            if ($gameSystem.versionId() !== $dataSystem.versionId) {
+                return;
+            }
+            
             // ロード時にイベント初期化する場合
             if (pInitEventOnLoad) {
                 // タイルイベントを全削除
@@ -1072,9 +1081,6 @@ DataManager.onLoad = function(object) {
                 // 置換対象のタイルを非表示にするだけ
                 makeTileEvents(false);
             }
-
-            // 用済みなのでフラグ初期化
-            mTileToEventLoad = false;
 
         // メニューを閉じた際や、戦闘終了時など
         } else {
