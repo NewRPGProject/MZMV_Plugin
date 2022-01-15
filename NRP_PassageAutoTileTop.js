@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Only the top of the auto tile (wall/roof) can be open to traffic.
+ * @plugindesc v1.021 Only the top of the auto tile (wall/roof) can be open to traffic.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/473715538.html
  *
@@ -76,7 +76,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 オートタイル（壁・屋根）の上部だけを通行可能に
+ * @plugindesc v1.021 オートタイル（壁・屋根）の上部だけを通行可能に
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/473715538.html
  *
@@ -234,8 +234,8 @@ const TOP_OF_WALL_TOP_TILE_PATTERNS = [20, 33, 34, 35, 36, 37, 42, 43, 45, 46];
  */
 const _Scene_Boot_start = Scene_Boot.prototype.start;
 Scene_Boot.prototype.start = function() {
-    // 戦闘テストやイベントテストでは意味がないのでやらない
-    if (DataManager.isBattleTest() || DataManager.isEventTest()) {
+    // 戦闘テストでは意味がないのでやらない
+    if (DataManager.isBattleTest()) {
         // 元の処理を実行
         _Scene_Boot_start.apply(this, arguments);
         return;
