@@ -2,7 +2,7 @@
 // Plugin for RPG Maker MZ
 // NRP_K_CommonMoveRouteMZ.js
 //=============================================================================
-// [Release Note]
+// [Release Note (Original)]
 // CommonMoveRoute.js for RMMV
 // 2017 Jul 11: Ver1.0.0 First Release
 // CommonMoveRouteMZ.js for RMMZ
@@ -10,8 +10,8 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.001 Set events' custom move by common event
- * @author Sasuke KANNAZUKI(Thx to terunon)
+ * @plugindesc v1.01 Set events' custom move by common event
+ * @author Sasuke KANNAZUKI(Thx to terunon)(mod Takeshi Sunagawa)
  *
  * @command set
  * @text Set Common Event
@@ -99,14 +99,25 @@
  * @param LockRunningEvent
  * @type boolean
  * @default true
- * @desc 実行中のイベントに対して、当プラグインによる自律移動を禁止します。
+ * @desc Prohibits self movement by this plugin for events that are currently running.
  *
  * @param LockOtherEvents
  * @type boolean
  * @default false
- * @desc イベントを実行している際、全てのイベントに対して、当プラグインによる自律移動を禁止します。
+ * @desc When an event is running, self movement by this plugin is prohibited for all events.
  *
  * @help
+ * CommonMoveRouteMZ.js is a launch plugin for RPG Maker MZ
+ * by Sasuke KANNAZUKI (Thx to terunon).
+ * This plugin is an addition to it by Takeshi Sunagawa.
+ * 
+ * According to the original specification, the action specified
+ * in the common event will continue to run while the event is running,
+ * but this can be stopped with a plugin parameter.
+ * 
+ * -------------------------------------------------------------------
+ * [Here is the original explanation]
+ * -------------------------------------------------------------------
  * This plugin runs under RPG Maker MZ.
  * This plugin is the MZ version of CommonMoveRoute.js
  * 
@@ -189,8 +200,8 @@
  */
 /*:ja
  * @target MZ
- * @plugindesc v1.001 複数イベントの移動ルートをひとつのコモンイベントで制御可能
- * @author 砂川赳 (神無月サスケ/terunon)
+ * @plugindesc v1.01 複数イベントの移動ルートをひとつのコモンイベントで制御可能
+ * @author 神無月サスケ（原案：terunon）（改造：砂川赳）
  *
  * @command set
  * @text コモン移動ルート設定
@@ -280,13 +291,23 @@
  * @default true
  * @desc 実行中のイベントに対して、当プラグインによる自律移動を禁止します。
  *
- * @param LockOtherEvents
- * @text 他イベントをロック
- * @type boolean
- * @default false
- * @desc イベントを実行している際、全てのイベントに対して、当プラグインによる自律移動を禁止します。
+ * @param LockOtherEventsSwitch
+ * @text 他イベント停止スイッチ
+ * @type switch
+ * @desc スイッチがオンの間、当プラグインによる全イベントの自律移動を禁止します。0（なし）なら常に停止。
  * 
  * @help
+ * このプラグインは神無月サスケ様（原案：terunon様）による
+ * ＲＰＧツクールＭＺのローンチプラグインCommonMoveRouteMZ.jsに対して、
+ * 砂川赳が機能追加を行ったものです。
+ * 
+ * 元の仕様だとコモンイベントで指定した動作は
+ * イベント実行中も動作するようになっていますが、
+ * プラグインパラメータによって、それを停止できます。
+ * 
+ * -------------------------------------------------------------------
+ * ■以下、オリジナルの解説
+ * -------------------------------------------------------------------
  * このプラグインは、RPGツクールMZに対応しています。
  *
  * ■概要
@@ -360,8 +381,9 @@
  * ・コモンイベントが終了した場合は、ただちに従来の自律移動に戻ります。
  *
  * ■ライセンス表記
- * 当プラグインは神無月サスケ様（原案：terunon様）の
- * CommonMoveRouteMZ.jsを砂川赳が改造したものです。
+ * このプラグインは、terunon(エイリアスエイク)様の TN_commonMoveRoute.js を
+ * 元に、神無月サスケが機能追加およびバグ修正を行ったものです(MV版)。
+ * terunon様に感謝いたします。
  *
  * このプラグインは MIT ライセンスで配布されます。
  * ご自由にお使いください。
@@ -378,11 +400,17 @@ function toBoolean(str, def) {
     }
     return def;
 }
+function toNumber(str, def) {
+    if (str == undefined || str == "") {
+        return def;
+    }
+    return isNaN(str) ? def : +(str || def);
+}
 
   const pluginName = 'NRP_K_CommonMoveRouteMZ';
   const parameters = PluginManager.parameters(pluginName);
   const pLockRunningEvent = toBoolean(parameters["LockRunningEvent"], true);
-  const pLockOtherEvents = toBoolean(parameters["LockOtherEvents"], false);
+  const pLockOtherEventsSwitch = toNumber(parameters["LockOtherEventsSwitch"]);
 
   //
   // process plugin commands
@@ -600,7 +628,7 @@ function toBoolean(str, def) {
       if (pLockRunningEvent && this._locked) {
         return;
       // 他のイベントが実行中でも処理停止
-      } else if (pLockOtherEvents && $gameMap.isEventRunning()) {
+      } else if (isLockOtherEvents() && $gameMap.isEventRunning()) {
         return;
       }
 
@@ -648,4 +676,17 @@ function toBoolean(str, def) {
     _Game_Character_processRouteEnd.call(this);
     onFinishMovement(this);
   };
+
+/**
+ * ●他イベントを停止するかどうか？
+ */
+function isLockOtherEvents() {
+    // 0なら常に禁止
+    if (pLockOtherEventsSwitch === 0) {
+        return true;
+    }
+    // それ以外はスイッチがオンの場合のみ停止
+    return $gameSwitches.value(pLockOtherEventsSwitch);
+};
+
 })();
