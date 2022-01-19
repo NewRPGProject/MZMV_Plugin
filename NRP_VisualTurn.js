@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.143 The order of actions is displayed on the battle screen.
+ * @plugindesc v1.15 The order of actions is displayed on the battle screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -276,7 +276,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.143 行動順序を戦闘画面へ表示します。
+ * @plugindesc v1.15 行動順序を戦闘画面へ表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -1970,7 +1970,10 @@ if (paramKeepCommandWindow) {
         Scene_Battle.prototype.endCommandSelection = function() {
             // アクターコマンドウィンドウを隠さない。
             // this.closeCommandWindows();
+
             // 選択解除する。
+            this._partyCommandWindow.deactivate();
+            this._actorCommandWindow.deactivate();
             this._actorCommandWindow.deselect();
             this.hideSubInputWindows();
             this._statusWindow.deselect();
