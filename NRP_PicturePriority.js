@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.001 Change the display priority for each picture.
+ * @plugindesc v1.002 Change the display priority for each picture.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/485015972.html
  *
@@ -108,7 +108,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.001 ピクチャ毎に表示優先度を変更します。
+ * @plugindesc v1.002 ピクチャ毎に表示優先度を変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/485015972.html
  *
@@ -487,8 +487,10 @@ Game_Screen.prototype.erasePicture = function(pictureId) {
 
     const spriteset = getSpriteset();
     const picture = spriteset.getPictureFromId(pictureId);
-    // ピクチャの親を元に戻す。
-    picture.restoreContainer(spriteset);
+    if (picture) {
+        // ピクチャの親を元に戻す。
+        picture.restoreContainer(spriteset);
+    }
 };
 
 // ----------------------------------------------------------------------------
