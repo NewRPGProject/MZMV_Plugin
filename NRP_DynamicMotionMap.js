@@ -3,13 +3,15 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.07 Call DynamicMotion on the map.
+ * @plugindesc v1.08 Call DynamicMotion on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicMotionMZ
  * @base NRP_DynamicAnimationMapMZ
  * @orderAfter NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicMotionMZ
  * @orderAfter NRP_DynamicAnimationMapMZ
+ * @orderAfter CharacterGraphicExtend
+ * @orderAfter EventEffect
  * @url http://newrpg.seesaa.net/article/477913000.html
  *
  * @help Call DynamicMotion on the map.
@@ -88,13 +90,15 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.07 DynamicMotionをマップ上から起動します。
+ * @plugindesc v1.08 DynamicMotionをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicMotionMZ
  * @base NRP_DynamicAnimationMapMZ
  * @orderAfter NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicMotionMZ
  * @orderAfter NRP_DynamicAnimationMapMZ
+ * @orderAfter CharacterGraphicExtend
+ * @orderAfter EventEffect
  * @url http://newrpg.seesaa.net/article/477913000.html
  *
  * @help DynamicMotionをマップ上から起動します。
@@ -1262,6 +1266,67 @@ function getSprite(character) {
  */
 function getSpriteset() {
     return SceneManager._scene._spriteset;
+}
+
+//------------------------------------------------------------------------
+// ■競合対応（EventEffects.js）
+// ※EventEffects.jsでは常にSprite_Characterのrotationを更新しているため、
+// 　その他のプラグインによる回転率の更新を上書きしてしまう。
+// 　そのため、使用していない間は処理を行わないように変更して対応。
+//------------------------------------------------------------------------
+
+// EventEffects.jsの関数が存在する場合
+if (Game_CharacterBase.prototype.initEffects) {
+    const _Game_CharacterBase_initEffects = Game_CharacterBase.prototype.initEffects;
+    Game_CharacterBase.prototype.initEffects = function() {
+        _Game_CharacterBase_initEffects.apply(this, arguments);
+
+        // 初期値はnullへ変更
+        // ※元々は0だが、未使用の場合と区別をつけるため。
+        this._angle = null;
+    };
+
+    const _Sprite_Character_updateAngle = Sprite_Character.prototype.updateAngle;
+    Sprite_Character.prototype.updateAngle = function() {
+        // nullの場合は処理しない
+        if (this._character._angle == null) {
+            return;
+        }
+        _Sprite_Character_updateAngle.apply(this, arguments);
+    };
+}
+
+//------------------------------------------------------------------------
+// ■競合対応（CharacterGraphicExtend.js）
+// ※EventEffects.jsと同様
+//------------------------------------------------------------------------
+
+// CharacterGraphicExtend.jsの関数が存在する場合
+if (Sprite_Character.prototype.updateExtend) {
+    const _Game_CharacterBase_clearCgInfo = Game_CharacterBase.prototype.clearCgInfo;
+    Game_CharacterBase.prototype.clearCgInfo = function() {
+        _Game_CharacterBase_clearCgInfo.apply(this, arguments);
+
+        // 初期値はnullへ変更
+        // ※元々は0だが、未使用の場合と区別をつけるため。
+        this._angle = null;
+    };
+
+    const _Sprite_Character_updateExtend = Sprite_Character.prototype.updateExtend;
+    Sprite_Character.prototype.updateExtend = function() {
+        // angleの指定がない場合
+        if (this._character.angle() == null) {
+            // 回転率を保持しておく。
+            const keepRotation = this.rotation;
+            // ↓の中でthis.rotationが変更される。
+            _Sprite_Character_updateExtend.apply(this, arguments);
+            // 保持した値へと戻す。
+            this.rotation = keepRotation;
+            return;
+        }
+
+        _Sprite_Character_updateExtend.apply(this, arguments);
+    };
 }
 
 })();
