@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.002 Change the display priority for each picture.
+ * @plugindesc v1.003 Change the display priority for each picture.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/485015972.html
  *
@@ -108,7 +108,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.002 ピクチャ毎に表示優先度を変更します。
+ * @plugindesc v1.003 ピクチャ毎に表示優先度を変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/485015972.html
  *
@@ -581,7 +581,9 @@ function getSpriteset() {
  */
 function getPictureParent(spriteset) {
     // 戦闘
-    if ($gameParty.inBattle()) {
+    // ※$gameParty.inBattle()がセットされるより
+    // 　早く呼び出されることがあるので、こちらで判定を行う。
+    if (spriteset._battleField) {
         return spriteset._battleField;
     // マップ
     } else {
