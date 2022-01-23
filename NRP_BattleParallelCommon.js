@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.021 Enables parallel common events, even during battle.
+ * @plugindesc v1.022 Enables parallel common events, even during battle.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477740800.html
  *
@@ -45,7 +45,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.021 コモンイベントの並列処理を戦闘中も有効にします。
+ * @plugindesc v1.022 コモンイベントの並列処理を戦闘中も有効にします。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477740800.html
  *
@@ -204,6 +204,11 @@ Game_Map.prototype.updateBattleCommonEvents = function() {
  * 【独自】コモンイベントの更新
  */
 Game_Map.prototype.refreshBattleCommonEvent = function() {
+    // 空の場合は処理しない。
+    if (!this._battleCommonEvents) {
+        return;
+    }
+
     for (const commonEvent of this._battleCommonEvents) {
         commonEvent.refresh();
     }
