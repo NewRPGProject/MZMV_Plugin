@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV
- * @plugindesc v1.121 Call DynamicAnimation on the map.
+ * @plugindesc v1.13 Call DynamicAnimation on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimation
  * @url http://newrpg.seesaa.net/article/477639171.html
@@ -102,7 +102,8 @@
  * [Call from note]
  * <D-Skill:1>
  * As mentioned above,
- * if you specify a skill ID for a map event or state note,
+ * if you specify a skill ID for a map event
+ * or actor or enemy or state note,
  * its animation will be executed automatically.
  * 
  * Also fill in the tag in the note at the top of the event page.
@@ -152,7 +153,7 @@
 
 /*:ja
  * @target MV
- * @plugindesc v1.121 DynamicAnimationをマップ上から起動します。
+ * @plugindesc v1.13 DynamicAnimationをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimation
  * @url http://newrpg.seesaa.net/article/477639171.html
@@ -241,7 +242,8 @@
  * 
  * 【メモ欄＆注釈からの起動】
  * <D-Skill:1>
- * というように、マップイベントやステートのメモ欄にスキルＩＤを指定すると、
+ * というように、マップイベント、アクター、敵キャラ、
+ * およびステートのメモ欄にスキルＩＤを指定すると、
  * そのアニメーションが自動実行されます。
  * 
  * また、イベントページ先頭の注釈に記入しても有効です。
@@ -355,7 +357,7 @@ const pNoteTargetRangeGrid = toNumber(parameters["noteTargetRangeGrid"]);
 const pActingNoStateAnimation = toBoolean(parameters["actingNoStateAnimation"], false);
 
 // DynamicAnimation本体側のパラメータ
-const baseParameters = PluginManager.parameters(PLUGIN_NAME);
+const baseParameters = PluginManager.parameters(BASE_PLUGIN_NAME);
 // 計算レート（ＭＶの場合は存在しないので既定値=4になる）
 const pCalculationRate = toNumber(baseParameters["calculationRate"], 4);
 
@@ -963,6 +965,18 @@ Game_Character.prototype.includesDynamicStartSkill = function(skillId) {
     }
     return false;
 };
+Game_Battler.prototype.includesDynamicStartSkill = function(skillId) {
+    // 初期化されていない
+    if (this._dynamicStartSkills === undefined) {
+        return false;
+    }
+
+    // 既に登録済ならば
+    if (this._dynamicStartSkills.includes(skillId)) {
+        return true;
+    }
+    return false;
+};
 Game_CommonEvent.prototype.includesDynamicStartSkill = function(skillId) {
     // 初期化されていない
     if (this._dynamicStartSkills === undefined) {
@@ -984,7 +998,14 @@ Game_Character.prototype.setDynamicStartSkill = function(skillId) {
     if (this._dynamicStartSkills === undefined) {
         this._dynamicStartSkills = [];
     }
-
+    // 登録
+    this._dynamicStartSkills.push(skillId);
+};
+Game_Battler.prototype.setDynamicStartSkill = function(skillId) {
+    // 初期化されていないならば初期化
+    if (this._dynamicStartSkills === undefined) {
+        this._dynamicStartSkills = [];
+    }
     // 登録
     this._dynamicStartSkills.push(skillId);
 };
@@ -993,7 +1014,6 @@ Game_CommonEvent.prototype.setDynamicStartSkill = function(skillId) {
     if (this._dynamicStartSkills === undefined) {
         this._dynamicStartSkills = [];
     }
-
     // 登録
     this._dynamicStartSkills.push(skillId);
 };
@@ -1004,8 +1024,20 @@ Game_CommonEvent.prototype.setDynamicStartSkill = function(skillId) {
 Game_Character.prototype.clearDynamicStartSkill = function() {
     this._dynamicStartSkills = [];
 };
+Game_Battler.prototype.clearDynamicStartSkill = function() {
+    this._dynamicStartSkills = [];
+};
 Game_CommonEvent.prototype.clearDynamicStartSkill = function() {
     this._dynamicStartSkills = [];
+};
+
+/**
+ * ●戦闘開始時
+ */
+const _Game_Battler_onBattleStart = Game_Battler.prototype.onBattleStart;
+Game_Battler.prototype.onBattleStart = function(advantageous) {
+    this.clearDynamicStartSkill();
+    _Game_Battler_onBattleStart.apply(this, arguments);
 };
 
 /**
@@ -1756,7 +1788,7 @@ SceneManager.changeScene = function() {
                 } else {
                     clearTempData();
                 }
-
+                
             // アニメーション状態を保持
             } else {
                 this._scene._spriteset.saveAnimationTempData();
@@ -2158,10 +2190,24 @@ Game_Battler.prototype.refresh = function() {
 
     // クリア
     this.dynamicSkills = [];
+
+    // アクターまたはエネミーのデータを取得
+    if (this.isAlive()) {
+        const battlerData = this.isActor() ? this.actor() : this.enemy();
+        if (battlerData) {
+            // メモ欄から<D-Skill:*>を取得
+            const skillId = getDynamicSkill(battlerData.note);
+            // 取得できれば実行スキルに設定
+            if (skillId != undefined) {
+                this.dynamicSkills.push(skillId);
+            }
+        }
+    }
+
     // 現在のステートでループ
     for (const state of this.states()) {
         // メモ欄から<D-Skill:*>を取得
-        let skillId = getDynamicSkill(state.note);
+        const skillId = getDynamicSkill(state.note);
         // 取得できれば実行スキルに設定
         if (skillId != undefined) {
             this.dynamicSkills.push(skillId);
@@ -2192,7 +2238,7 @@ Sprite_Battler.prototype.update = function() {
 
             const targets = [battler];
             const action = makeAction(skillId);
-            const mapAnimation = makeMapAnimationState(battler, skillId, action);
+            const mapAnimation = makeMapAnimationStateAndBattler(battler, skillId, action);
 
             // DynamicAnimation開始
             battler.showDynamicAnimation(targets, action, mapAnimation);
@@ -2202,8 +2248,9 @@ Sprite_Battler.prototype.update = function() {
 
 /**
  * ●マップアニメーション用情報を作成
+ * ※ステートまたはバトラー単位の表示
  */
-function makeMapAnimationState(battler, skillId, action) {
+function makeMapAnimationStateAndBattler(battler, skillId, action) {
     // 始点となる行動主体
     const subject = battler;
 
@@ -2215,6 +2262,8 @@ function makeMapAnimationState(battler, skillId, action) {
     mapAnimation.isParallel = true;
     mapAnimation.skillId = skillId;
 
+    // 開始時間の設定
+    setStartTiming(mapAnimation, action, subject);
     return mapAnimation;
 }
 
@@ -2275,6 +2324,8 @@ Sprite_Battler.prototype.startDynamicAnimation = function(mirror, delay, dynamic
             // スキルＩＤ単位で保有する実行時間
             if (battler.dynamicDurations[skillId]) {
                 dynamicDuration = battler.dynamicDurations[skillId];
+                // 開始タイミングの指定がある場合は調整
+                dynamicDuration -= mapAnimation.startTiming * pCalculationRate;
             }
             let waitDuration = 0;
             if (dynamicAnimation.waitDuration) {
