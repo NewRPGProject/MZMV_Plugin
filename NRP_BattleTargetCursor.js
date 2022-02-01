@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.032 Display the cursor when selecting a target in battle.
+ * @plugindesc v1.033 Display the cursor when selecting a target in battle.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482370647.html
  *
@@ -268,7 +268,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.032 戦闘時、選択中の対象にカーソルを表示
+ * @plugindesc v1.033 戦闘時、選択中の対象にカーソルを表示
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482370647.html
  *
@@ -768,7 +768,7 @@ Window_BattleEnemy.prototype.select = function(index) {
         } else {
             this._enemyNameWindow.hide();
         }
-    } 
+    }
 };
 
 /**
@@ -944,10 +944,13 @@ if (pUpdateCursorPosition) {
     Window_BattleEnemyName.prototype.update = function() {
         Window_Selectable.prototype.update.call(this);
 
-        // 表示されている場合
         if (this.visible) {
             // 対象名を更新
             // ※外部プラグインによって、リアルタイムで位置が変更されることを考慮
+            this.showTargetName();
+
+        // それ以外の場合は親ウィンドウと選択が一致したら更新
+        } else if (this._parentWindow._index == this._index) {
             this.showTargetName();
         }
     };
@@ -957,6 +960,7 @@ if (pUpdateCursorPosition) {
  * ●選択時（カーソル移動時）
  */
 Window_BattleEnemyName.prototype.select = function(index) {
+    this._index = index;
     this.showTargetName();
 };
 
@@ -1163,6 +1167,10 @@ if (pUpdateCursorPosition) {
             // 対象名を更新
             // ※外部プラグインによって、リアルタイムで位置が変更されることを考慮
             this.showTargetName();
+
+        // それ以外の場合は親ウィンドウと選択が一致したら更新
+        } else if (this._parentWindow._index == this._index) {
+            this.showTargetName();
         }
     };
 }
@@ -1171,6 +1179,7 @@ if (pUpdateCursorPosition) {
  * ●選択時（カーソル移動時）
  */
 Window_BattleActorName.prototype.select = function(index) {
+    this._index = index;
     this.showTargetName();
 };
 
