@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Extend the specification of magic reflection.
+ * @plugindesc v1.01 Extend the specification of magic reflection.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_DamageTiming
  * @url http://newrpg.seesaa.net/article/483027532.html
@@ -64,7 +64,7 @@
  * ◆About ToOriginalAnimation
  * When "ToOriginalAnimation" is turned on,
  * only the animation set in the skill can be displayed.
- * Please note that when combined with plug-ins such as "DynamicAnmation",
+ * Please note that when combined with plug-ins such as "DynamicAnimation",
  * even the description in the note field will not be executed.
  * 
  * ■About Conflict
@@ -137,7 +137,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 魔法反射の仕様を拡張します。
+ * @plugindesc v1.01 魔法反射の仕様を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_DamageTiming
  * @url http://newrpg.seesaa.net/article/483027532.html
@@ -195,7 +195,7 @@
  * ◆反射先に元アニメを表示について
  * 『反射先に元アニメを表示』をオンにした場合、
  * 表示できるのはスキルに設定されているアニメーションだけです。
- * DynamicAnmationなどのプラグインと組み合わせた場合、
+ * DynamicAnimationなどのプラグインと組み合わせた場合、
  * メモ欄の記述までは実行されませんので、ご了承ください。
  * 
  * ■競合について
@@ -644,6 +644,13 @@ function callAnimation(battler, animationId, delay) {
 }
 
 /**
+ * ●ＭＶアニメーションかどうかの判定
+ */
+function isMVAnimation(animation) {
+    return animation && !!animation.frames;
+};
+
+/**
  * ●MZアニメーションの情報が空かどうかの判定
  * ※AnimationMv.jsから移植
  */
@@ -706,9 +713,13 @@ function getAnimation(animationId) {
 
     // MZの場合
     if (Utils.RPGMAKER_NAME != "MV") {
+        // ＭＺエディタでＭＶアニメーションが設定されている。
+        if (isMVAnimation(animation)) {
+            return animation;
+
         // MZ用アニメーションが空ならMV用アニメーションを取得
         // ※ただし$dataMvAnimationsが有効な場合のみ
-        if (isEmptyAnimation(animation) && typeof $dataMvAnimations !== 'undefined') {
+        } else if (isEmptyAnimation(animation) && typeof $dataMvAnimations !== 'undefined') {
             animation = $dataMvAnimations[animationId];
         }
     }
