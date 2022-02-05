@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.03 Resolved conflict with GALV_LayerGraphicsMZ & added functions.
+ * @plugindesc v1.04 Resolved conflict with GALV_LayerGraphicsMZ & added functions.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base GALV_LayerGraphicsMZ
  * @orderAfter GALV_LayerGraphicsMZ
@@ -60,7 +60,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.03 GALV_LayerGraphicsMZとの競合を解消＆機能追加
+ * @plugindesc v1.04 GALV_LayerGraphicsMZとの競合を解消＆機能追加
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base GALV_LayerGraphicsMZ
  * @orderAfter GALV_LayerGraphicsMZ
@@ -272,6 +272,20 @@ Game_Map.prototype.createNoteLayers = function(mapId) {
 
     _Game_Map_createNoteLayers.apply(this, arguments);
 }
+
+//--------------------------------------------------------
+// NRP_N_TitleMap.js向けの調整
+//--------------------------------------------------------
+const _Sprite_LayerGraphic_update = Sprite_LayerGraphic.prototype.update;
+Sprite_LayerGraphic.prototype.update = function() {
+    // タイトル画面でレイヤーを使用した場合、
+    // ニューゲーム時にエラーとなる問題に対処。
+    if (this.lValue() == null) {
+        return;
+    }
+
+    _Sprite_LayerGraphic_update.apply(this, arguments);
+};
 
 //--------------------------------------------------------
 // DynamicMotion向け
