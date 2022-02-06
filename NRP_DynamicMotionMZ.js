@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.151 When executing skills, call motion freely.
+ * @plugindesc v1.16 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -556,7 +556,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.151 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.16 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -2769,10 +2769,16 @@ Sprite.prototype.startDynamicMotion = function(dynamicMotion) {
             ey = ey - eyRandom + Math.random() * (eyRandom * 2 + 1);
         }
 
+        // 座標を四捨五入
+        ex = Math.round(ex);
+        ey = Math.round(ey);
+
         // 空中Ｙ座標
         var airY = this._airY;
         if (dm.airY != undefined) {
             airY = eval(dm.airY);
+            // 座標を四捨五入
+            airY = Math.round(airY);
         }
         // 目標（終点）とする空中Ｙ座標
         this._targetAirY = airY;
@@ -3264,10 +3270,10 @@ Sprite.prototype.updateDynamicMove = function() {
 };
 
 /**
- * 【上書】移動終了
+ * ●移動終了
  */
+const _Sprite_Actor_onMoveEnd = Sprite_Actor.prototype.onMoveEnd;
 Sprite_Actor.prototype.onMoveEnd = function() {
-    Sprite_Battler.prototype.onMoveEnd.call(this);
     if (!BattleManager.isBattleEnd()) {
         // モーションを実行中ならリフレッシュしない。
         // ■条件詳細
@@ -3279,8 +3285,9 @@ Sprite_Actor.prototype.onMoveEnd = function() {
                 && this._pattern >= 0 && this._pattern <= 2) {
             return;
         }
-        this.refreshMotion();
     }
+
+    _Sprite_Actor_onMoveEnd.apply(this, arguments);
 };
 
 /**
@@ -3542,7 +3549,7 @@ Sprite_Actor.prototype.updateDynamicShadow = function() {
 
 /**
  * 【独自】影の位置を初期化
- * ※基本的にはSprite_Actor用だが、NRP_BattlerShadow,jsとの連携を考慮
+ * ※基本的にはSprite_Actor用だが、NRP_ShadowAndLevitate.jsとの連携を考慮
  */
 Sprite_Battler.prototype.initShadowPosition = function() {
     this._shadowSprite.x = 0;
