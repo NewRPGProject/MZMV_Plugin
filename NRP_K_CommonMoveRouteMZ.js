@@ -10,7 +10,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.01 Set events' custom move by common event
+ * @plugindesc v1.02 Set events' custom move by common event
  * @author Sasuke KANNAZUKI(Thx to terunon)(mod Takeshi Sunagawa)
  *
  * @command set
@@ -200,7 +200,7 @@
  */
 /*:ja
  * @target MZ
- * @plugindesc v1.01 複数イベントの移動ルートをひとつのコモンイベントで制御可能
+ * @plugindesc v1.02 複数イベントの移動ルートをひとつのコモンイベントで制御可能
  * @author 神無月サスケ（原案：terunon）（改造：砂川赳）
  *
  * @command set
@@ -624,6 +624,7 @@ function toNumber(str, def) {
     Game_Character.prototype.updateRoutineMove;
   Game_Character.prototype.updateRoutineMove = function() {
     if (this._moveRouteInterpreter) {
+// Add START Sunagawa
       // 実行中のイベントは処理停止
       if (pLockRunningEvent && this._locked) {
         return;
@@ -631,6 +632,7 @@ function toNumber(str, def) {
       } else if (isLockOtherEvents() && $gameMap.isEventRunning()) {
         return;
       }
+// Add END Sunagawa
 
       const interpreter = this._moveRouteInterpreter;
       if (!interpreter.isRunning()) {
@@ -676,6 +678,27 @@ function toNumber(str, def) {
     _Game_Character_processRouteEnd.call(this);
     onFinishMovement(this);
   };
+
+//--------------------------------------------------------------
+// ADD Sunagawa
+//--------------------------------------------------------------
+
+/**
+ * ●移動ルートの指定
+ */
+const _Game_Interpreter_command205 = Game_Interpreter.prototype.command205;
+Game_Interpreter.prototype.command205 = function(params) {
+    this._characterId = params[0];
+    const character = this.character(this._characterId);
+    if (character) {
+        // 命令がコモンイベント経由以外の場合
+        if (this != character._moveRouteInterpreter) {
+            // 当プラグインによるコモンイベント経由の動作をクリア
+            onFinishMovement(character);
+        }
+    }
+    return _Game_Interpreter_command205.apply(this, arguments);;
+};
 
 /**
  * ●他イベントを停止するかどうか？
