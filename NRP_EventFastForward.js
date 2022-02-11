@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Extends event acceleration feature.
+ * @plugindesc v1.01 Extends event acceleration feature.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483801702.html
  *
@@ -15,6 +15,7 @@
  * I will make some extensions to that feature.
  * 
  * ◆Main features.
+ * - Faster sprite processing (animations, balloons, etc.)
  * - Change of keys to be used
  * - Change of execution speed
  * - Change the time to hold down the key before execution
@@ -63,6 +64,12 @@
  * @desc This is the wait time before starting the acceleration.
  * Specify in units of 1/60th of a second.
  * 
+ * @param FastSprite
+ * @type boolean
+ * @default false
+ * @desc Speeds up sprite drawing.
+ * Animations, balloons, etc. are also accelerated.
+ * 
  * @param <Touch>
  * @desc This is the event acceleration setting for touch operations.
  * If not specified, the same settings as above will be used.
@@ -87,7 +94,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 イベント高速化機能を拡張します。
+ * @plugindesc v1.01 イベント高速化機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483801702.html
  *
@@ -98,6 +105,7 @@
  * その機能に対していくつかの拡張を行います。
  * 
  * ◆主な機能
+ * ・描画処理（アニメーション、フキダシなど）の高速化
  * ・使用するキーの変更
  * ・実行速度の変更
  * ・実行までの押しっぱなし時間の変更
@@ -149,6 +157,13 @@
  * @desc 高速化を開始するまでのウェイト時間です。
  * 1/60秒単位で指定してください。
  * 
+ * @param FastSprite
+ * @text 描画処理を高速化
+ * @type boolean
+ * @default false
+ * @desc 描画処理を高速化します。
+ * アニメーションやフキダシなども高速化されます。
+ * 
  * @param <Touch>
  * @text ＜タッチ関連＞
  * @desc タッチ操作時のイベント高速化設定です。
@@ -199,6 +214,7 @@ const pFastKey = parameters["FastKey"].toLowerCase();
 const pSpeedMultiply = toNumber(parameters["SpeedMultiply"], 2);
 const pSpeedVariableId = toNumber(parameters["SpeedVariableId"]);
 const pPressWait = toNumber(parameters["PressWait"], 24);
+const pFastSprite = toBoolean(parameters["FastSprite"], false);
 const pTouchSpeedMultiply = toNumber(parameters["TouchSpeedMultiply"], pSpeedMultiply);
 const pTouchSpeedVariableId = toNumber(parameters["TouchSpeedVariableId"], pSpeedVariableId);
 const pTouchPressWait = toNumber(parameters["TouchPressWait"], pPressWait);
@@ -235,6 +251,11 @@ Scene_Map.prototype.updateMainForMoreFast = function() {
 
     for (let i = 0; i < updateCount; i++) {
         this.updateMain();
+
+        // スプライトセットも更新
+        if (pFastSprite) {
+            this._spriteset.update();
+        }
     }
 };
 
