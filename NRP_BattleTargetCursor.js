@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.033 Display the cursor when selecting a target in battle.
+ * @plugindesc v1.04 Display the cursor when selecting a target in battle.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482370647.html
  *
@@ -268,7 +268,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.033 戦闘時、選択中の対象にカーソルを表示
+ * @plugindesc v1.04 戦闘時、選択中の対象にカーソルを表示
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482370647.html
  *
@@ -949,8 +949,9 @@ if (pUpdateCursorPosition) {
             // ※外部プラグインによって、リアルタイムで位置が変更されることを考慮
             this.showTargetName();
 
-        // それ以外の場合は親ウィンドウと選択が一致したら更新
-        } else if (this._parentWindow._index == this._index) {
+        // 敵名を表示しない場合は、親ウィンドウと選択が一致したら更新
+        } else if (!pShowTargetEnemyName
+                && this._index != null && this._parentWindow._index == this._index) {
             this.showTargetName();
         }
     };
@@ -1068,6 +1069,9 @@ Window_BattleEnemyName.prototype.show = function() {
 Window_BattleEnemyName.prototype.hide = function() {
     Window_Selectable.prototype.hide.call(this);
 
+    // インデックスを無効化
+    this._index = null;
+
     // 敵のカーソル画像描画（消去）
     const spriteset = getSpriteset();
     if (spriteset) {
@@ -1168,8 +1172,9 @@ if (pUpdateCursorPosition) {
             // ※外部プラグインによって、リアルタイムで位置が変更されることを考慮
             this.showTargetName();
 
-        // それ以外の場合は親ウィンドウと選択が一致したら更新
-        } else if (this._parentWindow._index == this._index) {
+        // アクター名を表示しない場合は、親ウィンドウと選択が一致したら更新
+        } else if (!pShowTargetEnemyName
+                && this._index != null && this._parentWindow._index == this._index) {
             this.showTargetName();
         }
     };
@@ -1293,6 +1298,9 @@ Window_BattleActorName.prototype.show = function() {
 
 Window_BattleActorName.prototype.hide = function() {
     Window_Selectable.prototype.hide.call(this);
+
+    // インデックスを無効化
+    this._index = null;
 
     // アクターのカーソル画像描画（消去）
     const spriteset = getSpriteset();
