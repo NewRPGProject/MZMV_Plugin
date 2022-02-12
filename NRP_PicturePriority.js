@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.003 Change the display priority for each picture.
+ * @plugindesc v1.01 Change the display priority for each picture.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/485015972.html
  *
@@ -108,7 +108,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.003 ピクチャ毎に表示優先度を変更します。
+ * @plugindesc v1.01 ピクチャ毎に表示優先度を変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/485015972.html
  *
@@ -455,23 +455,30 @@ Sprite_Picture.prototype.restoreContainer = function(spriteset) {
     // Ｚ座標をクリア
     this.z = null;
 
+    let container;
+
     // PicturePriorityCustomize.jsと併用時
     if (hasPicturePriorityCustomize) {
         const pictureId = this.getPictureId();
-        // PicturePriorityCustomize.js側の設定に従って、各コンテナに戻す。
+        // PicturePriorityCustomize.js側の設定に従って、各コンテナを取得
         if (pictureId <= ppcParam.lowerPictureId) {
-            spriteset._pictureContainerLower.addChild(this);
+            container = spriteset._pictureContainerLower;
         } else if (pictureId >= ppcParam.upperPictureId) {
-            spriteset._pictureContainerUpper.addChild(this);
+            container = spriteset._pictureContainerUpper;
         } else {
-            spriteset._pictureContainerMiddle.addChild(this);
+            container = spriteset._pictureContainerMiddle;
         }
 
     // 標準時
     } else if (spriteset._pictureContainer) {
-        // 元のコンテナに戻す。
-        spriteset._pictureContainer.addChild(this);
+        // 元のコンテナを取得
+        container = spriteset._pictureContainer;
     }
+
+    // コンテナに戻す
+    container.addChild(this);
+    // コンテナ内のピクチャを番号でソート
+    container.children.sort((a, b) => a._pictureId - b._pictureId);
 }
 
 // ----------------------------------------------------------------------------
@@ -487,7 +494,8 @@ Game_Screen.prototype.erasePicture = function(pictureId) {
 
     const spriteset = getSpriteset();
     const picture = spriteset.getPictureFromId(pictureId);
-    if (picture) {
+    // ピクチャがＺ座標管理の対象だった場合
+    if (picture && picture.z != null) {
         // ピクチャの親を元に戻す。
         picture.restoreContainer(spriteset);
     }
