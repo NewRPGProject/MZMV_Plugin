@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.022 Extends the functionality of the bushes attribute.
+ * @plugindesc v1.023 Extends the functionality of the bushes attribute.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore OverpassTile
  * @url http://newrpg.seesaa.net/article/481013577.html
@@ -162,7 +162,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.022 茂み属性の機能を拡張します。
+ * @plugindesc v1.023 茂み属性の機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore OverpassTile
  * @url http://newrpg.seesaa.net/article/481013577.html
@@ -444,6 +444,11 @@ if (pLimitBushLayer) {
             return false;
         }
 
+        // 小数点座標に対応するため四捨五入
+        // ※layeredTilesの引数は整数を想定されている。
+        x = Math.round(x);
+        y = Math.round(y);
+
         // 各タイルが保有するフラグ情報
         const flags = this.tilesetFlags();
 
@@ -496,7 +501,7 @@ Game_Map.prototype.isBush = function(x, y) {
         }
     }
 
-    return _Game_Map_isBush.apply(this, arguments);
+    return _Game_Map_isBush.call(this, x, y);
 };
 
 /**
