@@ -3,26 +3,28 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Gives an afterimage effect to the battler.
+ * @plugindesc v2.00 Gives an afterimage effect to the battler or character.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483120023.html
  *
- * @help Gives an afterimage effect to the battler.
+ * @help Gives an afterimage effect to the battler or character.
  * The display time, interval, and color tone of the afterimage
  * can be adjusted using plugin parameters.
  * 
  * [Basic Usage]
- * During battle, you can execute the following script
- * by specifying the battler and calling it.
+ * You can execute the following script
+ * by specifying the battler (or character) and calling it.
  * Basically, it is assumed to be called from DynamicMotion.
- * ※a is the battler.
+ * ※a is the battler or character.
  * 
  * ◆a.afterimage().start();
  * Start the afterimage.
  * 
  * ◆a.afterimage().end();
  * End the afterimage.
- * ※If omitted, it will be automatically terminated when the action is finished.
+ * ※If omitted in battle,
+ *   it will be automatically terminated when the action is finished.
+ * ※Note that it does not automatically exit on the map.
  * 
  * ◆Example for DynamicMotion
  * ---------------------------------
@@ -37,6 +39,15 @@
  * <D-Animation/>
  * <D-Motion:return/>
  * ---------------------------------
+ * 
+ * ◆Example for Movement Route
+ * It is easy to write a script as follows.
+ * > this.afterimage().start();
+ * 
+ * When finished, it will look like this
+ * > this.afterimage().end();
+ * 
+ * It is exactly the same, except that it targets "this" instead of "a".
  * 
  * [Option]
  * Normally, the plugin parameter settings are used,
@@ -121,25 +132,26 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 バトラーに残像効果を付与します。
+ * @plugindesc v2.00 バトラー＆キャラクターに残像効果を付与します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483120023.html
  *
- * @help バトラーに対して残像効果を付与します。
+ * @help バトラーまたはキャラクターに対して残像効果を付与します。
  * 残像の表示時間、間隔、色調などをプラグインパラメータで調整可能です。
  * 
  * ■基本的な使用法
- * 戦闘中、バトラーを指定して、
+ * バトラーまたはキャラクターを指定して、
  * 以下のスクリプトを呼び出すことで実行できます。
  * 基本的にはDynamicMotionから呼び出すことを想定しています。
- * ※aはバトラーです。
+ * ※aはバトラーまたはキャラクターです。
  * 
  * ◆a.afterimage().start();
  * 残像を開始する。
  * 
  * ◆a.afterimage().end();
  * 残像を終了する。
- * ※省略した場合、アクション終了時に自動で終了します。
+ * ※戦闘時に省略した場合、アクション終了時に自動で終了します。
+ * ※マップ上では自動終了しないので注意してください。
  * 
  * ◆DynamicMotionの記述例
  * ---------------------------------
@@ -154,6 +166,15 @@
  * <D-Animation/>
  * <D-Motion:return/>
  * ---------------------------------
+ * 
+ * ◆移動ルートの設定の記述例
+ * スクリプトで以下のように記述するのが手軽です。
+ * > this.afterimage().start();
+ * 
+ * 終了時は以下のようになります。
+ * > this.afterimage().end();
+ * 
+ * aではなくthisを対象にする以外は全く同じです。
  * 
  * ■オプション
  * 通常はプラグインパラメータの設定値を使用しますが、
@@ -285,8 +306,6 @@ Battler_Afterimage.prototype = Object.create(Game_Battler.prototype);
 Battler_Afterimage.prototype.constructor = Battler_Afterimage;
 
 Battler_Afterimage.prototype.initialize = function(battler) {
-    // Game_Battler.prototype.initialize.call(this);
-
     // 親となるバトラー
     this._battler = battler;
 };
@@ -311,7 +330,7 @@ Battler_Afterimage.prototype.start = function() {
     // 合成方法
     this._blendMode = pBlendMode;
 
-    const battlerSprite = BattleManager._spriteset.findTargetSprite(this._battler);
+    const battlerSprite = getSpriteset().findTargetSprite(this._battler);
     battlerSprite._afterimages = [];
     battlerSprite._makeAfterimage = true;
 
@@ -322,7 +341,7 @@ Battler_Afterimage.prototype.start = function() {
  * ●残像処理の終了
  */
 Battler_Afterimage.prototype.end = function() {
-    const battlerSprite = BattleManager._spriteset.findTargetSprite(this._battler);
+    const battlerSprite = getSpriteset().findTargetSprite(this._battler);
     battlerSprite._makeAfterimage = false;
 
     this._isActive = false;
@@ -332,6 +351,10 @@ Battler_Afterimage.prototype.end = function() {
  * ●残像作成チェック
  */
 Battler_Afterimage.prototype.check = function() {
+    if (!this.isActive()) {
+        return false;
+    }
+
     let check = false;
 
     if (this._checkInterval == 0) {
@@ -666,19 +689,34 @@ Game_Actor.prototype.onBattleEnd = function() {
 };
 
 //-----------------------------------------------------------------------------
-// Sprite_Battler
+// Spriteset_Battle
 //-----------------------------------------------------------------------------
 
 /**
- * ●スプライトの位置更新
+ * ●更新処理
  */
-const _Sprite_Battler_updatePosition = Sprite_Battler.prototype.updatePosition;
-Sprite_Battler.prototype.updatePosition = function() {
-    _Sprite_Battler_updatePosition.apply(this, arguments);
-
-    // 残像を更新する。
+const _Spriteset_Battle_update = Spriteset_Battle.prototype.update;
+Spriteset_Battle.prototype.update = function() {
+    // removeChild処理を伴うため、個別のupdateに追加するのではなく、
+    // 先にまとめて処理を行う。
+    // ※要素数が変化するため、処理が飛ばされるSpriteが発生してしまう。
     this.updateAfterimage();
+
+    _Spriteset_Battle_update.apply(this, arguments);
 };
+
+/**
+ * 【独自】残像の更新処理
+ */
+Spriteset_Battle.prototype.updateAfterimage = function() {
+    for (const sprite of this.battlerSprites()) {
+        sprite.updateAfterimage();
+    }
+};
+
+//-----------------------------------------------------------------------------
+// Sprite_Battler
+//-----------------------------------------------------------------------------
 
 /**
  * 【独自】残像の状態更新
@@ -688,12 +726,18 @@ Sprite_Battler.prototype.updateAfterimage = function() {
         return;
     }
 
-    // 透明度が０以下になった残像を消去
+    // 不透明度が０以下になった残像を消去
+    const newAfterimages = [];
     for (const afterimage of this._afterimages) {
-        if (afterimage.opacity <= 0) {
+        // 不透明度が有効な残像だけを新配列に追加
+        if (afterimage.opacity > 0) {
+            newAfterimages.push(afterimage);
+        // それ以外は削除
+        } else {
             this.parent.removeChild(afterimage);
         }
     }
+    this._afterimages = newAfterimages;
 
     // 残像管理クラスを取得
     const afterimageManage = this._battler.afterimage();
@@ -736,10 +780,10 @@ Sprite_Battler.prototype.createAfterimage = function() {
     }
     // 合成方法
     afterimage.blendMode = afterimageManage.blendMode();
-    // Ｚ座標（本体 - 0.1）
-    if (this.z != undefined) {
-        afterimage.z = this.z - 0.1;
-    }
+    // Ｚ座標
+    afterimage.z = this.z;
+    // 表示優先度の調整のため本体より下に
+    afterimage.spriteId = this.spriteId - 0.1;
 
     this._afterimages.push(afterimage);
     // 戦闘画面に追加
@@ -757,6 +801,474 @@ Sprite_Battler.prototype.removeAfterimage = function() {
     this._afterimages = [];
 };
 
+//-----------------------------------------------------------------------------
+// Character_Afterimage
+//
+// キャラクターの残像を管理するクラス
+
+function Character_Afterimage() {
+    this.initialize(...arguments);
+}
+
+Character_Afterimage.prototype = Object.create(Game_Character.prototype);
+Character_Afterimage.prototype.constructor = Character_Afterimage;
+
+Character_Afterimage.prototype.initialize = function() {
+};
+
+/**
+ * ●残像の元となる本体スプライトを取得
+ */
+Character_Afterimage.prototype.originalSprite = function() {
+    const spriteset = getSpriteset();
+    return spriteset._characterSprites.find(sprite => sprite._character.afterimage() == this);
+};
+
+/**
+ * ●残像処理の開始
+ */
+Character_Afterimage.prototype.start = function() {
+    // 間隔チェック用のカウンタ
+    this._checkInterval = 0;
+
+    // 表示時間
+    this._duration = pDuration;
+    // 表示間隔
+    this._interval = pInterval;
+    // 標準の不透明度
+    this._opacity = pOpacity;
+    // 色調
+    if (pColor) {
+        this._color = eval(pColor);
+    }
+    // 合成方法
+    this._blendMode = pBlendMode;
+
+    const characterSprite = this.originalSprite();
+    characterSprite._afterimages = [];
+
+    this._isActive = true;
+};
+
+/**
+ * ●残像処理の終了
+ */
+Character_Afterimage.prototype.end = function() {
+    this._isActive = false;
+};
+
+/**
+ * ●残像作成チェック
+ */
+Character_Afterimage.prototype.check = function() {
+    if (!this.isActive()) {
+        return false;
+    }
+
+    let check = false;
+
+    if (this._checkInterval == 0) {
+        check = true;
+    }
+    
+    this._checkInterval++;
+    if (this._checkInterval >= this._interval) {
+        this._checkInterval = 0;
+    }
+        
+    return check;
+};
+
+/**
+ * ●残像を実行中かどうか？
+ */
+Character_Afterimage.prototype.isActive = function() {
+    return this._isActive;
+};
+
+/**
+ * ●表示時間を取得
+ */
+Character_Afterimage.prototype.duration = function() {
+    return this._duration;
+};
+
+/**
+ * ●表示時間を設定
+ */
+Character_Afterimage.prototype.setDuration = function(duration) {
+    this._duration = duration;
+};
+
+/**
+ * ●間隔を取得
+ */
+Character_Afterimage.prototype.interval = function() {
+    return this._interval;
+};
+
+/**
+ * ●間隔を設定
+ */
+Character_Afterimage.prototype.setInterval = function(interval) {
+    this._interval = interval;
+};
+
+/**
+ * ●不透明度を取得
+ */
+Character_Afterimage.prototype.opacity = function() {
+    return this._opacity;
+};
+
+/**
+ * ●不透明度を設定
+ */
+Character_Afterimage.prototype.setOpacity = function(opacity) {
+    this._opacity = opacity;
+};
+
+/**
+ * ●色調を取得
+ */
+Character_Afterimage.prototype.color = function() {
+    return this._color;
+};
+
+/**
+ * ●色調を設定
+ */
+Character_Afterimage.prototype.setColor = function(color) {
+    this._color = color;
+};
+
+/**
+ * ●合成方法を設定
+ */
+Character_Afterimage.prototype.blendMode = function() {
+    return this._blendMode;
+};
+
+/**
+ * ●合成方法を設定
+ */
+Character_Afterimage.prototype.setBlendMode = function(blendMode) {
+    this._blendMode = blendMode;
+};
+
+//-----------------------------------------------------------------------------
+// Sprite_CharacterAfterimage
+//
+// キャラクターの残像となるスプライトクラス
+
+function Sprite_CharacterAfterimage() {
+    this.initialize(...arguments);
+}
+
+Sprite_CharacterAfterimage.prototype = Object.create(Sprite_Character.prototype);
+Sprite_CharacterAfterimage.prototype.constructor = Sprite_CharacterAfterimage;
+
+Sprite_CharacterAfterimage.prototype.initialize = function(parent) {
+    Sprite.prototype.initialize.call(this);
+    this.initMembers();
+    this._parent = parent;
+    this.setCharacter(parent._character);
+};
+
+/**
+ * ●更新
+ */
+Sprite_CharacterAfterimage.prototype.update = function() {
+    // 不透明度を減算
+    this.opacity -= (this._initialOpacity / this._duration);
+
+    // スクロール差分を調整
+    this.x -= $gameMap.moveScreenX();
+    this.y -= $gameMap.moveScreenY();
+};
+
+/**
+ * ●不透明度の設定
+ */
+Sprite_CharacterAfterimage.prototype.setOpacity = function(opacity) {
+    this.opacity = opacity;
+};
+
+/**
+ * ●初期不透明度の設定
+ */
+Sprite_CharacterAfterimage.prototype.setInitialOpacity = function(opacity) {
+    this._initialOpacity = opacity;
+};
+
+/**
+ * ●持続時間の設定
+ */
+Sprite_CharacterAfterimage.prototype.setDuration = function(duration) {
+    this._duration = duration;
+};
+
+/**
+ * ●位置の設定
+ */
+Sprite_CharacterAfterimage.prototype.setPosition = function(x, y) {
+    this.x = x;
+    this.y = y;
+};
+
+/**
+ * ●画像の設定
+ */
+Sprite_CharacterAfterimage.prototype.setBitmap = function() {
+    Sprite_Character.prototype.updateBitmap.call(this);
+}
+
+/**
+ * ●画像の切抜位置の設定
+ * ※関数名がかぶるので適当
+ */
+Sprite_CharacterAfterimage.prototype.setSetFrame = function() {
+    Sprite_Character.prototype.updateFrame.call(this);
+};
+
+//-----------------------------------------------------------------------------
+// Game_Character
+//-----------------------------------------------------------------------------
+
+/**
+ * 【独自】残像管理情報の取得
+ */
+Game_Character.prototype.afterimage = function() {
+    // 未定義の場合は初期化
+    // ※ロード時にCharacter_Afterimageの型が取得できなかった場合も考慮
+    if (!(this._afterimage instanceof Character_Afterimage)) {
+        this._afterimage = new Character_Afterimage();
+    }
+
+    return this._afterimage;
+};
+
+/**
+ * 【独自】残像情報の初期化
+ */
+Game_Character.prototype.clearAfterimage = function() {
+    this._afterimage = null;
+};
+
+//-----------------------------------------------------------------------------
+// Spriteset_Map
+//-----------------------------------------------------------------------------
+
+/**
+ * ●更新処理
+ */
+const _Spriteset_Map_update = Spriteset_Map.prototype.update;
+Spriteset_Map.prototype.update = function() {
+    // removeChild処理を伴うため、個別のupdateに追加するのではなく、
+    // 先にまとめて処理を行う。
+    // ※要素数が変化するため、処理が飛ばされるSpriteが発生してしまう。
+    this.updateAfterimage();
+
+    _Spriteset_Map_update.apply(this, arguments);
+};
+
+/**
+ * 【独自】残像の更新処理
+ */
+Spriteset_Map.prototype.updateAfterimage = function() {
+    for (const sprite of this._characterSprites) {
+        sprite.updateAfterimage();
+    }
+};
+
+//-----------------------------------------------------------------------------
+// Sprite_Character
+//-----------------------------------------------------------------------------
+
+/**
+ * 【独自】残像管理情報の取得
+ * ※マップ版DynamicMotionの仕様に合わせるため、スプライトも関数を持つ。
+ */
+Sprite_Character.prototype.afterimage = function() {
+    // 未定義の場合は初期化
+    // ※ロード時にCharacter_Afterimageの型が取得できなかった場合も考慮
+    if (!(this._character._afterimage instanceof Character_Afterimage)) {
+        this._character._afterimage = new Character_Afterimage();
+    }
+    return this._character._afterimage;
+};
+
+/**
+ * 【独自】残像の状態更新
+ */
+Sprite_Character.prototype.updateAfterimage = function() {
+    // 残像管理クラスを取得
+    const afterimageManage = this.afterimage();
+    // 残像が有効な場合
+    if (afterimageManage.isActive()) {
+        // メニュー開閉などによって、残像データがなくなった場合はクリア
+        if (!this._afterimages) {
+            this._afterimages = [];
+        }
+        
+    // 残像が無効かつデータがない場合は処理しない。
+    // ※無効になっていても、残像が残っている場合は処理する。
+    } else if (!this._afterimages || this._afterimages.length == 0) {
+        return;
+    }
+
+    // 不透明度が０以下になった残像を消去
+    const newAfterimages = [];
+    for (const afterimage of this._afterimages) {
+        // 不透明度が有効な残像だけを新配列に追加
+        if (afterimage.opacity > 0) {
+            newAfterimages.push(afterimage);
+        // それ以外は削除
+        } else {
+            this.parent.removeChild(afterimage);
+        }
+    }
+    this._afterimages = newAfterimages;
+
+    if (afterimageManage.check()) {
+        // 新しい残像を追加
+        this.createAfterimage();
+    }
+}
+
+/**
+ * 【独自】残像を作成する。
+ */
+Sprite_Character.prototype.createAfterimage = function() {
+    // 残像管理クラスを取得
+    const afterimageManage = this.afterimage();
+
+    // 新しい残像を作成
+    const afterimage = new Sprite_CharacterAfterimage(this);
+
+    // 初期不透明度
+    afterimage.setInitialOpacity(afterimageManage.opacity());
+    afterimage.setOpacity(afterimageManage.opacity());
+    // 持続時間
+    afterimage.setDuration(afterimageManage.duration());
+    // 本体の情報をコピー
+    afterimage.setPosition(this.x, this.y);
+    afterimage.setBitmap();
+    afterimage.setSetFrame();
+    afterimage.scale = this.scale;
+    afterimage.rotation = this.rotation;
+    // 色調設定
+    const colorTone = afterimageManage.color()
+    if (colorTone) {
+        afterimage.setColorTone(colorTone);
+    }
+    // 合成方法
+    afterimage.blendMode = afterimageManage.blendMode();
+    // Ｚ座標
+    afterimage.z = this.z;
+    // 表示優先度の調整のため本体より下に
+    afterimage.spriteId = this.spriteId - 0.1;
+
+    this._afterimages.push(afterimage);
+    // Tilemapに追加
+    this.parent.addChild(afterimage);
+};
+
+/**
+ * 【独自】残像を消去する。
+ */
+Sprite_Character.prototype.removeAfterimage = function() {
+    for (const afterimage of this._afterimages) {
+        this.parent.removeChild(afterimage);
+    }
+
+    this._afterimages = [];
+};
+
+//-----------------------------------------------------------------------------
+// DataManager
+//-----------------------------------------------------------------------------
+
+/**
+ * ●セーブ情報の作成
+ */
+const _DataManager_makeSaveContents = DataManager.makeSaveContents;
+DataManager.makeSaveContents = function() {
+    // 残像情報が保存されないようにクリア
+    $gamePlayer.clearAfterimage();
+    for (const follower of $gamePlayer.followers().data()) {
+        follower.clearAfterimage();
+    }
+    for (const event of $gameMap.events()) {
+        event.clearAfterimage();
+    }
+    for (const vehicle of $gameMap.vehicles()) {
+        vehicle.clearAfterimage();
+    }
+
+    return _DataManager_makeSaveContents.apply(this, arguments);
+};
+
+//-----------------------------------------------------------------------------
+// Game_Map
+// ※NRP_DynamicAnimationMapMZの関数をコピペ
+//-----------------------------------------------------------------------------
+
+if (!Game_Map.prototype.moveScreenX) {
+    /**
+     * 【独自】１フレームでスクロールしたスクリーンＸ座標
+     */
+    Game_Map.prototype.moveScreenX = function() {
+        // 現在の座標と前回の座標を比較し差分を求める。
+        const displayScreenX = this.displayX() * this.tileWidth();
+        let moveScreenX = displayScreenX - this._beforeDisplayScreenX;
+
+        // マップ全体の横幅（ピクセル）
+        const mapWidth = this.width() * this.tileWidth();
+        // 全体座標の半分以上を移動した（ループ）
+        if (moveScreenX > mapWidth / 2) {
+            moveScreenX -= mapWidth;
+        } else if (moveScreenX < mapWidth / 2 * -1) {
+            moveScreenX += mapWidth;
+        }
+
+        return moveScreenX;
+    };
+}
+
+if (!Game_Map.prototype.moveScreenY) {
+    /**
+     * 【独自】１フレームでスクロールしたスクリーンＹ座標
+     */
+    Game_Map.prototype.moveScreenY = function() {
+        // 現在の座標と前回の座標を比較し差分を求める。
+        const displayScreenY = this.displayY() * this.tileHeight();
+        let moveScreenY = displayScreenY - this._beforeDisplayScreenY;
+
+        // マップ全体の縦幅（ピクセル）
+        const mapHeight = this.height() * this.tileHeight();
+        // 全体座標の半分以上を移動した（ループ）
+        if (moveScreenY > mapHeight / 2) {
+            moveScreenY -= mapHeight;
+        } else if (moveScreenY < mapHeight / 2 * -1) {
+            moveScreenY += mapHeight;
+        }
+
+        return moveScreenY;
+    };
+}
+
+//----------------------------------------------------------
+// 共通関数
+//----------------------------------------------------------
+
+/**
+ * ●現在の画面のSpritesetを取得する。
+ */
+function getSpriteset() {
+    return SceneManager._scene._spriteset;
+}
+
 //----------------------------------------------------------
 // ＭＶ対応
 // ※ＭＺにしか存在しない関数を定義
@@ -769,6 +1281,22 @@ if (!Spriteset_Battle.prototype.findTargetSprite) {
 
     Sprite_Battler.prototype.checkBattler = function(battler) {
         return this._battler === battler;
+    };
+}
+
+if (!Spriteset_Map.prototype.findTargetSprite) {
+    Spriteset_Map.prototype.findTargetSprite = function(target) {
+        return this._characterSprites.find(sprite => sprite.checkCharacter(target));
+    };
+
+    Sprite_Character.prototype.checkCharacter = function(character) {
+        return this._character === character;
+    };
+}
+
+if (!Game_Followers.prototype.data) {
+    Game_Followers.prototype.data = function() {
+        return this._data.clone();
     };
 }
 
