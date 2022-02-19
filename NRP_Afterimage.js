@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v2.00 Gives an afterimage effect to the battler or character.
+ * @plugindesc v2.001 Gives an afterimage effect to the battler or character.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483120023.html
  *
@@ -132,7 +132,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.00 バトラー＆キャラクターに残像効果を付与します。
+ * @plugindesc v2.001 バトラー＆キャラクターに残像効果を付与します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483120023.html
  *
@@ -773,6 +773,7 @@ Sprite_Battler.prototype.createAfterimage = function() {
     afterimage.setSetFrame();
     afterimage.scale = this.scale;
     afterimage.rotation = this.rotation;
+    afterimage.anchor.y = this.anchor.y;
     // 色調設定
     const colorTone = afterimageManage.color()
     if (colorTone) {
@@ -1157,6 +1158,7 @@ Sprite_Character.prototype.createAfterimage = function() {
     afterimage.setSetFrame();
     afterimage.scale = this.scale;
     afterimage.rotation = this.rotation;
+    afterimage.anchor.y = this.anchor.y;
     // 色調設定
     const colorTone = afterimageManage.color()
     if (colorTone) {
