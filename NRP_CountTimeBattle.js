@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.101 Change the battle system to CTB.
+ * @plugindesc v1.11 Change the battle system to CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -35,6 +35,7 @@
  * - BattleManager.startTurn
  * - BattleManager.processTurn
  * - BattleManager.endTurn
+ * - BattleManager.updateTurnEnd
  * - BattleManager.getNextSubject
  * - BattleManager.processEscape
  * - Game_Battler.prototype.onAllActionsEnd
@@ -129,7 +130,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.101 戦闘システムをＣＴＢへ変更します。
+ * @plugindesc v1.11 戦闘システムをＣＴＢへ変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -160,6 +161,7 @@
  * ・BattleManager.startTurn
  * ・BattleManager.processTurn
  * ・BattleManager.endTurn
+ * ・BattleManager.updateTurnEnd
  * ・BattleManager.getNextSubject
  * ・BattleManager.processEscape
  * ・Game_Battler.prototype.onAllActionsEnd
@@ -283,17 +285,17 @@ function toNumber(str, def) {
     return isNaN(str) ? def : +(str || def);
 }
 
-var parameters = PluginManager.parameters("NRP_CountTimeBattle");
+const parameters = PluginManager.parameters("NRP_CountTimeBattle");
     
-var paramNumber = toNumber(parameters["number"], 9);
-var paramActorStartRandomWt = toNumber(parameters["actorStartRandomWt"], 0);
-var paramEnemyStartRandomWt = toNumber(parameters["enemyStartRandomWt"], 20);
-var paramEscapePenalty = toNumber(parameters["escapePenalty"], 25);
-var paramPreemptiveAdvantage = toNumber(parameters["preemptiveAdvantage"], 50);
-var paramSurpriseAdvantage = toNumber(parameters["surpriseAdvantage"], 50);
-var paramStartTurn = toNumber(parameters["startTurn"], 1);
-var paramSelfStatePlusTurn = toBoolean(parameters["selfStatePlusTurn"], true);
-var paramSelfBufPlusTurn = toBoolean(parameters["selfBufPlusTurn"], true);
+const pNumber = toNumber(parameters["number"], 9);
+const pActorStartRandomWt = toNumber(parameters["actorStartRandomWt"], 0);
+const pEnemyStartRandomWt = toNumber(parameters["enemyStartRandomWt"], 20);
+const pEscapePenalty = toNumber(parameters["escapePenalty"], 25);
+const pPreemptiveAdvantage = toNumber(parameters["preemptiveAdvantage"], 50);
+const pSurpriseAdvantage = toNumber(parameters["surpriseAdvantage"], 50);
+const pStartTurn = toNumber(parameters["startTurn"], 1);
+const pSelfStatePlusTurn = toBoolean(parameters["selfStatePlusTurn"], true);
+const pSelfBufPlusTurn = toBoolean(parameters["selfBufPlusTurn"], true);
 
 /**
  * ●戦闘開始シーン制御
@@ -331,7 +333,7 @@ Game_Battler.prototype.onBattleStart = function() {
 
     this._wt = 0;
     // 初期ターンの設定
-    this._turnCount = paramStartTurn - 1;
+    this._turnCount = pStartTurn - 1;
 };
 
 /**
@@ -365,22 +367,22 @@ BattleManager.setStartWt = function() {
         
         // 味方
         if (battler.isActor()) {
-            startRandomWt = paramActorStartRandomWt;
+            startRandomWt = pActorStartRandomWt;
             
             // 先制攻撃の場合はWT減算
             if (preemptive) {
                 // - WT * 先制攻撃特典％ / 100
-                wt -= parseInt(wt * paramPreemptiveAdvantage / 100);
+                wt -= parseInt(wt * pPreemptiveAdvantage / 100);
             }
             
         // 敵の場合はWT分散
         } else {
-            startRandomWt = paramEnemyStartRandomWt;
+            startRandomWt = pEnemyStartRandomWt;
                 
             // 不意打ちの場合はWT半減
             if (surprise) {
                 // - WT * 奇襲特典％ / 100
-                wt -= parseInt(wt * paramSurpriseAdvantage / 100);
+                wt -= parseInt(wt * pSurpriseAdvantage / 100);
             }
         }
         
@@ -423,6 +425,7 @@ BattleManager.startInput = function() {
     if (!this._subject.isActor() || !this._subject.canInput()) {
         this._actorIndex = -1;
         this.startTurn();
+        return;
     }
     
     this.startInputActor();
@@ -543,7 +546,7 @@ BattleManager.makeActionOrders = function() {
      * CTB用のリストを作成していく。
      */
     battlers.forEach(function(battler) {
-        for (var i = 0; i < paramNumber; i++) {
+        for (var i = 0; i < pNumber; i++) {
             // 現在のWTに、次の行動までのWTを加算する。
             var tmpWt = battler._wt + (battler._baseWt * i);
 
@@ -552,8 +555,8 @@ BattleManager.makeActionOrders = function() {
              * １．現在の行動順リストが埋まっている。
              * ２．かつ、末尾のバトラーよりもWTが大きい場合。
              */
-            if (wt_battlers.length >= paramNumber
-                && tmpWt >= wt_battlers[paramNumber - 1][0]) {
+            if (wt_battlers.length >= pNumber
+                && tmpWt >= wt_battlers[pNumber - 1][0]) {
                 // forループを終了して、次のバトラーへ
                 break;
             }
@@ -567,7 +570,7 @@ BattleManager.makeActionOrders = function() {
             });
             
             // 押し出された要素（最後の要素）を削除
-            if (wt_battlers.length > paramNumber) {
+            if (wt_battlers.length > pNumber) {
                 wt_battlers.pop();
             }
         }
@@ -734,6 +737,15 @@ BattleManager.endTurn = function() {
 };
 
 /**
+ * 【上書】ターン更新
+ * ※MZ1.4.0の更新により処理が変更されたため、
+ * 　endAllBattlersTurnを呼ばないように上書き。
+ */
+BattleManager.updateTurnEnd = function() {
+    this.startInput();
+};
+
+/**
  * ●行動終了時
  */
 Game_Battler.prototype.onAllActionsEnd = function() {
@@ -775,7 +787,7 @@ Game_BattlerBase.prototype.resetStateCounts = function(stateId) {
     
     // 対象者が行動者自身の場合は有効ターン＋１
     // そうしておかないと、行動終了と同時にターン経過してしまうため。
-    if (paramSelfStatePlusTurn && this == BattleManager._subject) {
+    if (pSelfStatePlusTurn && this == BattleManager._subject) {
         // 自動解除が『行動終了時』のステートを対象とする。
         if ($dataStates[stateId].autoRemovalTiming == 1) {
             this._stateTurns[stateId]++;
@@ -792,7 +804,7 @@ Game_BattlerBase.prototype.overwriteBuffTurns = function(paramId, turns) {
 
     // 対象者が行動者自身の場合は有効ターン＋１
     // そうしておかないと、行動終了と同時にターン経過してしまうため。
-    if (paramSelfBufPlusTurn && this == BattleManager._subject) {
+    if (pSelfBufPlusTurn && this == BattleManager._subject) {
         // 同じパラメータの多重がけで、
         // 二重にターンが加算されないよう設定ターンの場合のみに限定
         if (this._buffTurns[paramId] == turns) {
@@ -863,7 +875,7 @@ BattleManager.setEscapePenalty = function() {
         // 失敗した当人以外のWTを加算する。
         if (battler != BattleManager._subject) {
             // 基本ＷＴ * ペナルティ% / 100
-            battler._wt += parseInt(battler._baseWt * paramEscapePenalty / 100);
+            battler._wt += parseInt(battler._baseWt * pEscapePenalty / 100);
         }
     });
 };
