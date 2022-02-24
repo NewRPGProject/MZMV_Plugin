@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v2.001 Gives an afterimage effect to the battler or character.
+ * @plugindesc v2.002 Gives an afterimage effect to the battler or character.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483120023.html
  *
@@ -132,7 +132,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.001 バトラー＆キャラクターに残像効果を付与します。
+ * @plugindesc v2.002 バトラー＆キャラクターに残像効果を付与します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483120023.html
  *
@@ -1218,6 +1218,33 @@ DataManager.makeSaveContents = function() {
 
 if (!Game_Map.prototype.moveScreenX) {
     /**
+     * ●初期化
+     */
+    const _Game_Map_initialize = Game_Map.prototype.initialize;
+    Game_Map.prototype.initialize = function() {
+        _Game_Map_initialize.apply(this, arguments);
+
+        this._beforeDisplayScreenX = this.displayX() * this.tileWidth();
+        this._beforeDisplayScreenY = this.displayY() * this.tileHeight();
+    };
+
+    /**
+     * ●更新処理
+     */
+    const _Game_Map_update = Game_Map.prototype.update;
+    Game_Map.prototype.update = function(sceneActive) {
+        _Game_Map_update.apply(this, arguments);
+
+        // 現在の画面座標
+        const displayScreenX = this.displayX() * this.tileWidth();
+        const displayScreenY = this.displayY() * this.tileHeight();
+
+        // 画面座標を保持
+        this._beforeDisplayScreenX = displayScreenX;
+        this._beforeDisplayScreenY = displayScreenY;
+    };
+
+    /**
      * 【独自】１フレームでスクロールしたスクリーンＸ座標
      */
     Game_Map.prototype.moveScreenX = function() {
@@ -1236,9 +1263,7 @@ if (!Game_Map.prototype.moveScreenX) {
 
         return moveScreenX;
     };
-}
 
-if (!Game_Map.prototype.moveScreenY) {
     /**
      * 【独自】１フレームでスクロールしたスクリーンＹ座標
      */
