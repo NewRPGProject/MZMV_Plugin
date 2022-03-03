@@ -297,10 +297,14 @@ const pStartTurn = toNumber(parameters["startTurn"], 1);
 const pSelfStatePlusTurn = toBoolean(parameters["selfStatePlusTurn"], true);
 const pSelfBufPlusTurn = toBoolean(parameters["selfBufPlusTurn"], true);
 
+//-----------------------------------------------------------------------------
+// Scene_Battle
+//-----------------------------------------------------------------------------
+
 /**
  * ●戦闘開始シーン制御
  */
-var _Scene_Battle_start = Scene_Battle.prototype.start;
+const _Scene_Battle_start = Scene_Battle.prototype.start;
 Scene_Battle.prototype.start = function() {
     _Scene_Battle_start.apply(this);
     
@@ -311,10 +315,44 @@ Scene_Battle.prototype.start = function() {
     }
 };
 
+/**
+ * 【上書】パーティコマンドの戦うを選択
+ */
+Scene_Battle.prototype.commandFight = function() {
+    BattleManager.startInputActor();
+//    this.selectNextCommand();
+};
+
+/**
+ * ●味方選択キャンセル
+ */
+const _Scene_Battle_prototype_onActorCancel = Scene_Battle.prototype.onActorCancel;
+Scene_Battle.prototype.onActorCancel = function() {
+    _Scene_Battle_prototype_onActorCancel.call(this);
+    
+    // 行動予測を戻すために行動順序再計算
+    BattleManager.makeActionOrders();
+};
+
+/**
+ * ●敵選択キャンセル
+ */
+const _Scene_Battle_prototype_onEnemyCancel = Scene_Battle.prototype.onEnemyCancel;
+Scene_Battle.prototype.onEnemyCancel = function() {
+    _Scene_Battle_prototype_onEnemyCancel.call(this);
+    
+    // 行動予測を戻すために行動順序再計算
+    BattleManager.makeActionOrders();
+};
+
+//-----------------------------------------------------------------------------
+// BattleManager
+//-----------------------------------------------------------------------------
+
 /*
  * ●初期化処理
  */
-var _BattleManager_initMembers = BattleManager.initMembers;
+const _BattleManager_initMembers = BattleManager.initMembers;
 BattleManager.initMembers = function() {
     _BattleManager_initMembers.call(this);
     
@@ -323,81 +361,7 @@ BattleManager.initMembers = function() {
 };
 
 /**
- * ●戦闘開始時
- * ※バトラー変数の初期化
- */
-var _Game_Battler_onBattleStart = Game_Battler.prototype.onBattleStart;
-Game_Battler.prototype.onBattleStart = function() {
-    // 元処理実行
-    _Game_Battler_onBattleStart.call(this);
-
-    this._wt = 0;
-    // 初期ターンの設定
-    this._turnCount = pStartTurn - 1;
-};
-
-/**
- * ●戦闘開始
- */
-var _BattleManager_startBattle = BattleManager.startBattle;
-BattleManager.startBattle = function() {
-    _BattleManager_startBattle.apply(this, arguments); // 再定義した旧処理
-    
-    // 戦闘開始時の初期WTを設定
-    this.setStartWt();
-};
-
-/**
- * ●戦闘開始時のWT（待ち時間）設定
- * ※先制攻撃、奇襲を考慮
- */
-BattleManager.setStartWt = function() {
-    // ループ内でthis参照はできないので一旦移す
-    var surprise = this._surprise;
-    var preemptive = this._preemptive;
-    
-    // 敵味方全員の初期WTを計算する。
-    this.allBattleMembers().forEach(function(battler) {
-        // 基本WTを設定する。
-        battler.makeBaseWt();
-
-        // WTの初期値として基本WTを設定する。
-        var wt = battler._baseWt;
-        var startRandomWt = 0;
-        
-        // 味方
-        if (battler.isActor()) {
-            startRandomWt = pActorStartRandomWt;
-            
-            // 先制攻撃の場合はWT減算
-            if (preemptive) {
-                // - WT * 先制攻撃特典％ / 100
-                wt -= parseInt(wt * pPreemptiveAdvantage / 100);
-            }
-            
-        // 敵の場合はWT分散
-        } else {
-            startRandomWt = pEnemyStartRandomWt;
-                
-            // 不意打ちの場合はWT半減
-            if (surprise) {
-                // - WT * 奇襲特典％ / 100
-                wt -= parseInt(wt * pSurpriseAdvantage / 100);
-            }
-        }
-        
-        // 初期ＷＴを分散値に従って設定する。
-        // 例：分散値が20の場合
-        // 100 - (20 / 2) + [0～20未満の乱数] → 90～110未満の乱数を作成
-        var r = 100 - (startRandomWt / 2) + Math.random() * startRandomWt;
-        wt = parseInt(wt * r / 100);
-        
-        battler._wt = wt;
-    });
-};
-
-/**
- * ●コマンド入力開始
+ * 【上書】コマンド入力開始
  * ※一度だけ呼び出される部分
  */
 BattleManager.startInput = function() {
@@ -432,7 +396,7 @@ BattleManager.startInput = function() {
 };
 
 /**
- * ●コマンド入力開始（続）
+ * 【独自】コマンド入力開始（続）
  * ※パーティコマンドから戻ってくる際と共有
  */
 BattleManager.startInputActor = function() {
@@ -456,38 +420,7 @@ BattleManager.startInputActor = function() {
 };
 
 /**
- * ●アクターの位置調整
- */
-var _Sprite_Actor_updateTargetPosition = Sprite_Actor.prototype.updateTargetPosition;
-Sprite_Actor.prototype.updateTargetPosition = function() {
-    if (this._actor.isInputting()) {
-        // 通常は前進処理が呼び出されるが、不要なので何もしない
-        // this.stepForward();
-        return;
-    }
-
-    _Sprite_Actor_updateTargetPosition.apply(this, arguments);
-};
-
-/**
- * ●アクション終了時
- */
-Game_Battler.prototype.performActionEnd = function() {
-// 元のターン制ではdoneだが、違和感あるので変える。
-//    this.setActionState('done');
-    this.setActionState('undecided');
-};
-
-/**
- * ●パーティコマンドの戦うを選択
- */
-Scene_Battle.prototype.commandFight = function() {
-    BattleManager.startInputActor();
-//    this.selectNextCommand();
-};
-
-/**
- * ●次のコマンド入力へ
+ * 【上書】次のコマンド入力へ
  */
 BattleManager.selectNextCommand = function() {
     do {
@@ -505,7 +438,7 @@ BattleManager.selectNextCommand = function() {
 };
 
 /**
- * ●前のコマンド入力へ
+ * 【上書】前のコマンド入力へ
  */
 BattleManager.selectPreviousCommand = function() {
     do {
@@ -521,13 +454,13 @@ BattleManager.selectPreviousCommand = function() {
 };
 
 /**
- * ●行動順序の作成
+ * 【独自】行動順序の作成
  */
 BattleManager.makeActionOrders = function() {
     // WTとバトラーの組のリスト
-    var wt_battlers = []
+    const wtBattlers = []
     // 一時バトラーリスト
-    var battlers = [];
+    let battlers = [];
     
     /*
      * 敵味方全員の生存者リストを作成し、基本WTを計算する。
@@ -546,32 +479,32 @@ BattleManager.makeActionOrders = function() {
      * CTB用のリストを作成していく。
      */
     battlers.forEach(function(battler) {
-        for (var i = 0; i < pNumber; i++) {
+        for (let i = 0; i < pNumber; i++) {
             // 現在のWTに、次の行動までのWTを加算する。
-            var tmpWt = battler._wt + (battler._baseWt * i);
+            const tmpWt = battler.wt + (battler.baseWt * i);
 
             /*
              * 以下の条件を満たす場合は、割り込めない。
              * １．現在の行動順リストが埋まっている。
              * ２．かつ、末尾のバトラーよりもWTが大きい場合。
              */
-            if (wt_battlers.length >= pNumber
-                && tmpWt >= wt_battlers[pNumber - 1][0]) {
+            if (wtBattlers.length >= pNumber
+                && tmpWt >= wtBattlers[pNumber - 1][0]) {
                 // forループを終了して、次のバトラーへ
                 break;
             }
             
             // 行動順リストの末尾にWTとバトラーの組を追加
-            wt_battlers.push([tmpWt, battler]);
+            wtBattlers.push([tmpWt, battler]);
 
             // WT順でソート実行
-            wt_battlers.sort(function(a, b) {
+            wtBattlers.sort(function(a, b) {
                 return a[0] - b[0];
             });
             
             // 押し出された要素（最後の要素）を削除
-            if (wt_battlers.length > pNumber) {
-                wt_battlers.pop();
+            if (wtBattlers.length > pNumber) {
+                wtBattlers.pop();
             }
         }
     });
@@ -580,7 +513,7 @@ BattleManager.makeActionOrders = function() {
      * 変更前との互換性を保つため、WTを除いたリストも作成
      */
     battlers = [];
-    wt_battlers.forEach(function(wtBattler) {
+    wtBattlers.forEach(function(wtBattler) {
         battlers.push(wtBattler[1]);
     });
 
@@ -588,42 +521,42 @@ BattleManager.makeActionOrders = function() {
 };
 
 /**
- * ●行動者の速度補正を考慮した上で、行動順序を再計算する。（予測用）
+ * 【独自】行動者の速度補正を考慮した上で、行動順序を再計算する。（予測用）
  */
 BattleManager.reMakeActionOrders = function() {
-    var subject = BattleManager._subject;
+    const subject = BattleManager._subject;
     // 行動者のWTを一時的に保持
-    var tmpWt = subject._wt;
+    const tmpWt = subject.wt;
     // 速度補正を元にWTを一時的に書き換える。
     subject.makeSpeed();
     // 速度補正後のWTを加算する。
-    subject._wt = subject._wt + subject.getAddWt();
+    subject.setWt(subject.wt + subject.getAddWt());
 
     // 行動順序再計算
     BattleManager.makeActionOrders();
 
     // ＷＴを元に戻す。
-    subject._wt = tmpWt;
+    subject.setWt(tmpWt);
 }
 
 /**
- * ●時間経過処理
+ * 【独自】時間経過処理
  */
 BattleManager.timeGoesBy = function() {
-    var topWt = this._actionBattlers[0]._wt;
+    const topWt = this._actionBattlers[0].wt;
     if (topWt > 0) {
         // 先頭行動者のWTが0になるように、全バトラーのWTを減算。
-        this.allBattleMembers().forEach(function(battler) {
+        for (const battler of this.allBattleMembers()) {
             // 生存者のみに絞る
             if (battler.isAlive()) {
-                battler._wt -= topWt;
+                battler.setWt(battler.wt - topWt);
             }
-        });
+        }
     }
 }
 
 /**
- * ●ターン開始処理
+ * 【上書】ターン開始処理
  */
 BattleManager.startTurn = function() {
     this._phase = 'turn';
@@ -645,16 +578,7 @@ BattleManager.startTurn = function() {
 };
 
 /**
- * 【関数上書】ターン開始
- */
-Window_BattleLog.prototype.startTurn = function() {
-    // ウェイトをかけているだけなので削除
-    // CTBでは全行動がターン開始なのでテンポ悪化を防ぐため。
-    // this.push('wait');
-};
-
-/**
- * ●戦闘行動の処理
+ * 【上書】戦闘行動の処理
  */
 BattleManager.processTurn = function() {
     var subject = this._subject;
@@ -682,7 +606,7 @@ BattleManager.processTurn = function() {
 /**
  * ●行動開始
  */
-var _BattleManager_startAction = BattleManager.startAction;
+const _BattleManager_startAction = BattleManager.startAction;
 BattleManager.startAction = function() {
     // 元の処理
     _BattleManager_startAction.apply(this);
@@ -692,17 +616,17 @@ BattleManager.startAction = function() {
 };
 
 /**
- * ●ターン終了処理
+ * 【上書】ターン終了処理
  */
 BattleManager.endTurn = function() {
     this._phase = 'turnEnd';
     this._preemptive = false;
     this._surprise = false;
     
-    var subject = this._subject;
+    const subject = this._subject;
 
     // 行動者の現在WTに加算WTを加算する。
-    subject._wt += subject.getAddWt();
+    subject.setWt(subject.wt + subject.getAddWt());
     
     // AddWt == 0 の場合は連続行動なのでターン経過なしとする。
     if (subject.getAddWt() > 0) {
@@ -746,27 +670,88 @@ BattleManager.updateTurnEnd = function() {
 };
 
 /**
- * ●行動終了時
+ * 【上書】次の行動主体の取得
+ * 行動順序リストの次に来るバトラーを取得する。
+ * 現在パーティにいないアクターを取得した場合（index が nil, バトルイベ
+ * ントでの離脱直後などに発生）は、それをスキップする。
  */
-Game_Battler.prototype.onAllActionsEnd = function() {
-// onTurnEndと処理がかぶるので注釈化
-// 消しておかないと毒などの数値表示が消える。
-//    this.clearResult();
-    this.removeStatesAuto(1);
-    this.removeBuffsAuto();
+BattleManager.getNextSubject = function() {
+    // MZ対応
+    this._currentActor = null;
+
+    for (;;) {
+        var battler = this._actionBattlers[0];
+        
+        if (!battler) {
+            return null;
+        }
+        if (battler.isBattleMember() && battler.isAlive()) {
+            // MZ対応
+            if (battler.isActor()) {
+                this._currentActor = battler;
+            }
+
+            return battler;
+        }
+    }
 };
 
 /**
- * ●自動解除が『ターン終了時』となっているステートを処理するためのターン終了処理
+ * 【上書】逃走実行時
  */
-Game_Battler.prototype.onEveryTurnEnd = function() {
-    this.clearResult();
-    this.updateStateEveryTurns();
-    this.removeStatesAuto(2);
+BattleManager.processEscape = function() {
+    $gameParty.performEscape();
+    SoundManager.playEscape();
+    var success = this._preemptive ? true : (Math.random() < this._escapeRatio);
+    if (success) {
+        this.displayEscapeSuccessMessage();
+        this._escaped = true;
+        this.processAbort();
+    } else {
+        this.displayEscapeFailureMessage();
+        this._escapeRatio += 0.1;
+        $gameParty.clearActions();
+        
+        // 逃走失敗のペナルティを設定
+        this.setEscapePenalty();
+        
+        // 即ターン終了
+        this.endTurn();
+//        this.startTurn();
+    }
+    return success;
 };
 
 /**
- * ●自動解除が『ターン終了時』となっているステートの効果ターンを経過させる。
+ * 【独自】逃走失敗時のペナルティ
+ */
+BattleManager.setEscapePenalty = function() {
+    // 逃走失敗のペナルティを設定
+    $gameParty.aliveMembers().forEach(function(battler) {
+        // 失敗した当人以外のWTを加算する。
+        if (battler != BattleManager._subject) {
+            // 基本ＷＴ * ペナルティ% / 100
+            battler.setWt(battler.wt + parseInt(battler.baseWt * pEscapePenalty / 100));
+        }
+    });
+};
+
+//-----------------------------------------------------------------------------
+// Game_BattlerBase
+//-----------------------------------------------------------------------------
+
+/**
+ * ●パラメータの追加
+ */
+Object.defineProperties(Game_BattlerBase.prototype, {
+    // WT（待ち時間）
+    wt: { get: function() { return this._wt; }, set: function(val) { this._wt = val; }, configurable: true },
+    // 基本WT（基本待ち時間）
+    baseWt: { get: function() { return this._baseWt; }, configurable: true },
+});
+
+/**
+ * 【独自】自動解除が『ターン終了時』となっているステートの効果ターンを経過させる。
  */
 Game_BattlerBase.prototype.updateStateEveryTurns = function() {
     this._states.forEach(function(stateId) {
@@ -780,7 +765,7 @@ Game_BattlerBase.prototype.updateStateEveryTurns = function() {
 /**
  * ●ステート有効ターン初期設定
  */
-var _Game_BattlerBase_prototype_resetStateCounts = Game_BattlerBase.prototype.resetStateCounts;
+const _Game_BattlerBase_prototype_resetStateCounts = Game_BattlerBase.prototype.resetStateCounts;
 Game_BattlerBase.prototype.resetStateCounts = function(stateId) {
     // 元処理呼び出し
     _Game_BattlerBase_prototype_resetStateCounts.apply(this, arguments);
@@ -814,81 +799,121 @@ Game_BattlerBase.prototype.overwriteBuffTurns = function(paramId, turns) {
 };
 
 /**
- * ●次の行動主体の取得
- * 行動順序リストの次に来るバトラーを取得する。
- * 現在パーティにいないアクターを取得した場合（index が nil, バトルイベ
- * ントでの離脱直後などに発生）は、それをスキップする。
+ * ●ステート追加（ＷＴ変動の実装）
  */
-BattleManager.getNextSubject = function() {
-    // MZ対応
-    this._currentActor = null;
-
-    for (;;) {
-        var battler = this._actionBattlers[0];
-        
-        if (!battler) {
-            return null;
-        }
-        if (battler.isBattleMember() && battler.isAlive()) {
-            // MZ対応
-            if (battler.isActor()) {
-                this._currentActor = battler;
-            }
-
-            return battler;
-        }
+const _Game_BattlerBase_prototype_addNewState = Game_BattlerBase.prototype.addNewState;
+Game_BattlerBase.prototype.addNewState = function(stateId) {
+    /*
+     * WT設定値を元にWTを変化
+     */
+    // <SetWt:number>があれば、その値(%)を設定
+    if ($dataStates[stateId].meta.SetWt) {
+        this.setWt(this.baseWt * $dataStates[stateId].meta.SetWt / 100);
+    
+    // <AddWt:number>があれば、その値(%)を加算
+    } else if ($dataStates[stateId].meta.AddWt) {
+        this.setWt(this.wt + this.baseWt * $dataStates[stateId].meta.AddWt / 100);
     }
+    
+    // 元の処理
+    _Game_BattlerBase_prototype_addNewState.apply(this, arguments);
 };
 
 /**
- * ●逃走実行時
+ * 【独自】ＷＴの設定
  */
-BattleManager.processEscape = function() {
-    $gameParty.performEscape();
-    SoundManager.playEscape();
-    var success = this._preemptive ? true : (Math.random() < this._escapeRatio);
-    if (success) {
-        this.displayEscapeSuccessMessage();
-        this._escaped = true;
-        this.processAbort();
+Game_BattlerBase.prototype.setWt = function(wt) {
+    this._wt = wt;
+};
+
+//-----------------------------------------------------------------------------
+// Game_Battler
+//-----------------------------------------------------------------------------
+
+/**
+ * ●戦闘開始時
+ * ※バトラー変数の初期化
+ */
+const _Game_Battler_onBattleStart = Game_Battler.prototype.onBattleStart;
+Game_Battler.prototype.onBattleStart = function() {
+    // 元処理実行
+    _Game_Battler_onBattleStart.apply(this, arguments);
+    // CTBターンの初期化
+    this.initCtbTurn();
+};
+
+/**
+ * 【独自】ＣＴＢターンの初期化
+ */
+Game_Battler.prototype.initCtbTurn = function() {
+    // 初期ターンの設定
+    this._turnCount = pStartTurn - 1;
+
+    // 基本WTを設定する。
+    this.makeBaseWt();
+
+    // WTの初期値として基本WTを設定する。
+    let wt = this._baseWt;
+    let startRandomWt = 0;
+    
+    // アクター
+    if (this.isActor()) {
+        startRandomWt = pActorStartRandomWt;
+        
+        // 先制攻撃の場合はWT減算
+        if (BattleManager._preemptive) {
+            // - WT * 先制攻撃特典％ / 100
+            wt -= parseInt(wt * pPreemptiveAdvantage / 100);
+        }
+        
+    // 敵キャラ
     } else {
-        this.displayEscapeFailureMessage();
-        this._escapeRatio += 0.1;
-        $gameParty.clearActions();
-        
-        // 逃走失敗のペナルティを設定
-        this.setEscapePenalty();
-        
-        // 即ターン終了
-        this.endTurn();
-//        this.startTurn();
-    }
-    return success;
-};
-
-/**
- * ●逃走失敗時のペナルティ
- */
-BattleManager.setEscapePenalty = function() {
-    // 逃走失敗のペナルティを設定
-    $gameParty.aliveMembers().forEach(function(battler) {
-        // 失敗した当人以外のWTを加算する。
-        if (battler != BattleManager._subject) {
-            // 基本ＷＴ * ペナルティ% / 100
-            battler._wt += parseInt(battler._baseWt * pEscapePenalty / 100);
+        startRandomWt = pEnemyStartRandomWt;
+            
+        // 不意打ちの場合はWT半減
+        if (BattleManager._surprise) {
+            // - WT * 奇襲特典％ / 100
+            wt -= parseInt(wt * pSurpriseAdvantage / 100);
         }
-    });
+    }
+    
+    // 初期ＷＴを分散値に従って設定する。
+    // 例：分散値が20の場合
+    // 100 - (20 / 2) + [0～20未満の乱数] → 90～110未満の乱数を作成
+    const r = 100 - (startRandomWt / 2) + Math.random() * startRandomWt;
+    wt = parseInt(wt * r / 100);
+    
+    this.setWt(wt);
 };
 
 /**
- * ●パラメータの追加
+ * 【上書】アクション終了時
  */
-Object.defineProperties(Game_BattlerBase.prototype, {
-    // WT（待ち時間）
-    wt: { get: function() { return this._wt; }, set: function(val) { this._wt = val; }, configurable: true },
-    // 基本WT（基本待ち時間）
-    baseWt: { get: function() { return this._baseWt; }, configurable: true },
-});
+Game_Battler.prototype.performActionEnd = function() {
+// 元のターン制ではdoneだが、違和感あるので変える。
+//    this.setActionState('done');
+    this.setActionState('undecided');
+};
+
+/**
+ * 【上書】行動終了時
+ */
+Game_Battler.prototype.onAllActionsEnd = function() {
+// onTurnEndと処理がかぶるので注釈化
+// 消しておかないと毒などの数値表示が消える。
+//    this.clearResult();
+    this.removeStatesAuto(1);
+    this.removeBuffsAuto();
+};
+
+/**
+ * 【独自】自動解除が『ターン終了時』となっているステートを処理するためのターン終了処理
+ */
+Game_Battler.prototype.onEveryTurnEnd = function() {
+    this.clearResult();
+    this.updateStateEveryTurns();
+    this.removeStatesAuto(2);
+};
 
 /**
  * 【MZのみ関数上書】
@@ -899,7 +924,7 @@ Game_Battler.prototype.turnCount = function() {
 };
 
 /**
- * ●基本WTを計算する。
+ * 【独自】基本WTを計算する。
  */
 Game_Battler.prototype.makeBaseWt = function() {
     // 100000 / 敏捷性
@@ -907,10 +932,10 @@ Game_Battler.prototype.makeBaseWt = function() {
 };
 
 /**
- * ●速度補正つき加算WTを取得する。
+ * 【独自】速度補正つき加算WTを取得する。
  */
 Game_Battler.prototype.getAddWt = function() {
-    var addWt = 100000;
+    let addWt = 100000;
 
     // speedが有効ならspeed値を使用する。
     if (this._speed > 0) {
@@ -923,15 +948,37 @@ Game_Battler.prototype.getAddWt = function() {
     return addWt;
 };
 
+//-----------------------------------------------------------------------------
+// Sprite_Actor
+//-----------------------------------------------------------------------------
+
 /**
- * ●行動速度の計算
+ * ●アクターの位置調整
+ */
+const _Sprite_Actor_updateTargetPosition = Sprite_Actor.prototype.updateTargetPosition;
+Sprite_Actor.prototype.updateTargetPosition = function() {
+    if (this._actor.isInputting()) {
+        // 通常は前進処理が呼び出されるが、不要なので何もしない
+        // this.stepForward();
+        return;
+    }
+
+    _Sprite_Actor_updateTargetPosition.apply(this, arguments);
+};
+
+//-----------------------------------------------------------------------------
+// Game_Action
+//-----------------------------------------------------------------------------
+
+/**
+ * 【上書】行動速度の計算
  * 速度補正を％化
  */
 Game_Action.prototype.speed = function() {
-    var agi = this.subject().agi;
+    const agi = this.subject().agi;
     
     // バラつきをなくす
-    var speed = agi;
+    let speed = agi;
 //    var speed = agi + Math.randomInt(Math.floor(5 + agi / 4));
     
     if (this.item()) {
@@ -964,7 +1011,29 @@ Game_Action.prototype.speed = function() {
 };
 
 /**
- * ●敵の行動条件合致判定［ターン数］
+ * ●各種効果
+ * 効果前後で敏捷性の変化を監視し、変化があればWTを調整する。
+ */
+const _Game_Action_prototype_applyItemEffect = Game_Action.prototype.applyItemEffect;
+Game_Action.prototype.applyItemEffect = function(target, effect) {
+    // 効果前の敏捷性を保持
+    var beforeAgi = target.agi;
+    
+    // 元の処理
+    _Game_Action_prototype_applyItemEffect.apply(this, arguments);
+
+    if (target.agi != beforeAgi) {
+        // 敏捷性が変化したので、WTも変化させる。
+        target.setWt(parseInt(target.wt / (target.agi / beforeAgi)));
+    }
+}
+
+//-----------------------------------------------------------------------------
+// Game_Enemy
+//-----------------------------------------------------------------------------
+
+/**
+ * 【上書】敵の行動条件合致判定［ターン数］
  */
 Game_Enemy.prototype.meetsTurnCondition = function(param1, param2) {
     // グループのターンではなく、行動者の個別ターンを参照する。
@@ -978,49 +1047,27 @@ Game_Enemy.prototype.meetsTurnCondition = function(param1, param2) {
     }
 };
 
+//-----------------------------------------------------------------------------
+// Window_BattleLog
+//-----------------------------------------------------------------------------
+
 /**
- * ●ステート追加（ＷＴ変動の実装）
+ * 【上書】ターン開始
  */
-var _Game_BattlerBase_prototype_addNewState = Game_BattlerBase.prototype.addNewState;
-Game_BattlerBase.prototype.addNewState = function(stateId) {
-    /*
-     * WT設定値を元にWTを変化
-     */
-    // <SetWt:number>があれば、その値(%)を設定
-    if ($dataStates[stateId].meta.SetWt) {
-        this._wt = this._baseWt * $dataStates[stateId].meta.SetWt / 100;
-    
-    // <AddWt:number>があれば、その値(%)を加算
-    } else if ($dataStates[stateId].meta.AddWt) {
-        this._wt += this._baseWt * $dataStates[stateId].meta.AddWt / 100;
-    }
-    
-    // 元の処理
-    _Game_BattlerBase_prototype_addNewState.apply(this, arguments);
+Window_BattleLog.prototype.startTurn = function() {
+    // ウェイトをかけているだけなので削除
+    // CTBでは全行動がターン開始なのでテンポ悪化を防ぐため。
+    // this.push('wait');
 };
 
-/**
- * ●各種効果
- * 効果前後で敏捷性の変化を監視し、変化があればWTを調整する。
- */
-var _Game_Action_prototype_applyItemEffect = Game_Action.prototype.applyItemEffect;
-Game_Action.prototype.applyItemEffect = function(target, effect) {
-    // 効果前の敏捷性を保持
-    var beforeAgi = target.agi;
-    
-    // 元の処理
-    _Game_Action_prototype_applyItemEffect.apply(this, arguments);
-
-    if (target.agi != beforeAgi) {
-        // 敏捷性が変化したので、WTも変化させる。
-        target._wt = parseInt(target._wt / (target.agi / beforeAgi));
-    }
-}
+//-----------------------------------------------------------------------------
+// Window_BattleActor
+//-----------------------------------------------------------------------------
 
 /**
  * ●味方の選択時
  */
-var _Window_BattleActor_prototype_show = Window_BattleActor.prototype.show;
+const _Window_BattleActor_prototype_show = Window_BattleActor.prototype.show;
 Window_BattleActor.prototype.show = function(index) {
     _Window_BattleActor_prototype_show.apply(this, arguments);
     
@@ -1028,10 +1075,14 @@ Window_BattleActor.prototype.show = function(index) {
     BattleManager.reMakeActionOrders();
 };
 
+//-----------------------------------------------------------------------------
+// Window_BattleEnemy
+//-----------------------------------------------------------------------------
+
 /**
  * ●敵の選択時
  */
-var _Window_BattleEnemy_show = Window_BattleEnemy.prototype.show;
+const _Window_BattleEnemy_show = Window_BattleEnemy.prototype.show;
 Window_BattleEnemy.prototype.show = function() {
     _Window_BattleEnemy_show.apply(this, arguments);
     
@@ -1039,31 +1090,9 @@ Window_BattleEnemy.prototype.show = function() {
     BattleManager.reMakeActionOrders();
 };
 
-/**
- * ●味方選択キャンセル
- */
-var _Scene_Battle_prototype_onActorCancel = Scene_Battle.prototype.onActorCancel;
-Scene_Battle.prototype.onActorCancel = function() {
-    _Scene_Battle_prototype_onActorCancel.call(this);
-    
-    // 行動予測を戻すために行動順序再計算
-    BattleManager.makeActionOrders();
-};
-
-/**
- * ●敵選択キャンセル
- */
-var _Scene_Battle_prototype_onEnemyCancel = Scene_Battle.prototype.onEnemyCancel;
-Scene_Battle.prototype.onEnemyCancel = function() {
-    _Scene_Battle_prototype_onEnemyCancel.call(this);
-    
-    // 行動予測を戻すために行動順序再計算
-    BattleManager.makeActionOrders();
-};
-
-/**
- * MZ対応
- */
+//-----------------------------------------------------------------------------
+// ＭＺ対応
+//-----------------------------------------------------------------------------
 if (Utils.RPGMAKER_NAME == "MZ") {
     /**
      * エラーにしないため空の関数を定義
@@ -1079,7 +1108,7 @@ if (Utils.RPGMAKER_NAME == "MZ") {
     };
 
     /**
-     * ●アクション終了時
+     * 【上書】アクション終了時
      */
     BattleManager.endAction = function() {
         this._logWindow.endAction(this._subject);
