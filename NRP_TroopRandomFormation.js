@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.051 Place enemy groups automatically and randomly.
+ * @plugindesc v1.06 Place enemy groups automatically and randomly.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475049887.html
  *
@@ -169,7 +169,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.051 敵グループを自動でランダム配置します。
+ * @plugindesc v1.06 敵グループを自動でランダム配置します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475049887.html
  *
@@ -503,7 +503,7 @@ Spriteset_Battle.prototype.setTrooRandomFormation = function() {
 
         // 一体ずつ配置計算
         for (let sprite of this._enemySprites) {
-            var distance = sprite.startAutoPosition(bestDistance);
+            const distance = sprite.makeAutoPosition(bestDistance);
 
             // 返ってきた結果の中で最も小さな（間隔の狭い）値を取得する
             if (distance < newDistance) {
@@ -522,7 +522,7 @@ Spriteset_Battle.prototype.setTrooRandomFormation = function() {
             }
 
             // 十分な間隔が確保されている場合、そこで終了
-            if (bestDistance >= getDistanceBorder()) {
+            if (bestDistance >= BattleManager.getDistanceBorder()) {
                 break;
             }
         }
@@ -541,15 +541,15 @@ Spriteset_Battle.prototype.setTrooRandomFormation = function() {
     }
 
     // データ上の並び順を更新
-    sortTroopMembers();
+    BattleManager.sortTroopMembers();
     // Ｙ座標を元にスプライトの並び順を更新
-    sortTroopSprite(this);
+    this.sortTroopSprite();
 };
 
 /**
  * ●データ上の並び順を更新
  */
-function sortTroopMembers() {
+BattleManager.sortTroopMembers = function() {
     // サイドビューの場合
     if ($gameSystem.isSideView()) {
         $gameTroop.members().sort(function(a, b) {
@@ -603,7 +603,7 @@ function sortTroopMembers() {
     }
     // 記号再生成
     $gameTroop.makeUniqueNames();
-}
+};
 
 /**
  * ●並び替えに使用するＸ座標
@@ -618,10 +618,10 @@ Game_Enemy.prototype.formationSortX = function() {
 };
 
 /**
- * ●スプライトの並び順を更新
+ * 【独自】スプライトの並び順を更新
  */
-function sortTroopSprite(spritesetBattle) {
-    var battleField = spritesetBattle._battleField;
+Spriteset_Battle.prototype.sortTroopSprite = function() {
+    const battleField = this._battleField;
 
     // バトラースプライトだけをソートしたいので、childrenを３分割して格納
     // 真ん中にバトラーがいるはず
@@ -666,7 +666,7 @@ function sortTroopSprite(spritesetBattle) {
     for (let child of afterChildren) {
         battleField.addChild(child);
     }
-}
+};
 
 /**
  * ●優先度設定
@@ -700,28 +700,28 @@ function compareSprite(a, b) {
  * 【独自】配置計算を開始
  * ※外部プラグインとの連携を考慮し、あえてEnemyではなくBattlerに実装。
  */
-Sprite_Battler.prototype.startAutoPosition = function(bestDistance) {
+Sprite_Battler.prototype.makeAutoPosition = function(bestDistance) {
     // 配置範囲を取得（Ｘ座標は中央が基準、Ｙ座標は足元が基準）
-    var startX = eval(pStartX) + this.width/2;
-    var endX = eval(pEndX) - this.width/2;
+    const startX = eval(pStartX) + this.width/2;
+    const endX = eval(pEndX) - this.width/2;
     // 頭上と足元を基準に大きなほうを取得
-    var startY = Math.max(eval(pStartHeadY) + this.height, eval(pStartFootY));
-    var endY = eval(pEndY);
+    const startY = Math.max(eval(pStartHeadY) + this.height, eval(pStartFootY));
+    const endY = eval(pEndY);
 
     // 配置できるグリッド数を計算
-    var gridCountX = Math.floor((endX - startX) / pGridSize) + 1;
-    var gridCountY = Math.floor((endY - startY) / pGridSize) + 1;
-
+    let gridCountX = Math.floor((endX - startX) / pGridSize) + 1;
+    let gridCountY = Math.floor((endY - startY) / pGridSize) + 1;
     // 最低でも１
     gridCountX = Math.max(gridCountX, 1);
     gridCountY = Math.max(gridCountY, 1);
 
     // 既に配置を確定した敵のスプライトを取得
-    var sprites = this.parent.parent.parent._enemySprites.filter(function(s) {
-        return s && s._isPositionOK;
+    const spriteset = BattleManager._spriteset;
+    const sprites = spriteset._enemySprites.filter(function(s) {
+        return s && s._isPositionOK && s._battler.isAlive();
     });
 
-    var distanceList;
+    let distanceList;
 
     // 座標総当り方式の場合
     if (pAlgorithmType == 0) {
@@ -781,7 +781,7 @@ Sprite_Battler.prototype.makeAutoPositionWithBruteForce = function(
      * １つずつ座標総当りで距離評価値を取得
      */
     for (let gridData of gridList) {
-        var distanceData = makeDistanceData(
+        const distanceData = makeDistanceData(
             this, gridData.x, gridData.y, sprites, bestDistance);
 
         // 取得できなかった場合は次へ
@@ -790,7 +790,7 @@ Sprite_Battler.prototype.makeAutoPositionWithBruteForce = function(
         }
 
         // 間隔が適切に開いている場合はＯＫ
-        if (distanceData.distance >= getDistanceBorder()) {
+        if (distanceData.distance >= BattleManager.getDistanceBorder()) {
             // 成功の１件だけ残す
             distanceList = [];
             distanceList.push(distanceData);
@@ -839,7 +839,7 @@ Sprite_Battler.prototype.makeAutoPositionAtRandom = function(
         }
 
         // 間隔が適切に開いている場合はＯＫ
-        if (distanceData.distance >= getDistanceBorder()) {
+        if (distanceData.distance >= BattleManager.getDistanceBorder()) {
             // 成功の１件だけ残す
             distanceList = [];
             distanceList.push(distanceData);
@@ -862,16 +862,14 @@ function makeDistanceData(target, x, y, sprites, bestDistance) {
     target.y = y;
 
     // 最小間隔を記録
-    var minDistance = 999999;
+    let minDistance = 999999;
 
     // 既に配置を確定した敵との距離評価値を比較
-    for (var sprite of sprites) {
-        var distance = getDistanceValue(target, sprite);
-
+    for (const sprite of sprites) {
+        const distance = getDistanceValue(target, sprite);
         // 最小間隔を記録
         if (distance < minDistance) {
             minDistance = distance;
-
             // 既に記録を下回っている場合
             if (minDistance <= bestDistance) {
                 // ループ終了
@@ -881,7 +879,7 @@ function makeDistanceData(target, x, y, sprites, bestDistance) {
     }
 
     // 候補を作成
-    var distanceData = {
+    const distanceData = {
         x: x,
         y: y,
         distance: minDistance
@@ -961,9 +959,9 @@ function getDistanceValue(a, b) {
 /**
  * ●距離評価値のしきい値を取得する。
  */
-function getDistanceBorder() {
+BattleManager.getDistanceBorder = function() {
     return eval(pDistanceBorder);
-}
+};
 
 /**
  * ●YEP_BattleEngineCoreの競合対策で関数を上書
