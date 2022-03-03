@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.16 When executing skills, call motion freely.
+ * @plugindesc v1.161 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -556,7 +556,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.16 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.161 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -2773,6 +2773,9 @@ Sprite.prototype.startDynamicMotion = function(dynamicMotion) {
         ex = Math.round(ex);
         ey = Math.round(ey);
 
+        motion._ex = ex;
+        motion._ey = ey;
+
         // 空中Ｙ座標
         var airY = this._airY;
         if (dm.airY != undefined) {
@@ -3157,8 +3160,10 @@ Sprite.prototype.updateDynamicMove = function() {
         var screenY = motion._screenY;
         var defaultX = motion._defaultX;
         var defaultY = motion._defaultY;
-        var sx = motion._sx;
-        var sy = motion._sy;
+        const sx = motion._sx;
+        const sy = motion._sy;
+        const ex = motion._ex;
+        const ey = motion._ey;
         var performerNo = motion._performerNo;
         var targetNo = motion._targetNo;
 
@@ -3305,6 +3310,9 @@ Sprite_Battler.prototype.onMoveEnd = function() {
  * 【独自】DynamicMotion用の移動終了
  */
 Sprite.prototype.onDynamicMoveEnd = function() {
+    // 目標とする空中Ｙ座標へ移動
+    this._airY = this._targetAirY;
+
     // 変数初期化
     this._setDynamicMotion = [];
     this._startAirY = undefined;
@@ -3781,7 +3789,7 @@ if (pUsePriority) {
     /**
      * ●更新処理
      */
-    var _Spriteset_Battle_update = Spriteset_Battle.prototype.update;
+    const _Spriteset_Battle_update = Spriteset_Battle.prototype.update;
     Spriteset_Battle.prototype.update = function() {
         _Spriteset_Battle_update.apply(this, arguments);
 
@@ -3789,7 +3797,7 @@ if (pUsePriority) {
     };
 
     /**
-     * ●Ｚ座標による優先度表示の更新
+     * 【独自】Ｚ座標による優先度表示の更新
      */
     Spriteset_Battle.prototype.updateNrpZCoordinates = function () {
         // Ｚ座標の既定値
@@ -3806,14 +3814,14 @@ if (pUsePriority) {
     /**
      * ●アクション開始
      */
-    var _Game_Battler_performActionStart = Game_Battler.prototype.performActionStart;
+    const _Game_Battler_performActionStart = Game_Battler.prototype.performActionStart;
     Game_Battler.prototype.performActionStart = function(action) {
         _Game_Battler_performActionStart.apply(this, arguments);
 
         // 行動開始前、Ｚ座標を調整
         // ※相手サイドを下に表示
-        var battlerSprites = BattleManager._spriteset.battlerSprites();
-        for (var sprite of battlerSprites) {
+        const battlerSprites = BattleManager._spriteset.battlerSprites();
+        for (const sprite of battlerSprites) {
             // 存在しない場合は無視
             if (!sprite._battler) {
                 continue;
@@ -3838,13 +3846,13 @@ if (pUsePriority) {
      * ●アクション実行終了（バトラー共通）
      * ※上に同関数があるので名前を_2に変更
      */
-    var _Game_Battler_performActionEnd_2 = Game_Battler.prototype.performActionEnd;
+    const _Game_Battler_performActionEnd_2 = Game_Battler.prototype.performActionEnd;
     Game_Battler.prototype.performActionEnd = function() {
         _Game_Battler_performActionEnd_2.call(this);
 
         // 行動終了後、Ｚ座標を初期化
-        var battlerSprites = BattleManager._spriteset.battlerSprites();
-        for (var sprite of battlerSprites) {
+        const battlerSprites = BattleManager._spriteset.battlerSprites();
+        for (const sprite of battlerSprites) {
             sprite.z = pBattlerZ;
         }
     };

@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.22 When executing skills, call motion freely.
+ * @plugindesc v1.221 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help When executing skills(items), call motion freely.
@@ -550,7 +550,7 @@
  */
 
 /*:ja
- * @plugindesc v1.22 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.221 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在にモーションを呼び出します。
@@ -3224,6 +3224,9 @@ Sprite_Battler.prototype.onMoveEnd = function() {
  * 【独自】DynamicMotion用の移動終了
  */
 Sprite.prototype.onDynamicMoveEnd = function() {
+    // 目標とする空中Ｙ座標へ移動
+    this._airY = this._targetAirY;
+
     // 変数初期化
     this._setDynamicMotion = [];
     this._startAirY = undefined;
