@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v2.002 Gives an afterimage effect to the battler or character.
+ * @plugindesc v2.003 Gives an afterimage effect to the battler or character.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483120023.html
  *
@@ -132,7 +132,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.002 バトラー＆キャラクターに残像効果を付与します。
+ * @plugindesc v2.003 バトラー＆キャラクターに残像効果を付与します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483120023.html
  *
@@ -785,6 +785,8 @@ Sprite_Battler.prototype.createAfterimage = function() {
     afterimage.z = this.z;
     // 表示優先度の調整のため本体より下に
     afterimage.spriteId = this.spriteId - 0.1;
+    // DynamicMotionの空中Ｙ座標
+    afterimage._airY = this._airY;
 
     this._afterimages.push(afterimage);
     // 戦闘画面に追加
@@ -1170,6 +1172,8 @@ Sprite_Character.prototype.createAfterimage = function() {
     afterimage.z = this.z;
     // 表示優先度の調整のため本体より下に
     afterimage.spriteId = this.spriteId - 0.1;
+    // DynamicMotionの空中Ｙ座標
+    afterimage._airY = this._airY;
 
     this._afterimages.push(afterimage);
     // Tilemapに追加
