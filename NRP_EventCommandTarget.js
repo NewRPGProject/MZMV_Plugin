@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Change the target of the event command.
+ * @plugindesc v1.02 Change the target of the event command.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482259070.html
  *
@@ -29,7 +29,9 @@
  * ・Enable speed change for each follower.
  * 　※Normally fixed at the same speed as the player.
  * 
- * ■MZ Plugin Command
+ * -------------------------------------------------------------------
+ * [MZ Plugin Command]
+ * -------------------------------------------------------------------
  * ◆ChangeTarget
  * Change the target characters of "This Event".
  * 
@@ -41,11 +43,24 @@
  * -1 is a player, -2 or lower is a follower.
  * If it is blank, it will be unset.
  * 
+ * ◆BatchOfTargets
+ * The command is given for multiple events at once.
+ * - 1,3,5: Targets events 1, 3, and 5.
+ * - 1~10: Targets events 1~10.
+ * - -1~-4: Targets a player and 3 followers.
+ * 
+ * Target commands are limited to the following.
+ * - Set Movement Route
+ * - Show Animation
+ * - Show Balloon Icon
+ * 
  * ◆StopFollow
  * Followers will no longer track the player.
  * 
- * ■MV Plugin Command
- * ◆NRP.EventCommandTarget.ChangeTarget [対象ＩＤ]
+ * -------------------------------------------------------------------
+ * [MV Plugin Command]
+ * -------------------------------------------------------------------
+ * ◆NRP.EventCommandTarget.ChangeTarget [TargetID]
  * Change the target characters of "This Event".
  * Specify the event ID as a number or formula.
  * -1 is a player, -2 or lower is a follower.
@@ -62,12 +77,18 @@
  * Calling the above script in the movement route setting
  * will bring you closer to the previous character.
  * 
+ * -------------------------------------------------------------------
  * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
  * The author is not responsible,
  * but will deal with defects to the extent possible.
+ * 
+ * @------------------------------------------------------------------
+ * @ Plugin Commands
+ * @------------------------------------------------------------------
  * 
  * @command ChangeTarget
  * @desc Change the character to be the target of "this event". If blank, cancel the setting.
@@ -83,6 +104,23 @@
  * @option 0 #Set the release
  * 
  * 
+ * @command BatchOfTargets
+ * @desc Specifies a batch of target characters to be manipulated.
+ * If blank, cancel the setting.
+ * 
+ * @arg TargetsId
+ * @desc Processes within the called event, targeting the event(s) with the specified ID(s).
+ * @type combo
+ * @option 1,2,3 #Multiple
+ * @option 1~3 #Range
+ * @option -1~-4 #Party
+ * 
+ * @arg AutoRelease
+ * @desc The setting is automatically cancelled when the process is executed once.
+ * @type boolean
+ * @default true
+ * 
+ * 
  * @command StopFollow
  * @desc Followers will no longer track the player.
  * 
@@ -92,6 +130,9 @@
  * @type boolean
  * @default true
  * 
+ * @------------------------------------------------------------------
+ * @ Plugin Parameters
+ * @------------------------------------------------------------------
  * 
  * @param TerminateStopFollow
  * @desc Automatically release the "StopFollow" function when the event processing is finished.
@@ -101,7 +142,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 イベントコマンドの対象を変更する。
+ * @plugindesc v1.02 イベントコマンドの対象を変更する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/482259070.html
  *
@@ -126,7 +167,9 @@
  * ・フォロワー毎の速度変更を有効に
  * 　※通常はプレイヤーと同じ速度で固定
  * 
+ * -------------------------------------------------------------------
  * ■ＭＺ用プラグインコマンド
+ * -------------------------------------------------------------------
  * ◆対象キャラクターの変更
  * 『このイベント』の対象とするキャラクターを変更します。
  * 
@@ -138,10 +181,23 @@
  * -1はプレイヤー、-2以下はフォロワーとなります。
  * 空白ならば設定解除します。
  * 
+ * ◆対象キャラクターの一括指定
+ * 複数のイベントに対してまとめて命令を行います。
+ * 『1,3,5』でイベント１、３、５を対象とします。
+ * 『1~10』でイベント１～１０を対象とします。
+ * 『-1~-4』ならばプレイヤーとフォロワー３人を対象とします。
+ * 
+ * 対象となるコマンドは以下に限定されます。
+ * ・移動ルートの指定
+ * ・アニメーションの表示
+ * ・フキダシアイコンの表示
+ * 
  * ◆隊列歩行の追尾を停止
  * 隊列歩行の仲間がプレイヤーを追尾しなくなります。
  * 
+ * -------------------------------------------------------------------
  * ■ＭＶ用プラグインコマンド
+ * -------------------------------------------------------------------
  * ◆NRP.EventCommandTarget.ChangeTarget [対象ＩＤ]
  * 『このイベント』の対象とするキャラクターを変更します。
  * イベントＩＤを数値や数式で指定してください。
@@ -154,15 +210,23 @@
  * 
  * ※大文字／小文字は不問です。[]は含めないでください。
  * 
+ * -------------------------------------------------------------------
  * ■フォロワー用の追加関数
+ * -------------------------------------------------------------------
  * ◆this.chasePreceding()
  * 移動ルートの設定にて上記のスクリプトを呼び出すと、
  * 一つ前のキャラクターに向かって近づきます。
  * 
+ * -------------------------------------------------------------------
  * ■利用規約
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
+ * 
+ * @------------------------------------------------------------------
+ * @ プラグインコマンド
+ * @------------------------------------------------------------------
  * 
  * @command ChangeTarget
  * @text 対象キャラクターの変更
@@ -181,6 +245,26 @@
  * @option 0 #設定解除
  * 
  * 
+ * @command BatchOfTargets
+ * @text 対象キャラクターの一括指定
+ * @desc 操作する対象のキャラクターを一括指定します。
+ * 空白ならば設定解除します。
+ * 
+ * @arg TargetsId
+ * @text 対象ＩＤ（複数）
+ * @desc 呼び出されたイベント内の処理で、指定ＩＤ（複数）のイベントを対象とします。
+ * @type combo
+ * @option 1,2,3 #複数指定
+ * @option 1~3 #範囲指定
+ * @option -1~-4 #パーティ全員
+ * 
+ * @arg AutoRelease
+ * @text 実行後に解除
+ * @desc 処理を一度実行した際に自動で設定を解除します。
+ * @type boolean
+ * @default true
+ * 
+ * 
  * @command StopFollow
  * @text 隊列歩行の追尾を停止
  * @desc 隊列歩行の仲間がプレイヤーを追尾しなくなります。
@@ -192,6 +276,9 @@
  * @type boolean
  * @default true
  * 
+ * @------------------------------------------------------------------
+ * @ プラグインパラメータ
+ * @------------------------------------------------------------------
  * 
  * @param TerminateStopFollow
  * @text 処理終了時に追尾停止解除
@@ -235,6 +322,81 @@ const pTerminateStopFollow = toBoolean(parameters["TerminateStopFollow"], true);
     // #以降は注釈扱いなので除去
     // さらに前後の空白を除去する。
     return value.split("#")[0].trim();
+}
+
+/**
+ * ●引数を元に対象の配列を取得する。
+ * ※bindによってinterpreterをthisに渡して用いる。
+ */
+function makeTargets(targetId) {
+    const targets = [];
+
+    // 無効なら処理しない。
+    if (targetId === undefined || targetId === null || targetId === "") {
+        return targets;
+    }
+
+    // カンマ区切りでループ
+    for (let id of targetId.split(",")) {
+        // 空白除去
+        id = id.trim();
+        // 1~5というように範囲指定の場合
+        // ※~が存在する。
+        if (id.indexOf("~") >= 0) {
+            const idRange = id.split("~");
+            const idRangeStart = eval(idRange[0]);
+            const idRangeEnd = eval(idRange[1]);
+
+            // IDの指定範囲で実行
+            // 開始のほうが終了より大きい場合は反対に実行
+            if (idRangeEnd < idRangeStart) {
+                for (let i = idRangeStart; i >= idRangeEnd; i--) {
+                    const evalId = eval(i);
+                    if (this.character(evalId)) {
+                        targets.push(this.character(evalId));
+                    }
+                }
+            } else {
+                for (let i = idRangeStart; i <= idRangeEnd; i++) {
+                    const evalId = eval(i);
+                    if (this.character(evalId)) {
+                        targets.push(this.character(evalId));
+                    }
+                }
+            }
+            
+        // 通常時
+        } else {
+            const evalId = eval(id);
+            if (this.character(evalId)) {
+                targets.push(this.character(evalId));
+            }
+        }
+    }
+    return targets;
+}
+
+/**
+ * ●イベント、プレイヤー、フォロワーを一意に識別するためのＩＤを取得する。
+ */
+function getTargetId(target) {
+    // プレイヤーは-1、フォロワーは-2, -3, -4として取得
+    // フォロワーならば-2以下に変換して返す
+    for (let i = 0; i < $gamePlayer.followers()._data.length; i++) {
+        const follower = $gamePlayer.followers().follower(i);
+        if (follower == target) {
+            // 0 -> -2, 1 -> -3というように変換
+            return i * -1 - 2;
+        }
+    }
+
+    // イベントＩＤがあればそのまま返す
+    if (target._eventId) {
+        return target._eventId;
+    }
+
+    // それ以外はプレイヤー
+    return -1;
 }
 
 //----------------------------------------
@@ -294,6 +456,7 @@ Game_Interpreter.prototype.terminate = function() {
 
     // クリア
     this._changeTargetId = null;
+    mBatchTargetsId = [];
 
     // 処理終了時に追尾停止解除
     if (pTerminateStopFollow && this._stopFollow) {
@@ -337,6 +500,145 @@ Game_Interpreter.prototype.character = function(param) {
 };
 
 //----------------------------------------
+// 一括指定
+//----------------------------------------
+
+let mBatchTargetsId = [];
+let mAutoRelease = false;
+
+/**
+ * ●【ＭＺ用プラグインコマンド】対象キャラクターの一括指定
+ */
+PluginManager.registerCommand(PLUGIN_NAME, "BatchOfTargets", function(args) {
+    const targetsId = getCommandValue(args.TargetsId);
+    mAutoRelease = toBoolean(args.AutoRelease);
+
+    // 対象を生成
+    // ※bindによってthisをメソッドに渡す。
+    const targets = makeTargets.bind(this)(targetsId);
+    // 対象が取得できなければ処理しない。
+    if (targets.length == 0) {
+        // 設定解除
+        mBatchTargetsId = null;
+        return;
+    }
+
+    // 一括指定用の対象を設定
+    mBatchTargetsId = [];
+    for (const target of targets) {
+        mBatchTargetsId.push(getTargetId(target));
+    }
+});
+
+// /**
+//  * ●【ＭＶ用プラグインコマンド】対象キャラクターの一括指定
+//  */
+// const _Game_Interpreter_pluginCommand2 = Game_Interpreter.prototype.pluginCommand;
+// Game_Interpreter.prototype.pluginCommand = function(command, args) {
+//     _Game_Interpreter_pluginCommand2.call(this, command, args);
+
+//     // 小文字化してから判定
+//     const lowerCommand = command.toLowerCase();
+//     if (lowerCommand === "nrp.eventcommandtarget.batchoftargets") {
+//         const targetsId = args[0];
+//         mAutoRelease = toBoolean(args[1], true);
+
+//         // 対象を生成
+//         // ※bindによってthisをメソッドに渡す。
+//         const targets = makeTargets.bind(this)(targetsId);
+//         // 対象が取得できなければ処理しない。
+//         if (targets.length == 0) {
+//             // 設定解除
+//             mBatchTargetsId = null;
+//             return;
+//         }
+
+//         // 一括指定用の対象を設定
+//         mBatchTargetsId = [];
+//         for (const target of targets) {
+//             mBatchTargetsId.push(getTargetId(target));
+//         }
+//     }
+// };
+
+/**
+ * ●移動ルートの指定
+ */
+const _Game_Interpreter_command205 = Game_Interpreter.prototype.command205;
+Game_Interpreter.prototype.command205 = function(params) {
+    // 一括指定が無効な場合
+    if (!mBatchTargetsId || mBatchTargetsId.length == 0) {
+        // 通常の処理を実行
+        return _Game_Interpreter_command205.apply(this, arguments);
+    }
+
+    // 一括指定が有効な場合
+    $gameMap.refreshIfNeeded();
+    // 対象毎に処理を実行
+    for (const targetId of mBatchTargetsId) {
+        params[0] = targetId;
+        _Game_Interpreter_command205.call(this, params);
+    }
+
+    // 自動解除するならクリア
+    if (mAutoRelease) {
+        mBatchTargetsId = [];
+    }
+
+    return true;
+};
+
+/**
+ * ●アニメーションを表示
+ */
+const _Game_Interpreter_command212 = Game_Interpreter.prototype.command212;
+Game_Interpreter.prototype.command212 = function(params) {
+    // 一括指定が無効な場合
+    if (!mBatchTargetsId || mBatchTargetsId.length == 0) {
+        // 通常の処理を実行
+        return _Game_Interpreter_command212.apply(this, arguments);
+    }
+
+    // 対象毎に処理を実行
+    for (const targetId of mBatchTargetsId) {
+        params[0] = targetId;
+        _Game_Interpreter_command212.call(this, params);
+    }
+
+    // 自動解除するならクリア
+    if (mAutoRelease) {
+        mBatchTargetsId = [];
+    }
+
+    return true;
+};
+
+/**
+ * ●フキダシアイコンの表示
+ */
+const _Game_Interpreter_command213 = Game_Interpreter.prototype.command213;
+Game_Interpreter.prototype.command213 = function(params) {
+    // 一括指定が無効な場合
+    if (!mBatchTargetsId || mBatchTargetsId.length == 0) {
+        // 通常の処理を実行
+        return _Game_Interpreter_command213.apply(this, arguments);
+    }
+
+    // 対象毎に処理を実行
+    for (const targetId of mBatchTargetsId) {
+        params[0] = targetId;
+        _Game_Interpreter_command213.call(this, params);
+    }
+
+    // 自動解除するならクリア
+    if (mAutoRelease) {
+        mBatchTargetsId = [];
+    }
+
+    return true;
+};
+
+//----------------------------------------
 // フォロワーの制御
 //----------------------------------------
 
@@ -352,9 +654,9 @@ PluginManager.registerCommand(PLUGIN_NAME, "StopFollow", function(args) {
 /**
  * ●【ＭＶ用プラグインコマンド】隊列歩行の追尾を停止
  */
-const _Game_Interpreter_pluginCommand2 = Game_Interpreter.prototype.pluginCommand;
+const _Game_Interpreter_pluginCommand3 = Game_Interpreter.prototype.pluginCommand;
 Game_Interpreter.prototype.pluginCommand = function(command, args) {
-    _Game_Interpreter_pluginCommand2.call(this, command, args);
+    _Game_Interpreter_pluginCommand3.call(this, command, args);
 
     // 小文字化してから判定
     const lowerCommand = command.toLowerCase();
