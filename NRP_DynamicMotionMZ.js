@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.161 When executing skills, call motion freely.
+ * @plugindesc v1.162 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -556,7 +556,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.161 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.162 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -1483,9 +1483,12 @@ BaseMotion.prototype.setContent = function (valueLine) {
  * ●基本項目の計算を行う。（処理前）
  */
 BaseMotion.prototype.calcBasicBefore = function (targets) {
+    // 本来の対象を保持しておく。
+    this.originalTargets = targets;
+
     // eval参照用
-    var a = this.getReferenceSubject();
-    var b = getReferenceBattler(targets[0]);
+    const a = this.referenceSubject;
+    const b = this.referenceTarget;
 
     var no = this.no;
     var dataA = this.dataA;
@@ -1647,6 +1650,8 @@ BaseMotion.prototype.evalTimingStr = function (arg) {
     const arrival = this.arrival;
     const interval = this.interval;
     const repeat = this.repeat;
+    const a = this.referenceSubject;
+    const b = this.referenceTarget;
 
     var isSync = false;
     // Syncの設定を読込（eval内で使用される）
@@ -1677,7 +1682,8 @@ BaseMotion.prototype.makeMotion = function (dataM, dataA, dynamicMotionList) {
     BattleManager._noUpdateTargetPosition = true;
 
     // eval参照用
-    var a = this.getReferenceSubject();
+    const a = this.getReferenceSubject();
+    this.referenceSubject = a;
 
     let targets = this.targets;
     // 対象がいなければとりあえず行動主体を設定
@@ -1686,7 +1692,9 @@ BaseMotion.prototype.makeMotion = function (dataM, dataA, dynamicMotionList) {
         targets = [this.getSubject()];
     }
 
-    var b = getReferenceBattler(targets[0]);
+    // この時点では対象未確定だが、とりあえず先頭を取得
+    const b = getReferenceBattler(targets[0]);
+    this.referenceTarget = b;
 
     // アニメーションとモーションで別のため、番号を取得する。
     var no = dataM.length;
@@ -1718,7 +1726,8 @@ BaseMotion.prototype.makeMotion = function (dataM, dataA, dynamicMotionList) {
     // リピート回数だけ実行（r = 現在のリピート回数）
     for (var r = 0; r < this.repeat; r++) {
         // リピートごとの動的アニメーション生成
-        this.makeRepeatMotion(dynamicMotionList, r);
+        this.r = r;
+        this.makeRepeatMotion(dynamicMotionList);
     }
 
     // 合計フレーム数をセットし、基本レートで割る。
@@ -1755,7 +1764,9 @@ function evalNumber(val) {
 /**
  * ●繰り返しモーションの生成
  */
-BaseMotion.prototype.makeRepeatMotion = function (dynamicMotionList, r) {
+BaseMotion.prototype.makeRepeatMotion = function (dynamicMotionList) {
+    const r = this.r;
+
     // eval用に定義
     var no = this.no;
     var dataM = this.dataM;
@@ -1799,28 +1810,27 @@ BaseMotion.prototype.makeRepeatMotion = function (dynamicMotionList, r) {
     }
 
     // 設定された対象を取得
-    var performers = this.performers;
+    const performers = this.performers;
 
     // 対象毎にモーションを繰り返すフラグ
-    var isEvery = eval(this.every);
+    const isEvery = eval(this.every);
 
     // 間隔×レート分のディレイを加算
     if (r > 0) {
         this.delaySum += this.list[r - 1].interval * rate;
     }
 
-    var delay = this.delaySum;
+    const delay = this.delaySum;
     // 対象ごとのディレイ値
     var targetDelay = delay;
     // この<D-Motion>内での集計用ディレイ
     let baseDelaySum = 0;
 
-    var dynamicMotion;
-
     // 対象リストから重複除去
-    const distinctTargets = this.targets.filter(function(target, i) {
-        return this.indexOf(target) == i;
-    }, this.targets);
+    const distinctTargets = Array.from(new Set(this.targets));
+
+    // 最後の一つを保持するため、ここで定義
+    let dynamicMotion;
 
     // モーション対象毎に繰り返し
     performers.forEach(function (performer, performerIndex) {
@@ -1828,7 +1838,7 @@ BaseMotion.prototype.makeRepeatMotion = function (dynamicMotionList, r) {
         if (isEvery) {
             this.targets.forEach(function (target, index) {
                 // Sprite_Battlerへと引き渡すパラメータを作成
-                dynamicMotion = this.createDynamicMotion(performer, target, r, targetDelay);
+                dynamicMotion = this.createDynamicMotion(performer, target, targetDelay);
                 dynamicMotion.performerNo = performerIndex;
                 dynamicMotion.targetNo = index;
 
@@ -1838,10 +1848,7 @@ BaseMotion.prototype.makeRepeatMotion = function (dynamicMotionList, r) {
                 }
 
                 // 対象のスプライトを設定
-                dynamicMotion.targetsSprite = distinctTargets.map(function(battler){
-                    return getBattlerSprite(battler);
-                });
-
+                dynamicMotion.targetsSprite = distinctTargets.map(battler => getBattlerSprite(battler));
                 // 参照用に保持しておく
                 this.list.push(dynamicMotion);
                 // モーション実行リストに追加
@@ -1851,7 +1858,7 @@ BaseMotion.prototype.makeRepeatMotion = function (dynamicMotionList, r) {
                 // ※最後の一回は除外
                 if (this.targets.length - 1 > index) {
                     // 対象毎の時間差
-                    var nextDelay = this.animationNextDelay;
+                    let nextDelay = this.animationNextDelay;
                     // nextDelayが設定されている場合
                     if (this.nextDelay) {
                         // autoの場合はモーションの長さを自動取得
@@ -1870,7 +1877,7 @@ BaseMotion.prototype.makeRepeatMotion = function (dynamicMotionList, r) {
         // その他
         } else {
             // Sprite_Battlerへと引き渡すパラメータを作成
-            dynamicMotion = this.createDynamicMotion(performer, this.targets[0], r, targetDelay);
+            dynamicMotion = this.createDynamicMotion(performer, this.targets[0], targetDelay);
             dynamicMotion.performerNo = performerIndex;
 
             // 条件を満たさなかった場合は処理不要
@@ -1879,10 +1886,7 @@ BaseMotion.prototype.makeRepeatMotion = function (dynamicMotionList, r) {
             }
 
             // 対象のスプライトを設定
-            dynamicMotion.targetsSprite = distinctTargets.map(function(battler){
-                return getBattlerSprite(battler);
-            });
-
+            dynamicMotion.targetsSprite = distinctTargets.map(battler => getBattlerSprite(battler));
             // 参照用に保持しておく
             this.list.push(dynamicMotion);
             // モーション実行リストに追加
@@ -1908,14 +1912,20 @@ BaseMotion.prototype.makeRepeatMotion = function (dynamicMotionList, r) {
     // 最後の１回ならモーション時間を保持
     if (r == this.repeat - 1) {
         this.delaySum = this.totalDuration;
+
+        // 要素が存在しない場合はウェイトなし
+        if (this.list.length == 0) {
+            this.baseDuration = 0;
+            this.wait = 0;
+        }
     }
 };
 
 /**
  * ●動的モーションデータを生成する。
  */
-BaseMotion.prototype.createDynamicMotion = function (performer, target, r, delay) {
-    var dynamicMotion = new DynamicMotion(this, performer, target, r);
+BaseMotion.prototype.createDynamicMotion = function(performer, target, delay) {
+    const dynamicMotion = new DynamicMotion(this, performer, target);
     dynamicMotion.targetDelay = delay;
 
     return dynamicMotion;
@@ -1924,7 +1934,7 @@ BaseMotion.prototype.createDynamicMotion = function (performer, target, r, delay
 /**
  * ●標準画面Ｘ座標取得
  */
-BaseMotion.prototype.getScreenX = function (b) {
+BaseMotion.prototype.getScreenX = function(b) {
     var screenX;
 
     // マップ上では画面中央
@@ -2059,18 +2069,20 @@ BaseMotion.prototype.getReferenceSubject = function () {
 /**
  * ●初期化処理
  */
-DynamicMotion.prototype.initialize = function (baseMotion, performer, target, r) {
+DynamicMotion.prototype.initialize = function (baseMotion, performer, target) {
+    const r = this.r;
+
     // eval参照用
-    var a = getReferenceBattler(performer);
-    var spriteA = getBattlerSprite(performer);
+    const a = getReferenceBattler(performer);
+    const spriteA = getBattlerSprite(performer);
     // モーションの対象ではなく、スキルの対象を取得
-    var b = getReferenceBattler(target);
-    var bm = baseMotion;
-    var dm = this;
+    const b = getReferenceBattler(target);
+    const bm = baseMotion;
+    const dm = this;
     // 常にスキルの使用者を参照（condition用）
     const subject = bm.getReferenceSubject();
 
-    var no = baseMotion.no;
+    const no = baseMotion.no;
     this.no = no;
 
     // 親情報への参照設定
@@ -2099,7 +2111,7 @@ DynamicMotion.prototype.initialize = function (baseMotion, performer, target, r)
      */
 
     // 条件が存在し、かつ満たさなければ次のループへ
-    var condition = baseMotion.condition;
+    const condition = baseMotion.condition;
     if (condition && !eval(condition)) {
         // 表示しない
         this.maxDuration = 0;
@@ -2517,6 +2529,12 @@ Sprite.prototype.startDynamicMotion = function(dynamicMotion) {
     if (!$gameParty.inBattle()) {
         dm.referenceSubject = getReferenceBattler(dynamicMotion.performer);
         dm.referenceTarget = getReferenceBattler(dynamicMotion.target);
+    }
+
+    // 対象が無効な場合は処理しない。
+    // ※外部プラグインによる操作を考慮
+    if (!dm.referenceSubject || !dm.referenceTarget) {
+        return;
     }
 
     // eval参照用

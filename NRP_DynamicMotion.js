@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.221 When executing skills, call motion freely.
+ * @plugindesc v1.222 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help When executing skills(items), call motion freely.
@@ -550,7 +550,7 @@
  */
 
 /*:ja
- * @plugindesc v1.221 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.222 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在にモーションを呼び出します。
@@ -1466,8 +1466,8 @@ BaseMotion.prototype.setContent = function (valueLine) {
  */
 BaseMotion.prototype.calcBasicBefore = function (targets) {
     // eval参照用
-    var a = getReferenceBattler(BattleManager._subject);
-    var b = getReferenceBattler(targets[0]);
+    const a = this.referenceSubject;
+    const b = this.referenceTarget;
 
     var no = this.no;
     var dataA = this.dataA;
@@ -1633,6 +1633,8 @@ BaseMotion.prototype.evalTimingStr = function (arg) {
     const arrival = this.arrival;
     const interval = this.interval;
     const repeat = this.repeat;
+    const a = this.referenceSubject;
+    const b = this.referenceTarget;
 
     var isSync = false;
     // Syncの設定を読込（eval内で使用される）
@@ -1663,7 +1665,8 @@ BaseMotion.prototype.makeMotion = function (dataM, dataA, dynamicMotionList) {
     BattleManager._noUpdateTargetPosition = true;
 
     // eval参照用
-    var a = this.getReferenceSubject();
+    const a = this.getReferenceSubject();
+    this.referenceSubject = a;
 
     let targets = this.targets;
     // 対象がいなければとりあえず行動主体を設定
@@ -1672,7 +1675,9 @@ BaseMotion.prototype.makeMotion = function (dataM, dataA, dynamicMotionList) {
         targets = [this.getSubject()];
     }
 
-    var b = getReferenceBattler(targets[0]);
+    // この時点では対象未確定だが、とりあえず先頭を取得
+    const b = getReferenceBattler(targets[0]);
+    this.referenceTarget = b;
 
     // アニメーションとモーションで別のため、番号を取得する。
     var no = dataM.length;
@@ -1871,6 +1876,12 @@ BaseMotion.prototype.makeRepeatMotion = function (dynamicMotionList, r) {
     // 最後の１回ならモーション時間を保持
     if (r == this.repeat - 1) {
         this.delaySum = this.totalDuration;
+
+        // 要素が存在しない場合はウェイトなし
+        if (this.list.length == 0) {
+            this.baseDuration = 0;
+            this.wait = 0;
+        }
     }
 };
 

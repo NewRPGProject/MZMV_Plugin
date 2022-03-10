@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.18 Automate & super-enhance battle animations.
+ * @plugindesc v1.181 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -496,7 +496,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.18 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.181 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -1762,9 +1762,12 @@ BaseAnimation.prototype.setContent = function (valueLine) {
  * ●基本項目の計算を行う。（処理前）
  */
 BaseAnimation.prototype.calcBasicBefore = function (targets) {
+    // 本来の対象を保持しておく。
+    this.originalTargets = targets;
+
     // eval参照用
-    var a = this.getReferenceSubject()
-    var b = getReferenceBattler(targets[0]);
+    const a = this.referenceSubject;
+    const b = this.referenceTarget;
 
     var no = this.no;
     var dataA = this.dataA;
@@ -1801,7 +1804,7 @@ BaseAnimation.prototype.calcBasicBefore = function (targets) {
         changeTarget.forEach(function(t) {
             // Spriteの場合
             if (t.spriteId != undefined) {
-                if ($gameParty.inBattle()) {
+                if (inBattle()) {
                     this.targets.push(t._battler);
                 } else {
                     this.targets.push(t._character);
@@ -1870,7 +1873,9 @@ BaseAnimation.prototype.evalTimingStr = function (arg) {
     const arrival = this.arrival;
     const interval = this.interval;
     const repeat = this.repeat;
-    
+    const a = this.referenceSubject;
+    const b = this.referenceTarget;
+
     var isSync = false;
     // Syncの設定を読込
     if (this.action.existDynamicSetting("Sync")) {
@@ -1946,7 +1951,7 @@ BaseAnimation.prototype.makeAnimation = function (dataA, mirror, dynamicAnimatio
     this.delaySum = this.animationBaseDelay + this.calcDelay * basicRate;
 
     // リピート回数だけ実行（r = 現在のリピート回数）
-    for (var r = 0; r < this.repeat; r++) {
+    for (let r = 0; r < this.repeat; r++) {
         // リピートごとにevalする。
         const id = eval(this.id);
         // アニメーションを取得
@@ -1954,7 +1959,8 @@ BaseAnimation.prototype.makeAnimation = function (dataA, mirror, dynamicAnimatio
 
         if (animation) {
             // リピートごとの動的アニメーション生成
-            this.makeRepeatAnimation(dynamicAnimationList, r, animation, targets);
+            this.r = r;
+            this.makeRepeatAnimation(dynamicAnimationList, animation);
 
             // アニメーションリストに追加
             if (animationList.indexOf(animation) < 0) {
@@ -2049,14 +2055,16 @@ function evalNumber(val) {
 /**
  * ●繰り返しアニメーションの生成
  */
-BaseAnimation.prototype.makeRepeatAnimation = function (dynamicAnimationList, r, animation, originalTargets) {
+BaseAnimation.prototype.makeRepeatAnimation = function(dynamicAnimationList, animation) {
+    const r = this.r;
+
     // eval用に定義
-    var no = this.no;
-    var dataA = this.dataA;
-    var repeat = this.repeat;
+    const no = this.no;
+    const dataA = this.dataA;
+    const repeat = this.repeat;
 
     //【MZ対応】
-    var spriteAnimation = getSpriteAnimation(this.mv, animation);
+    const spriteAnimation = getSpriteAnimation(this.mv, animation);
     // アニメーションに設定されているrateを取得
     // ※フレームレート変更系プラグインを考慮
     spriteAnimation._animation = animation;
@@ -2067,25 +2075,12 @@ BaseAnimation.prototype.makeRepeatAnimation = function (dynamicAnimationList, r,
         rate = eval(this.rate);
         spriteAnimation._rate = rate;
     }
-
     // アニメーションの継続時間を取得
     spriteAnimation.setupDuration();
-    // MZの場合のみ
-    if (!this.mv) {
-        // アニメーションの終了待ちを行うフラグ
-        // MZではEffekseerのエフェクトの終了タイミングが不定のため、
-        // 実際にエフェクトを見て終了を判定している。
-        // ※MVでは正確な終了フレームが分かるため、この処理は不要。
-        // ※このフラグが立っていても必ずしも終了待ちをするとは限らない。
-        // 　あくまで、durationよりもアニメーションの長さを優先するという意味。
-        this.isAnimationEndWait = true;
+    this.spriteAnimation = spriteAnimation;
 
-        // 並列実行時はウェイト対象にしない
-        // そうしないとメインループが止まる！
-        if (this.mapAnimation && this.mapAnimation.isParallel) {
-            this.isAnimationEndWait = false;
-        }
-    }
+    // ＭＺアニメーションの終了待ちを行うフラグを設定
+    this.setAnimationEndWait();
     
     // アニメーション位置の取得
     var position = animation.position;
@@ -2107,10 +2102,11 @@ BaseAnimation.prototype.makeRepeatAnimation = function (dynamicAnimationList, r,
     this.displayType = animation.displayType;
 
     // 設定された対象を取得
-    var targets = this.targets;
+    const targets = this.targets;
 
     // 間隔
-    var interval = eval(this.interval);
+    const interval = eval(this.interval);
+    this.interval = interval;
     // 間隔×レート分のディレイを加算
     if (r > 0) {
         this.delaySum += interval * rate;
@@ -2126,25 +2122,17 @@ BaseAnimation.prototype.makeRepeatAnimation = function (dynamicAnimationList, r,
     // ※一括で表示を行う
     if (position === 3) {
         // 重複ターゲットを削除して再作成
-        var distinctTargets = targets.filter(function(target, i) {
-            return targets.indexOf(target) == i;
-        });
+        const distinctTargets = Array.from(new Set(targets));
         this.distinctTargets = distinctTargets;
 
-        for (let i = 0; i < distinctTargets.length; i++) {
-            const target = distinctTargets[i];
-
-            // Sprite_Animationへと引き渡すパラメータ
-            var dynamicAnimation = [];
-
+        for (const target of distinctTargets) {
             // 条件を満たさない場合はアニメ非表示
-            if (!this.isAnimationDisp(i, target, targets, originalTargets)) {
+            if (!this.isAnimationDisp(target, targets)) {
                 continue;
             }
 
             // Sprite_Animationへと引き渡すパラメータを作成
-            dynamicAnimation = this.createDynamicAnimation(
-                target, r, spriteAnimation, interval, delay, dynamicAnimationList);
+            const dynamicAnimation = this.createDynamicAnimation(target, delay, dynamicAnimationList);
 
             // 非表示、フラッシュなし、効果音なし、ダメージなし、最終リピートではない
             // 全てを満たす場合は意味がないので不要
@@ -2161,17 +2149,17 @@ BaseAnimation.prototype.makeRepeatAnimation = function (dynamicAnimationList, r,
     // 通常アニメーション（対象ごとに表示を行う）
     } else {
         // 対象ごとの時間差
-        var nextDelay = this.animationNextDelay;
+        let nextDelay = this.animationNextDelay;
         if (this.nextDelay) {
             // アニメーションフレーム単位なので補正する。
             nextDelay = eval(this.nextDelay) * rate;
         }
 
         // 対象ごとにループ
-        targets.forEach(function (target, index) {
+        let index = 0;
+        for (const target of targets) {
             // Sprite_Animationへと引き渡すパラメータを作成
-            var dynamicAnimation = this.createDynamicAnimation(
-                    target, r, spriteAnimation, interval, targetDelay, dynamicAnimationList);
+            const dynamicAnimation = this.createDynamicAnimation(target, targetDelay, dynamicAnimationList);
 
             // 対象番号を保持しておく
             dynamicAnimation.targetNo = index;
@@ -2198,7 +2186,10 @@ BaseAnimation.prototype.makeRepeatAnimation = function (dynamicAnimationList, r,
                 targetDelay += nextDelay;
                 baseDelaySum += nextDelay;
             }
-        }, this);
+
+            // 次へ
+            index++;
+        }
     }
 
     // 実行時間の最大長を求める。（スキル開始からの総合計）
@@ -2218,19 +2209,47 @@ BaseAnimation.prototype.makeRepeatAnimation = function (dynamicAnimationList, r,
         } else {
             this.delaySum = this.totalDuration;
         }
+
+        // 要素が存在しない場合はウェイトなし
+        if (this.list.length == 0) {
+            this.baseDuration = 0;
+            this.wait = 0;
+        }
+    }
+};
+
+/**
+ * ●ＭＺアニメーションの終了待ちを行うフラグを設定
+ */
+BaseAnimation.prototype.setAnimationEndWait = function () {
+    // MZの場合のみ
+    if (!this.mv) {
+        // アニメーションの終了待ちを行うフラグ
+        // MZではEffekseerのエフェクトの終了タイミングが不定のため、
+        // 実際にエフェクトを見て終了を判定している。
+        // ※MVでは正確な終了フレームが分かるため、この処理は不要。
+        // ※このフラグが立っていても必ずしも終了待ちをするとは限らない。
+        // 　あくまで、durationよりもアニメーションの長さを優先するという意味。
+        this.isAnimationEndWait = true;
+
+        // 並列実行時はウェイト対象にしない
+        // そうしないとメインループが止まる！
+        if (this.mapAnimation && this.mapAnimation.isParallel) {
+            this.isAnimationEndWait = false;
+        }
     }
 };
 
 /**
  * ●アニメーションを表示するかどうかの判定
  */
-BaseAnimation.prototype.isAnimationDisp = function (i, target, targets, originalTargets) {
+BaseAnimation.prototype.isAnimationDisp = function(target, targets) {
     // マップ起動時は無関係なので無視
     if (!this.mapAnimation) {
         // 範囲拡張プラグインとの連携用
         // 主対象が設定されていて、かつ範囲変更がされていない場合
         // 特殊な範囲技と判定
-        if (BattleManager._mainTarget && targets == originalTargets) {
+        if (BattleManager._mainTarget && targets == this.originalTargets) {
             // 主対象以外はアニメを表示しない
             if (target == BattleManager._mainTarget) {
                 return true;
@@ -2240,7 +2259,7 @@ BaseAnimation.prototype.isAnimationDisp = function (i, target, targets, original
     }
 
     // 通常時は最初の一人のみアニメを表示
-    if (i == 0) {
+    if (target == targets[0]) {
         return true;
     }
 
@@ -2250,18 +2269,15 @@ BaseAnimation.prototype.isAnimationDisp = function (i, target, targets, original
 /**
  * ●動的アニメーションデータを生成する。
  */
-BaseAnimation.prototype.createDynamicAnimation = function (
-    target, r, spriteAnimation, interval, delay, dynamicAnimationList) {
-    var dynamicAnimation = new DynamicAnimation(this, target, r, spriteAnimation, interval);
+BaseAnimation.prototype.createDynamicAnimation = function (target, delay, dynamicAnimationList) {
+    const dynamicAnimation = new DynamicAnimation(this, target);
     dynamicAnimation.mirror = this.mirror;
     dynamicAnimation.targetDelay = delay;
 
     // 一括表示
     if (this.position == 3) {
         // フラッシュ用の対象（バトラーをスプライトに変換）
-        dynamicAnimation.targetsSprite = this.distinctTargets.map(function(battler){
-            return getBattlerSprite(battler);
-        });
+        dynamicAnimation.targetsSprite = this.distinctTargets.map(battler => getBattlerSprite(battler));
     // 個別表示
     } else {
         // フラッシュ用の対象（バトラーをスプライトに変換）
@@ -2269,12 +2285,12 @@ BaseAnimation.prototype.createDynamicAnimation = function (
     }
 
     // ダメージ用データの作成
-    dynamicAnimation.makeDamageData(this, dynamicAnimationList, delay, spriteAnimation);
+    dynamicAnimation.makeDamageData(this, dynamicAnimationList, delay);
     // 残像の作成
-    dynamicAnimation.makeAfterimage(this, dynamicAnimationList, spriteAnimation);
+    dynamicAnimation.makeAfterimage(this, dynamicAnimationList);
 
     // 最終リピートの場合
-    if (r == this.repeat - 1) {
+    if (this.r == this.repeat - 1) {
         dynamicAnimation.isLastRepeat = true;
         // 最終エフェクトを待つためにフラグオン
         if (this.position == 3) {
@@ -2282,43 +2298,6 @@ BaseAnimation.prototype.createDynamicAnimation = function (
         // 個別表示の場合は最終ターゲットだけ
         } else if (this.targets[this.targets.length - 1] == target) {
             dynamicAnimation.isLastEffect = true;
-        }
-    }
-
-    return dynamicAnimation;
-};
-
-/**
-* ●動的アニメーションデータを生成する。
-* ※こちらはアニメーション非表示版
-*/
-BaseAnimation.prototype.createDynamicAnimationHidden = function (target, delay, r, spriteAnimation, interval) {
-    var no = this.no;
-    var dataA = this.dataA;
-    this.r = r;
-
-    // DynamicAnimationを作成（値はほぼ空で問題ない）
-    var dynamicAnimation = new DynamicAnimation(this, target, r, spriteAnimation, interval);
-
-    dynamicAnimation.dispAnimation = false;
-    dynamicAnimation.isLimitSound = true;
-    dynamicAnimation.targetDelay = delay;
-    dynamicAnimation.id = spriteAnimation._animation.id;
-
-    // フラッシュ制限フラグがオフの場合
-    if (!dynamicAnimation.isLimitFlash) {
-        // 対象のフラッシュデータの有無を確認
-        // MV用
-        if (this.mv) {
-            dynamicAnimation.isLimitFlash = spriteAnimation._animation.timings.every(function(timing) {
-                return timing.flashScope != 1;
-            });
-        // MZ用
-        } else {
-            // 1:対象のフラッシュが一つも存在しないなら、フラッシュ制限フラグを立てる。
-            dynamicAnimation.isLimitFlash = !spriteAnimation._animation.flashTimings.some(function(timing) {
-                return timing;
-            });
         }
     }
 
@@ -2354,7 +2333,7 @@ BaseAnimation.prototype.getScreenX = function (b) {
     var screenX;
 
     // マップ上では対象の座標
-    if (!$gameParty.inBattle()) {
+    if (!inBattle()) {
         screenX = b.x;
 
     // アクターが対象の場合、左右位置反転
@@ -2379,7 +2358,7 @@ BaseAnimation.prototype.getScreenY = function (b) {
     var screenY = this.defaultScreenY;
     
     // マップ上では対象の座標
-    if (!$gameParty.inBattle()) {
+    if (!inBattle()) {
         // グリッド中央を取得するよう調整
         screenY = b.y - $gameMap.tileHeight() / 2;
 
@@ -2490,7 +2469,11 @@ BaseAnimation.prototype.getReferenceSubject = function () {
 /**
  * ●初期化処理
  */
-DynamicAnimation.prototype.initialize = function(baseAnimation, target, r, spriteAnimation, interval) {
+DynamicAnimation.prototype.initialize = function(baseAnimation, target) {
+    const r = baseAnimation.r;
+    const interval = baseAnimation.interval;
+    const spriteAnimation = baseAnimation.spriteAnimation;
+
     this.referenceSubject = baseAnimation.getReferenceSubject();
     this.referenceTarget = getReferenceBattler(target);
     
@@ -2523,7 +2506,7 @@ DynamicAnimation.prototype.initialize = function(baseAnimation, target, r, sprit
      */
 
     // 条件が存在し、かつ満たさなければ次のループへ
-    var condition = baseAnimation.condition;
+    const condition = baseAnimation.condition;
     if (condition && !eval(condition)) {
         // 表示しない
         this.frame = 0;
@@ -2611,9 +2594,15 @@ DynamicAnimation.prototype.evaluate = function (spriteAnimation) {
 
     // マップ時になぜかエラーになるパターンがあるので再取得
     // 参照スプライトが変質している？
-    if (!$gameParty.inBattle()) {
+    if (!inBattle()) {
         this.referenceSubject = baseAnimation.getReferenceSubject();
         this.referenceTarget = getReferenceBattler(this.target);
+    }
+
+    // 対象が無効な場合は処理しない。
+    // ※外部プラグインによる操作を考慮
+    if (!this.referenceSubject || !this.referenceTarget) {
+        return;
     }
 
     var a = this.referenceSubject;
@@ -3008,13 +2997,13 @@ DynamicAnimation.prototype.setLimitEffect = function (baseAnimation) {
 /**
  * ●残像の作成
  */
-DynamicAnimation.prototype.makeAfterimage = function (baseAnimation, dynamicAnimationList, spriteAnimation) {
+DynamicAnimation.prototype.makeAfterimage = function (baseAnimation, dynamicAnimationList) {
     // 残像の作成
     const afterimage = this.afterimage;
     // 設定数分ループ
     for (var i = 0; i < afterimage; i++) {
         // DynamicAnimationを作成（値はほぼ空で問題ない）
-        const afterimageData = new DynamicAnimation(baseAnimation, this.target, this.r, spriteAnimation, null);
+        const afterimageData = new DynamicAnimation(baseAnimation, this.target);
         // 本体をコピー
         afterimageData.setProperties(this);
         // 親への参照
@@ -3040,7 +3029,7 @@ DynamicAnimation.prototype.makeAfterimage = function (baseAnimation, dynamicAnim
 /**
  * ●ダメージ処理用データの作成
  */
-DynamicAnimation.prototype.makeDamageData = function (baseAnimation, dynamicAnimationList, delay, spriteAnimation) {
+DynamicAnimation.prototype.makeDamageData = function (baseAnimation, dynamicAnimationList, delay) {
     // 単体ダメージか全体ダメージのいずれか
     if (this.damage === undefined && this.damageAll === undefined) {
         return;
@@ -3049,8 +3038,10 @@ DynamicAnimation.prototype.makeDamageData = function (baseAnimation, dynamicAnim
         return;
     }
 
+    const spriteAnimation = baseAnimation.spriteAnimation;
+
     // ダメージ用のDynamicAnimationを作成（値はほぼ空で問題ない）
-    var damageData = new DynamicAnimation(baseAnimation, this.target, this.r, spriteAnimation, null);
+    var damageData = new DynamicAnimation(baseAnimation, this.target);
     // ダメージ表示フラグをオン
     damageData.afterDamage = true;
     // 各種演出を行わない。
@@ -4280,7 +4271,7 @@ function getReferenceBattler(battler) {
     // マップ中はスプライトを取得
     // ※Game_Characterのx,yはグリッド座標になってしまうため、
     //   画面座標を参照できるスプライトを参照する。
-    if (!$gameParty.inBattle()) {
+    if (!inBattle()) {
         return getBattlerSprite(battler);
     }
     // バトラー取得
@@ -4298,13 +4289,13 @@ function getBattlerSprite(battler) {
     var sprites;
     const spriteset = getSpriteset();
 
-    // マップ上ではキャラクタースプライトを返す。
-    if (!$gameParty.inBattle()) {
-        sprites = spriteset._characterSprites;
-
     // 戦闘中はバトラースプライトを返す。
-    } else  {
+    if (inBattle()) {
         sprites = spriteset.battlerSprites();
+
+    // マップ上ではキャラクタースプライトを返す。
+    } else {
+        sprites = spriteset._characterSprites;
     }
 
     // 一致があれば返す
@@ -4402,13 +4393,19 @@ Spriteset_Battle.prototype.characterSprites = function() {
  * ●現在の画面のSpritesetを取得する。
  */
 function getSpriteset() {
-    // 戦闘
-    if ($gameParty.inBattle()) {
-        return BattleManager._spriteset;
-    // マップ
-    } else {
-        return SceneManager._scene._spriteset;
+    return SceneManager._scene._spriteset;
+}
+
+/**
+ * ●戦闘中かどうかの判定。
+ */
+function inBattle() {
+    const spriteset = getSpriteset();
+    // 戦闘用のスプライトを取得できるかどうかで判定
+    if (spriteset.battlerSprites) {
+        return true;
     }
+    return false;
 }
 
 //-----------------------------------------------
@@ -4422,7 +4419,7 @@ function getSpriteset() {
  */
 BattleManager.dynamicDamageControl = function(dynamicAction) {
     // 戦闘中以外は処理しない
-    if (!$gameParty.inBattle()) {
+    if (!inBattle()) {
         return;
     }
 
@@ -4505,9 +4502,7 @@ BattleManager.isDynamicCallDamage = function(dynamicAction) {
 
     // 範囲に従ってダメージ処理
     // 重複ターゲットを削除して再作成
-    const distinctTargets = targets.filter(function(target, i) {
-        return targets.indexOf(target) == i;
-    });
+    const distinctTargets = Array.from(new Set(targets));
 
     // 対象の人数分実行
     for (const target of distinctTargets) {

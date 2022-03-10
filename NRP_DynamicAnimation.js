@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.251 Automate & super-enhance battle animations.
+ * @plugindesc v1.252 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help Call battle animations freely from skills (items).
@@ -458,7 +458,7 @@
  */
 
 /*:ja
- * @plugindesc v1.251 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.252 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在に戦闘アニメーションを呼び出します。
@@ -1657,8 +1657,8 @@ BaseAnimation.prototype.setContent = function (valueLine) {
  */
 BaseAnimation.prototype.calcBasicBefore = function (targets) {
     // eval参照用
-    var a = this.getReferenceSubject()
-    var b = getReferenceBattler(targets[0]);
+    const a = this.referenceSubject;
+    const b = this.referenceTarget;
 
     var no = this.no;
     var dataA = this.dataA;
@@ -1775,7 +1775,9 @@ BaseAnimation.prototype.evalTimingStr = function (arg) {
     const arrival = this.arrival;
     const interval = this.interval;
     const repeat = this.repeat;
-    
+    const a = this.referenceSubject;
+    const b = this.referenceTarget;
+
     var isSync = false;
     // Syncの設定を読込
     if (this.action.existDynamicSetting("Sync")) {
@@ -2052,6 +2054,12 @@ BaseAnimation.prototype.makeRepeatAnimation = function (dynamicAnimationList, r,
     // 最後の１回ならアニメーション時間を保持
     if (r == this.repeat - 1) {
         this.delaySum = this.totalDuration;
+
+        // 要素が存在しない場合はウェイトなし
+        if (this.list.length == 0) {
+            this.baseDuration = 0;
+            this.wait = 0;
+        }
     }
 };
 
