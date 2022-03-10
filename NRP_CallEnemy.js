@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Implement the "Call Enemy" function.
+ * @plugindesc v1.001 Implement the "Call Enemy" function.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_TroopRandomFormation
  * @url http://newrpg.seesaa.net/article/485838070.html
@@ -144,7 +144,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 敵キャラの『仲間を呼ぶ』を実装します。
+ * @plugindesc v1.001 敵キャラの『仲間を呼ぶ』を実装します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_TroopRandomFormation
  * @url http://newrpg.seesaa.net/article/485838070.html
@@ -565,6 +565,14 @@ Spriteset_Battle.prototype.refreshEnemies = function() {
         this._battleField.removeChild(sprite);
     }
     this.createEnemies();
+
+    // サイズが設定されていない場合は一度更新する。
+    // ※ＭＶの場合に発生する模様
+    for (const sprite of this._enemySprites) {
+        if (!sprite.width) {
+            sprite.updateBitmap();
+        }
+    }
 };
 
 //-----------------------------------------------------------------------------
@@ -654,37 +662,12 @@ function makeAction(itemId, battleSubject, isItem) {
 }
 
 /**
- * 指定したバトラーのスプライトを取得する。
+ * ●指定したバトラーのスプライトを取得する。
  */
 function getBattlerSprite(battler) {
-    if (!battler || !BattleManager._spriteset) {
-        return undefined;
-    }
-
-    let sprite;
-
-    const actorSprites = BattleManager._spriteset._actorSprites;
-    const enemySprites = BattleManager._spriteset._enemySprites;
-
-    if (battler.isActor()) {
-        for (var i = 0; i < actorSprites.length; i++) {
-            var s = actorSprites[i];
-            if (s._battler == battler) {
-                sprite = s;
-                break;
-            }
-        }
-    } else {
-        for (var i = 0; i < enemySprites.length; i++) {
-            var s = enemySprites[i];
-            if (s._battler == battler) {
-                sprite = s;
-                break;
-            }
-        }
-    }
-
-    return sprite;
+    const spriteset = BattleManager._spriteset;
+    // 一致するスプライトを返す
+    return spriteset.battlerSprites().find(s => s._battler == battler);
 }
 
 })();
