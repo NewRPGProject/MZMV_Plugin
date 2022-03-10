@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.06 Place enemy groups automatically and randomly.
+ * @plugindesc v1.07 Place enemy groups automatically and randomly.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475049887.html
  *
@@ -169,7 +169,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.06 敵グループを自動でランダム配置します。
+ * @plugindesc v1.07 敵グループを自動でランダム配置します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475049887.html
  *
@@ -894,26 +894,26 @@ function makeDistanceData(target, x, y, sprites, bestDistance) {
  * @param {*} b 比較対象となる敵キャラ
  */
 function getDistanceValue(a, b) {
-    var distanceValue = 0;
+    let distanceValue = 0;
 
     // 中央座標を求める
-    var ax = a.x;
-    var aCenterY = a.y - a.height/2;
-    var bx = b.x;
-    var bCenterY = b.y - b.height/2;
+    const ax = a.x;
+    const aCenterY = a.y - a.height/2;
+    const bx = b.x;
+    const bCenterY = b.y - b.height/2;
 
     // 中心同士の距離を計算
-    var distanceCenterX = Math.abs(ax - bx);
-    var distanceCenterY = Math.abs(aCenterY - bCenterY);
+    const distanceCenterX = Math.abs(ax - bx);
+    const distanceCenterY = Math.abs(aCenterY - bCenterY);
 
     // 横幅・縦幅を考慮した距離
-    var distanceX = distanceCenterX - (a.width + b.width) / 2;
-    var distanceY = distanceCenterY - (a.height + b.height) / 2;
+    const distanceX = distanceCenterX - (a.width + b.width) / 2;
+    const distanceY = distanceCenterY - (a.height + b.height) / 2;
 
     // 両方がマイナスなら重なっている
     if (distanceX < 0 && distanceY < 0) {
-        var aHeadY = a.y - a.height;
-        var bHeadY = b.y - b.height;
+        const aHeadY = a.y - a.height;
+        const bHeadY = b.y - b.height;
 
         // 比較的自然に重なっているパターン
         // ■aの上半分が隠れていない場合
@@ -927,8 +927,8 @@ function getDistanceValue(a, b) {
         // 不自然な重なり方をしているパターン
         } else {
             // 極力選ばないようにするため、-10000のペナルティ
-            // またＹ座標差を/10して、Ｙ座標の変化を優遇する。
-            distanceValue = distanceX + distanceY/10 - 10000;
+            // またＹ座標差を*10して、Ｙ座標の変化を優遇する。
+            distanceValue = distanceX + distanceY*10 - 10000;
         }
 
     // それ以外は重なっていない
