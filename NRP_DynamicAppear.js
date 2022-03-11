@@ -91,12 +91,12 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 戦闘開始時の登場演出を実装します。
+ * @plugindesc v1.00 戦闘開始時に登場演出を実行します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @url http://newrpg.seesaa.net/article/485942538.html
  *
- * @help 戦闘開始時にバトラーの登場演出を実装します。
+ * @help 戦闘開始時にバトラーの登場演出を実行します。
  * 演出はDynamicAnimation&Motionプラグインによって作成します。
  * 
  * 必然的に以下のプラグインが必須です。
