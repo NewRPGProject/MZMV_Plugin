@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.04 Resolved conflict with GALV_LayerGraphicsMZ & added functions.
+ * @plugindesc v1.041 Resolved conflict with GALV_LayerGraphicsMZ & added functions.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base GALV_LayerGraphicsMZ
  * @orderAfter GALV_LayerGraphicsMZ
@@ -60,7 +60,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.04 GALV_LayerGraphicsMZとの競合を解消＆機能追加
+ * @plugindesc v1.041 GALV_LayerGraphicsMZとの競合を解消＆機能追加
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base GALV_LayerGraphicsMZ
  * @orderAfter GALV_LayerGraphicsMZ
@@ -299,13 +299,33 @@ if (pForDynamicMotion && isDynamicMotionMZ) {
     const parametersDm = PluginManager.parameters(PLUGIN_NAME_DYNAMIC_MOTION);
     const pBattlerZ = toNumber(parametersDm["battlerZ"], 3);
 
+    /**
+     * ●アクタースプライトの作成
+     * ※アクターに限定した処理ではないが、
+     * 　createLowerLayerの末尾なので、ここに記述する。
+     */
+    const _Spriteset_Battle_createActors = Spriteset_Battle.prototype.createActors;
+    Spriteset_Battle.prototype.createActors = function() {
+        _Spriteset_Battle_createActors.apply(this, arguments);
+
+        // 書き換え前のＺ座標を保持
+        for (const child of this._battleField.children) {
+            child._oldZ = child.z;
+        };
+    };
+
+    /**
+     * ●下層スプライトの作成
+     */
     const _Spriteset_Battle_createLowerLayer = Spriteset_Battle.prototype.createLowerLayer;
     Spriteset_Battle.prototype.createLowerLayer = function() {
         _Spriteset_Battle_createLowerLayer.apply(this, arguments);
 
         // Ｚ座標の書き換えを戻す。
-        for (let i = 0; i < this._battleField.children.length; i++) {
-            this._battleField.children[i].z = pBattlerZ;
+        for (const child of this._battleField.children) {
+            // child.z = pBattlerZ;
+            child.z = child._oldZ;
+            child._oldZ = undefined;
         };
     };
 }
