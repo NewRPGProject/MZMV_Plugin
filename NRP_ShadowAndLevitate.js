@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.04 Setting the battler's shadow & adding the levitation effect
+ * @plugindesc v1.05 Setting the battler's shadow & adding the levitation effect
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base animatedSVEnemies
  * @base NRP_DynamicMotionMZ
@@ -255,11 +255,16 @@
  * @type boolean
  * @default true
  * @desc Randomize the height at the start of floating and make it naturally uneven.
+ * 
+ * @param TransparencyJumpHeight
+ * @type number
+ * @default 500
+ * @desc When the jump height reaches the specified value, the shadow becomes transparent. Invalid if blank.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 バトラーの影を設定＆浮遊効果の追加
+ * @plugindesc v1.05 バトラーの影を設定＆浮遊効果の追加
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @orderAfter animatedSVEnemies
  * @orderAfter NRP_DynamicMotionMZ
@@ -526,6 +531,13 @@
  * @type boolean
  * @default true
  * @desc 浮遊開始時の高さをランダム化し、自然にバラつかせます。
+ * 
+ * @param TransparencyJumpHeight
+ * @text 透明化するジャンプ高度
+ * @type number
+ * @default 500
+ * @desc ジャンプ中に影の透明度を上昇させます。
+ * 指定値は完全に透明化する高度です。空白なら無効。
  */
 
 (function() {
@@ -603,6 +615,7 @@ const pActorFloatAmplitude = setDefault(parameters["ActorFloatAmplitude"], "5");
 const pActorFloatPeriodicTime = setDefault(parameters["ActorFloatPeriodicTime"], "120");
 // 共通
 const pRandomStartFloatHeight = toBoolean(parameters["RandomStartFloatHeight"], true);
+const pTransparencyJumpHeight = toNumber(parameters["TransparencyJumpHeight"]);
 
 // DynamicMotionのパラメータ
 const dMotionParams = getDynamicMotionParameters();
@@ -752,6 +765,15 @@ Sprite_Enemy.prototype.updateShadow = function() {
     if (this.updateDynamicShadow) {
         this.updateDynamicShadow();
     }
+
+    // 不透明度
+    // ※透明度が可変の場合のみ更新
+    if (pTransparencyJumpHeight) {
+        const shadowOpacity = getOpacity(this, meta.ShadowOpacity);
+        if (shadowOpacity != undefined) {
+            this._shadowSprite.opacity = shadowOpacity;
+        }
+    }
 };
 
 //--------------------------------------------------------
@@ -823,6 +845,16 @@ Sprite_Actor.prototype.updateShadow = function() {
     }
 
     _Sprite_Actor_updateShadow.apply(this, arguments);
+
+    // 不透明度
+    // ※透明度が可変の場合のみ更新
+    if (pTransparencyJumpHeight && this._battler) {
+        const meta  = this._battler.actor().meta;
+        const shadowOpacity = getOpacity(this, meta.ShadowOpacity);
+        if (shadowOpacity != undefined) {
+            this._shadowSprite.opacity = shadowOpacity;
+        }
+    }
 };
 
 //--------------------------------------------------------
@@ -976,14 +1008,34 @@ function getOpacity(sprite, metaOpacity) {
     const a = getMainSprite(sprite);
     const isActor = isUseActorSetting(sprite);
 
+    let opacity;
     if (metaOpacity) {
-        return eval(metaOpacity);
+        opacity = eval(metaOpacity);
     } else if (isActor && pActorShadowOpacity) {
-        return eval(pActorShadowOpacity);
+        opacity = eval(pActorShadowOpacity);
     } else if (!isActor && pEnemyShadowOpacity) {
-        return eval(pEnemyShadowOpacity);
+        opacity = eval(pEnemyShadowOpacity);
     }
-    return undefined;
+
+    // ジャンプ中は影を薄く
+    const jumpHeight = getJumpHeight(sprite);
+    opacity = opacity * (1 - Math.min(jumpHeight / 500, 1));
+
+    return opacity;
+}
+
+/**
+ * ●ジャンプの高さを取得
+ */
+function getJumpHeight(sprite) {
+    if (sprite.jumpHeight) {
+        return sprite.jumpHeight();
+
+    // DynamicMotion用
+    } else if (sprite._airY != null) {
+        return sprite._airY * -1;
+    }
+    return 0;
 }
 
 /**
@@ -1190,7 +1242,9 @@ Game_BattlerBase.prototype.addNewState = function(stateId) {
     if (state.meta.BattlerFloat != undefined) {
         const sprite = getBattlerSprite(this);
         // 影を未設定にして初期化
-        sprite._isSetShadow = false;
+        if (sprite) {
+            sprite._isSetShadow = false;
+        }
     }
 };
 
