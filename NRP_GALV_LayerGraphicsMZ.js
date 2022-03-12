@@ -290,15 +290,11 @@ Sprite_LayerGraphic.prototype.update = function() {
 //--------------------------------------------------------
 // DynamicMotion向け
 //--------------------------------------------------------
-const PLUGIN_NAME_DYNAMIC_MOTION = "NRP_DynamicMotionMZ";
 const isDynamicMotionMZ = PluginManager._scripts.some(function(scriptName) {
     return scriptName == "NRP_DynamicMotionMZ";
 });
 
 if (pForDynamicMotion && isDynamicMotionMZ) {
-    const parametersDm = PluginManager.parameters(PLUGIN_NAME_DYNAMIC_MOTION);
-    const pBattlerZ = toNumber(parametersDm["battlerZ"], 3);
-
     /**
      * ●アクタースプライトの作成
      * ※アクターに限定した処理ではないが、
