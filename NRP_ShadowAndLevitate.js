@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.05 Setting the battler's shadow & adding the levitation effect
+ * @plugindesc v1.06 Setting the battler's shadow & adding the levitation effect
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base animatedSVEnemies
  * @base NRP_DynamicMotionMZ
@@ -264,7 +264,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.05 バトラーの影を設定＆浮遊効果の追加
+ * @plugindesc v1.06 バトラーの影を設定＆浮遊効果の追加
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @orderAfter animatedSVEnemies
  * @orderAfter NRP_DynamicMotionMZ
@@ -668,28 +668,21 @@ Sprite_Enemy.prototype.createShadowSprite = function() {
 };
 
 /**
- * ●敵の作成
+ * ●戦闘開始時
  */
-const _Spriteset_Battle_createEnemies = Spriteset_Battle.prototype.createEnemies;
-Spriteset_Battle.prototype.createEnemies = function() {
-    _Spriteset_Battle_createEnemies.apply(this, arguments);
+const _Game_Battler_onBattleStart = Game_Battler.prototype.onBattleStart;
+Game_Battler.prototype.onBattleStart = function(advantageous) {
+    _Game_Battler_onBattleStart.apply(this, arguments);
 
-    // 敵の影は一旦全削除
-    // ※バトラーを追加する外部プラグインの中には、
-    //   createEnemiesを再度実行するものがあるので考慮
-    const enemyShadows = this._battleField.children.filter(child => child._isEnemyShadow);
-    for (const enemyShadow of enemyShadows) {
-        this._battleField.removeChild(enemyShadow);
-    }
-
-    // 敵の影をDynamicMotionなど表示順序のソート対象にする。
-    for (const sprite of this._enemySprites) {
-        // animatedSVEnemies.jsを使用する場合、
-        // 中身がSprite_Enemyでない場合があるので考慮。
-        if (sprite.isUseEnemyShadow && sprite.isUseEnemyShadow()) {
+    // 敵キャラの場合
+    // ※『仲間を呼ぶ』など途中追加に対応するため、ここで実行
+    if (this.isEnemy()) {
+        const sprite = getBattlerSprite(this);
+        if (sprite && sprite.isUseEnemyShadow()) {
             // 影を本体の後ろへ追加
-            const bodyIndex = this._battleField.children.indexOf(sprite);
-            this._battleField.addChildAt(sprite._shadowSprite, bodyIndex);
+            const spriteset = BattleManager._spriteset;
+            const bodyIndex = spriteset._battleField.children.indexOf(sprite);
+            spriteset._battleField.addChildAt(sprite._shadowSprite, bodyIndex);
         }
     }
 };

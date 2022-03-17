@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.001 Implement the "Call Enemy" function.
+ * @plugindesc v1.01 Implement the "Call Enemy" function.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_TroopRandomFormation
  * @url http://newrpg.seesaa.net/article/485838070.html
@@ -48,11 +48,25 @@
  * you can call more than one fellow at a time.
  * 
  * -------------------------------------------------------------------
- * [Note of Skills (optional)]
+ * [Note of Skills]
  * -------------------------------------------------------------------
  * <CallEnemyDynamic: x>
  * Works with the DynamicAnimation&Motion plugins.
  * Appears with the direction specified for the x numbered skill.
+ * 
+ * -------------------------------------------------------------------
+ * [Note of Enemies]
+ * -------------------------------------------------------------------
+ * <DynamicAppear: x>
+ * In linkage with the DynamicAnimation&Motion plugins,
+ * the skill appears with the direction specified
+ * for the x-numbered skill.
+ * 
+ * Choose your preferred designation method: skill or enemy.
+ * If both are specified, the skill side is given priority.
+ * 
+ * Note that this setting is shared
+ * with the appearance direction by NRP_DynamicAppear.js.
  * 
  * -------------------------------------------------------------------
  * [Sample of DynamicMotion]
@@ -140,11 +154,16 @@
  * @type string
  * @default However, the fellow didn't show up!
  * @desc The message to be displayed when the call is failed.
+ * 
+ * @param LinkDynamicAppear
+ * @type boolean
+ * @default true
+ * @desc Works with NRP_DynamicAppear.js to execute the appearance direction.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.001 敵キャラの『仲間を呼ぶ』を実装します。
+ * @plugindesc v1.01 敵キャラの『仲間を呼ぶ』を実装します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_TroopRandomFormation
  * @url http://newrpg.seesaa.net/article/485838070.html
@@ -186,11 +205,24 @@
  * ちなみに連続回数を増やせば、一度に複数の仲間を呼びます。
  * 
  * -------------------------------------------------------------------
- * ■スキルのメモ欄（オプション）
+ * ■スキルのメモ欄
  * -------------------------------------------------------------------
  * <CallEnemyDynamic: x>
  * DynamicAnimation&Motionプラグインと連携し、
  * x番のスキルに指定された演出で登場します。
+ * 
+ * -------------------------------------------------------------------
+ * ■敵キャラのメモ欄
+ * -------------------------------------------------------------------
+ * <DynamicAppear: x>
+ * DynamicAnimation&Motionプラグインと連携し、
+ * x番のスキルに指定された演出で登場します。
+ * 
+ * スキルか敵キャラか、好きな指定方法を選んでください。
+ * 両方の指定がある場合はスキル側が優先されます。
+ * 
+ * なお、この設定はNRP_DynamicAppear.js（登場演出プラグイン）による
+ * 登場演出と共有されます。
  * 
  * -------------------------------------------------------------------
  * ■DynamicMotionによる演出の例
@@ -284,6 +316,12 @@
  * @type string
  * @default しかし仲間は現れなかった！
  * @desc 呼び出しに失敗した際に表示する文章です。
+ * 
+ * @param LinkDynamicAppear
+ * @text DynamicAppearと連携
+ * @type boolean
+ * @default true
+ * @desc NRP_DynamicAppear.jsと連携し、登場演出を実行します。
  */
 
 (function() {
@@ -315,18 +353,7 @@ const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pMaxEnemyNo = toNumber(parameters["MaxEnemyNo"]);
 const pSuccessMessage = parameters["SuccessMessage"];
 const pFailureMessage = parameters["FailureMessage"];
-
-/**
- * ●プラグインコマンドの値を取得する。
- */
- function getCommandValue(value) {
-    if (value === undefined) {
-        return value;
-    }
-    // #以降は注釈扱いなので除去
-    // さらに前後の空白を除去する。
-    return value.split("#")[0].trim();
-}
+const pLinkDynamicAppear = toBoolean(parameters["LinkDynamicAppear"], true);
 
 /**
  * ●引数を元に対象の配列を取得する。
@@ -396,7 +423,7 @@ PluginManager.registerCommand(PLUGIN_NAME, "CallEnemy", function(args) {
     const argsEnemyId = args.EnemyId;
     const x = eval(args.X);
     const y = eval(args.Y);
-    const dynamicId = eval(args.DynamicId);
+    const dynamicId = args.DynamicId;
 
     // 複数指定に対応するため配列変換
     const enemyIds = makeTargets(argsEnemyId);
@@ -465,7 +492,7 @@ Game_Action.prototype.callEnemy = function(enemyId, callArgs) {
     // 既に制限数に達している場合は処理停止
     if (pMaxEnemyNo && pMaxEnemyNo <= $gameTroop.aliveMembers().length) {
         // 失敗メッセージを表示
-        BattleManager._logWindow.displayCallEnemy(this.subject());
+        BattleManager._logWindow.displayCallEnemy(this, this.subject(), callArgs);
         return;
     }
 
@@ -475,37 +502,13 @@ Game_Action.prototype.callEnemy = function(enemyId, callArgs) {
     // 名前記号を振り直す
     $gameTroop.makeUniqueNames();
 
-    // 描画
-    const spriteset = BattleManager._spriteset;
-    spriteset.refreshEnemies();
+    // 敵キャラ画像を事前ロードしておく。
+    const newSprite = new Sprite_Enemy(newEnemy)
+    newSprite.updateBitmap();
     
-    // 位置設定
-    const newSprite = getBattlerSprite(newEnemy);
-    // 位置設定用のフラグ
-    for (const sprite of spriteset._enemySprites) {
-        sprite._isPositionOK = true;
-    }
-    newSprite.setCallPosition(callArgs);
-    // Ｙ座標を元にスプライトの並び順を更新
-    spriteset.sortTroopSprite();
-    // バトラー毎の戦闘開始処理
-    newEnemy.onBattleStart();
-
     // 成功メッセージを表示
     this.makeSuccess(newEnemy);
-    BattleManager._logWindow.displayCallEnemy(newEnemy);
-
-    // DynamicAnimation&Motionの指定があるか？
-    let dynamicId;
-    if (callArgs && callArgs.dynamicId) {
-        dynamicId = callArgs.dynamicId;
-
-    } else {
-        // <CallEnemyDynamic>のスキルＩＤを取得
-        dynamicId = this.item().meta.CallEnemyDynamic;
-    }
-    // DynamicAnimation&Motion実行
-    callDynamic(this, newEnemy, newSprite, dynamicId);
+    BattleManager._logWindow.displayCallEnemy(this, newEnemy, callArgs);
 };
 
 /**
@@ -554,28 +557,6 @@ function callDynamic(action, newEnemy, newSprite, dynamicId) {
 }
 
 //-----------------------------------------------------------------------------
-// Spriteset_Battle
-//-----------------------------------------------------------------------------
-
-/**
- * 【独自】敵のスプライトを再生成
- */
-Spriteset_Battle.prototype.refreshEnemies = function() {
-    for (const sprite of this._enemySprites) {
-        this._battleField.removeChild(sprite);
-    }
-    this.createEnemies();
-
-    // サイズが設定されていない場合は一度更新する。
-    // ※ＭＶの場合に発生する模様
-    for (const sprite of this._enemySprites) {
-        if (!sprite.width) {
-            sprite.updateBitmap();
-        }
-    }
-};
-
-//-----------------------------------------------------------------------------
 // Sprite_Enemy
 //-----------------------------------------------------------------------------
 
@@ -615,12 +596,51 @@ Sprite_Enemy.prototype.setCallPosition = function(args) {
 /**
  * 【独自】呼び出しメッセージを表示
  */
-Window_BattleLog.prototype.displayCallEnemy = function(target) {
+Window_BattleLog.prototype.displayCallEnemy = function(action, target, callArgs) {
     if (target.result().success && pSuccessMessage) {
         this.push('addText', pSuccessMessage.format(target.name()));
+        // 敵キャラ画像をロードする時間を作るためにpushする。
+        this.push("performCallEnemy", action, target, callArgs);
+
     } else if (pFailureMessage) {
         this.push('addText', pFailureMessage.format(target.name()));
     }
+};
+
+/**
+ * 【独自】敵キャラの登場演出
+ */
+Window_BattleLog.prototype.performCallEnemy = function(action, newEnemy, callArgs) {
+    // 描画
+    const spriteset = BattleManager._spriteset;
+    // スプライトの作成
+    const newSprite = new Sprite_Enemy(newEnemy)
+    // チラ見えしないように、適当に画面外へ移動
+    newSprite._offsetX = -9999;
+    // 敵キャラのスプライトに追加
+    spriteset._enemySprites.push(newSprite);
+    // 表示順を調整する多面に並び替え
+    // ※DynamicMotion併用時は常時処理しているため、あまり意味はない。
+    spriteset._enemySprites.sort(spriteset.compareEnemySprite.bind(spriteset));
+    // スプライトを画面に追加
+    spriteset._battleField.addChild(newSprite);
+
+    // 位置設定用のフラグ
+    for (const sprite of spriteset._enemySprites) {
+        sprite._isPositionOK = true;
+    }
+    // 位置設定
+    newSprite.setCallPosition(callArgs);
+    // Ｙ座標を元にスプライトの並び順を更新
+    spriteset.sortTroopSprite();
+
+    // バトラー毎の戦闘開始処理
+    newEnemy.onBattleStart();
+
+    // DynamicAnimation&Motionの指定があれば取得
+    const dynamicId = getDynamicId(action, newEnemy, callArgs);
+    // DynamicAnimation&Motion実行
+    callDynamic(action, newEnemy, newSprite, dynamicId);
 };
 
 /**
@@ -637,8 +657,39 @@ Window_BattleLog.prototype.displayFailure = function(target) {
 };
 
 //-----------------------------------------------------------------------------
+// NRP_DynamicAppear.jsと連携
+//-----------------------------------------------------------------------------
+
+const APPEAR_PLUGIN_NAME = "NRP_DynamicAppear";
+const appearParameters = PluginManager.parameters(APPEAR_PLUGIN_NAME);
+const pEnemyDynamicId = appearParameters["EnemyDynamicId"];
+
+//-----------------------------------------------------------------------------
 // 共通関数
 //-----------------------------------------------------------------------------
+
+/**
+ * ●DynamicAnimation&MotionのスキルＩＤを取得
+ */
+function getDynamicId(action, newEnemy, callArgs) {
+    // DynamicAnimation&Motionの指定があるか？
+    let dynamicId;
+
+    // プラグインコマンドの指定値
+    if (callArgs && callArgs.dynamicId) {
+        dynamicId = callArgs.dynamicId;
+    // スキルの指定値
+    } else if (action.item() && action.item().meta.CallEnemyDynamic) {
+        // <CallEnemyDynamic>のスキルＩＤを取得
+        dynamicId = action.item().meta.CallEnemyDynamic;
+    // 敵キャラの指定値
+    } else if (pLinkDynamicAppear) {
+        // <DynamicAppear>のスキルＩＤを取得
+        dynamicId = newEnemy.enemy().meta.DynamicAppear || pEnemyDynamicId
+    }
+
+    return eval(dynamicId);
+}
 
 /**
  * ●アクション情報の作成
@@ -659,15 +710,6 @@ function makeAction(itemId, battleSubject, isItem) {
     }
 
     return action;
-}
-
-/**
- * ●指定したバトラーのスプライトを取得する。
- */
-function getBattlerSprite(battler) {
-    const spriteset = BattleManager._spriteset;
-    // 一致するスプライトを返す
-    return spriteset.battlerSprites().find(s => s._battler == battler);
 }
 
 })();

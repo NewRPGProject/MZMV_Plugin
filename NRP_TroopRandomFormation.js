@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.07 Place enemy groups automatically and randomly.
+ * @plugindesc v1.08 Place enemy groups automatically and randomly.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475049887.html
  *
@@ -169,7 +169,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.07 敵グループを自動でランダム配置します。
+ * @plugindesc v1.08 敵グループを自動でランダム配置します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475049887.html
  *
@@ -463,7 +463,7 @@ function setSinglePosition(a) {
     var endY = eval(pEndY);
     var startHeadY = eval(pStartHeadY);
 
-    var battler = a._battler;
+    const battler = a._battler;
     battler._screenX = eval(pSingleEnemyX);
     battler._screenY = eval(pSingleEnemyY);
 
@@ -481,7 +481,7 @@ function setSinglePosition(a) {
 }
 
 /**
- * 【独自実装】自動配置
+ * 【独自】自動配置
  */
 Spriteset_Battle.prototype.setTrooRandomFormation = function() {
     // サイズの大きい順にスプライトを並び替え
@@ -497,12 +497,14 @@ Spriteset_Battle.prototype.setTrooRandomFormation = function() {
         var newDistance = 999999;
 
         // フラグ初期化
-        for (let sprite of this._enemySprites) {
+        for (const sprite of this._enemySprites) {
             sprite._isPositionOK = false;
+            sprite._homeX = null;
+            sprite._homeY = null;
         }
 
         // 一体ずつ配置計算
-        for (let sprite of this._enemySprites) {
+        for (const sprite of this._enemySprites) {
             const distance = sprite.makeAutoPosition(bestDistance);
 
             // 返ってきた結果の中で最も小さな（間隔の狭い）値を取得する
@@ -516,7 +518,7 @@ Spriteset_Battle.prototype.setTrooRandomFormation = function() {
             bestDistance = newDistance;
 
             // 最善値を更新
-            for (let sprite of this._enemySprites) {
+            for (const sprite of this._enemySprites) {
                 sprite._bestFormationX = sprite.x;
                 sprite._bestFormationY = sprite.y;
             }
@@ -529,8 +531,8 @@ Spriteset_Battle.prototype.setTrooRandomFormation = function() {
     }
 
     // 確定
-    for (let sprite of this._enemySprites) {
-        var battler = sprite._battler;
+    for (const sprite of this._enemySprites) {
+        const battler = sprite._battler;
         // 最善値で座標更新
         battler._screenX = sprite._bestFormationX;
         battler._screenY = sprite._bestFormationY;
@@ -823,14 +825,14 @@ function shuffleArray(array) {
  */
 Sprite_Battler.prototype.makeAutoPositionAtRandom = function(
         endX, endY, gridCountX, gridCountY, sprites, bestDistance) {
-    var distanceList = [];
+    let distanceList = [];
 
     for (let i = 0; i < pMaxTryNoForEnemy; i++) {
         // ランダム位置を取得（右下を基準にグリッド座標を計算）
-        var randomX = endX - Math.randomInt(gridCountX) * pGridSize;
-        var randomY = endY - Math.randomInt(gridCountY) * pGridSize;
+        const randomX = endX - Math.randomInt(gridCountX) * pGridSize;
+        const randomY = endY - Math.randomInt(gridCountY) * pGridSize;
 
-        var distanceData = makeDistanceData(
+        const distanceData = makeDistanceData(
             this, randomX, randomY, sprites, bestDistance);
 
         // 取得できなかった場合は次へ
@@ -898,9 +900,12 @@ function getDistanceValue(a, b) {
 
     // 中央座標を求める
     const ax = a.x;
-    const aCenterY = a.y - a.height/2;
+    const ay = a.y;
+    const aCenterY = ay - a.height/2;
+    // 浮遊プラグインによるズレを考慮して足元の座標を取得
     const bx = b.x;
-    const bCenterY = b.y - b.height/2;
+    const by = getFootY(b);
+    const bCenterY = by - b.height/2;
 
     // 中心同士の距離を計算
     const distanceCenterX = Math.abs(ax - bx);
@@ -912,16 +917,16 @@ function getDistanceValue(a, b) {
 
     // 両方がマイナスなら重なっている
     if (distanceX < 0 && distanceY < 0) {
-        const aHeadY = a.y - a.height;
-        const bHeadY = b.y - b.height;
+        const aHeadY = ay - a.height;
+        const bHeadY = by - b.height;
 
         // 比較的自然に重なっているパターン
         // ■aの上半分が隠れていない場合
         // ・aの足元座標がbの中央座標より上である。
         // ・かつ、aの中央座標がbの頭上座標より上である。
         // ■または、bの上半分が隠れていない場合
-        if ((a.y <= bCenterY && aCenterY <= bHeadY)
-                || (b.y <= aCenterY && bCenterY <= aHeadY)) {
+        if ((ay <= bCenterY && aCenterY <= bHeadY)
+                || (by <= aCenterY && bCenterY <= aHeadY)) {
             distanceValue = distanceX + distanceY;
 
         // 不自然な重なり方をしているパターン
@@ -954,6 +959,17 @@ function getDistanceValue(a, b) {
     }
 
     return distanceValue;
+}
+
+/**
+ * ●足元のＹ座標を取得する。
+ */
+function getFootY(sprite) {
+    // NRP_ShadowAndLevitate.jsの浮遊値
+    if (sprite.floatHeight) {
+        return sprite.y + sprite.floatHeight - sprite.floatSwing;
+    }
+    return sprite.y;
 }
 
 /**
