@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Implement the "Call Enemy" function.
+ * @plugindesc v1.011 Implement the "Call Enemy" function.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_TroopRandomFormation
  * @url http://newrpg.seesaa.net/article/485838070.html
@@ -163,7 +163,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 敵キャラの『仲間を呼ぶ』を実装します。
+ * @plugindesc v1.011 敵キャラの『仲間を呼ぶ』を実装します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_TroopRandomFormation
  * @url http://newrpg.seesaa.net/article/485838070.html
@@ -536,10 +536,6 @@ function getCallEnemyId(action) {
  * ●DynamicAnimation&Motionを呼び出し
  */
 function callDynamic(action, newEnemy, newSprite, dynamicId) {
-    if (!dynamicId) {
-        return;
-    }
-
     // チラ見えしないように、適当に画面外へ移動
     newSprite._offsetX = -newSprite.x - newSprite.width / 2 - 100;
 
@@ -615,8 +611,12 @@ Window_BattleLog.prototype.performCallEnemy = function(action, newEnemy, callArg
     const spriteset = BattleManager._spriteset;
     // スプライトの作成
     const newSprite = new Sprite_Enemy(newEnemy)
-    // チラ見えしないように、適当に画面外へ移動
-    newSprite._offsetX = -9999;
+    // DynamicAnimation&Motionの指定があれば取得
+    const dynamicId = getDynamicId(action, newEnemy, callArgs);
+    if (dynamicId) {
+        // チラ見えしないように、適当に画面外へ移動
+        newSprite._offsetX = -9999;
+    }
     // 敵キャラのスプライトに追加
     spriteset._enemySprites.push(newSprite);
     // 表示順を調整する多面に並び替え
@@ -637,10 +637,10 @@ Window_BattleLog.prototype.performCallEnemy = function(action, newEnemy, callArg
     // バトラー毎の戦闘開始処理
     newEnemy.onBattleStart();
 
-    // DynamicAnimation&Motionの指定があれば取得
-    const dynamicId = getDynamicId(action, newEnemy, callArgs);
     // DynamicAnimation&Motion実行
-    callDynamic(action, newEnemy, newSprite, dynamicId);
+    if (dynamicId) {
+        callDynamic(action, newEnemy, newSprite, dynamicId);
+    }
 };
 
 /**
