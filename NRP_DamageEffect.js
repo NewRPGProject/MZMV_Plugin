@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Change the effect of damage handling.
+ * @plugindesc v1.021 Change the effect of damage handling.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475586753.html
  *
@@ -16,8 +16,8 @@
  * 3. change the position of the damage popup.
  * 
  * Effective from ver1.02, a staging for resistance has been added.
- * Initially, resistance effect 1 is assumed to be halved
- * and resistance effect 2 is assumed to be disabled.
+ * Initially, "Resist1" is assumed to be halved
+ * and "Resist2" is assumed to be disabled.
  * 
  * For more information, please see below.
  * http://newrpg.seesaa.net/article/475586753.html
@@ -128,9 +128,9 @@
  * @param resistCondition2
  * @parent <Resist2>
  * @type string
- * @default 0 >= action.calcElementRate(target) * 100
+ * @default 0 == action.calcElementRate(target) * 100
  * @desc The condition for staging resistance.
- * The default value is less than 0% validity.
+ * The initial value is conditional on 0% validity.
  * 
  * @param <Critical & Weak>
  * 
@@ -173,7 +173,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 ダメージ処理の演出を変更します。
+ * @plugindesc v1.021 ダメージ処理の演出を変更します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475586753.html
  *
@@ -314,9 +314,9 @@
  * @text 耐性演出を行う条件２
  * @parent <Resist2>
  * @type string
- * @default 0 >= action.calcElementRate(target) * 100
+ * @default 0 == action.calcElementRate(target) * 100
  * @desc 耐性演出を行う条件です。
- * 初期値は有効度0%以下が条件です。
+ * 初期値は有効度0%が条件です。
  * 
  * @param <Critical & Weak>
  * @text ＜クリティカル／弱点共通＞
@@ -847,7 +847,8 @@ if (Utils.RPGMAKER_NAME != "MV") {
  */
 if (pEnemyDamageOffsetX != undefined) {
     Sprite_Enemy.prototype.damageOffsetX = function() {
-        return eval(pEnemyDamageOffsetX);
+        const offset = eval(pEnemyDamageOffsetX);
+        return offset ? Number(offset) : 0;
     };
 }
 
@@ -856,7 +857,8 @@ if (pEnemyDamageOffsetX != undefined) {
  */
 if (pEnemyDamageOffsetY != undefined) {
     Sprite_Enemy.prototype.damageOffsetY = function() {
-        return eval(pEnemyDamageOffsetY);
+        const offset = eval(pEnemyDamageOffsetY);
+        return offset ? Number(offset) : 0;
     };
 }
 
@@ -865,7 +867,8 @@ if (pEnemyDamageOffsetY != undefined) {
  */
 if (pActorDamageOffsetX != undefined) {
     Sprite_Actor.prototype.damageOffsetX = function() {
-        return eval(pActorDamageOffsetX);
+        const offset = eval(pActorDamageOffsetX);
+        return offset ? Number(offset) : 0;
     };
 }
 
@@ -874,7 +877,8 @@ if (pActorDamageOffsetX != undefined) {
  */
 if (pActorDamageOffsetY != undefined) {
     Sprite_Actor.prototype.damageOffsetY = function() {
-        return eval(pActorDamageOffsetY);
+        const offset = eval(pActorDamageOffsetY);
+        return offset ? Number(offset) : 0;
     };
 }
 
