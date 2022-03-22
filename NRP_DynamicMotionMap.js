@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.08 Call DynamicMotion on the map.
+ * @plugindesc v1.09 Call DynamicMotion on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicMotionMZ
  * @base NRP_DynamicAnimationMapMZ
@@ -90,7 +90,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.08 DynamicMotionをマップ上から起動します。
+ * @plugindesc v1.09 DynamicMotionをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicMotionMZ
  * @base NRP_DynamicAnimationMapMZ
@@ -607,10 +607,18 @@ Sprite_Character.prototype.updateDynamicMove = function() {
     }
 
     this._movementDuration--;
+
+    // 動作終了時
     if (this._movementDuration === 0) {
         // 実座標を更新する。
         character._realX = character._x;
         character._realY = character._y;
+
+        // プレイヤーを移動させた場合
+        if (pPlayerOnScroll && character == $gamePlayer) {
+            // スクロール位置を調整
+            $gamePlayer.center($gamePlayer.x, $gamePlayer.y);
+        }
 
         // DynamicMotion用の移動終了
         this.onDynamicMoveEnd();
@@ -1239,7 +1247,7 @@ Sprite_Character.prototype.mainSprite = function() {
 /**
  * ●キャラクターからスプライトを取得する。
  */
-function getSprite(character) {
+function getSprite(target) {
     const spriteset = getSpriteset();
     if (!spriteset) {
         return undefined;
@@ -1247,17 +1255,10 @@ function getSprite(character) {
 
     // マップ上ではキャラクタースプライトを返す。
     if (!$gameParty.inBattle()) {
-        const sprites = spriteset._characterSprites;
-        return sprites.find(function(sprite) {
-            return sprite._character == character;
-        });
-
+        return spriteset._characterSprites.find(sprite => sprite._character == target);
     // 戦闘中はバトラースプライトを返す。
     } else  {
-        const sprites = spriteset.battlerSprites();
-        return sprites.find(function(sprite) {
-            return sprite._battler == character;
-        });
+        return spriteset.battlerSprites().find(sprite => sprite._battler == target);
     }
 }
 
