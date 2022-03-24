@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Extends the collision detection for events.
+ * @plugindesc v1.03 Extends the collision detection for events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481944599.html
  *
@@ -103,7 +103,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 イベントの当たり判定を拡張する。
+ * @plugindesc v1.03 イベントの当たり判定を拡張する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481944599.html
  *
@@ -433,6 +433,13 @@ Game_CharacterBase.prototype.collisionHeight = function() {
     return 1 + this._collisionUp + this._collisionDown;
 };
 
+/**
+ * 【独自】拡張を行っているかどうか？
+ */
+Game_CharacterBase.prototype.isCollisionEX = function() {
+    return this._collisionUp || this._collisionDown || this._collisionLeft || this._collisionRight;
+};
+
 //--------------------------------------------------------------
 // プレイヤーからイベントへの当たり判定
 // ※プレイヤーは拡張なしとして計算
@@ -596,6 +603,16 @@ if (pConsiderMove) {
  * イベントが移動しない想定なら不要
  */
 if (pConsiderMove) {
+    /*
+    * Game_Event.prototype.canPassが未定義の場合は事前に定義
+    * ※これをしておかないと以後のGame_CharacterBase側への追記が反映されない。
+    */
+    if (Game_Event.prototype.canPass == Game_CharacterBase.prototype.canPass) {
+        Game_Event.prototype.canPass = function(x, y, d) {
+            return Game_CharacterBase.prototype.canPass.apply(this, arguments);
+        }
+    }
+
     /**
      * 【独自】イベントからマップへの当たり判定
      * ※Game_CharacterBaseの関数をオーバーライド
@@ -766,11 +783,43 @@ Game_Map.prototype.eventsXyCollisionEX = function(x, y) {
  * ※イベントが移動しない想定なら不要
  */
 if (pConsiderMove) {
+    /*
+    * Game_Event.prototype.checkEventTriggerTouchFrontが未定義の場合は事前に定義
+    * ※これをしておかないと以後のGame_CharacterBase側への追記が反映されない。
+    */
+    if (Game_Event.prototype.checkEventTriggerTouchFront == Game_CharacterBase.prototype.checkEventTriggerTouchFront) {
+        Game_Event.prototype.checkEventTriggerTouchFront = function(d) {
+            Game_CharacterBase.prototype.checkEventTriggerTouchFront.apply(this, arguments);
+        }
+    }
+
+    // 一時的に保持する向き
+    let mTmpD = 0;
+
     /**
      * 【独自】イベントから接触による起動判定１
      * ※Game_CharacterBaseの関数をオーバーライド
      */
+    const _Game_Event_checkEventTriggerTouchFront = Game_Event.prototype.checkEventTriggerTouchFront;
     Game_Event.prototype.checkEventTriggerTouchFront = function(d) {
+        mTmpD = d;
+        _Game_Event_checkEventTriggerTouchFront.apply(this, arguments);
+    };
+
+    /**
+     * ●イベントから接触による起動判定１
+     */
+    const _Game_Event_checkEventTriggerTouch = Game_Event.prototype.checkEventTriggerTouch;
+    Game_Event.prototype.checkEventTriggerTouch = function(x, y) {
+        // 拡張対象外の場合は元の処理
+        if (!this.isCollisionEX()) {
+            _Game_Event_checkEventTriggerTouch.apply(this, arguments);
+            return;
+        }
+
+        // 本来引数に存在しないdを取得
+        const d = mTmpD;
+
         // 先端座標を取得
         const tipX = this.collisionTipX(this._x, d);
         const tipY = this.collisionTipY(this._y, d);
