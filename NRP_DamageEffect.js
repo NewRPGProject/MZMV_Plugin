@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.021 Change the effect of damage handling.
+ * @plugindesc v1.03 Change the effect of damage handling.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475586753.html
  *
@@ -173,7 +173,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.021 ダメージ処理の演出を変更します。
+ * @plugindesc v1.03 ダメージ処理の演出を変更します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475586753.html
  *
@@ -774,11 +774,18 @@ function callAnimation(target, animationId, win) {
 
     // MZの場合
     } else {
+        //---------------------------------------
+        // MZ ver1.4.0より$dataAnimations内に
+        // ＭＶデータが含まれるようになったので考慮
+        //---------------------------------------
         let animation = $dataAnimations[animationId];
 
-        // MZ用アニメーションが空ならMV用アニメーションを取得
-        // ※ただし$dataMvAnimationsが有効な場合のみ
-        if (isEmptyAnimation(animation) && typeof $dataMvAnimations !== 'undefined') {
+        // MZのMV用アニメーションではない。
+        // かつ、MZ用アニメーションが空で
+        // $dataMvAnimationsが有効ならMV用アニメーションを取得
+        if (!isMVAnimation(animation)
+                && isEmptyAnimation(animation)
+                && typeof $dataMvAnimations !== 'undefined') {
             animation = $dataMvAnimations[animationId];
         }
 
@@ -798,7 +805,14 @@ function isEmptyAnimation(animation) {
 }
 
 /**
- * MZ用のアニメーション呼び出し
+ * ●ＭＶアニメーションかどうかの判定
+ */
+function isMVAnimation(animation) {
+    return animation && !!animation.frames;
+};
+
+/**
+ * ●MZ用のアニメーション呼び出し
  */
 function createAnimationSprite(targets, animation, mirror, delay) {
     var spriteSet = BattleManager._spriteset;
