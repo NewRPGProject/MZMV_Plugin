@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v2.003 Gives an afterimage effect to the battler or character.
+ * @plugindesc v2.004 Gives an afterimage effect to the battler or character.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483120023.html
  *
@@ -132,7 +132,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.003 バトラー＆キャラクターに残像効果を付与します。
+ * @plugindesc v2.004 バトラー＆キャラクターに残像効果を付与します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483120023.html
  *
@@ -293,6 +293,9 @@ const pOpacity = toNumber(parameters["Opacity"], 255);
 const pColor = parameters["Color"];
 const pBlendMode = toNumber(parameters["BlendMode"], 0);
 
+// 残像ＩＤの連番
+let mAfterimageSeq = 0;
+
 //-----------------------------------------------------------------------------
 // Battler_Afterimage
 //
@@ -305,9 +308,22 @@ function Battler_Afterimage() {
 Battler_Afterimage.prototype = Object.create(Game_Battler.prototype);
 Battler_Afterimage.prototype.constructor = Battler_Afterimage;
 
+/**
+ * ●初期化
+ */
 Battler_Afterimage.prototype.initialize = function(battler) {
-    // 親となるバトラー
-    this._battler = battler;
+    // 紐付け用の残像ＩＤを設定する。
+    this._afterimageId = mAfterimageSeq;
+    battler._afterimageId = mAfterimageSeq;
+    // 連番を加算
+    mAfterimageSeq++;
+};
+
+/**
+ * ●残像の親となるバトラーを取得する。
+ */
+Battler_Afterimage.prototype.battler = function() {
+    return BattleManager.allBattleMembers().find(battler => battler._afterimageId == this._afterimageId);
 };
 
 /**
@@ -330,7 +346,7 @@ Battler_Afterimage.prototype.start = function() {
     // 合成方法
     this._blendMode = pBlendMode;
 
-    const battlerSprite = getSpriteset().findTargetSprite(this._battler);
+    const battlerSprite = getSpriteset().findTargetSprite(this.battler());
     battlerSprite._afterimages = [];
     battlerSprite._makeAfterimage = true;
 
@@ -341,7 +357,7 @@ Battler_Afterimage.prototype.start = function() {
  * ●残像処理の終了
  */
 Battler_Afterimage.prototype.end = function() {
-    const battlerSprite = getSpriteset().findTargetSprite(this._battler);
+    const battlerSprite = getSpriteset().findTargetSprite(this.battler());
     battlerSprite._makeAfterimage = false;
 
     this._isActive = false;
@@ -628,6 +644,21 @@ Sprite_EnemyAfterimage.prototype.initVisibility = function() {
  */
 Sprite_EnemyAfterimage.prototype.setSetFrame = function() {
     // 何もしない
+};
+
+//-----------------------------------------------------------------------------
+// BattleManager
+//-----------------------------------------------------------------------------
+
+/**
+ * ●変数初期化
+ */
+const _BattleManager_initMembers = BattleManager.initMembers;
+BattleManager.initMembers = function() {
+    _BattleManager_initMembers.apply(this, arguments);
+
+    // 戦闘の度に残像連番をクリア
+    mAfterimageSeq = 0;
 };
 
 //-----------------------------------------------------------------------------
