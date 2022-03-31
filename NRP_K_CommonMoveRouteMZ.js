@@ -10,7 +10,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.02 Set events' custom move by common event
+ * @plugindesc v1.03 Set events' custom move by common event
  * @author Sasuke KANNAZUKI(Thx to terunon)(mod Takeshi Sunagawa)
  *
  * @command set
@@ -200,7 +200,7 @@
  */
 /*:ja
  * @target MZ
- * @plugindesc v1.02 複数イベントの移動ルートをひとつのコモンイベントで制御可能
+ * @plugindesc v1.03 複数イベントの移動ルートをひとつのコモンイベントで制御可能
  * @author 神無月サスケ（原案：terunon）（改造：砂川赳）
  *
  * @command set
@@ -411,6 +411,9 @@ function toNumber(str, def) {
   const parameters = PluginManager.parameters(pluginName);
   const pLockRunningEvent = toBoolean(parameters["LockRunningEvent"], true);
   const pLockOtherEventsSwitch = toNumber(parameters["LockOtherEventsSwitch"]);
+
+  // イベントを停止するかどうかの判定 ADD Sunagawa
+  let mIsLockOtherEvents = false;
 
   //
   // process plugin commands
@@ -629,7 +632,7 @@ function toNumber(str, def) {
       if (pLockRunningEvent && this._locked) {
         return;
       // 他のイベントが実行中でも処理停止
-      } else if (isLockOtherEvents() && $gameMap.isEventRunning()) {
+      } else if (mIsLockOtherEvents) {
         return;
       }
 // Add END Sunagawa
@@ -682,6 +685,18 @@ function toNumber(str, def) {
 //--------------------------------------------------------------
 // ADD Sunagawa
 //--------------------------------------------------------------
+
+/**
+ * ●イベント更新
+ */
+const _Game_Map_updateEvents = Game_Map.prototype.updateEvents;
+Game_Map.prototype.updateEvents = function() {
+    // 動作軽量化のため判定は一度だけ
+    // ※特に$gameMap.isEventRunning()は非常に重いので毎回実行しない。
+    mIsLockOtherEvents = isLockOtherEvents() && $gameMap.isEventRunning();
+
+    _Game_Map_updateEvents.apply(this, arguments);
+};
 
 /**
  * ●移動ルートの指定
