@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Randomly place events on the map.
+ * @plugindesc v1.00 Placement automation for symbol encounters.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base TemplateEvent
  * @base EventReSpawn
@@ -190,7 +190,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 イベントをランダム配置します。
+ * @plugindesc v1.00 シンボルエンカウントの配置自動化。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base TemplateEvent
  * @base EventReSpawn
