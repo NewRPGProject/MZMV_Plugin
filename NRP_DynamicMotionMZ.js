@@ -3820,7 +3820,7 @@ if (pUsePriority) {
     Spriteset_Battle.prototype.updateNrpZCoordinates = function () {
         // Ｚ座標の既定値
         // 8:戦闘アニメ
-        for (var child of this._battleField.children) {
+        for (const child of this._battleField.children) {
             if (child.z == undefined) {
                 child.z = 9;
             }
