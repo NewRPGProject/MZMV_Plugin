@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @target MZ
+ * @target MV MZ
  * @plugindesc v1.01 Display an animation for the actor at the time of command input.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477380673.html
@@ -63,7 +63,7 @@
  */
 
 /*:ja
- * @target MZ
+ * @target MV MZ
  * @plugindesc v1.01 コマンド入力時のアクターにアニメーションを表示する。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477380673.html
