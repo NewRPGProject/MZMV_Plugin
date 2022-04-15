@@ -124,6 +124,7 @@
  * @type boolean
  * @default false
  * @desc Change the position of battler's shadow over the bushes.
+ * In short, it displays a shadow on the water surface.
  * 
  * @param ShadowOnlyAir
  * @parent ShowShadow
@@ -308,6 +309,7 @@
  * @type boolean
  * @default false
  * @desc バトラーの影の位置を茂みの上に変更します。
+ * 要するに水面上に影を表示します。
  * 
  * @param ShadowOnlyAir
  * @text 空中時のみ影を表示
