@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.163 When executing skills, call motion freely.
+ * @plugindesc v1.164 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -556,7 +556,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.163 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.164 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -2737,11 +2737,13 @@ Sprite.prototype.startDynamicMotion = function(dynamicMotion) {
             sx = eval(dm.sx);
             // 差分を調整して現在座標に反映
             this._offsetX += sx - this.x;
+            this.x = sx;
         }
         if (dm.sy != undefined) {
             sy = eval(dm.sy);
             // 差分を調整して現在座標に反映
             this._offsetY += sy - this.y;
+            this.y = sy;
         }
 
         motion._sx = sx;
@@ -3306,6 +3308,8 @@ Sprite_Actor.prototype.onMoveEnd = function() {
         if (this._motion
                 && !this._motion.loop
                 && this._pattern >= 0 && this._pattern <= 2) {
+            // DynamicMotion用の移動終了
+            this.onDynamicMoveEnd();
             return;
         }
     }

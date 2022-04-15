@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.222 When executing skills, call motion freely.
+ * @plugindesc v1.223 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help When executing skills(items), call motion freely.
@@ -550,7 +550,7 @@
  */
 
 /*:ja
- * @plugindesc v1.222 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.223 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在にモーションを呼び出します。
@@ -2652,11 +2652,13 @@ Sprite.prototype.startDynamicMotion = function(dynamicMotion) {
             sx = eval(dm.sx);
             // 差分を調整して現在座標に反映
             this._offsetX += sx - this.x;
+            this.x = sx;
         }
         if (dm.sy != undefined) {
             sy = eval(dm.sy);
             // 差分を調整して現在座標に反映
             this._offsetY += sy - this.y;
+            this.y = sy;
         }
 
         motion._sx = sx;
@@ -3201,10 +3203,10 @@ Sprite.prototype.updateDynamicMove = function() {
 };
 
 /**
- * 【上書】移動終了
+ * ●移動終了
  */
+const _Sprite_Actor_onMoveEnd = Sprite_Actor.prototype.onMoveEnd;
 Sprite_Actor.prototype.onMoveEnd = function() {
-    Sprite_Battler.prototype.onMoveEnd.call(this);
     if (!BattleManager.isBattleEnd()) {
         // モーションを実行中ならリフレッシュしない。
         // ■条件詳細
@@ -3214,10 +3216,13 @@ Sprite_Actor.prototype.onMoveEnd = function() {
         if (this._motion
                 && !this._motion.loop
                 && this._pattern >= 0 && this._pattern <= 2) {
+            // DynamicMotion用の移動終了
+            this.onDynamicMoveEnd();
             return;
         }
-        this.refreshMotion();
     }
+
+    _Sprite_Actor_onMoveEnd.apply(this, arguments);
 };
 
 /**
