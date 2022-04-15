@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.062 Setting the battler's shadow & adding the levitation effect
+ * @plugindesc v1.07 Setting the battler's shadow & adding the levitation effect
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base animatedSVEnemies
  * @base NRP_DynamicMotionMZ
@@ -264,7 +264,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.062 バトラーの影を設定＆浮遊効果の追加
+ * @plugindesc v1.07 バトラーの影を設定＆浮遊効果の追加
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @orderAfter animatedSVEnemies
  * @orderAfter NRP_DynamicMotionMZ
@@ -759,10 +759,17 @@ Sprite_Enemy.prototype.updateShadow = function() {
         this.updateDynamicShadow();
     }
 
-    // 不透明度
+    // 影の不透明度が取得できない場合は終了
+    if (!this._shadowSprite.originalOpacity) {
+        return;
+    }
+    
+    // 不透明度を初期化
+    this._shadowSprite.opacity = this._shadowSprite.originalOpacity;
+
     // ※透明度が可変の場合のみ更新
     if (pTransparencyJumpHeight) {
-        const shadowOpacity = getOpacity(this, meta.ShadowOpacity);
+        const shadowOpacity = getJumpOpacity(this, this._shadowSprite.opacity);
         if (shadowOpacity != undefined) {
             this._shadowSprite.opacity = shadowOpacity;
         }
@@ -839,11 +846,17 @@ Sprite_Actor.prototype.updateShadow = function() {
 
     _Sprite_Actor_updateShadow.apply(this, arguments);
 
-    // 不透明度
+    // 影の不透明度が取得できない場合は終了
+    if (!this._shadowSprite.originalOpacity) {
+        return;
+    }
+
+    // 不透明度を初期化
+    this._shadowSprite.opacity = this._shadowSprite.originalOpacity;
+
     // ※透明度が可変の場合のみ更新
-    if (pTransparencyJumpHeight && this._battler) {
-        const meta  = this._battler.actor().meta;
-        const shadowOpacity = getOpacity(this, meta.ShadowOpacity);
+    if (pTransparencyJumpHeight) {
+        const shadowOpacity = getJumpOpacity(this, this._shadowSprite.opacity);
         if (shadowOpacity != undefined) {
             this._shadowSprite.opacity = shadowOpacity;
         }
@@ -932,6 +945,8 @@ Sprite_Battler.prototype.initBattlerShadow = function() {
     if (shadowOpacity != undefined) {
         this._shadowSprite.opacity = shadowOpacity;
     }
+    // 元の値を保持しておく。
+    this._shadowSprite.originalOpacity = this._shadowSprite.opacity;
 
     // 影を設定した
     this._isSetShadow = true;
@@ -1010,10 +1025,18 @@ function getOpacity(sprite, metaOpacity) {
         opacity = eval(pEnemyShadowOpacity);
     }
 
-    // ジャンプ中は影を薄く
-    const jumpHeight = getJumpHeight(sprite);
-    opacity = opacity * (1 - Math.min(jumpHeight / pTransparencyJumpHeight, 1));
+    return opacity;
+}
 
+/**
+ * ●ジャンプを考慮した影の不透明度を取得
+ */
+function getJumpOpacity(sprite, opacity) {
+    // ジャンプ中は影を薄く
+    if (pTransparencyJumpHeight) {
+        const jumpHeight = getJumpHeight(sprite);
+        return opacity * (1 - Math.min(jumpHeight / pTransparencyJumpHeight, 1));
+    }
     return opacity;
 }
 
