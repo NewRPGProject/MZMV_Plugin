@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v2.004 Gives an afterimage effect to the battler or character.
+ * @plugindesc v2.01 Gives an afterimage effect to the battler or character.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483120023.html
  *
@@ -132,7 +132,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.004 バトラー＆キャラクターに残像効果を付与します。
+ * @plugindesc v2.01 バトラー＆キャラクターに残像効果を付与します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483120023.html
  *
@@ -1017,8 +1017,8 @@ Sprite_CharacterAfterimage.prototype.update = function() {
     this.opacity -= (this._initialOpacity / this._duration);
 
     // スクロール差分を調整
-    this.x -= $gameMap.moveScreenX();
-    this.y -= $gameMap.moveScreenY();
+    this.x -= moveScreenX.bind($gameMap)();
+    this.y -= moveScreenY.bind($gameMap)();
 };
 
 /**
@@ -1248,77 +1248,76 @@ DataManager.makeSaveContents = function() {
 
 //-----------------------------------------------------------------------------
 // Game_Map
-// ※NRP_DynamicAnimationMapMZの関数をコピペ
 //-----------------------------------------------------------------------------
 
-if (!Game_Map.prototype.moveScreenX) {
-    /**
-     * ●初期化
-     */
-    const _Game_Map_initialize = Game_Map.prototype.initialize;
-    Game_Map.prototype.initialize = function() {
-        _Game_Map_initialize.apply(this, arguments);
+// スクロール差分計算用
+let mBeforeDisplayScreenX = 0;
+let mBeforeDisplayScreenY = 0;
 
-        this._beforeDisplayScreenX = this.displayX() * this.tileWidth();
-        this._beforeDisplayScreenY = this.displayY() * this.tileHeight();
-    };
+/**
+ * ●初期化
+ */
+const _Game_Map_initialize = Game_Map.prototype.initialize;
+Game_Map.prototype.initialize = function() {
+    _Game_Map_initialize.apply(this, arguments);
 
-    /**
-     * ●更新処理
-     */
-    const _Game_Map_update = Game_Map.prototype.update;
-    Game_Map.prototype.update = function(sceneActive) {
-        _Game_Map_update.apply(this, arguments);
+    mBeforeDisplayScreenX = this.displayX() * this.tileWidth();
+    mBeforeDisplayScreenY = this.displayY() * this.tileHeight();
+};
 
-        // 現在の画面座標
-        const displayScreenX = this.displayX() * this.tileWidth();
-        const displayScreenY = this.displayY() * this.tileHeight();
+/**
+ * ●更新処理
+ */
+const _Game_Map_update = Game_Map.prototype.update;
+Game_Map.prototype.update = function(sceneActive) {
+    // 画面座標を保持
+    mBeforeDisplayScreenX = this.displayX() * this.tileWidth();
+    mBeforeDisplayScreenY = this.displayY() * this.tileHeight();
+    
+    _Game_Map_update.apply(this, arguments);
+};
 
-        // 画面座標を保持
-        this._beforeDisplayScreenX = displayScreenX;
-        this._beforeDisplayScreenY = displayScreenY;
-    };
+/**
+ * 【独自】１フレームでスクロールしたスクリーンＸ座標
+ * ※NRP_DynamicAnimationMapMZとほぼ同じ関数
+ */
+function moveScreenX() {
+    // 現在の座標と前回の座標を比較し差分を求める。
+    const displayScreenX = this.displayX() * this.tileWidth();
+    let moveScreenX = displayScreenX - mBeforeDisplayScreenX;
 
-    /**
-     * 【独自】１フレームでスクロールしたスクリーンＸ座標
-     */
-    Game_Map.prototype.moveScreenX = function() {
-        // 現在の座標と前回の座標を比較し差分を求める。
-        const displayScreenX = this.displayX() * this.tileWidth();
-        let moveScreenX = displayScreenX - this._beforeDisplayScreenX;
+    // マップ全体の横幅（ピクセル）
+    const mapWidth = this.width() * this.tileWidth();
+    // 全体座標の半分以上を移動した（ループ）
+    if (moveScreenX > mapWidth / 2) {
+        moveScreenX -= mapWidth;
+    } else if (moveScreenX < mapWidth / 2 * -1) {
+        moveScreenX += mapWidth;
+    }
 
-        // マップ全体の横幅（ピクセル）
-        const mapWidth = this.width() * this.tileWidth();
-        // 全体座標の半分以上を移動した（ループ）
-        if (moveScreenX > mapWidth / 2) {
-            moveScreenX -= mapWidth;
-        } else if (moveScreenX < mapWidth / 2 * -1) {
-            moveScreenX += mapWidth;
-        }
+    return moveScreenX;
+};
 
-        return moveScreenX;
-    };
+/**
+ * 【独自】１フレームでスクロールしたスクリーンＹ座標
+ * ※NRP_DynamicAnimationMapMZとほぼ同じ関数
+ */
+function moveScreenY() {
+    // 現在の座標と前回の座標を比較し差分を求める。
+    const displayScreenY = this.displayY() * this.tileHeight();
+    let moveScreenY = displayScreenY - mBeforeDisplayScreenY;
 
-    /**
-     * 【独自】１フレームでスクロールしたスクリーンＹ座標
-     */
-    Game_Map.prototype.moveScreenY = function() {
-        // 現在の座標と前回の座標を比較し差分を求める。
-        const displayScreenY = this.displayY() * this.tileHeight();
-        let moveScreenY = displayScreenY - this._beforeDisplayScreenY;
+    // マップ全体の縦幅（ピクセル）
+    const mapHeight = this.height() * this.tileHeight();
+    // 全体座標の半分以上を移動した（ループ）
+    if (moveScreenY > mapHeight / 2) {
+        moveScreenY -= mapHeight;
+    } else if (moveScreenY < mapHeight / 2 * -1) {
+        moveScreenY += mapHeight;
+    }
 
-        // マップ全体の縦幅（ピクセル）
-        const mapHeight = this.height() * this.tileHeight();
-        // 全体座標の半分以上を移動した（ループ）
-        if (moveScreenY > mapHeight / 2) {
-            moveScreenY -= mapHeight;
-        } else if (moveScreenY < mapHeight / 2 * -1) {
-            moveScreenY += mapHeight;
-        }
-
-        return moveScreenY;
-    };
-}
+    return moveScreenY;
+};
 
 //----------------------------------------------------------
 // 共通関数
