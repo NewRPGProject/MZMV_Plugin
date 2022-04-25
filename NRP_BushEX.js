@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Extends the functionality of the bushes attribute.
+ * @plugindesc v1.031 Extends the functionality of the bushes attribute.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore OverpassTile
  * @url http://newrpg.seesaa.net/article/481013577.html
@@ -285,7 +285,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 茂み属性の機能を拡張します。
+ * @plugindesc v1.031 茂み属性の機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore OverpassTile
  * @url http://newrpg.seesaa.net/article/481013577.html
@@ -1106,9 +1106,13 @@ Game_CharacterBase.prototype.screenY = function() {
 
     // 浮遊設定がされている場合、浮遊時間に応じて上下させる。
     if (this._bushFloatAmplitude) {
-        // 変動幅を設定し、Ｙ座標に加算
+        // 変動幅を設定
         this.bushFloatSwing =
             Math.sin(this._bushFloatTime / this._bushFloatPeriodicTime * Math.PI * 2) * this._bushFloatAmplitude;
+        // 整数に丸める。
+        // ※この対応がないと画像の境界線に別枠の画像の線が紛れ込む。
+        this.bushFloatSwing = Math.round(this.bushFloatSwing);
+        // Ｙ座標に加算
         screenY += this.bushFloatSwing;
         // 時間を進める。
         this._bushFloatTime++;
