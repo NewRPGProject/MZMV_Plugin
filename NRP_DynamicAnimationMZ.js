@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.181 Automate & super-enhance battle animations.
+ * @plugindesc v1.19 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -454,7 +454,35 @@
  * @parent <Real Time>
  * @type string
  * @desc Change the color tone.
- * Ex.[255, 255, 255, 255](Red, green, blue, strength)
+ * e.g.:[255, 255, 255, 255](Red, green, blue, strength)
+ * 
+ * @param cellStartX
+ * @text [MV]cellStartX
+ * @parent <Real Time>
+ * @type string
+ * @desc X coordinate at which to start cell cropping.
+ * This item is for MV animation only.
+ * 
+ * @param cellEndX
+ * @text [MV]cellEndX
+ * @parent <Real Time>
+ * @type string
+ * @desc X coordinate at which to end cell cropping.
+ * This item is for MV animation only.
+ * 
+ * @param cellStartY
+ * @text [MV]cellStartY
+ * @parent <Real Time>
+ * @type string
+ * @desc Y coordinate at which to start cell cropping.
+ * This item is for MV animation only.
+ * 
+ * @param cellEndY
+ * @text [MV]cellEndY
+ * @parent <Real Time>
+ * @type string
+ * @desc X coordinate at which to end cell cropping.
+ * This item is for MV animation only.
  * 
  * @param z
  * @parent <Real Time>
@@ -496,7 +524,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.181 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.19 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -1018,6 +1046,34 @@
  * @type string
  * @desc 色調を変更します。例：[255, 255, 255, 255]
  * 赤,緑,青,強さの順。この項目はMVアニメーション専用です。
+ * 
+ * @param cellStartX
+ * @text [MV]セル開始Ｘ座標
+ * @parent <Real Time>
+ * @type string
+ * @desc セルを切り取る開始Ｘ座標です。
+ * この項目はMVアニメーション専用です。
+ * 
+ * @param cellEndX
+ * @text [MV]セル終了Ｘ座標
+ * @parent <Real Time>
+ * @type string
+ * @desc セルを切り取る終了Ｘ座標です。
+ * この項目はMVアニメーション専用です。
+ * 
+ * @param cellStartY
+ * @text [MV]セル開始Ｙ座標
+ * @parent <Real Time>
+ * @type string
+ * @desc セルを切り取る開始Ｙ座標です。
+ * この項目はMVアニメーション専用です。
+ * 
+ * @param cellEndY
+ * @text [MV]セル終了Ｙ座標
+ * @parent <Real Time>
+ * @type string
+ * @desc セルを切り取る終了Ｙ座標です。
+ * この項目はMVアニメーション専用です。
  * 
  * @param z
  * @text Ｚ座標（表示優先度）
@@ -2192,10 +2248,12 @@ BaseAnimation.prototype.makeRepeatAnimation = function(dynamicAnimationList, ani
         }
     }
 
+    // 1/60秒余分に追加されているので-1する。
+    const duration = spriteAnimation._duration - 1;
     // 実行時間の最大長を求める。（スキル開始からの総合計）
-    this.totalDuration = Math.max(this.totalDuration, targetDelay + spriteAnimation._duration);
+    this.totalDuration = Math.max(this.totalDuration, targetDelay + duration);
     // この<D-Animation>内の実行時間
-    this.baseDuration = Math.max(this.baseDuration, baseDelaySum + spriteAnimation._duration);
+    this.baseDuration = Math.max(this.baseDuration, baseDelaySum + duration);
 
     // 最後の１回ならアニメーション時間を保持
     if (r == this.repeat - 1) {
@@ -2525,8 +2583,10 @@ DynamicAnimation.prototype.initialize = function(baseAnimation, target) {
     this.position = position;
 
     this.displayType = baseAnimation.displayType;
-    this.frame = spriteAnimation._duration / this.rate;
-    this.duration = spriteAnimation._duration;
+    // 1/60秒余分に追加されているので-1する。
+    const duration = spriteAnimation._duration - 1;
+    this.frame = duration / this.rate;
+    this.duration = duration;
 
     // アニメーション反転設定
     this.noMirror = eval(baseAnimation.noMirror);
@@ -2756,7 +2816,9 @@ DynamicAnimation.prototype.evaluate = function (spriteAnimation) {
     if (baseAnimation.arrival != undefined) {
         this.arrival = eval(baseAnimation.arrival);
     } else {
-        this.arrival = spriteAnimation._duration / this.rate;
+        // 1/60秒余分に追加されているので-1する。
+        const duration = spriteAnimation._duration - 1;
+        this.arrival = duration / this.rate;
     }
 
     // 円運動初期値
@@ -2826,6 +2888,10 @@ DynamicAnimation.prototype.evaluate = function (spriteAnimation) {
     this.scaleZ = baseAnimation.scaleZ;
     this.color = baseAnimation.color;
     this.z = baseAnimation.z;
+    this.cellStartX = baseAnimation.cellStartX;
+    this.cellEndX = baseAnimation.cellEndX;
+    this.cellStartY = baseAnimation.cellStartY;
+    this.cellEndY = baseAnimation.cellEndY;
     // リアルタイム円
     this.radiusX = baseAnimation.radiusX;
     this.radiusY = baseAnimation.radiusY;

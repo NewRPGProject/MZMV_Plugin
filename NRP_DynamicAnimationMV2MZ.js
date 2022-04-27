@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.023 It makes MV animations correspond to DynamicAnimationMZ.
+ * @plugindesc v1.03 It makes MV animations correspond to DynamicAnimationMZ.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -90,7 +90,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.023 ＭＶ用アニメーションをDynamicAnimationMZに対応させます。
+ * @plugindesc v1.03 ＭＶ用アニメーションをDynamicAnimationMZに対応させます。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -207,7 +207,7 @@ var Nrp = Nrp || {};
 (function() {
 "use strict";
 
-var parameters = PluginManager.parameters("NRP_DynamicAnimationMV2MZ");
+const parameters = PluginManager.parameters("NRP_DynamicAnimationMV2MZ");
 
 /**
  * ●アニメーションが準備完了かどうか？
@@ -225,7 +225,7 @@ Sprite_AnimationMV.prototype.isReady = function() {
 /**
  * ●継続時間の設定
  */
-var _Sprite_AnimationMV_setupDuration = Sprite_AnimationMV.prototype.setupDuration;
+const _Sprite_AnimationMV_setupDuration = Sprite_AnimationMV.prototype.setupDuration;
 Sprite_AnimationMV.prototype.setupDuration = function() {
     if (!this._animation.frames) {
         return;
@@ -508,13 +508,13 @@ Sprite_AnimationMV.prototype.updateDynamicAnimation = function() {
 /**
  * ●アニメーションセルの更新
  */
-var _Sprite_AnimationMV_updateCellSprite = Sprite_AnimationMV.prototype.updateCellSprite;
+const _Sprite_AnimationMV_updateCellSprite = Sprite_AnimationMV.prototype.updateCellSprite;
 Sprite_AnimationMV.prototype.updateCellSprite = function(sprite, cell) {
     _Sprite_AnimationMV_updateCellSprite.call(this, sprite, cell);
 
-    var pattern = cell[0];
+    const pattern = cell[0];
     if (pattern >= 0 && this.dynamicAnimation) {
-        var da = this.dynamicAnimation;
+        const da = this.dynamicAnimation;
     
         var r = da.r; // 現在のリピート回数
         var t = this._allDuration - this._duration - 1; // 現在の経過時間
@@ -526,6 +526,25 @@ Sprite_AnimationMV.prototype.updateCellSprite = function(sprite, cell) {
             const blendMode = sprite.blendMode;
             sprite.setBlendColor(eval(da.color));
             sprite.blendMode = blendMode;
+        }
+
+        // セルアニメの切り取り描画
+        // ※いずれかの入力がある場合のみ実行
+        if (da.cellStartX || da.cellStartY || da.cellEndX || da.cellEndY) {
+            const sx = (pattern % 5) * 192;
+            const sy = Math.floor((pattern % 100) / 5) * 192;
+
+            let cellStartX = eval(da.cellStartX) ?? 0;
+            let cellEndX = eval(da.cellEndX) ?? 1;
+            let cellStartY = eval(da.cellStartY) ?? 0;
+            let cellEndY = eval(da.cellEndY) ?? 1;
+            // 値を0~1の範囲に調整する。
+            cellStartX = cellStartX.clamp(0, 1);
+            cellEndX = cellEndX.clamp(0, 1) - cellStartX;
+            cellStartY = cellStartY.clamp(0, 1);
+            cellEndY = cellEndY.clamp(0, 1) - cellStartY;
+
+            sprite.setFrame(sx + cellStartX * 192, sy + cellStartY * 192, cellEndX * 192, cellEndY * 192);
         }
     }
 };

@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.252 Automate & super-enhance battle animations.
+ * @plugindesc v1.26 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help Call battle animations freely from skills (items).
@@ -417,7 +417,31 @@
  * @parent <Real Time>
  * @type string
  * @desc Change the color tone.
- * Ex.[255, 255, 255, 255](Red, green, blue, strength)
+ * e.g.:[255, 255, 255, 255](Red, green, blue, strength)
+ * 
+ * @param cellStartX
+ * @parent <Real Time>
+ * @type string
+ * @desc X coordinate at which to start cell cropping.
+ * This item is for MV animation only.
+ * 
+ * @param cellEndX
+ * @parent <Real Time>
+ * @type string
+ * @desc X coordinate at which to end cell cropping.
+ * This item is for MV animation only.
+ * 
+ * @param cellStartY
+ * @parent <Real Time>
+ * @type string
+ * @desc Y coordinate at which to start cell cropping.
+ * This item is for MV animation only.
+ * 
+ * @param cellEndY
+ * @parent <Real Time>
+ * @type string
+ * @desc X coordinate at which to end cell cropping.
+ * This item is for MV animation only.
  * 
  * @param z
  * @parent <Real Time>
@@ -458,7 +482,7 @@
  */
 
 /*:ja
- * @plugindesc v1.252 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.26 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在に戦闘アニメーションを呼び出します。
@@ -944,6 +968,34 @@
  * @type string
  * @desc 色調を変更します。
  * 例：[255, 255, 255, 255] 赤,緑,青,強さの順。
+ * 
+ * @param cellStartX
+ * @text セル開始Ｘ座標
+ * @parent <Real Time>
+ * @type string
+ * @desc セルを切り取る開始Ｘ座標です。
+ * この項目はMVアニメーション専用です。
+ * 
+ * @param cellEndX
+ * @text セル終了Ｘ座標
+ * @parent <Real Time>
+ * @type string
+ * @desc セルを切り取る終了Ｘ座標です。
+ * この項目はMVアニメーション専用です。
+ * 
+ * @param cellStartY
+ * @text セル開始Ｙ座標
+ * @parent <Real Time>
+ * @type string
+ * @desc セルを切り取る開始Ｙ座標です。
+ * この項目はMVアニメーション専用です。
+ * 
+ * @param cellEndY
+ * @text セル終了Ｙ座標
+ * @parent <Real Time>
+ * @type string
+ * @desc セルを切り取る終了Ｙ座標です。
+ * この項目はMVアニメーション専用です。
  * 
  * @param z
  * @text Ｚ座標（表示優先度）
@@ -2046,10 +2098,12 @@ BaseAnimation.prototype.makeRepeatAnimation = function (dynamicAnimationList, r,
         }, this);
     }
 
+    // 1/60秒余分に追加されているので-1する。
+    const duration = spriteAnimation._duration - 1;
     // 実行時間の最大長を求める。（スキル開始からの総合計）
-    this.totalDuration = Math.max(this.totalDuration, targetDelay + spriteAnimation._duration);
+    this.totalDuration = Math.max(this.totalDuration, targetDelay + duration);
     // この<D-Animation>内の実行時間
-    this.baseDuration = Math.max(this.baseDuration, baseDelaySum + spriteAnimation._duration);
+    this.baseDuration = Math.max(this.baseDuration, baseDelaySum + duration);
 
     // 最後の１回ならアニメーション時間を保持
     if (r == this.repeat - 1) {
@@ -2341,7 +2395,9 @@ DynamicAnimation.prototype.initialize = function(baseAnimation, target, r, sprit
     var position = baseAnimation.position;
     this.position = position;
 
-    this.frame = spriteAnimation._duration / this.rate;
+    // 1/60秒余分に追加されているので-1する。
+    const duration = spriteAnimation._duration - 1;
+    this.frame = duration / this.rate;
 
     // アニメーション反転設定
     this.noMirror = eval(baseAnimation.noMirror);
@@ -2572,7 +2628,9 @@ DynamicAnimation.prototype.evaluate = function (spriteAnimation) {
     if (baseAnimation.arrival != undefined) {
         this.arrival = eval(baseAnimation.arrival);
     } else {
-        this.arrival = spriteAnimation._animation.frames.length;
+        // 1/60秒余分に追加されているので-1する。
+        const duration = spriteAnimation._duration - 1;
+        this.arrival = duration / this.rate;
     }
 
     // 円運動初期値
@@ -2638,6 +2696,10 @@ DynamicAnimation.prototype.evaluate = function (spriteAnimation) {
     this.scaleY = baseAnimation.scaleY;
     this.color = baseAnimation.color;
     this.z = baseAnimation.z;
+    this.cellStartX = baseAnimation.cellStartX;
+    this.cellEndX = baseAnimation.cellEndX;
+    this.cellStartY = baseAnimation.cellStartY;
+    this.cellEndY = baseAnimation.cellEndY;
     // リアルタイム円
     this.radiusX = baseAnimation.radiusX;
     this.radiusY = baseAnimation.radiusY;
@@ -3715,11 +3777,11 @@ DynamicAnimation.prototype.isNoMirrorForFriend = function() {
 /**
  * ●アニメーションセルの更新
  */
-var _Sprite_Animation_updateCellSprite = Sprite_Animation.prototype.updateCellSprite;
+const _Sprite_Animation_updateCellSprite = Sprite_Animation.prototype.updateCellSprite;
 Sprite_Animation.prototype.updateCellSprite = function(sprite, cell) {
     _Sprite_Animation_updateCellSprite.call(this, sprite, cell);
 
-    var pattern = cell[0];
+    const pattern = cell[0];
     if (pattern >= 0 && this.dynamicAnimation) {
         var da = this.dynamicAnimation;
     
@@ -3733,6 +3795,30 @@ Sprite_Animation.prototype.updateCellSprite = function(sprite, cell) {
             const blendMode = sprite.blendMode;
             sprite.setBlendColor(eval(da.color));
             sprite.blendMode = blendMode;
+        }
+
+        // セルアニメの切り取り描画
+        // ※いずれかの入力がある場合のみ実行
+        if (da.cellStartX || da.cellStartY || da.cellEndX || da.cellEndY) {
+            const sx = (pattern % 5) * 192;
+            const sy = Math.floor((pattern % 100) / 5) * 192;
+
+            let cellStartX = eval(da.cellStartX);
+            let cellEndX = eval(da.cellEndX);
+            let cellStartY = eval(da.cellStartY);
+            let cellEndY = eval(da.cellEndY);
+            // nullチェック
+            cellStartX = cellStartX != null ? cellStartX : 0;
+            cellEndX = cellEndX != null ? cellEndX : 1;
+            cellStartY = cellStartY != null ? cellStartY : 0;
+            cellEndY = cellEndY != null ? cellEndY : 1;
+            // 値を0~1の範囲に調整する。
+            cellStartX = cellStartX.clamp(0, 1);
+            cellEndX = cellEndX.clamp(0, 1) - cellStartX;
+            cellStartY = cellStartY.clamp(0, 1);
+            cellEndY = cellEndY.clamp(0, 1) - cellStartY;
+
+            sprite.setFrame(sx + cellStartX * 192, sy + cellStartY * 192, cellEndX * 192, cellEndY * 192);
         }
     }
 };
