@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.03 It makes MV animations correspond to DynamicAnimationMZ.
+ * @plugindesc v1.031 It makes MV animations correspond to DynamicAnimationMZ.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -86,11 +86,20 @@
  * and rights indication are also optional.
  * The author is not responsible,
  * but will deal with defects to the extent possible.
+ * 
+ * @------------------------------------------------------------------
+ * @ Plugin Parameters
+ * @------------------------------------------------------------------
+ * 
+ * @param sortPriorityByBottom
+ * @type boolean
+ * @default true
+ * @desc The Y coordinate of the bottom edge determines the priority of the animation.
  */
 
 /*:ja
  * @target MZ
- * @plugindesc v1.03 ＭＶ用アニメーションをDynamicAnimationMZに対応させます。
+ * @plugindesc v1.031 ＭＶ用アニメーションをDynamicAnimationMZに対応させます。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -163,6 +172,16 @@
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
+ * 
+ * @------------------------------------------------------------------
+ * @ プラグインパラメータ
+ * @------------------------------------------------------------------
+ * 
+ * @param sortPriorityByBottom
+ * @text 表示優先度を下端で判定
+ * @type boolean
+ * @default true
+ * @desc Ｚ座標が同じアニメーションの表示優先度を判定する際、下端のＹ座標を基準にします。
  */
 
  /**
@@ -174,7 +193,7 @@
 /**
  * AnimationMvが登録されているか？
  */
-var existAnimationMv = PluginManager._scripts.some(function(scriptName) {
+const existAnimationMv = PluginManager._scripts.some(function(scriptName) {
     return scriptName == "AnimationMv";
 });
 
@@ -207,7 +226,17 @@ var Nrp = Nrp || {};
 (function() {
 "use strict";
 
+function toBoolean(str, def) {
+    if (str === true || str === "true") {
+        return true;
+    } else if (str === false || str === "false") {
+        return false;
+    }
+    return def;
+}
+
 const parameters = PluginManager.parameters("NRP_DynamicAnimationMV2MZ");
+const pSortPriorityByBottom = toBoolean(parameters["sortPriorityByBottom"], true);
 
 /**
  * ●アニメーションが準備完了かどうか？
@@ -545,6 +574,13 @@ Sprite_AnimationMV.prototype.updateCellSprite = function(sprite, cell) {
             cellEndY = cellEndY.clamp(0, 1) - cellStartY;
 
             sprite.setFrame(sx + cellStartX * 192, sy + cellStartY * 192, cellEndX * 192, cellEndY * 192);
+        }
+
+        // 並び替え用のＹ座標を下端に調整
+        if (pSortPriorityByBottom) {
+            // ※セルを削った分だけ基準位置を調整しないと表示順がおかしくなる。
+            const d = (sprite._frame.height / 2) * this.scale.y;
+            this.sortY = this.y + d;
         }
     }
 };

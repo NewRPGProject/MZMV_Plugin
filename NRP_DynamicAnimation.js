@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.26 Automate & super-enhance battle animations.
+ * @plugindesc v1.261 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help Call battle animations freely from skills (items).
@@ -131,6 +131,12 @@
  * @default true
  * @desc When calculating the animation position, consider the target scale.
  * This item also affects DynamicMotion.
+ * 
+ * @param sortPriorityByBottom
+ * @parent <Animation Position>
+ * @type boolean
+ * @default true
+ * @desc The Y coordinate of the bottom edge determines the priority of the animation.
  * 
  * @param <For FrontView>
  * @desc Items related to the front view.
@@ -482,7 +488,7 @@
  */
 
 /*:ja
- * @plugindesc v1.26 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.261 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在に戦闘アニメーションを呼び出します。
@@ -623,6 +629,13 @@
  * @default true
  * @desc アニメーションの位置計算時に対象の拡大率を考慮します。
  * この項目はDynamicMotionにも適用されます。
+ * 
+ * @param sortPriorityByBottom
+ * @text 表示優先度を下端で判定
+ * @parent <Animation Position>
+ * @type boolean
+ * @default true
+ * @desc Ｚ座標が同じアニメーションの表示優先度を判定する際、下端のＹ座標を基準にします。
  * 
  * @param <For FrontView>
  * @text ＜フロントビュー用＞
@@ -1145,8 +1158,9 @@ var pAllRangeY = setDefault(parameters["allRangeY"], "($gameSystem.isSideView() 
 var pMirrorAdjustX = parameters["mirrorAdjustX"];
 var pMirrorAdjustY = parameters["mirrorAdjustY"];
 const pNoMirrorForFriend = toBoolean(parameters["noMirrorForFriend"], true);
-var pRandomAdjust = toNumber(parameters["randomAdjust"], 0);
-var pConsiderTargetScale = toBoolean(parameters["considerTargetScale"], true);
+const pRandomAdjust = toNumber(parameters["randomAdjust"], 0);
+const pConsiderTargetScale = toBoolean(parameters["considerTargetScale"], true);
+const pSortPriorityByBottom = toBoolean(parameters["sortPriorityByBottom"], true);
 // フロントビュー関連
 var pFvActorHomeX = parameters["fvActorHomeX"];
 var pFvActorHomeY = parameters["fvActorHomeY"];
@@ -3819,6 +3833,13 @@ Sprite_Animation.prototype.updateCellSprite = function(sprite, cell) {
             cellEndY = cellEndY.clamp(0, 1) - cellStartY;
 
             sprite.setFrame(sx + cellStartX * 192, sy + cellStartY * 192, cellEndX * 192, cellEndY * 192);
+        }
+
+        // 並び替え用のＹ座標を下端に調整
+        if (pSortPriorityByBottom) {
+            // ※セルを削った分だけ基準位置を調整しないと表示順がおかしくなる。
+            const d = (sprite._frame.height / 2) * this.scale.y;
+            this.sortY = this.y + d;
         }
     }
 };

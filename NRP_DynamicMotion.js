@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.223 When executing skills, call motion freely.
+ * @plugindesc v1.23 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help When executing skills(items), call motion freely.
@@ -550,7 +550,7 @@
  */
 
 /*:ja
- * @plugindesc v1.223 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.23 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在にモーションを呼び出します。
@@ -3808,8 +3808,8 @@ function compareZ(a, b) {
     }
 
     // 空中Ｙ座標があれば優先（マイナス優先）
-    var aAirY = a._airY ? a._airY : 0;
-    var bAirY = b._airY ? b._airY : 0;
+    const aAirY = a._airY ? a._airY : 0;
+    const bAirY = b._airY ? b._airY : 0;
 
     if (aAirY < bAirY) {
         return 1;
@@ -3817,10 +3817,14 @@ function compareZ(a, b) {
         return -1;
     }
 
+    // ソート用の座標があるなら優先取得
+    const ay = a.sortY ? a.sortY : a.y;
+    const by = b.sortY ? b.sortY : b.y;
+
     // 優先度が同一の場合、Ｙ座標が大きいものを優先
-    if (a.y > b.y) {
+    if (ay > by) {
         return 1;
-    } else if (a.y < b.y) {
+    } else if (ay < by) {
         return -1;
     }
 
