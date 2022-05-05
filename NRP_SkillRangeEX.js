@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.071 Extends the effective range of skills and items.
+ * @plugindesc v1.072 Extends the effective range of skills and items.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_VisualTurn
  * @orderBefore NRP_DynamicAnimationMZ
@@ -85,7 +85,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.071 スキル及びアイテムの効果範囲を拡張します。
+ * @plugindesc v1.072 スキル及びアイテムの効果範囲を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_VisualTurn
  * @orderBefore NRP_DynamicAnimationMZ
@@ -234,8 +234,8 @@ function rangeEx(action, targets) {
     });
 
     // 行動主体とそのスプライトを取得
-    var subject = action.subject();
-    var subjectSprite = getBattlerSprite(subject);
+    const subject = action.subject();
+    const subjectSprite = getBattlerSprite(subject);
 
     var targetSprites;
 
@@ -249,26 +249,12 @@ function rangeEx(action, targets) {
             targetSprites = actorSprites.concat(enemySprites);
         }
 
-    // 対象サイドを対象リストに登録
+    // 対象サイドを判定して登録
     } else {
-        // 行動主体がアクター
-        if (subject.isActor()) {
-            // 相手サイドが対象
-            if (action.isForOpponent()) {
-                targetSprites = enemySprites;
-            // 自軍サイドが対象
-            } else {
-                targetSprites = actorSprites;
-            }
-        // 行動主体がエネミー
+        if (isTargetEnemies(subject, targets, action)) {
+            targetSprites = enemySprites;
         } else {
-            // 相手サイドが対象
-            if (action.isForOpponent()) {
-                targetSprites = actorSprites;
-            // 自軍サイドが対象
-            } else {
-                targetSprites = enemySprites;
-            }
+            targetSprites = actorSprites;
         }
     }
 
@@ -316,22 +302,21 @@ function rangeEx(action, targets) {
     BattleManager._mainTarget = mainTarget;
 
     // 数式用に設定
-    var b = mainTargetSprite;
+    const b = mainTargetSprite;
 
     // 再作成するため、対象リストをクリア
     targets = [];
 
     try {
-        for (var i = 0; i < targetSprites.length; i++) {
-            // 数式用に設定
-            // 巻き込む副対象のスプライト
-            var c = targetSprites[i];
+        // 数式用に設定
+        // 巻き込む副対象のスプライト
+        for (const c of targetSprites) {
             // Sprite_Actorのサイズ設定
             setActorSpriteSize(c);
-    
+
             // 計算式を元に、条件を満たす副対象を対象リストへ追加
             if (eval(rangeIf)) {
-                targets.push(targetSprites[i]._battler);
+                targets.push(c._battler);
             }
         }
     // 数式でエラーが出た場合
@@ -340,8 +325,41 @@ function rangeEx(action, targets) {
         return [];
     }
 
-
     return targets;
+}
+
+/**
+ * ●対象サイドを判定
+ */
+function isTargetEnemies(subject, targets, action) {
+    // 混乱している場合→対象サイドをそのまま取得
+    if (subject.isConfused()) {
+        // 相手サイドが対象
+        if (targets[0].isEnemy()) {
+            return true;
+        }
+        // 自軍サイドが対象
+        return false;
+    }
+
+    // 行動主体がアクター
+    if (subject.isActor()) {
+        // 相手サイドが対象
+        if (action.isForOpponent()) {
+            return true;
+        }
+        // 自軍サイドが対象
+        return false;
+
+    // 行動主体がエネミー
+    } else {
+        // 相手サイドが対象
+        if (action.isForOpponent()) {
+            return false;
+        }
+        // 自軍サイドが対象
+        return true;
+    }
 }
 
 /**
