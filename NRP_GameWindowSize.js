@@ -15,6 +15,9 @@
  * - Window size change function can be added to the options screen.
  *   If changed, the change will be reflected at startup thereafter.
  * 
+ * Note that it does not make sense on mobile or browser activation.
+ * This plugin is automatically disabled.
+ * 
  * -------------------------------------------------------------------
  * [Notice (for MZ)]
  * -------------------------------------------------------------------
@@ -178,6 +181,9 @@
  * ・オプション画面にウィンドウサイズの変更機能を追加可能。
  * 　変更すると以降、起動時にも反映されます。
  *
+ * なお、モバイルやブラウザ起動では意味がないので、
+ * このプラグインは自動で無効化されます。
+ * 
  * -------------------------------------------------------------------
  * ■注意点（ＭＺ向け）
  * -------------------------------------------------------------------
