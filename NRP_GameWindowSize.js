@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Resize the entire game window & add to the options.
+ * @plugindesc v1.031 Resize the entire game window & add to the options.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475413177.html
  *
@@ -169,7 +169,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 ゲーム全体のウィンドウサイズを変更＆オプションに追加
+ * @plugindesc v1.031 ゲーム全体のウィンドウサイズを変更＆オプションに追加
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/475413177.html
  *
@@ -342,11 +342,6 @@
 (function() {
 "use strict";
 
-// ローカル実行以外では機能無効
-if (!Utils.isNwjs()) {
-    return;
-}
-
 function setDefault(str, def) {
     return str ? str : def;
 }
@@ -423,6 +418,11 @@ Scene_Boot.prototype.start = function() {
  * ●ウィンドウサイズの変更
  */
 function changeWindowSize() {
+    // ローカル実行以外では機能無効
+    if (!Utils.isNwjs()) {
+        return;
+    }
+
     if (pWindowWidth || pWindowHeight) {
         const dw = getWindowWidth() - window.innerWidth;
         const dh = getWindowHeight() - window.innerHeight;
@@ -468,6 +468,11 @@ function getWindowSizeRate() {
     }
 
     return windowSizeRate;
+}
+
+// ローカル実行以外では機能無効
+if (!Utils.isNwjs()) {
+    return;
 }
 
 /**
