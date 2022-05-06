@@ -163,7 +163,7 @@
  * @param overWriteSceneManagerRun
  * @parent <cooperation>
  * @type boolean
- * @default true
+ * @default false
  * @desc Override the SceneManager.run function. This function is used to disable window resizing by YEP_CoreEngine.
  */
 
@@ -335,7 +335,7 @@
  * @text SceneManager.runを上書
  * @parent <cooperation>
  * @type boolean
- * @default true
+ * @default false
  * @desc SceneManager.run関数を上書きします。YEP_CoreEngineのウィンドウサイズ変更を無効化するための機能です。
  */
 
