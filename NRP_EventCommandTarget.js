@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Change the target of the event command.
+ * @plugindesc v1.021 Change the target of the event command.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482259070.html
  *
@@ -142,7 +142,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 イベントコマンドの対象を変更する。
+ * @plugindesc v1.021 イベントコマンドの対象を変更する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/482259070.html
  *
@@ -352,15 +352,17 @@ function makeTargets(targetId) {
             if (idRangeEnd < idRangeStart) {
                 for (let i = idRangeStart; i >= idRangeEnd; i--) {
                     const evalId = eval(i);
-                    if (this.character(evalId)) {
-                        targets.push(this.character(evalId));
+                    const character = this.characterAndFollower(evalId);
+                    if (character) {
+                        targets.push(character);
                     }
                 }
             } else {
                 for (let i = idRangeStart; i <= idRangeEnd; i++) {
                     const evalId = eval(i);
-                    if (this.character(evalId)) {
-                        targets.push(this.character(evalId));
+                    const character = this.characterAndFollower(evalId);
+                    if (character) {
+                        targets.push(character);
                     }
                 }
             }
@@ -368,8 +370,9 @@ function makeTargets(targetId) {
         // 通常時
         } else {
             const evalId = eval(id);
-            if (this.character(evalId)) {
-                targets.push(this.character(evalId));
+            const character = this.characterAndFollower(evalId);
+            if (character) {
+                targets.push(character);
             }
         }
     }
@@ -399,9 +402,9 @@ function getTargetId(target) {
     return -1;
 }
 
-//----------------------------------------
+//-----------------------------------------------------------------------------
 // 対象キャラクターの変更
-//----------------------------------------
+//-----------------------------------------------------------------------------
 
 // MVには存在しないため、空で定義しておかないとエラーになる。
 if (!PluginManager.registerCommand) {
@@ -475,33 +478,50 @@ Game_Interpreter.prototype.terminate = function() {
  */
 const _Game_Interpreter_character = Game_Interpreter.prototype.character;
 Game_Interpreter.prototype.character = function(param) {
+    // 戦闘時は無視
+    if ($gameParty.inBattle()) {
+        return _Game_Interpreter_character.call(this, param);
+    }
+
     // 値が未指定（このイベント）かつ指定のＩＤがある場合
+    // →値を強制変更
     if (!param && this._changeTargetId) {
         param = this._changeTargetId;
+    }
 
-        if ($gameParty.inBattle()) {
-            return null;
+    if (param <= -2) {
         // イベントＩＤがマイナスの場合、フォロワーを取得
-        } else if (param <= -2) {
-            // -2 -> 0, -3 -> 1というように変換
-            const n = Math.abs(param) - 2;
-            return $gamePlayer.followers().follower(n);
-        // プレイヤーを取得
-        } else if (param == -1) {
-            return $gamePlayer;
-        } else if (this.isOnCurrentMap()) {
-            return $gameMap.event(param > 0 ? param : this._eventId);
-        }
-
-        return null;
+        // ※-2 -> 0, -3 -> 1というように変換
+        const n = Math.abs(param) - 2;
+        return $gamePlayer.followers().follower(n);
     }
 
     return _Game_Interpreter_character.call(this, param);
 };
 
-//----------------------------------------
+/**
+ * 【独自】キャラクター取得時、-2以下はフォロワーとして取得する。
+ */
+Game_Interpreter.prototype.characterAndFollower = function(param) {
+    if ($gameParty.inBattle()) {
+        return null;
+    // フォロワーを取得
+    } else if (param <= -2) {
+        // -2 -> 0, -3 -> 1というように変換
+        const n = Math.abs(param) - 2;
+        return $gamePlayer.followers().follower(n);
+    } else if (param < 0) {
+        return $gamePlayer;
+    } else if (this.isOnCurrentMap()) {
+        return $gameMap.event(param > 0 ? param : this._eventId);
+    } else {
+        return null;
+    }
+};
+
+//-----------------------------------------------------------------------------
 // 一括指定
-//----------------------------------------
+//-----------------------------------------------------------------------------
 
 let mBatchTargetsId = [];
 let mAutoRelease = false;
@@ -638,9 +658,9 @@ Game_Interpreter.prototype.command213 = function(params) {
     return true;
 };
 
-//----------------------------------------
+//-----------------------------------------------------------------------------
 // フォロワーの制御
-//----------------------------------------
+//-----------------------------------------------------------------------------
 
 /**
  * 【ＭＺ用プラグインコマンド】隊列歩行の追尾を停止
@@ -739,9 +759,9 @@ Game_Follower.prototype.setMoveSpeed = function(moveSpeed) {
     _Game_Follower_setMoveSpeed.apply(this, arguments);
 };
 
-//----------------------------------------
+//-----------------------------------------------------------------------------
 // ＭＶ対応
-//----------------------------------------
+//-----------------------------------------------------------------------------
 
 /**
  * ●ＭＶには存在しない関数なので定義
@@ -752,9 +772,9 @@ if (!Game_Followers.prototype.data) {
     };
 }
 
-//----------------------------------------
+//-----------------------------------------------------------------------------
 // 追加関数
-//----------------------------------------
+//-----------------------------------------------------------------------------
 
 /**
  * 【独自】先行のキャラクターに向かって移動する。
