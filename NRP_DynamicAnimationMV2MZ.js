@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.031 It makes MV animations correspond to DynamicAnimationMZ.
+ * @plugindesc v1.04 It makes MV animations correspond to DynamicAnimationMZ.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -91,6 +91,11 @@
  * @ Plugin Parameters
  * @------------------------------------------------------------------
  * 
+ * @param useMvAnimationFile
+ * @type boolean
+ * @default false
+ * @desc Load MV animations from a separate file (mv/Animations.json), Function no longer needed in MZ ver 1.4.
+ * 
  * @param sortPriorityByBottom
  * @type boolean
  * @default true
@@ -99,7 +104,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.031 ＭＶ用アニメーションをDynamicAnimationMZに対応させます。
+ * @plugindesc v1.04 ＭＶ用アニメーションをDynamicAnimationMZに対応させます。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -177,6 +182,12 @@
  * @ プラグインパラメータ
  * @------------------------------------------------------------------
  * 
+ * @param useMvAnimationFile
+ * @text 旧形式のファイルを使用
+ * @type boolean
+ * @default false
+ * @desc ＭＶアニメーションを別ファイル（mv/Animations.json）から読み込みます。MZ ver1.4以降は不要となった機能。
+ * 
  * @param sortPriorityByBottom
  * @text 表示優先度を下端で判定
  * @type boolean
@@ -184,11 +195,20 @@
  * @desc Ｚ座標が同じアニメーションの表示優先度を判定する際、下端のＹ座標を基準にします。
  */
 
- /**
-  * AnimationMv.jsから流用
-  */
 (() => {
 'use strict';
+
+function toBoolean(str, def) {
+    if (str === true || str === "true") {
+        return true;
+    } else if (str === false || str === "false") {
+        return false;
+    }
+    return def;
+}
+
+const parameters = PluginManager.parameters("NRP_DynamicAnimationMV2MZ");
+const pUseMvAnimationFile = toBoolean(parameters["useMvAnimationFile"], false);
 
 /**
  * AnimationMvが登録されているか？
@@ -200,7 +220,8 @@ const existAnimationMv = PluginManager._scripts.some(function(scriptName) {
 /**
  * 登録されていなければ、代わりの処理を行う。
  */
-if (!existAnimationMv) {
+if (!existAnimationMv && pUseMvAnimationFile) {
+    // ※AnimationMv.jsから流用
     const variableName = '$dataMvAnimations';
     const variableSrc = 'mv/Animations.json';
 
@@ -220,9 +241,6 @@ if (!existAnimationMv) {
  /**
   * ここから開始！
   */
- // 連携用に値を保持
-var Nrp = Nrp || {};
-
 (function() {
 "use strict";
 
