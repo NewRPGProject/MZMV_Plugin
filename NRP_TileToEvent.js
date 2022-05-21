@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Automatically generate events on tiles.
+ * @plugindesc v1.04 Automatically generate events on tiles.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481496398.html
  *
@@ -186,7 +186,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 タイル上に自動でイベントを生成します。
+ * @plugindesc v1.04 タイル上に自動でイベントを生成します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481496398.html
  *
@@ -1148,6 +1148,9 @@ Scene_Map.prototype.create = function() {
 // 以下は軽量化対応
 //---------------------------------------------------
 
+/**
+ * ●描画更新
+ */
 const _Sprite_Character_update = Sprite_Character.prototype.update;
 Sprite_Character.prototype.update = function() {
     // 対象のイベント以外はそのまま
@@ -1156,8 +1159,9 @@ Sprite_Character.prototype.update = function() {
         return;
     }
 
-    // 画面外なら位置情報だけを更新
+    // 画面外なら最小限の情報だけを更新
     if (isOutOfRangeSprite(this)) {
+        this.setFrame(0, 0, 0, 0);
         this.updatePosition();
         return;
     }
