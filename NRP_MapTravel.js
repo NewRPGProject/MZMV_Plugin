@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Implement a map selection & transfer screen.
+ * @plugindesc v1.001 Implement a map selection & transfer screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484927929.html
  *
@@ -553,7 +553,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 マップ選択＆移動画面を実装します。
+ * @plugindesc v1.001 マップ選択＆移動画面を実装します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484927929.html
  *
@@ -1269,7 +1269,7 @@ function editSpotList(argSpotList) {
     const newSpotList = [];
 
     for (let spot of argSpotList) {
-        // 条件を満たすなら編集して追加
+        // 編集して追加
         newSpotList.push(editSpot(spot));
     }
 
@@ -2488,6 +2488,10 @@ Windows_MapDisplay.prototype.getFieldPlayerY = function() {
  * ●地点情報を設定します。
  */
 Windows_MapDisplay.prototype.setItem = function(item) {
+    if (!item) {
+        return;
+    }
+
     this._item = item;
     // マップ情報を取得して設定（ここのwidth, heightはグリッド数のこと）
     this._mapInfo = mMapsInfo.find(m => m.mapId == item.fieldMapId);
