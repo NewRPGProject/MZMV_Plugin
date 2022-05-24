@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.001 Changes the message speed.
+ * @plugindesc v1.01 Changes the message speed.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/485101364.html
  *
@@ -88,7 +88,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.001 メッセージ速度を変更します。
+ * @plugindesc v1.01 メッセージ速度を変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/485101364.html
  *
@@ -544,5 +544,13 @@ function isMessageSpeedSymbol(symbol) {
     }
     return false;
 }
+
+/**
+ * ●コマンド数を加算
+ */
+const _Scene_Options_maxCommands = Scene_Options.prototype.maxCommands;
+Scene_Options.prototype.maxCommands = function() {
+    return _Scene_Options_maxCommands.apply(this, arguments) + 1;
+};
 
 })();

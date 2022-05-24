@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.032 Resize the entire game window & add to the options.
+ * @plugindesc v1.04 Resize the entire game window & add to the options.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475413177.html
  *
@@ -169,7 +169,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.032 ゲーム全体のウィンドウサイズを変更＆オプションに追加
+ * @plugindesc v1.04 ゲーム全体のウィンドウサイズを変更＆オプションに追加
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/475413177.html
  *
@@ -717,5 +717,13 @@ function isWindowsSizeSymbol(symbol) {
     }
     return false;
 }
+
+/**
+ * ●コマンド数を加算
+ */
+const _Scene_Options_maxCommands = Scene_Options.prototype.maxCommands;
+Scene_Options.prototype.maxCommands = function() {
+    return _Scene_Options_maxCommands.apply(this, arguments) + 1;
+};
 
 })();
