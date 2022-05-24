@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Changes the message speed.
+ * @plugindesc v1.001 Changes the message speed.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/485101364.html
  *
@@ -88,7 +88,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 メッセージ速度を変更します。
+ * @plugindesc v1.001 メッセージ速度を変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/485101364.html
  *
@@ -512,6 +512,14 @@ Window_Options.prototype.makeCommandList = function() {
     _Window_Options_makeCommandList.apply(this, arguments);
 
     this._list.splice(pOptionPosition, 0, { name: pOptionName, symbol: MESSAGE_SPEED_SYMBOL, enabled: true, ext: null});
+
+    // Mano_InputConfig.jsとの競合対処
+    if (this._gamepadOptionIndex >= pOptionPosition) {
+        this._gamepadOptionIndex++;
+    }
+    if (this._keyboardConfigIndex >= pOptionPosition) {
+        this._keyboardConfigIndex++;
+    }
 };
 
 /**

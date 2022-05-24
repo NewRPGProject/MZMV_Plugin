@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.031 Resize the entire game window & add to the options.
+ * @plugindesc v1.032 Resize the entire game window & add to the options.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475413177.html
  *
@@ -169,7 +169,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.031 ゲーム全体のウィンドウサイズを変更＆オプションに追加
+ * @plugindesc v1.032 ゲーム全体のウィンドウサイズを変更＆オプションに追加
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/475413177.html
  *
@@ -685,6 +685,14 @@ Window_Options.prototype.makeCommandList = function() {
     _Window_Options_makeCommandList.apply(this, arguments);
 
     this._list.splice(pOptionPosition, 0, { name: pOptionName, symbol: WINDOW_SIZE_SYMBOL, enabled: true, ext: null});
+
+    // Mano_InputConfig.jsとの競合対処
+    if (this._gamepadOptionIndex >= pOptionPosition) {
+        this._gamepadOptionIndex++;
+    }
+    if (this._keyboardConfigIndex >= pOptionPosition) {
+        this._keyboardConfigIndex++;
+    }
 };
 
 /**
