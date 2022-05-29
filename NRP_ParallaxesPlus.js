@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Display parallaxes freely.
+ * @plugindesc v1.001 Display parallaxes freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488413806.html
  *
@@ -352,7 +352,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 自在に遠景（近景）を表示します。
+ * @plugindesc v1.001 自在に遠景（近景）を表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488413806.html
  *
@@ -834,7 +834,7 @@ PluginManager.registerCommand(PLUGIN_NAME, "AddParallax", function(args) {
  * ●追加背景の作成
  */
 function createParallaxPlus(params) {
-    const parallax = new TilingSprite();
+    const parallax = new ParallaxPlus();
     setParallaxData(parallax, params);
     return parallax;
 }
@@ -874,8 +874,8 @@ function setParallaxData(parallax, params) {
     // 初回用の項目
     } else {
         // 元の幅
-        parallax.originalWidth = setDefault(params.width, Graphics.width);
-        parallax.originalHeight = setDefault(params.height, Graphics.height);
+        parallax.originalWidth = setDefault(params.width);
+        parallax.originalHeight = setDefault(params.height);
         parallax.mapX = params.mapX;
         parallax.mapY = params.mapY;
         parallax.x = parallax.shiftX;
@@ -944,18 +944,28 @@ PluginManager.registerCommand(PLUGIN_NAME, "ChangeParallax", function(args) {
     const targetParallaxes = spriteset._parallaxPlus.filter(p => id == null || p.id == id);
     // 変更を反映
     for (const parallax of targetParallaxes) {
+        // 基本項目
         parallax.name = changeValue(parallax.name, params.name);
         parallax.scrollX = changeValue(parallax.scrollX, params.scrollX);
         parallax.scrollY = changeValue(parallax.scrollY, params.scrollY);
+        parallax.mapX = changeValue(parallax.mapX, params.mapX);
+        parallax.mapY = changeValue(parallax.mapY, params.mapY);
         parallax.z = changeValue(parallax.z, params.z);
         parallax.opacity = changeValue(parallax.opacity, params.opacity);
-        parallax.blendMode = changeValue(parallax.blendMode, params.blendMode);
-        parallax.parallaxX = changeValue(parallax.parallaxX, params.parallaxX);
-        parallax.parallaxY = changeValue(parallax.parallaxY, params.parallaxY);
+        parallax.parallaxTile = changeValue(parallax.parallaxTile, params.parallaxTile);
+
+        // 特殊な調整をする項目
+        parallax.originalWidth = changeValue(parallax.originalWidth, params.width);
+        parallax.originalHeight = changeValue(parallax.originalHeight, params.height);
+
+        // オプション項目
         parallax.shiftX = changeValue(parallax.shiftX, params.shiftX);
         parallax.shiftY = changeValue(parallax.shiftY, params.shiftY);
+        parallax.parallaxX = changeValue(parallax.parallaxX, params.parallaxX);
+        parallax.parallaxY = changeValue(parallax.parallaxY, params.parallaxY);
         parallax.noLoopX = changeValue(parallax.noLoopX, params.noLoopX);
         parallax.noLoopY = changeValue(parallax.noLoopY, params.noLoopY);
+        parallax.blendMode = changeValue(parallax.blendMode, params.blendMode);
     }
 
     // $gameMapに反映
@@ -1002,6 +1012,106 @@ PluginManager.registerCommand(PLUGIN_NAME, "RemoveParallax", function(args) {
 });
 
 //-----------------------------------------------------------------------------
+// ParallaxPlus
+//
+// 追加の遠景を定義するクラス
+
+function ParallaxPlus() {
+    this.initialize(...arguments);
+}
+
+ParallaxPlus.prototype = Object.create(TilingSprite.prototype);
+ParallaxPlus.prototype.constructor = ParallaxPlus;
+
+ParallaxPlus.prototype.initialize = function() {
+    TilingSprite.prototype.initialize.call(this);
+};
+
+/**
+ * ●サイズを設定する。
+ */
+ParallaxPlus.prototype.setSize = function() {
+    const bmp = this.bitmap;
+
+    //-------------------------------------------------
+    // 基本サイズの設定
+    //-------------------------------------------------
+    // 横幅が設定されていない場合→初期設定を行う
+    if (this.originalWidth == null) {
+        // ループしない場合は画像幅に合わせる。
+        if (this.noLoopX) {
+            this.originalWidth = bmp.width;
+        // それ以外は画像幅と画面幅の大きなほう。
+        } else {
+            this.originalWidth = Math.max(bmp.width, Graphics.width);
+        }
+    }
+    // 縦幅が設定されていない場合→初期設定を行う
+    if (this.originalHeight == null) {
+        // ループしない場合は画像幅に合わせる。
+        if (this.noLoopY) {
+            this.originalHeight = bmp.height;
+        // それ以外は画像幅と画面幅の大きなほう。
+        } else {
+            this.originalHeight = Math.max(bmp.height, Graphics.height);
+        }
+    }
+
+    //-------------------------------------------------
+    // 基本サイズを元に表示サイズを設定
+    //-------------------------------------------------
+    if (this.isLimitX) {
+        this.width = this.originalWidth;
+    } else {
+        // 指定の幅がない場合はズーム対応
+        // ※ズームアウト時に画面全体まで引き伸ばす
+        this.width = this.originalWidth / $gameScreen.zoomScale();
+    }
+    if (this.isLimitY) {
+        this.height = this.originalHeight;
+    } else {
+        // 指定の幅がない場合はズーム対応
+        this.height = this.originalHeight / $gameScreen.zoomScale();
+    }
+};
+
+/**
+ * ●マップ座標に配置する際の補正を行う
+ */
+ParallaxPlus.prototype.setMapPosition = function(diffX, diffY) {
+    // マップＸ座標の指定がある場合は補正
+    if (this.mapX != null) {
+        // 表示座標 = 配置座標 - 現在の画面座標
+        this.x = (this.mapX - $gameMap.displayX()) * $gameMap.tileWidth() + this.shiftX;
+        // 横ループマップの場合
+        if (!$gameParty.inBattle() && $gameMap.isLoopHorizontal()) {
+            const mapWidth = $gameMap.width() * $gameMap.tileWidth();
+            // 画像が画面外（左）に位置している場合、画面右へ表示されるよう補正
+            if (this.x + this.width < 0) {
+                this.x += mapWidth;
+            }
+        }
+        // 画像のスクロールを戻す
+        this.origin.x -= diffX;
+    }
+    // マップＹ座標の指定がある場合は補正
+    if (this.mapY != null) {
+        // 表示座標 = 配置座標 - 現在の画面座標
+        this.y = (this.mapY - $gameMap.displayY()) * $gameMap.tileHeight() + this.shiftY;
+        // 縦ループマップの場合
+        if (!$gameParty.inBattle() && $gameMap.isLoopVertical()) {
+            const mapHeight = $gameMap.height() * $gameMap.tileHeight();
+            // 画像が画面外（上）に位置している場合、画面下へ表示されるよう補正
+            if (this.y + this.height < 0) {
+                this.y += mapHeight;
+            }
+        }
+        // 画像のスクロールを戻す
+        this.origin.y -= diffY;
+    }
+}
+
+//-----------------------------------------------------------------------------
 // Spriteset_Base
 //-----------------------------------------------------------------------------
 
@@ -1038,74 +1148,29 @@ Spriteset_Base.prototype.updateParallaxPlus = function() {
             parallax.bitmap = ImageManager.loadParallax(parallax.name);
         }
 
-        // 画像が読み込まれている場合
         const bmp = parallax.bitmap;
-        if (bmp) {
-            // ループしない場合は画像幅に合わせる。
-            if (parallax.noLoopX) {
-                parallax.originalWidth = bmp.width;
-            }
-            if (parallax.noLoopY) {
-                parallax.originalHeight = bmp.height;
-            }
-
-            // 視差に応じて画面スクロール分を加算
-            if (parallax.parallaxX) {
-                parallax.origin.x += diffX * parallax.parallaxX;
-            }
-            if (parallax.parallaxY) {
-                parallax.origin.y += diffY * parallax.parallaxY;
-            }
-
-            // 遠景自体のスクロール値を加算
-            parallax.origin.x += eval(parallax.scrollX);
-            parallax.origin.y += eval(parallax.scrollY);
-
-            if (parallax.isLimitX) {
-                parallax.width = parallax.originalWidth;
-            } else {
-                // 指定の幅がない場合はズーム対応
-                // ※ズームアウト時に画面全体まで引き伸ばす
-                parallax.width = parallax.originalWidth / $gameScreen.zoomScale();
-            }
-            if (parallax.isLimitY) {
-                parallax.height = parallax.originalHeight;
-            } else {
-                // 指定の幅がない場合はズーム対応
-                parallax.height = parallax.originalHeight / $gameScreen.zoomScale();
-            }
-
-            // マップＸ座標の指定がある場合は補正
-            if (parallax.mapX != null) {
-                // 表示座標 = 配置座標 - 現在の画面座標
-                parallax.x = (parallax.mapX - $gameMap.displayX()) * $gameMap.tileWidth() + parallax.shiftX;
-                // 横ループマップの場合
-                if (!$gameParty.inBattle() && $gameMap.isLoopHorizontal()) {
-                    const mapWidth = $gameMap.width() * $gameMap.tileWidth();
-                    // 画像が画面外（左）に位置している場合、画面右へ表示されるよう補正
-                    if (parallax.x + parallax.width < 0) {
-                        parallax.x += mapWidth;
-                    }
-                }
-                // 画像のスクロールを戻す
-                parallax.origin.x -= diffX;
-            }
-            // マップＹ座標の指定がある場合は補正
-            if (parallax.mapY != null) {
-                // 表示座標 = 配置座標 - 現在の画面座標
-                parallax.y = (parallax.mapY - $gameMap.displayY()) * $gameMap.tileHeight() + parallax.shiftY;
-                // 縦ループマップの場合
-                if (!$gameParty.inBattle() && $gameMap.isLoopVertical()) {
-                    const mapHeight = $gameMap.height() * $gameMap.tileHeight();
-                    // 画像が画面外（上）に位置している場合、画面下へ表示されるよう補正
-                    if (parallax.y + parallax.height < 0) {
-                        parallax.y += mapHeight;
-                    }
-                }
-                // 画像のスクロールを戻す
-                parallax.origin.y -= diffY;
-            }
+        // 画像の幅を取得できない場合は終了
+        if (!bmp.width) {
+            continue;
         }
+
+        // 幅が設定されていない場合に初期設定を行う
+        parallax.setSize();
+
+        // 視差に応じて画面スクロール分を加算
+        if (parallax.parallaxX) {
+            parallax.origin.x += diffX * parallax.parallaxX;
+        }
+        if (parallax.parallaxY) {
+            parallax.origin.y += diffY * parallax.parallaxY;
+        }
+
+        // 遠景自体のスクロール値を加算
+        parallax.origin.x += eval(parallax.scrollX);
+        parallax.origin.y += eval(parallax.scrollY);
+
+        // マップ座標の指定がある場合は補正
+        parallax.setMapPosition(diffX, diffY);
     }
 };
 
