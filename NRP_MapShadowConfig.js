@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.011 Sets the settings for shadows on the map.
+ * @plugindesc v1.02 Sets the settings for shadows on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/479088201.html
  *
@@ -57,7 +57,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.011 マップの影に関する設定を行います。
+ * @plugindesc v1.02 マップの影に関する設定を行います。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/479088201.html
  *
@@ -154,8 +154,8 @@ if (pNoTableShadow) {
             return;
         }
 
-        const dx = x * this._tileWidth;
-        const dy = y * this._tileHeight;
+        const dx = x * (this.tileWidth || this._tileWidth);
+        const dy = y * (this.tileHeight || this._tileHeight);
         const tileId0 = this._readMapData(mx, my, 0);
         const tileId2 = this._readMapData(mx, my, 2);
         const tileId3 = this._readMapData(mx, my, 3);
@@ -189,8 +189,8 @@ if (pNoTableShadow) {
 const _Tilemap__addShadow = Tilemap.prototype._addShadow;
 Tilemap.prototype._addShadow = function(layer, shadowBits, dx, dy) {
     if (shadowBits & 0x0f) {
-        const w1 = this._tileWidth / 2;
-        const h1 = this._tileHeight / 2;
+        const w1 = (this.tileWidth || this._tileWidth) / 2;
+        const h1 = (this.tileHeight || this._tileHeight) / 2;
 
         // 斜め影の作成
         if (isDiagonalShadow() && makeDiagonalShadow(layer, shadowBits, dx, dy, w1, h1)) {
@@ -424,8 +424,8 @@ if (pOpacity !== undefined) {
 
         return new PIXI.Shader(PIXI.Program.from(vertexSrc, fragmentSrc), {
             uSampler0: 0,
-            uSampler1: 1,
-            uSampler2: 2,
+            uSampler1: 0,
+            uSampler2: 0,
             uProjectionMatrix: new PIXI.Matrix()
         });
     };
