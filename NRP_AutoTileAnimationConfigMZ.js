@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.011 Changes the animation speed of auto tiles (water, falls, etc.).
+ * @plugindesc v1.02 Changes the animation speed of auto tiles (water, falls, etc.).
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/480713311.html
  *
@@ -56,7 +56,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.011 オートタイル（水、滝など）のアニメーション速度を変更します。
+ * @plugindesc v1.02 オートタイル（水、滝など）のアニメーション速度を変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/480713311.html
  *
@@ -195,8 +195,8 @@ Tilemap.prototype._addAutotile = function(layer, tileId, dx, dy) {
 
         if (editFlg) {
             const table = autotileTable[shape];
-            const w1 = this._tileWidth / 2;
-            const h1 = this._tileHeight / 2;
+            const w1 = (this.tileWidth || this._tileWidth) / 2;
+            const h1 = (this.tileHeight || this._tileHeight) / 2;
             for (let i = 0; i < 4; i++) {
                 const qsx = table[i][0];
                 const qsy = table[i][1];
