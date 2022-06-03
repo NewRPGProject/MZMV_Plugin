@@ -3,14 +3,14 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Display DynamicAnimation to match the battle background.
+ * @plugindesc v1.01 Display DynamicAnimation to match the battle background.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
- * @base NRP_DynamicAnimationMapMZ
- * @orderAfter NRP_DynamicAnimationMapMZ
  * @url http://newrpg.seesaa.net/article/488123194.html
  *
  * @help Display DynamicAnimation to match the battle background.
- * The following plugins are required to use this plug-in.
+ * In addition, common event can be executed.
+ * 
+ * The following plugins are required to show DynamicAnimation.
  * 
  * - NRP_DynamicAnimationMZ.js
  * - NRP_DynamicAnimationMapMZ.js
@@ -76,18 +76,18 @@
  * @parent <Condition>
  * @type file
  * @dir img/battlebacks1
- * @desc The battle background (below) is the condition for executing DynamicAnimation.
+ * @desc The battle background (below) is the condition for executing.
  * 
  * @param Battleback2
  * @parent <Condition>
  * @type file
  * @dir img/battlebacks2
- * @desc The battle background (above) is the condition for executing DynamicAnimation.
+ * @desc The battle background (above) is the condition for executing.
  * 
  * @param Switch
  * @parent <Condition>
  * @type switch
- * @desc This is a switch that serves as the execution condition for DynamicAnimation.s
+ * @desc This is a switch that serves as the execution condition.
  * 
  * @param <Directing>
  * 
@@ -95,18 +95,24 @@
  * @parent <Directing>
  * @type skill
  * @desc DynamicAnimation skills to execute.
+ * 
+ * @param CommonEvent
+ * @parent <Directing>
+ * @type common_event
+ * @desc A common event that is executed at battle start.
+ * It is executed before the fade-in on the screen.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 戦闘背景に合わせてDynamicAnimationを表示。
+ * @plugindesc v1.01 戦闘背景に合わせてDynamicAnimationを表示。
  * @author 砂川赳（http://newrpg.seesaa.net/）
- * @base NRP_DynamicAnimationMapMZ
- * @orderAfter NRP_DynamicAnimationMapMZ
  * @url http://newrpg.seesaa.net/article/488123194.html
  *
  * @help 戦闘背景に合わせてDynamicAnimationを表示します。
- * このプラグインの利用には、以下のプラグインが必要です。
+ * ついでにコモンイベントも実行できます。
+ * 
+ * DynamicAnimationの表示には、以下のプラグインが必要です。
  * 
  * ・NRP_DynamicAnimationMZ.js
  * ・NRP_DynamicAnimationMapMZ.js
@@ -166,20 +172,20 @@
  * @text 戦闘背景１
  * @type file
  * @dir img/battlebacks1
- * @desc DynamicAnimationの実行条件となる戦闘背景（下）です。
+ * @desc 実行条件となる戦闘背景（下）です。
  * 
  * @param Battleback2
  * @parent <Condition>
  * @text 戦闘背景２
  * @type file
  * @dir img/battlebacks2
- * @desc DynamicAnimationの実行条件となる戦闘背景（上）です。
+ * @desc 実行条件となる戦闘背景（上）です。
  * 
  * @param Switch
  * @parent <Condition>
  * @text スイッチ
  * @type switch
- * @desc DynamicAnimationの実行条件となるスイッチです。
+ * @desc 実行条件となるスイッチです。
  * 
  * @param <Directing>
  * @text ＜演出＞
@@ -189,6 +195,13 @@
  * @text Dynamic用スキル
  * @type skill
  * @desc 実行するDynamicAnimationのスキルです。
+ * 
+ * @param CommonEvent
+ * @parent <Directing>
+ * @text コモンイベント
+ * @type common_event
+ * @desc 戦闘開始直後に実行するコモンイベントです。
+ * 画面のフェードインより先に実行されます。
  */
 
 (function() {
@@ -242,6 +255,7 @@ for (const setting of pBattlebackSettingList) {
     setting.battleback2 = setDefault(setting.Battleback2);
     setting.switch = toNumber(setting.Switch);
     setting.dynamicSkill = toNumber(setting.DynamicSkill);
+    setting.commonEvent = setDefault(setting.CommonEvent);
 }
 
 //-----------------------------------------------------------------------------
@@ -302,6 +316,37 @@ Spriteset_Battle.prototype.createBattleback = function() {
 
     // 条件に一致する設定を反映
     this._battleBackDynamicSettings = getMatchSettings(battleback1Name, battleback2Name);
+};
+
+//-----------------------------------------------------------------------------
+// Game_Troop
+//-----------------------------------------------------------------------------
+
+/*
+ * Game_Troop.prototype.onBattleStartが未定義の場合は事前に定義
+ * ※これをしておかないと以後のGame_Unit側への追記が反映されない。
+ */
+if (Game_Troop.prototype.onBattleStart == Game_Unit.prototype.onBattleStart) {
+    Game_Troop.prototype.onBattleStart = function(advantageous) {
+        Game_Unit.prototype.onBattleStart.apply(this, arguments);
+    }
+}
+
+/**
+ * ●戦闘開始
+ */
+const _Game_Troop_onBattleStart = Game_Troop.prototype.onBattleStart;
+Game_Troop.prototype.onBattleStart = function(advantageous) {
+    _Game_Troop_onBattleStart.apply(this, arguments);
+
+    const spriteset = getSpriteset();
+    // コモンイベントを実行
+    for (const setting of spriteset._battleBackDynamicSettings) {
+        const commonEvent = eval(setting.commonEvent);
+        $gameTemp.reserveCommonEvent(commonEvent);
+        this._interpreter.setupReservedCommonEvent();
+        this._interpreter.update();
+    }
 };
 
 //-----------------------------------------------------------------------------
