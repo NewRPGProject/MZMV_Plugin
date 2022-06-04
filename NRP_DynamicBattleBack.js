@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Display DynamicAnimation to match the battle background.
+ * @plugindesc v1.011 Display DynamicAnimation to match the battle background.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488123194.html
  *
@@ -105,7 +105,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 戦闘背景に合わせてDynamicAnimationを表示。
+ * @plugindesc v1.011 戦闘背景に合わせてDynamicAnimationを表示。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488123194.html
  *
@@ -269,8 +269,8 @@ const _Game_Battler_refresh = Game_Battler.prototype.refresh;
 Game_Battler.prototype.refresh = function() {
     _Game_Battler_refresh.apply(this, arguments);
 
-    // 先頭の敵キャラが対象
-    if (this == $gameTroop.members()[0]) {
+    // 先頭の敵キャラが対象、かつDynamicAnimationMapが有効の場合
+    if (this == $gameTroop.members()[0] && this.dynamicSkills) {
         const spriteset = getSpriteset();
 
         // 設定がなければ終了
@@ -280,7 +280,9 @@ Game_Battler.prototype.refresh = function() {
 
         // 実行対象に追加
         for (const setting of spriteset._battleBackDynamicSettings) {
-            this.dynamicSkills.push(setting.dynamicSkill);
+            if (setting.dynamicSkill) {
+                this.dynamicSkills.push(setting.dynamicSkill);
+            }
         }
     }
 };
