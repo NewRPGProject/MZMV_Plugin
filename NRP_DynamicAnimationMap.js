@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV
- * @plugindesc v1.13 Call DynamicAnimation on the map.
+ * @plugindesc v1.14 Call DynamicAnimation on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimation
  * @url http://newrpg.seesaa.net/article/477639171.html
@@ -114,7 +114,7 @@
  * You can play the animation from an advanced state
  * by adding the above to the note field of the skill.
  * If ? =30 will start the animation with 30 frames advanced.
- * ※The standard value is 1 frame = 1/4 second.
+ * ※The standard value is 1 frame = 1/15 second.
  * 
  * This is useful when you want the animation
  * to start immediately after switching maps.
@@ -145,6 +145,11 @@
  * @type number
  * @desc When executed from note, If the distance to the event falls within this range, the animation is displayed.
  * 
+ * @param closeAnimationGap
+ * @type boolean
+ * @default false
+ * @desc Slightly speeds up the end of the animation to eliminate gaps in the cyclical animation.
+ * 
  * @param actingNoStateAnimation
  * @type boolean
  * @default false
@@ -153,7 +158,7 @@
 
 /*:ja
  * @target MV
- * @plugindesc v1.13 DynamicAnimationをマップ上から起動します。
+ * @plugindesc v1.14 DynamicAnimationをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimation
  * @url http://newrpg.seesaa.net/article/477639171.html
@@ -253,7 +258,7 @@
  * <D-StartTiming:?>
  * スキルのメモ欄に上記を追加すれば、アニメーションを進めた状態から再生できます。
  * ?=30ならば、アニメーションを30フレーム進めた状態から開始します。
- * ※標準では1フレーム＝1/4秒です。
+ * ※標準では1フレーム＝1/15秒です。
  * マップを切り替えた直後から表示したい演出などに有用です。
  *
  * 【利用規約】
@@ -282,6 +287,13 @@
  * @text 注釈実行時の有効範囲マス数
  * @type number
  * @desc 注釈実行時、イベントとの距離がこのマス数に収まる場合のみ、アニメーションを実行します。
+ * 
+ * @param closeAnimationGap
+ * @text アニメの切目をなくす
+ * @type boolean
+ * @default false
+ * @desc アニメーションの終了をわずかに早めることで、
+ * 並列処理などで循環するアニメーションの切れ目をなくします。
  * 
  * @param actingNoStateAnimation
  * @text 行動中のステートアニメを禁止
@@ -354,6 +366,7 @@ const pKeepAnimation = toBoolean(parameters["keepAnimation"], true);
 const pEventResetOnLoad = toBoolean(parameters["eventResetOnLoad"], true);
 const pTargetRangeGrid = toNumber(parameters["targetRangeGrid"]);
 const pNoteTargetRangeGrid = toNumber(parameters["noteTargetRangeGrid"]);
+const pCloseAnimationGap = toBoolean(parameters["closeAnimationGap"], false);
 const pActingNoStateAnimation = toBoolean(parameters["actingNoStateAnimation"], false);
 
 // DynamicAnimation本体側のパラメータ
@@ -1466,14 +1479,20 @@ Game_Interpreter.prototype.setDynamicDuration = function(dynamicAction) {
 
     this.setWaitMode("animation");
 
-    // 実行時間を設定
+    // 現在実行中のDynamicAnimationの実行時間を取得
     let dynamicDuration = 0;
     if (this.dynamicDuration) {
         dynamicDuration = this.dynamicDuration;
     }
+    // 新しく設定されるDynamicAnimationの実行時間を取得
     let waitDuration = 0;
     if (newWaitDuration) {
         waitDuration = newWaitDuration;
+        // 切れ目をなくす場合、3フレーム短縮
+        // ※3の根拠は不明……。実測値です。
+        if (pCloseAnimationGap) {
+            waitDuration -= 3;
+        }
     }
     // より長いほうを採用
     dynamicDuration = Math.max(waitDuration, dynamicDuration);
@@ -1493,16 +1512,21 @@ Game_Interpreter.prototype.setDynamicDuration = function(dynamicAction) {
  * ※引数にはDynamicAnimationとMotionの両方が来る場合あり
  */
 Sprite_Character.prototype.setDynamicAutoDuration = function(dynamicAction) {
-    // 実行時間を設定
+    // 現在実行中のDynamicAnimationの実行時間を取得
     let dynamicDuration = 0;
     if (this._character.dynamicDuration) {
         dynamicDuration = this._character.dynamicDuration;
     }
+    // 新しく設定されるDynamicAnimationの実行時間を取得
     let waitDuration = 0;
     if (dynamicAction.waitDuration) {
         waitDuration = dynamicAction.waitDuration;
+        // 切れ目をなくす場合、1フレーム短縮
+        if (pCloseAnimationGap) {
+            waitDuration -= 1;
+        }
     }
-    // より長いほうを採用
+    // 二つを比較し、より長いほうを採用
     dynamicDuration = Math.max(waitDuration, dynamicDuration);
     // 起動時のタイミング調整がある場合、実行時間も短縮
     // ※関数が存在する場合実行。
@@ -2145,7 +2169,7 @@ function makeMapAnimationEvent(event, skillId, action) {
  * 【独自】DynamicAnimationが実行中かどうか確認
  */
 Game_Event.prototype.isDynamicAutoAnimationPlaying = function() {
-    // 実行時間が残っている場合
+    // 実行時間が残っているかどうかの判定
     if (this.dynamicDuration > 0) {
         // 時間経過＆処理中と判断
         this.dynamicDuration--;

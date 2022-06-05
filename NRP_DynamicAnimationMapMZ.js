@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.13 Call DynamicAnimationMZ on the map.
+ * @plugindesc v1.14 Call DynamicAnimationMZ on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -21,11 +21,14 @@
  * Here's a sample.
  * http://newrpg.seesaa.net/article/477704129.html
  *
+ * -------------------------------------------------------------------
  * [Plugin Command]
+ * -------------------------------------------------------------------
  * >showAnimation
  * Specify the skill and target, and call DynamicAnimation.
  * Animations, such as shot, move from the startPoint to the target.
- * In the options, you can set the wait and screen scrolling to work or not.
+ * In the options, you can set the wait
+ * and screen scrolling to work or not.
  * 
  * If you enter a numerical value for the target or startPoint,
  * it will be specified as an event ID.
@@ -59,7 +62,9 @@
  * but The method of specifying the conditions
  * is the same as in "showAnimation(Battle)".
  * 
+ * -------------------------------------------------------------------
  * [Call from note]
+ * -------------------------------------------------------------------
  * <D-Skill:1>
  * As mentioned above,
  * if you specify a skill ID for a map event
@@ -69,22 +74,30 @@
  * Also fill in the tag in the note at the top of the event page.
  * You can switch the status of this one for each of the current pages.
  *
+ * -------------------------------------------------------------------
  * [Play from the middle] (ver1.09~)
+ * -------------------------------------------------------------------
  * <D-StartTiming:?>
  * You can play the animation from an advanced state
  * by adding the above to the note field of the skill.
  * If ? =30 will start the animation with 30 frames advanced.
- * ※The standard value is 1 frame = 1/4 second.
+ * ※The standard value is 1 frame = 1/15 second.
  * 
  * This is useful when you want the animation
  * to start immediately after switching maps.
  * 
+ * -------------------------------------------------------------------
  * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
  * The author is not responsible,
- * but we will respond to defects as far as possible.
+ * but will deal with defects to the extent possible.
+ * 
+ * @------------------------------------------------------------------
+ * @ Plugin Commands
+ * @------------------------------------------------------------------
  * 
  * @command showAnimation
  * @desc Show the DynamicAnimation.
@@ -123,6 +136,7 @@
  * @arg option
  * @type struct<Option>
  * 
+ * @------------------------------------------------------------------
  * 
  * @command removeAnimation
  * @desc Remove the currently running DynamicAnimation.
@@ -157,6 +171,7 @@
  * @option 1~3 #range
  * @option -1~-4 #party
  * 
+ * @------------------------------------------------------------------
  * 
  * @command showAnimationBattle
  * @desc Show the DynamicAnimation for the battle.
@@ -186,6 +201,7 @@
  * @arg option
  * @type struct<BattleOption>
  * 
+ * @------------------------------------------------------------------
  * 
  * @command removeAnimationBattle
  * @desc Removes the DynamicAnimation that is running during battle.
@@ -213,6 +229,9 @@
  * @option a._actorId == 1
  * @option a._enemyId == 1
  * 
+ * @------------------------------------------------------------------
+ * @ [Plugin Parameters]
+ * @------------------------------------------------------------------
  * 
  * @param keepAnimation
  * @type boolean
@@ -232,6 +251,11 @@
  * @param noteTargetRangeGrid
  * @type number
  * @desc When executed from note, If the distance to the event falls within this range, the animation is displayed.
+ * 
+ * @param closeAnimationGap
+ * @type boolean
+ * @default false
+ * @desc Slightly speeds up the end of the animation to eliminate gaps in the cyclical animation.
  * 
  * @param actingNoStateAnimation
  * @type boolean
@@ -261,7 +285,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.13 DynamicAnimationMZをマップ上から起動します。
+ * @plugindesc v1.14 DynamicAnimationMZをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -279,7 +303,9 @@
  * 以下はサンプルです。
  * http://newrpg.seesaa.net/article/477704129.html
  *
- * 【プラグインコマンド】
+ * -------------------------------------------------------------------
+ * ■プラグインコマンド
+ * -------------------------------------------------------------------
  * ◆アニメーションの表示
  * スキルと対象を指定してDynamicAnimationを起動します。
  * 射撃などのアニメーションは始点から対象へと移動します。
@@ -317,7 +343,9 @@
  * 要領は『アニメーションの削除』と同じですが、
  * 条件の指定方法は『アニメーションの表示（戦闘）』と同じになります。
  * 
- * 【メモ欄＆注釈からの起動】
+ * -------------------------------------------------------------------
+ * ■メモ欄＆注釈からの起動
+ * -------------------------------------------------------------------
  * <D-Skill:1>
  * というように、マップイベント、アクター、敵キャラ、
  * およびステートのメモ欄にスキルＩＤを指定すると、
@@ -326,17 +354,26 @@
  * また、イベントページ先頭の注釈に記入しても有効です。
  * こちらは現在のページ毎に状態を切り替えることも可能です。
  * 
- * 【途中から再生】（ver1.09～）
+ * -------------------------------------------------------------------
+ * ■途中から再生（ver1.09～）
+ * -------------------------------------------------------------------
  * <D-StartTiming:?>
- * スキルのメモ欄に上記を追加すれば、アニメーションを進めた状態から再生できます。
+ * スキルのメモ欄に上記を追加すれば、
+ * アニメーションを進めた状態から再生できます。
  * ?=30ならば、アニメーションを30フレーム進めた状態から開始します。
- * ※標準では1フレーム＝1/4秒です。
+ * ※標準では1フレーム＝1/15秒です。
  * マップを切り替えた直後から表示したい演出などに有用です。
  * 
- * 【利用規約】
+ * -------------------------------------------------------------------
+ * ■利用規約
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
+ * 
+ * @------------------------------------------------------------------
+ * @ プラグインコマンド
+ * @------------------------------------------------------------------
  * 
  * @command showAnimation
  * @text アニメーションの表示
@@ -379,6 +416,7 @@
  * @text オプション
  * @type struct<Option>
  * 
+ * @------------------------------------------------------------------
  * 
  * @command removeAnimation
  * @text アニメーションの削除
@@ -415,6 +453,7 @@
  * @option 1~3 #範囲指定
  * @option -1~-4 #パーティ全員
  * 
+ * @------------------------------------------------------------------
  * 
  * @command showAnimationBattle
  * @text アニメーションの表示（戦闘）
@@ -449,6 +488,7 @@
  * @text オプション
  * @type struct<BattleOption>
  * 
+ * @------------------------------------------------------------------
  * 
  * @command removeAnimationBattle
  * @text アニメーションの削除（戦闘）
@@ -480,6 +520,9 @@
  * @option a._actorId == 1 #アクターID
  * @option a._enemyId == 1 #敵キャラID
  * 
+ * @------------------------------------------------------------------
+ * @ プラグインパラメータ
+ * @------------------------------------------------------------------
  * 
  * @param keepAnimation
  * @text シーン変更時もアニメを維持
@@ -503,6 +546,13 @@
  * @text 注釈実行時の有効範囲マス数
  * @type number
  * @desc 注釈実行時、イベントとの距離がこのマス数に収まる場合のみ、アニメーションを実行します。
+ * 
+ * @param closeAnimationGap
+ * @text アニメの切目をなくす
+ * @type boolean
+ * @default false
+ * @desc アニメーションの終了をわずかに早めることで、
+ * 並列処理などで循環するアニメーションの切れ目をなくします。
  * 
  * @param actingNoStateAnimation
  * @text 行動中ステートアニメを禁止
@@ -599,6 +649,7 @@ const pKeepAnimation = toBoolean(parameters["keepAnimation"], true);
 const pEventResetOnLoad = toBoolean(parameters["eventResetOnLoad"], true);
 const pTargetRangeGrid = toNumber(parameters["targetRangeGrid"]);
 const pNoteTargetRangeGrid = toNumber(parameters["noteTargetRangeGrid"]);
+const pCloseAnimationGap = toBoolean(parameters["closeAnimationGap"], false);
 const pActingNoStateAnimation = toBoolean(parameters["actingNoStateAnimation"], false);
 
 // DynamicAnimation本体側のパラメータ
@@ -1711,14 +1762,20 @@ Game_Interpreter.prototype.setDynamicDuration = function(dynamicAction) {
 
     this.setWaitMode("animation");
 
-    // 実行時間を設定
+    // 現在実行中のDynamicAnimationの実行時間を取得
     let dynamicDuration = 0;
     if (this.dynamicDuration) {
         dynamicDuration = this.dynamicDuration;
     }
+    // 新しく設定されるDynamicAnimationの実行時間を取得
     let waitDuration = 0;
     if (newWaitDuration) {
         waitDuration = newWaitDuration;
+        // 切れ目をなくす場合、3フレーム短縮
+        // ※3の根拠は不明……。実測値です。
+        if (pCloseAnimationGap) {
+            waitDuration -= 3;
+        }
     }
     // より長いほうを採用
     dynamicDuration = Math.max(waitDuration, dynamicDuration);
@@ -1738,16 +1795,21 @@ Game_Interpreter.prototype.setDynamicDuration = function(dynamicAction) {
  * ※引数にはDynamicAnimationとMotionの両方が来る場合あり
  */
 Sprite_Character.prototype.setDynamicAutoDuration = function(dynamicAction) {
-    // 実行時間を設定
+    // 現在実行中のDynamicAnimationの実行時間を取得
     let dynamicDuration = 0;
     if (this._character.dynamicDuration) {
         dynamicDuration = this._character.dynamicDuration;
     }
+    // 新しく設定されるDynamicAnimationの実行時間を取得
     let waitDuration = 0;
     if (dynamicAction.waitDuration) {
         waitDuration = dynamicAction.waitDuration;
+        // 切れ目をなくす場合、1フレーム短縮
+        if (pCloseAnimationGap) {
+            waitDuration -= 1;
+        }
     }
-    // より長いほうを採用
+    // 二つを比較し、より長いほうを採用
     dynamicDuration = Math.max(waitDuration, dynamicDuration);
     // 起動時のタイミング調整がある場合、実行時間も短縮
     // ※関数が存在する場合実行。
@@ -2390,7 +2452,7 @@ function makeMapAnimationEvent(event, skillId, action) {
  * 【独自】DynamicAnimationが実行中かどうか確認
  */
 Game_Event.prototype.isDynamicAutoAnimationPlaying = function() {
-    // 実行時間が残っている場合
+    // 実行時間が残っているかどうかの判定
     if (this.dynamicDuration > 0) {
         // 時間経過＆処理中と判断
         this.dynamicDuration--;
