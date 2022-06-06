@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Changes the message speed.
+ * @plugindesc v1.011 Changes the message speed.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/485101364.html
  *
@@ -88,7 +88,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 メッセージ速度を変更します。
+ * @plugindesc v1.011 メッセージ速度を変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/485101364.html
  *
@@ -425,7 +425,7 @@ Window_Options.prototype.processOk = function() {
     const value = this.getConfigValue(symbol);
 
     if (isMessageSpeedSymbol(symbol)) {
-        this.changeMessageSpeedValue(symbol, nextMessageSpeed(value));
+        this.changeMessageSpeedValue(symbol, nextMessageSpeed(value), true);
         return;
     }
     
@@ -442,7 +442,7 @@ Window_Options.prototype.cursorRight = function(wrap) {
     const value = this.getConfigValue(symbol);
 
     if (isMessageSpeedSymbol(symbol)) {
-        this.changeMessageSpeedValue(symbol, nextMessageSpeed(value));
+        this.changeMessageSpeedValue(symbol, nextMessageSpeed(value), false);
         return;
     }
 
@@ -459,7 +459,7 @@ Window_Options.prototype.cursorLeft = function(wrap) {
     const value = this.getConfigValue(symbol);
 
     if (isMessageSpeedSymbol(symbol)) {
-        this.changeMessageSpeedValue(symbol, preMessageSpeed(value));
+        this.changeMessageSpeedValue(symbol, preMessageSpeed(value), false);
         return;
     }
 
@@ -469,7 +469,13 @@ Window_Options.prototype.cursorLeft = function(wrap) {
 /**
  * 【独自】メッセージ速度の値を変更
  */
-Window_Options.prototype.changeMessageSpeedValue = function(symbol, value) {
+Window_Options.prototype.changeMessageSpeedValue = function(symbol, value, wrap) {
+    // 現在値が最大の状態で決定を押した場合
+    if (wrap && this.getConfigValue(symbol) == messageSpeedMax()) {
+        this.changeValue(symbol, messageSpeedMin());
+        return;
+    }
+
     value = value.clamp(messageSpeedMin(), messageSpeedMax());
     this.changeValue(symbol, value);
 };
