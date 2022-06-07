@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.04 Automatically generate events on tiles.
+ * @plugindesc v1.041 Automatically generate events on tiles.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481496398.html
  *
@@ -186,7 +186,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 タイル上に自動でイベントを生成します。
+ * @plugindesc v1.041 タイル上に自動でイベントを生成します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481496398.html
  *
@@ -558,7 +558,7 @@ Game_Interpreter.prototype.pluginCommand = function(command, args) {
 //----------------------------------------
 
 // 消去するタイルのインデックスを保持する配列
-let mhiddenTiles = [];
+let mHiddenTiles = [];
 
 /**
  * ●マップ情報の設定
@@ -619,7 +619,7 @@ function makeTileEvents(createFlg) {
     // 設定リスト
     const settingList = [];
     // 非表示タイルのリストをクリア
-    mhiddenTiles = [];
+    mHiddenTiles = [];
 
     // 条件に一致する設定を抽出する。
     for (const setting of pSettingList) {
@@ -744,8 +744,8 @@ function tileToEvent(x, y, z, settingList, createFlg) {
 
         // 非表示タイルを保持
         // ※既に含まれているならば追加しない。
-        if (!mhiddenTiles.includes(index)) {
-            mhiddenTiles.push(index);
+        if (!mHiddenTiles.includes(index)) {
+            mHiddenTiles.push(index);
         }
     }
 
@@ -1085,7 +1085,7 @@ DataManager.onLoad = function(object) {
         // メニューを閉じた際や、戦闘終了時など
         } else {
             // 非表示タイルがあれば再度非表示
-            for (const index of mhiddenTiles) {
+            for (const index of mHiddenTiles) {
                 $dataMap.data[index] = 0;
             }
         }
@@ -1101,12 +1101,14 @@ Game_Map.prototype.restoreLinkTileEvents = function() {
     //------------------------------------------------------------
     // マップデータの変化を想定し、イベントＩＤを振り直す。
     //------------------------------------------------------------
-    // $dataMap.events上で有効なイベント数+1を取得
-    const dataMapEvents = $dataMap.events.filter(function(event) {
-        return event && event.id;
-    });
-
-    let newEventId = dataMapEvents.length + 1 || 1;
+    // $dataMap.events上の最大ＩＤ+1を取得
+    let maxEventId = 0;
+    for (const event of $dataMap.events) {
+        if (event) {
+            maxEventId = Math.max(maxEventId, event.id);
+        }
+    }
+    let newEventId = maxEventId + 1;
 
     for (const event of this.getTileEvents()) {
         // イベントＩＤを設定
@@ -1139,7 +1141,7 @@ Scene_Map.prototype.create = function() {
     // 場所移動時（マップＩＤが変化した場合のみ）
     if ($gamePlayer.isTransferring() && $gamePlayer.newMapId() !== $gameMap.mapId()) {
         // 非表示タイルを初期化
-        mhiddenTiles = [];
+        mHiddenTiles = [];
     }
     _Scene_Map_create.apply(this, arguments);
 };
