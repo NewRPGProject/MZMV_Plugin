@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.12 Change the battle system to CTB.
+ * @plugindesc v1.13 Change the battle system to CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -14,17 +14,95 @@
  * One by one, the actions will be turned in proportion to the agility.
  * With that, each battler will possess a turn individually.
  * 
- * [Notes]
- * The skill's speed modifier adds agility by %.
- * Please note a guard will be unusually fast by default.
- *
- * For more information, please see below.
- * http://newrpg.seesaa.net/article/472859369.html
- * 
  * This plugin does not display order by itself.
  * Please use it in combination with NRP_VisualTurn.js.
  * http://newrpg.seesaa.net/article/472840225.html
+ * 
+ * -------------------------------------------------------------------
+ * [Notice]
+ * -------------------------------------------------------------------
+ *  * If the state "Auto-removal Timing" is "Action End",
+ * the effect will expire at the individual's turn.
+ * In the case of "Turn End," the effect
+ * is determined in everyone's turn.
+ * Basically, "Action End" is easier to use.
  *
+ * Speed values entered from the editor are in %.
+ * Speed100 technique is +100%. This means twice as fast.
+ * Speed -50 is 1/2 times faster.
+ * Below -100, the turn will be almost no turn.
+ *
+ * Be sure to change the Guard Skill setting that is in the default.
+ * If Speed is left at 2000, it will be "my turn all the time".
+ * Also, "Action End" is recommended for Auto-removal of guard state.
+ * 
+ * The fight and escape party commands are not initially displayed.
+ * They are displayed when Cancel is pressed.
+ * 
+ * For more information, please see below.
+ * http://newrpg.seesaa.net/article/472859369.html
+ * 
+ * -------------------------------------------------------------------
+ * [Note of States]
+ * -------------------------------------------------------------------
+ * You can change the target's waiting time
+ * by entering the following in the note field of the state.
+ * A value of 100 is the waiting time for one turn of the target.
+ * Negative values are also possible.
+ * 
+ * ◆<SetWt:[Number]>
+ * Change the target waiting time.
+ * 
+ * ◆<AddWt:[Number]>
+ * Add up the waiting time for the target.
+ * 
+ * ◆例
+ * <AddWt:50>
+ * Delays the target's action for 1/2 turn.
+ * This is the so-called delay attack.
+ * 
+ * <SetWt:0>
+ * The target's waiting time is reduced to 0
+ * and the action is taken immediately.
+ * However, it is meaningless even
+ * if it is applied to the user of the skill,
+ * because the turn will elapse immediately after this.
+ * If you want the user to perform continuous action,
+ * set the Speed of the skill to 2000.
+ * (※Refer to: Continuous action skill)
+ * 
+ * <SetWt:-500>
+ * Changes the target's waiting time to -5 turns.
+ * In other words, you will be able to move unilaterally about 5 times.
+ * 
+ * Note that these effects occur only when a state is applied.
+ * Therefore, they cannot be applied on top of each other
+ * if the same state is still applied.
+ * If "Auto-removal Timing" is set to "Turn End" for a single turn,
+ * the stacking can be done instantly.
+ *
+ * Conversely, if "Auto-removal Timing"
+ * is set to one turn of "Action End",
+ * an anomaly such as "delay that cannot be stacked
+ * until the enemy acts once" can be created for the purpose.
+ * 
+ * -------------------------------------------------------------------
+ * [Continuous action skill]
+ * -------------------------------------------------------------------
+ * If the Speed of a skill is set to 2000 (MAX),
+ * it will perform a series of actions without time elapsing.
+ * This is useful for creating auxiliary skills, etc.,
+ * that trigger instantaneous effects.
+ * 
+ * -------------------------------------------------------------------
+ * [Conflict Information]
+ * -------------------------------------------------------------------
+ * Because it is fundamentally changing the flow of battle,
+ * it will conflict with plug-ins that touch that area.
+ * For reference, plugins with larger impact tend to move more easily
+ * if they are placed on the upper side.
+ * ※This is just a trend. It is not certain.
+ * 
  * Overrides the following functions. Please be careful of conflicts.
  * I think it's more stable if you put it on top as much as possible.
  * - Scene_Battle.prototype.commandFight
@@ -47,12 +125,18 @@
  * - Game_Battler.prototype.turnCount
  * - BattleManager.endAction
  * 
+ * -------------------------------------------------------------------
  * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
  * The author is not responsible,
- * but we will respond to defects as far as possible.
+ * but will deal with defects to the extent possible.
+ * 
+ * @------------------------------------------------------------------
+ * @ [Plugin Parameters]
+ * @------------------------------------------------------------------
  *
  * @param <Basic>
  *
@@ -65,6 +149,15 @@
  *
  * @param <Battle Start>
  *
+ * @param showPartyCommand
+ * @parent <Battle Start>
+ * @type select
+ * @option 0:None @value 0
+ * @option 1:Display @value 1
+ * @option 2:OnlyEnemyFirst @value 2
+ * @default 0
+ * @desc How to display party commands at the start of a battle.
+ * 
  * @param actorStartRandomWt
  * @parent <Battle Start>
  * @type number
@@ -130,7 +223,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.12 戦闘システムをＣＴＢへ変更します。
+ * @plugindesc v1.13 戦闘システムをＣＴＢへ変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -140,17 +233,83 @@
  * 敏捷性に比例して、一人ずつ行動が回ってくるようになります。
  * それに伴い、各バトラーは個別にターンを保有するようになります。
  * 
- * 【注意点】
- * スキルの速度補正によって、％分敏捷性が加算されます。
- * 初期状態では防御が超スピードになるのでご注意ください。
- *
- * 詳細は以下をご覧ください。
- * http://newrpg.seesaa.net/article/472859369.html
- *
  * このプラグイン単体では順序の表示を行いません。
  * NRP_VisualTurn.jsと組み合わせて使用してください。
  * http://newrpg.seesaa.net/article/472840225.html
+ * 
+ * -------------------------------------------------------------------
+ * ■注意点
+ * -------------------------------------------------------------------
+ * ステートの自動解除のタイミングが『行動終了時』の場合は
+ * 個人のターンで効果が切れます。
+ * 『ターン終了時』の場合は全員のターンで判定されます。
+ * 基本的には『行動終了時』のほうが使いやすいです。
  *
+ * エディタ上から入力する速度補正の値は％にしています。
+ * 速度補正100の技は+100%。つまり二倍速ということです。
+ * 速度補正-50で1/2倍速です。-100以下だとターンがほぼ回らなくなります。
+ *
+ * デフォルトにある防御の設定は必ず変えてください。
+ * 速度補正が2000のままだと「ずっと俺のターン」になります。
+ * また、防御ステートの自動解除は『行動終了時』を推奨します。
+ * 
+ * 戦う、逃げるのパーティコマンドは初期表示しません。
+ * キャンセルを押すと表示するようになっています。
+ * 
+ * その他、詳細は以下をご覧ください。
+ * http://newrpg.seesaa.net/article/472859369.html
+ *
+ * -------------------------------------------------------------------
+ * ■ステートのメモ欄
+ * -------------------------------------------------------------------
+ * ステートのメモ欄に以下を記入することで、対象の待ち時間を変更できます。
+ * 数値は100で対象の１ターン分の待ち時間となります。マイナス値も可能です。
+ * 
+ * ◆<SetWt:[数値]>
+ * 対象の待ち時間を変更します。
+ * 
+ * ◆<AddWt:[数値]>
+ * 対象の待ち時間を加算します。
+ * 
+ * ◆例
+ * <AddWt:50>
+ * 1/2ターン分、相手の行動を遅らせます。
+ * いわゆるディレイアタックですね。
+ * 
+ * <SetWt:0>
+ * 対象の待ち時間を０にし、即時行動させます。
+ * ただし、行動者自身にかけても、この直後にターン経過するので無意味です。
+ * 連続行動をさせたい場合は、スキルの速度補正を2000に設定してください。
+ * （※参照：連続行動技）
+ * 
+ * <SetWt:-500>
+ * 対象の待ち時間を－５ターンに変更します。
+ * つまり、一方的に５回程度動けるようになります。
+ * 
+ * なお、これらはステートがかかった際にのみ発生する効果となります。
+ * そのため、同一のステートがかかったままだと重ねがけできません。
+ * これは自動解除のタイミングを『ターン終了時』の1ターンにしておけば、
+ * 即座に重ねられるようになります。
+ *
+ * 逆に言えば、自動解除のタイミングを『行動終了時』の1ターンにしておけば、
+ * 「敵が一度行動するまで重ねられないディレイ」のような異常を狙って作れます。
+ * 
+ * -------------------------------------------------------------------
+ * ■連続行動技
+ * -------------------------------------------------------------------
+ * スキルの速度補正を2000（MAX）にしておくと、
+ * 時間経過なしで連続行動を行います。
+ * 瞬時に効果を発動する補助スキルなどの作成に便利です。
+ * 
+ * -------------------------------------------------------------------
+ * ■競合情報
+ * -------------------------------------------------------------------
+ * 戦闘の流れを根本的に変えているため、
+ * その辺に触れるプラグインとは競合しまくります。
+ * 参考までにこういった影響の大きなプラグインほど
+ * 上側に配置したほうが、動きやすい傾向にあります。
+ * ※あくまで傾向です。確実ではありません。
+ * 
  * 以下の関数を上書きしています。競合にご注意ください。
  * なるべく上側に配置したほうが安定すると思います。
  * ・Scene_Battle.prototype.commandFight
@@ -173,11 +332,17 @@
  * ・Game_Battler.prototype.turnCount
  * ・BattleManager.endAction
  * 
- * 【利用規約】
+ * -------------------------------------------------------------------
+ * ■利用規約
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
  *
+ * @------------------------------------------------------------------
+ * @ プラグインパラメータ
+ * @------------------------------------------------------------------
+ * 
  * @param <Basic>
  * @text ＜基本設定＞
  * @desc 見出しです。
@@ -193,7 +358,17 @@
  * @param <Battle Start>
  * @text ＜戦闘開始関連＞
  * @desc 見出しです。
- *
+ * 
+ * @param showPartyCommand
+ * @text パーティコマンドの表示
+ * @parent <Battle Start>
+ * @type select
+ * @option 0:非表示 @value 0
+ * @option 1:表示 @value 1
+ * @option 2:敵先制時のみ表示 @value 2
+ * @default 0
+ * @desc 戦闘開始時にパーティコマンドを表示する方法です。
+ * 
  * @param actorStartRandomWt
  * @text 味方の始動時間バラツキ
  * @parent <Battle Start>
@@ -288,6 +463,7 @@ function toNumber(str, def) {
 const parameters = PluginManager.parameters("NRP_CountTimeBattle");
     
 const pNumber = toNumber(parameters["number"], 9);
+const pShowPartyCommand = toNumber(parameters["showPartyCommand"], 0);
 const pActorStartRandomWt = toNumber(parameters["actorStartRandomWt"], 0);
 const pEnemyStartRandomWt = toNumber(parameters["enemyStartRandomWt"], 20);
 const pEscapePenalty = toNumber(parameters["escapePenalty"], 25);
@@ -319,8 +495,14 @@ Scene_Battle.prototype.start = function() {
  * 【上書】パーティコマンドの戦うを選択
  */
 Scene_Battle.prototype.commandFight = function() {
-    BattleManager.startInputActor();
-//    this.selectNextCommand();
+    const subject = BattleManager._subject;
+    // アクターのコマンドを呼び出し
+    if (subject && subject.isActor() && subject.canInput()) {
+        BattleManager.startInputActor();
+        return;
+    }
+    // 有効なアクターが取得できない場合は次へ
+    this.selectNextCommand();
 };
 
 /**
@@ -365,6 +547,14 @@ BattleManager.initMembers = function() {
  * ※一度だけ呼び出される部分
  */
 BattleManager.startInput = function() {
+    let callPartyCommand = false;
+
+    // パーティコマンドの表示を行う場合
+    // ※戦闘開始時かつ奇襲ではない場合が条件
+    if (pShowPartyCommand && this._phase == "start" && !this._surprise) {
+        callPartyCommand = true;
+    }
+
     this._phase = 'input';
 
     // MZ対応
@@ -385,6 +575,18 @@ BattleManager.startInput = function() {
     // ※敵なら行動設定、味方なら行動回数などの領域設定
     this._subject.makeActions();
     
+    // 入力中のアクターをクリアし、パーティコマンドを呼び出す。
+    if (callPartyCommand) {
+        // 通常表示の場合
+        // または、敵先制時のみ表示の条件を満たしている場合
+        if (pShowPartyCommand == 1
+                || pShowPartyCommand == 2 && this._subject.isEnemy()) {
+            this._actorIndex = -1;
+            this._currentActor = null;
+            return;
+        }
+    }
+
     // 敵の場合、または味方が入力不可ならターン開始
     if (!this._subject.isActor() || !this._subject.canInput()) {
         this._actorIndex = -1;
@@ -476,15 +678,16 @@ BattleManager.makeActionOrders = function() {
     });
     
     /*
-     * CTB用のリストを作成していく。
+     * CTB用の行動順リストを作成していく。
      */
-    battlers.forEach(function(battler) {
+    for (const battler of battlers) {
+        // バトラーをリストが埋まるまで登録していく。
         for (let i = 0; i < pNumber; i++) {
             // 現在のWTに、次の行動までのWTを加算する。
             const tmpWt = battler.wt + (battler.baseWt * i);
 
             /*
-             * 以下の条件を満たす場合は、割り込めない。
+             * 以下の条件を満たす場合は登録終了。
              * １．現在の行動順リストが埋まっている。
              * ２．かつ、末尾のバトラーよりもWTが大きい場合。
              */
@@ -498,16 +701,14 @@ BattleManager.makeActionOrders = function() {
             wtBattlers.push([tmpWt, battler]);
 
             // WT順でソート実行
-            wtBattlers.sort(function(a, b) {
-                return a[0] - b[0];
-            });
+            wtBattlers.sort((a, b) => a[0] - b[0]);
             
             // 押し出された要素（最後の要素）を削除
             if (wtBattlers.length > pNumber) {
                 wtBattlers.pop();
             }
         }
-    });
+    }
     
     /*
      * 変更前との互換性を保つため、WTを除いたリストも作成
