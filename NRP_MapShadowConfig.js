@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.02 Sets the settings for shadows on the map.
+ * @plugindesc v1.021 Sets the settings for shadows on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/479088201.html
  *
@@ -57,7 +57,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.02 マップの影に関する設定を行います。
+ * @plugindesc v1.021 マップの影に関する設定を行います。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/479088201.html
  *
@@ -323,7 +323,7 @@ function makeDiagonalShadow(layer, shadowBits, dx, dy, w1, h1) {
  */
 function isDiagonalShadow() {
     const tileset = $gameMap.tileset();
-    return tileset.isDiagonalShadow;
+    return tileset && tileset.isDiagonalShadow;
 }
 
 /**
