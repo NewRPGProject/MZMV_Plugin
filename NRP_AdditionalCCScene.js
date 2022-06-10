@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.012 Implemented a class change screen for multiple classes.
+ * @plugindesc v1.013 Implemented a class change screen for multiple classes.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -417,7 +417,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.012 多重職業用の転職画面を実装。
+ * @plugindesc v1.013 多重職業用の転職画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -2186,19 +2186,19 @@ Windows_ClassInfo.prototype.drawAllItems = function() {
 
         const nameRect = this.itemLineRect(0);
 
-        // 変更先の職業を表示
+        // 変更先の職業を表示（右寄せ）
         this.drawActorClass(this.itemPadding(), -this._scrollY + this.itemPadding());
         // 職業レベルを表示
         this.drawActorClassLevel(this.itemPadding(), -this._scrollY + this.itemPadding() + nameRect.height);
         // 職業経験値を表示
         this.drawExpInfo(0, -this._scrollY + this.itemPadding() + this.lineHeight());
 
-        this.drawActorName(this._actor, nameRect.x, -this._scrollY + this.itemPadding(), nameRect.width);
+        this.drawActorName(this._actor, this.itemPadding(), -this._scrollY + this.itemPadding(), nameRect.width);
 
         if (pReverseImagePos) {
             this.drawClassImage(this._tempActor, this.paramX() + 170, this.paramY(0));
         } else {
-            this.drawClassImage(this._tempActor, nameRect.x, this.paramY(0));
+            this.drawClassImage(this._tempActor, this.itemPadding(), this.paramY(0));
         }
         this.drawAllParams();
 
