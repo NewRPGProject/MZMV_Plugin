@@ -27,7 +27,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Use a map as title screen.
+ * @plugindesc v1.01 Use a map as title screen.
  * @author Takeshi Sunagawa（Original: Nolonar）
  * @url https://github.com/Nolonar/RM_Plugins
  * 
@@ -118,7 +118,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 マップをタイトル画面として使用する。
+ * @plugindesc v1.01 マップをタイトル画面として使用する。
  * @author 砂川赳（オリジナル：Nolonar様）
  * @url https://github.com/Nolonar/RM_Plugins
  * 
@@ -334,6 +334,12 @@
                 }
             }[Utils.RPGMAKER_NAME];
             stopVideo();
+        }
+
+        // ADD T.Sunagawa
+        isBusy() {
+            // コマンドウィンドウが閉じるのを待つ
+            return this._commandWindow.isClosing() || super.isBusy();
         }
     }
 
