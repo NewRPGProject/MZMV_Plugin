@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.013 Implemented a class change screen for multiple classes.
+ * @plugindesc v1.014 Implemented a class change screen for multiple classes.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -417,7 +417,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.013 多重職業用の転職画面を実装。
+ * @plugindesc v1.014 多重職業用の転職画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -2209,6 +2209,13 @@ Windows_ClassInfo.prototype.drawAllItems = function() {
         // フォント設定をリセット
         this.resetFontSettings();
     }
+};
+
+/**
+ * ●アクター名を表示
+ */
+Windows_ClassInfo.prototype.drawActorName = function(actor, x, y, width) {
+    return Window_StatusBase.prototype.drawActorName.apply(this, arguments);
 };
 
 /**
