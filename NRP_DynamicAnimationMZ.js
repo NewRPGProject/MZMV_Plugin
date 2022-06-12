@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.19 Automate & super-enhance battle animations.
+ * @plugindesc v1.191 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -524,7 +524,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.19 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.191 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -1929,6 +1929,7 @@ BaseAnimation.prototype.evalTimingStr = function (arg) {
     const arrival = this.arrival;
     const interval = this.interval;
     const repeat = this.repeat;
+    const rate = this.rate;
     const a = this.referenceSubject;
     const b = this.referenceTarget;
 
@@ -2216,7 +2217,6 @@ BaseAnimation.prototype.makeRepeatAnimation = function(dynamicAnimationList, ani
         for (const target of targets) {
             // Sprite_Animationへと引き渡すパラメータを作成
             const dynamicAnimation = this.createDynamicAnimation(target, targetDelay, dynamicAnimationList);
-
             // 対象番号を保持しておく
             dynamicAnimation.targetNo = index;
 
@@ -2228,7 +2228,7 @@ BaseAnimation.prototype.makeRepeatAnimation = function(dynamicAnimationList, ani
             // 非表示、フラッシュなし、効果音なし、ダメージなし、最終リピートではない
             // 全てを満たす場合は意味がないので不要
             if (dynamicAnimation.isNoMake()) {
-                return;
+                continue;
             }
 
             // 参照用に保持しておく
@@ -2645,11 +2645,6 @@ DynamicAnimation.prototype.isNoMake = function () {
  * ●評価実行（アニメーションを表示する直前に実行される）
  */
 DynamicAnimation.prototype.evaluate = function (spriteAnimation) {
-    // 非表示の場合は処理しない
-    if (!this.dispAnimation) {
-        return;
-    }
-
     const baseAnimation = this.baseAnimation;
 
     // マップ時になぜかエラーになるパターンがあるので再取得
@@ -3785,8 +3780,10 @@ Sprite_Animation.prototype.setup = function(
         this.setupRate();
         // 長さの設定
         this.setupDuration();
-        // 実行前に計算
-        dynamicAnimation.evaluate(this);
+        // 実行前に計算（非表示の場合は処理しない）
+        if (dynamicAnimation.dispAnimation) {
+            dynamicAnimation.evaluate(this);
+        }
 
         // 保管用座標の設定
         // ※MVと異なり、MZのSprite_Animationは表示に関係しない。

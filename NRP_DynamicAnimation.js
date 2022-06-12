@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.261 Automate & super-enhance battle animations.
+ * @plugindesc v1.262 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help Call battle animations freely from skills (items).
@@ -488,7 +488,7 @@
  */
 
 /*:ja
- * @plugindesc v1.261 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.262 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在に戦闘アニメーションを呼び出します。
@@ -1841,6 +1841,7 @@ BaseAnimation.prototype.evalTimingStr = function (arg) {
     const arrival = this.arrival;
     const interval = this.interval;
     const repeat = this.repeat;
+    const rate = this.rate;
     const a = this.referenceSubject;
     const b = this.referenceTarget;
 
