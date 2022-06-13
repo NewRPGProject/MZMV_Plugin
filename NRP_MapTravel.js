@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.001 Implement a map selection & transfer screen.
+ * @plugindesc v1.01 Implement a map selection & transfer screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484927929.html
  *
@@ -336,6 +336,12 @@
  * @desc Display the command only when the switch is on.
  * Always display if blank.
  * 
+ * @param DisableSwitch
+ * @parent <Menu Command>
+ * @type switch
+ * @desc Disallow command only when switch is on.
+ * Always allow if blank.
+ * 
  * @param TravelSymbol
  * @parent <Menu Command>
  * @type text
@@ -553,7 +559,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.001 マップ選択＆移動画面を実装します。
+ * @plugindesc v1.01 マップ選択＆移動画面を実装します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484927929.html
  *
@@ -884,6 +890,13 @@
  * @desc スイッチがオンの時のみコマンドを表示します。
  * 空白なら常に表示します。
  * 
+ * @param DisableSwitch
+ * @parent <Menu Command>
+ * @text 禁止するスイッチ
+ * @type switch
+ * @desc スイッチがオンの時のみコマンドを禁止（灰色）します。
+ * 空白なら常に許可します。
+ * 
  * @param TravelSymbol
  * @parent <Menu Command>
  * @text [上級]記号
@@ -1200,6 +1213,7 @@ const pShowMenuCommand = toBoolean(parameters["ShowMenuCommand"], false);
 const pShowMenuCommandPosition = toNumber(parameters["ShowMenuCommandPosition"], 4);
 const pTravelName = parameters["TravelName"];
 const pMenuCommandSwitch = toNumber(parameters["MenuCommandSwitch"]);
+const pDisableSwitch = toNumber(parameters["DisableSwitch"]);
 const pTravelSymbol = parameters["TravelSymbol"];
 const pReadOnlyMenu = toBoolean(parameters["ReadOnlyMenu"], false);
 // その他
@@ -2627,10 +2641,16 @@ if (pShowMenuCommand) {
             return;
         }
         
+        let isEnabled = true;
+        // 禁止スイッチが存在かつオンの場合は禁止
+        if (pDisableSwitch && $gameSwitches.value(pDisableSwitch)) {
+            isEnabled = false;
+        }
+
         // 指定位置に移動コマンドを挿入
         // ※標準ではステータスの下
         this._list.splice(pShowMenuCommandPosition, 0,
-            { name: pTravelName, symbol: pTravelSymbol, enabled: true, ext: null});
+            { name: pTravelName, symbol: pTravelSymbol, enabled: isEnabled, ext: null});
     };
 
     /**
