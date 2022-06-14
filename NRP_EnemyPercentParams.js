@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Set enemy parameters in terms of levels and percentages.
+ * @plugindesc v1.01 Set enemy parameters in terms of levels and percentages.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484538732.html
  *
@@ -20,9 +20,9 @@
  * based on the experience required for the next level.
  * This saves you the trouble of adjusting the values.
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * [Usage]
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * First, set the standard profession for the enemy parameters,
  * and specify it in the plug-in parameters.
  * ※Not only the parameters, but also the EXP curve
@@ -44,9 +44,9 @@
  * Of course, you can also set a fixed value for each enemy.
  * Please refer to the "Note of Enemies" section below for flexible settings.
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * [Note of Enemies]
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * <Level:?>
  * 
  * Sets the level of the enemy.
@@ -61,9 +61,9 @@
  * There may be cases where you want to eliminate the random range
  * only for the boss battle, so please use it differently.
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * [EXP & Gold]
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * The base values for EXP and Gold
  * cannot be simply obtained from class data,
  * so they are determined by the following formulas.
@@ -80,9 +80,9 @@
  * These formulas can be adjusted in the plugin parameters.
  * You can also leave it blank to use the editor settings as is.
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * [Battle Test]
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * The common event to be called at the start of the battle test
  * can be set in the plugin parameter.
  * 
@@ -93,9 +93,9 @@
  * For example, it is assumed that the base level
  * is set by referring to the level of the main character.
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * [Terms]
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
@@ -135,7 +135,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 敵の能力値をレベルと百分率で設定
+ * @plugindesc v1.01 敵の能力値をレベルと百分率で設定
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484538732.html
  *
@@ -150,9 +150,9 @@
  * 次のレベルに必要な経験値を基準に、自動で算出できます。
  * これによりバランス調整の手間を軽減できます。
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * ■使用方法
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * まず、敵の能力の基準となる職業を設定し、
  * プラグインパラメータで指定します。
  * ※能力だけでなく経験値曲線も取得経験値の計算に使用します。
@@ -173,9 +173,9 @@
  * 柔軟な設定が可能ですので、
  * 以下の『敵キャラのメモ欄』を参照してください。
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * ■敵キャラのメモ欄
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * <Level:?>
  * 
  * 敵のレベルを設定します。
@@ -190,9 +190,9 @@
  * ボス戦だけはランダム幅をなくしたいなどの場合も
  * あると思いますので、使い分けてください。
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * ■経験値と所持金
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * 経験値と所持金の基準値については職業データから
  * 単純取得できないため、以下の数式で決定しています。
  * 
@@ -208,9 +208,9 @@
  * 数式はプラグインパラメータで調整できます。
  * 空欄にすれば、エディタの設定値をそのまま使用することもできます。
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * ■戦闘テスト
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * 戦闘テスト開始時に呼び出すコモンイベントを
  * プラグインパラメータで設定可能です。
  * 
@@ -220,9 +220,9 @@
  * 例えば、主人公のレベルを参照して、
  * 基準レベルを設定するといった運用を想定しています。
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * ■利用規約
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
@@ -342,9 +342,9 @@ Game_Enemy.prototype.setup = function(enemyId, x, y) {
         BaseLevel = $gameVariables.value(pVariableBaseLevel);
     }
     // 基本レベルにランダム幅を加算したもの
-    let RandomLevel = 0;
+    let RandomLevel = BaseLevel;
     if (pVariableRandomLevel) {
-        RandomLevel = BaseLevel + Math.randomInt($gameVariables.value(pVariableRandomLevel) + 1);
+        RandomLevel += Math.randomInt($gameVariables.value(pVariableRandomLevel) + 1);
     }
 
     // レベルの設定
@@ -358,6 +358,11 @@ Game_Enemy.prototype.setup = function(enemyId, x, y) {
     // 指定がない場合はランダムレベルを使用
     } else {
         this._level = RandomLevel;
+    }
+
+    // レベルは最低でも1を設定
+    if (!this._level) {
+        this._level = 1;
     }
 
     _Game_Enemy_setup.apply(this, arguments);
