@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Set enemy parameters in terms of levels and percentages.
+ * @plugindesc v1.02 Set enemy parameters in terms of levels and percentages.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484538732.html
  *
@@ -94,6 +94,37 @@
  * is set by referring to the level of the main character.
  * 
  * -------------------------------------------------------------------
+ * [For use with EnemyBook-based plugins]
+ * -------------------------------------------------------------------
+ * Be careful when using with external EnemyBook-based plugins.
+ *  * This is because when enemy data is displayed in the book,
+ * the parameters are still displayed at the current setting level.
+ * ※Plugins compliant with EnemyBook.js (MV's DLC plugin)
+ *   such as ABMZ_EnemyBook.js are assumed.
+ *
+ * If the level is always a fixed value, there is no problem,
+ * but if the base level or random width is used,
+ * even fluctuations caused by them will be reflected.
+ *
+ * As a temporary workaround, the % value can be displayed
+ * as it is while the book is displayed.
+ * This is enabled when "SupportEnemyBook" is turned on.
+ * ※I really wanted to add a % character after the number,
+ *   but it was difficult to do so here.
+ *   It would be more practical to edit the EnemyBook plugin side.
+ *
+ * Note that this specification is not supported during battle,
+ * and the current values are displayed as they are.
+ * Some of the relevant plugins have the ability
+ * to examine enemy parameters during battle,
+ * which may be more convenient for you.
+ * ...To begin with, there is the situation that it is difficult
+ * to obtain the judgment that the book is open during the battle itself.
+ *
+ * Another simple solution is to not display the parameters
+ * on the book side. Please adjust according to your needs.
+ * 
+ * -------------------------------------------------------------------
  * [Terms]
  * -------------------------------------------------------------------
  * There are no restrictions.
@@ -101,6 +132,10 @@
  * and rights indication are also optional.
  * The author is not responsible,
  * but will deal with defects to the extent possible.
+ * 
+ * @------------------------------------------------------------------
+ * @ Plugin Commands
+ * @------------------------------------------------------------------
  * 
  * @param BaseClass
  * @type class
@@ -131,11 +166,16 @@
  * @type common_event
  * @desc A common event that is executed before a battle test.
  * Please use it to set the base level.
+ * 
+ * @param SupportEnemyBook
+ * @type boolean
+ * @default false
+ * @desc When used with EnemyBook, display % values instead of actual parameters.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 敵の能力値をレベルと百分率で設定
+ * @plugindesc v1.02 敵の能力値をレベルと百分率で設定
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484538732.html
  *
@@ -190,6 +230,10 @@
  * ボス戦だけはランダム幅をなくしたいなどの場合も
  * あると思いますので、使い分けてください。
  * 
+ * <ParamBaseClass:?>
+ * 
+ * 能力値の基準となる職業を変更します。?がＩＤです。
+ * 
  * -------------------------------------------------------------------
  * ■経験値と所持金
  * -------------------------------------------------------------------
@@ -221,11 +265,42 @@
  * 基準レベルを設定するといった運用を想定しています。
  * 
  * -------------------------------------------------------------------
+ * ■図鑑系プラグインとの併用について
+ * -------------------------------------------------------------------
+ * 外部のモンスター図鑑系プラグインと併用する場合は注意が必要です。
+ * 図鑑で敵キャラデータを表示した場合も、
+ * 現在の設定レベルでのパラメータが表示されるためです。
+ * ※ABMZ_EnemyBook.jsなどEnemyBook.js（ＭＶのＤＬＣプラグイン）に
+ * 　準拠したプラグインを想定しています。
+ *
+ * レベルが常に固定値ならば問題ないのですが、
+ * 基準レベルやランダム幅を利用している場合は
+ * それらによる変動まで反映されてしまいます。
+ *
+ * 暫定的な対処として、図鑑表示中は％値をそのまま表示できるようにしています。
+ * 『魔物図鑑に対応』をオンにすると有効になります。
+ * ※本当は数値の後ろに％文字を付けたかったのですが、こちらでは困難でした。
+ * 　図鑑プラグイン側を編集したほうが現実的と思われます。
+ *
+ * なお、この仕様は戦闘中には対応しておらず、現在値がそのまま表示されます。
+ * 該当のプラグインの中には、戦闘中に敵の能力値を調べる機能もありますが、
+ * その際はそのほうが都合が良いと思われます。
+ * ……そもそも、戦闘時は図鑑を開いているという判定を得ること自体が
+ * 難しいという事情もあります。
+ *
+ * 他にも、簡単な対処として図鑑側でパラメータを
+ * 表示しないという方法もありますので、用途に合わせて調整してください。
+ * 
+ * -------------------------------------------------------------------
  * ■利用規約
  * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
+ * 
+ * @------------------------------------------------------------------
+ * @ プラグインパラメータ
+ * @------------------------------------------------------------------
  * 
  * @param BaseClass
  * @text 基準となる職業
@@ -262,6 +337,12 @@
  * @type common_event
  * @desc 戦闘テスト前に実行されるコモンイベントです。
  * 基準レベルの設定などにご活用ください。
+ * 
+ * @param SupportEnemyBook
+ * @text 魔物図鑑に対応
+ * @type boolean
+ * @default false
+ * @desc モンスター図鑑と併用時、実際のパラメータではなく％値を表示するようにします。
  */
 
 (function() {
@@ -311,10 +392,11 @@ const pVariableRandomLevel = toNumber(parameters["VariableRandomLevel"]);
 const pBaseExp = parameters["BaseExp"];
 const pBaseGold = parameters["BaseGold"];
 const pTestCommonEvent = toNumber(parameters["TestCommonEvent"]);
+const pSupportEnemyBook = toBoolean(parameters["SupportEnemyBook"], false);
 
-//----------------------------------------------------------
+// ----------------------------------------------------------------------------
 // Game_Enemy
-//----------------------------------------------------------
+// ----------------------------------------------------------------------------
 
 /**
  * 【独自】敵のレベルを有効化
@@ -371,9 +453,15 @@ Game_Enemy.prototype.setup = function(enemyId, x, y) {
 /**
  * 【上書】パラメータの計算
  */
+const _Game_Enemy_paramBase = Game_Enemy.prototype.paramBase;
 Game_Enemy.prototype.paramBase = function(paramId) {
+    // 図鑑使用時はそのまま％値を取得
+    if (pSupportEnemyBook && (SceneManager._scene.constructor.name == "Scene_EnemyBook")) {
+        return _Game_Enemy_paramBase.apply(this, arguments);
+    }
+
     // パラメータのベースとなる職業を取得
-    const baseValue = getBaseClass().params[paramId][this._level];
+    const baseValue = this.getParamBaseClass().params[paramId][this._level];
     // 元の値を％として使用して乗算
     const percent = this.enemy().params[paramId]
     return Math.round(baseValue * percent / 100);
@@ -421,7 +509,7 @@ Game_Enemy.prototype.gold = function() {
  * 【独自】現在の職業（＝基準となる職業で固定）
  */
 Game_Enemy.prototype.currentClass = function() {
-    return getBaseClass();
+    return this.getParamBaseClass();
 };
 
 /**
@@ -459,9 +547,23 @@ Game_Enemy.prototype.nextRequiredExp = function() {
     return this.nextLevelExp() - this.currentExp();
 };
 
-//----------------------------------------------------------
+/**
+ * 【独自】パラメータのベースとなる職業を取得
+ */
+Game_Enemy.prototype.getParamBaseClass = function() {
+    // 個別の指定がある場合
+    const paramBaseClass = this.enemy().meta.ParamBaseClass;
+    if (paramBaseClass) {
+        return $dataClasses[paramBaseClass];
+    }
+
+    // 通常
+    return $dataClasses[pBaseClass];
+};
+
+// ----------------------------------------------------------------------------
 // Game_Party
-//----------------------------------------------------------
+// ----------------------------------------------------------------------------
 
 /**
  * ●戦闘テストの設定
@@ -476,17 +578,6 @@ Game_Party.prototype.setupBattleTest = function() {
         $gameTroop._interpreter.setupReservedCommonEvent();
         $gameTroop._interpreter.update();
     }
-};
-
-//----------------------------------------------------------
-// 共通関数
-//----------------------------------------------------------
-
-/**
- * ●パラメータのベースとなる職業を取得
- */
-function getBaseClass() {
-    return $dataClasses[pBaseClass];
 };
 
 })();
