@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Set enemy parameters in terms of levels and percentages.
+ * @plugindesc v1.021 Set enemy parameters in terms of levels and percentages.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484538732.html
  *
@@ -175,7 +175,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 敵の能力値をレベルと百分率で設定
+ * @plugindesc v1.021 敵の能力値をレベルと百分率で設定
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484538732.html
  *
@@ -456,7 +456,7 @@ Game_Enemy.prototype.setup = function(enemyId, x, y) {
 const _Game_Enemy_paramBase = Game_Enemy.prototype.paramBase;
 Game_Enemy.prototype.paramBase = function(paramId) {
     // 図鑑使用時はそのまま％値を取得
-    if (pSupportEnemyBook && (SceneManager._scene.constructor.name == "Scene_EnemyBook")) {
+    if (isEnemyBookScene()) {
         return _Game_Enemy_paramBase.apply(this, arguments);
     }
 
@@ -474,6 +474,10 @@ const _Game_Enemy_exp = Game_Enemy.prototype.exp;
 Game_Enemy.prototype.exp = function() {
     // 指定がない場合はそのまま
     if (!pBaseExp) {
+        return _Game_Enemy_exp.apply(this, arguments);
+
+    // 図鑑使用時はそのまま％値を取得
+    } else if (isEnemyBookScene()) {
         return _Game_Enemy_exp.apply(this, arguments);
     }
 
@@ -493,6 +497,10 @@ const _Game_Enemy_gold = Game_Enemy.prototype.gold;
 Game_Enemy.prototype.gold = function() {
     // 指定がない場合はそのまま
     if (!pBaseGold) {
+        return _Game_Enemy_gold.apply(this, arguments);
+
+    // 図鑑使用時はそのまま％値を取得
+    } else if (isEnemyBookScene()) {
         return _Game_Enemy_gold.apply(this, arguments);
     }
 
@@ -579,5 +587,19 @@ Game_Party.prototype.setupBattleTest = function() {
         $gameTroop._interpreter.update();
     }
 };
+
+// ----------------------------------------------------------------------------
+// 共通関数
+// ----------------------------------------------------------------------------
+
+/**
+ * ●魔物図鑑シーンかどうか？
+ */
+function isEnemyBookScene() {
+    if (pSupportEnemyBook && (SceneManager._scene.constructor.name == "Scene_EnemyBook")) {
+        return true;
+    }
+    return false;
+}
 
 })();
