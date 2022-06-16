@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.14 Call DynamicAnimationMZ on the map.
+ * @plugindesc v1.141 Call DynamicAnimationMZ on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -285,7 +285,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.14 DynamicAnimationMZをマップ上から起動します。
+ * @plugindesc v1.141 DynamicAnimationMZをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -2036,6 +2036,10 @@ if (pEventResetOnLoad) {
             if (event._trigger === 4) {
                 // 実行中のイベントをクリア
                 clearRunningEvent(event);
+            // 注釈起動用のスキルが設定されていた場合
+            } else if (event._dynamicSkill) {
+                // DynamicAnimationの途中実行制御フラグをクリア
+                event.clearDynamicStartSkill();
             }
         }
 
@@ -2056,6 +2060,7 @@ function clearRunningEvent(event) {
         // ※そうしないと再開時にアニメーションが途切れてしまう。
         if (event._dynamicStartSkills && event._dynamicStartSkills.length) {
             event._interpreter = new Game_Interpreter();
+            // DynamicAnimationの途中実行制御フラグをクリア
             event.clearDynamicStartSkill();
         }
     }
