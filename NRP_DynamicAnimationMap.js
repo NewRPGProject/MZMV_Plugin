@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV
- * @plugindesc v1.141 Call DynamicAnimation on the map.
+ * @plugindesc v1.15 Call DynamicAnimation on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimation
  * @url http://newrpg.seesaa.net/article/477639171.html
@@ -158,7 +158,7 @@
 
 /*:ja
  * @target MV
- * @plugindesc v1.141 DynamicAnimationをマップ上から起動します。
+ * @plugindesc v1.15 DynamicAnimationをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimation
  * @url http://newrpg.seesaa.net/article/477639171.html
@@ -1036,12 +1036,15 @@ Game_CommonEvent.prototype.setDynamicStartSkill = function(skillId) {
  */
 Game_Character.prototype.clearDynamicStartSkill = function() {
     this._dynamicStartSkills = [];
+    this.dynamicDuration = 0;
 };
 Game_Battler.prototype.clearDynamicStartSkill = function() {
     this._dynamicStartSkills = [];
+    this.dynamicDuration = 0;
 };
 Game_CommonEvent.prototype.clearDynamicStartSkill = function() {
     this._dynamicStartSkills = [];
+    this.dynamicDuration = 0;
 };
 
 /**
@@ -1925,7 +1928,7 @@ Spriteset_Map.prototype.createAnimations = function() {
                     sprite.dynamicAnimation = oldSprite.dynamicAnimation;
                     sprite.setup(parentSprite._effectTarget, animation, mirror, 0);
 
-                    // 時間を進める。
+                    // 時間を再設定
                     sprite._duration = oldSprite._duration;
 
                     parentSprite.parent.addChild(sprite);
@@ -1966,11 +1969,19 @@ Spriteset_Map.prototype.createAnimations = function() {
     
                 sprite.setup(targetSprites, animation, mirror, 0, null);
     
-                // 時間を進める。
+                // 時間を再設定
                 sprite._duration = oldSprite._duration;
-    
+
                 this._effectsContainer.addChild(sprite);
                 this._animationSprites.push(sprite);
+            }
+        }
+
+        // 2/60秒ズレるっぽいので調整して終了を早める。
+        // ※根拠不明（恐らくはシーン遷移→復帰の各1フレーム）
+        for (const event of $gameMap.events()) {
+            if (event.dynamicDuration) {
+                event.dynamicDuration -= 2;
             }
         }
     }
