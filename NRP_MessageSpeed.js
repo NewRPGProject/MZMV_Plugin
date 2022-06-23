@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.011 Changes the message speed.
+ * @plugindesc v1.02 Changes the message speed.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/485101364.html
  *
@@ -88,7 +88,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.011 メッセージ速度を変更します。
+ * @plugindesc v1.02 メッセージ速度を変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/485101364.html
  *
@@ -247,30 +247,35 @@ Window_Message.prototype.updateMessage = function() {
     // 出力する文字数を蓄積
     mMessageCount += getMessageSpeed() / 100;
 
-    // 出力する文字がない場合は終了
-    if (mMessageCount < 1) {
-        return true;
-    }
-
-    let outputFlg = false;
-
-    // 蓄積した文字数を出力
-    while (mMessageCount >= 1) {
-        mMessageCount--;
-
-        // 本来の処理を呼び出し
-        const ret = _Window_Message_updateMessage.apply(this, arguments);
-        // 出力がなければループ脱出
-        if (!ret) {
-            break;
-        }
-        // １文字でも出力があればtrue
-        outputFlg = true;
-    }
+    // 本来の処理を呼び出し
+    const ret = _Window_Message_updateMessage.apply(this, arguments);
 
     mDisableShowFast = false;
+    return ret;
+};
 
-    return outputFlg;
+/**
+ * ●文字出力の停止判定
+ * ※本来は瞬間表示時（false）に文字表示を一気に行うための判定。
+ * 　当プラグインでは、これを利用して２文字以上の同時表示を行う。
+ */
+const _Window_Message_shouldBreakHere = Window_Message.prototype.shouldBreakHere;
+Window_Message.prototype.shouldBreakHere = function(textState) {
+    // １文字出力したので減算
+    mMessageCount--;
+    // 追加の出力文字が存在する場合
+    if (mMessageCount >= 1 && this.canBreakHere(textState)) {
+        // ウェイト命令がある場合は停止
+        if (this.isWaiting()) {
+            // 出力文字数をクリア
+            mMessageCount = 0;
+            return true;
+        }
+        // それ以外は文字表示続行
+        return false;
+    }
+
+    return _Window_Message_shouldBreakHere.apply(this, arguments);
 };
 
 /**
