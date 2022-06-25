@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.15 Call DynamicAnimationMZ on the map.
+ * @plugindesc v1.151 Call DynamicAnimationMZ on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -285,7 +285,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.15 DynamicAnimationMZをマップ上から起動します。
+ * @plugindesc v1.151 DynamicAnimationMZをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -1733,10 +1733,11 @@ Sprite_Character.prototype.startDynamicAnimation = function(dynamicAnimation) {
         // スプライト情報が書き換わっている場合があるので、
         // 再びキャラクターに紐づくスプライトを取り直す。
         // ※迂遠だが、やらないとメニューを開閉した後でエラーになる模様。
-        dynamicAnimation.targetsSprite = dynamicAnimation.targetsSprite.map(function(sprite) {
-            return getSprite(sprite._character);
-        });
-    
+        dynamicAnimation.targetsSprite =
+            dynamicAnimation.targetsSprite.map(sprite => getSprite(sprite._character));
+        // 有効なデータに限定
+        dynamicAnimation.targetsSprite = dynamicAnimation.targetsSprite.filter(sprite => sprite);
+
         const spriteset = getSpriteset();
         spriteset.createDynamicAnimation([this._character], animation, dynamicAnimation);
     }
