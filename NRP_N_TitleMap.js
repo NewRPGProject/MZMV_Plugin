@@ -27,7 +27,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Use a map as title screen.
+ * @plugindesc v1.02 Use a map as title screen.
  * @author Takeshi Sunagawa（Original: Nolonar）
  * @url https://github.com/Nolonar/RM_Plugins
  * 
@@ -118,7 +118,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 マップをタイトル画面として使用する。
+ * @plugindesc v1.02 マップをタイトル画面として使用する。
  * @author 砂川赳（オリジナル：Nolonar様）
  * @url https://github.com/Nolonar/RM_Plugins
  * 
@@ -294,11 +294,22 @@
         }
 
         fadeOutAll() {
-            const time = this.slowFadeSpeed() / 60;
-            AudioManager.fadeOutBgm(time);
-            AudioManager.fadeOutBgs(time);
-            AudioManager.fadeOutMe(time);
-            this.startFadeOut(1);
+            // ADD T.Sunagawa
+            // フェードアウト前に画面キャプチャをかぶせる
+            // ※フェード中に画面が乱れるので、それを防ぐための措置。
+            SceneManager.snapForBackground();
+            this._backgroundSprite = new Sprite();
+            this._backgroundSprite.bitmap = SceneManager.backgroundBitmap();
+            this.addChild(this._backgroundSprite);
+            this._backgroundSprite.opacity = 255;
+            // 標準のフェードアウトを実行
+            Scene_Title_old.prototype.fadeOutAll.call(this);
+
+            // const time = this.slowFadeSpeed() / 60;
+            // AudioManager.fadeOutBgm(time);
+            // AudioManager.fadeOutBgs(time);
+            // AudioManager.fadeOutMe(time);
+            // this.startFadeOut(1);
         }
 
         update() {
