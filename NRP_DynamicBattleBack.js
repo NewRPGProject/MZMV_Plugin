@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.011 Display DynamicAnimation to match the battle background.
+ * @plugindesc v1.02 Display DynamicAnimation to match the battle background.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488123194.html
  *
@@ -35,9 +35,6 @@
  * of DynamicAnimation for specific details.
  * 
  * https://newrpg.seesaa.net/article/477704129.html
- * 
- * ※When the target is specified, the animation is supposed
- *   to be displayed for the first enemy character.
  * 
  * -------------------------------------------------------------------
  * [Notice]
@@ -105,7 +102,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.011 戦闘背景に合わせてDynamicAnimationを表示。
+ * @plugindesc v1.02 戦闘背景に合わせてDynamicAnimationを表示。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488123194.html
  *
@@ -132,7 +129,6 @@
  * 基本的には、画面全体に対して表示するアニメーションを想定しています。
  * 具体的には、マップ版DynamicAnimationの各サンプルをご覧ください。
  * https://newrpg.seesaa.net/article/477704129.html
- * ※対象を指定すると、先頭の敵キャラに対して表示する仕様です。
  * 
  * -------------------------------------------------------------------
  * ■注意点
@@ -259,37 +255,41 @@ for (const setting of pBattlebackSettingList) {
 }
 
 //-----------------------------------------------------------------------------
-// Game_Battler
+// Spriteset_Battle
 //-----------------------------------------------------------------------------
 
 /**
- * ●リフレッシュ
+ * 敵キャラの作成
  */
-const _Game_Battler_refresh = Game_Battler.prototype.refresh;
-Game_Battler.prototype.refresh = function() {
-    _Game_Battler_refresh.apply(this, arguments);
+const _Spriteset_Battle_createEnemies = Spriteset_Battle.prototype.createEnemies;
+Spriteset_Battle.prototype.createEnemies = function() {
+    _Spriteset_Battle_createEnemies.apply(this, arguments);
 
-    // 先頭の敵キャラが対象、かつDynamicAnimationMapが有効の場合
-    if (this == $gameTroop.members()[0] && this.dynamicSkills) {
-        const spriteset = getSpriteset();
+    // 背景アニメの管理に使うダミーエネミーを追加
+    const enemy = new Game_Enemy(1, 9999, 9999);
+    // 隠れる状態にしておく。
+    enemy.hide();
 
+    // DynamicAnimationMapが有効の場合
+    if (enemy.dynamicSkills) {
         // 設定がなければ終了
-        if (!spriteset._battleBackDynamicSettings) {
+        if (!this._battleBackDynamicSettings) {
             return;
         }
 
+        // ダミーエネミーのスプライトを作成し追加
+        const sprite = new Sprite_Enemy(enemy);
+        this._enemySprites.push(sprite);
+        this._battleField.addChild(sprite);
+
         // 実行対象に追加
-        for (const setting of spriteset._battleBackDynamicSettings) {
+        for (const setting of this._battleBackDynamicSettings) {
             if (setting.dynamicSkill) {
-                this.dynamicSkills.push(setting.dynamicSkill);
+                enemy.dynamicSkills.push(setting.dynamicSkill);
             }
         }
     }
 };
-
-//-----------------------------------------------------------------------------
-// Spriteset_Battle
-//-----------------------------------------------------------------------------
 
 /**
  * ●戦闘背景の作成
