@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.021 Realize a high-performance overpass.
+ * @plugindesc v1.03 Realize a high-performance overpass.
  * @author Takeshi Sunagawa (original triacontane & Yoji Ojima)
  * @orderAfter NRP_EventCollisionEX
  * @orderAfter NRP_BushEX
@@ -27,13 +27,17 @@
  * On top of that, I have improved it
  * so that it can be used in MV as well.
  * 
- * ■Caution
+ * -------------------------------------------------------------------
+ * [Caution]
+ * -------------------------------------------------------------------
  * This plugin should be placed below the following plugins.
  * 
  * - NRP_EventCollisionEX
  * - NRP_BushEX
  * 
- * ■Usage
+ * -------------------------------------------------------------------
+ * [Usage]
+ * -------------------------------------------------------------------
  * If you place a tile in the upper layer (layer 3-4 in MZ),
  * it will be treated as an overpass.
  * Then, as in "OverpassTile.js", specify the overpass
@@ -43,19 +47,31 @@
  * When the character passes through the entrance of the overpass,
  * the character will move above the overpass.
  * 
- * ■Note
+ * -------------------------------------------------------------------
+ * [Note]
+ * -------------------------------------------------------------------
  * If you specify the following in the event's note field,
  * it will appear above the overpass from the beginning.
  * 
  * <OverpassHigher>
  * 
- * ■Plugin Command (MZ)
+ * Also, the event will always be above the overpass
+ * and will not move to a lower level if the following is specified
+ * ※Assuming events such as flying events.
+ * 
+ * <OverpassFly>
+ * 
+ * -------------------------------------------------------------------
+ * [Plugin Command (MZ)]
+ * -------------------------------------------------------------------
  * ◆ChangeHeight
  * Specify the target character
  * and change its vertical relationship to the overpass.
  * Check the actual plugin command for details.
  * 
- * ■Plugin Command (MV)
+ * -------------------------------------------------------------------
+ * [Plugin Command (MV)]
+ * -------------------------------------------------------------------
  * ◆NRP.OverpassTile.Higher [Target] [Position (true/false)]
  * Change the height at which the target is displayed as in the MZ version.
  * ※If Position is omitted, it will be true.
@@ -80,11 +96,15 @@
  * Move the four party members to the upper level.
  * ※-2 and below means formation walking friends.
  * 
- * ■Acknowledgements
+ * -------------------------------------------------------------------
+ * [Acknowledgements]
+ * -------------------------------------------------------------------
  * This plugin is a modification of RPG Maker MZ's official OverpassTile.js
  * (by Triacontane and Yoji Ojima).
  *
- * ■Reference: From OverpassTile.js
+ * -------------------------------------------------------------------
+ * [Reference: From OverpassTile.js]
+ * -------------------------------------------------------------------
  * Overpasses, such as bridges, can be represented on the map.
  * This plugin improves functionality for RPG Maker MV's official "OverpassTile.js" plugin's MZ.
  *
@@ -104,6 +124,10 @@
  * The plugin can take event launch determination and collision determination into consideration.
  * -Events with different heights (over and under a bridge) will launch, without collision.
  *
+ * @------------------------------------------------------------------
+ * @ Plugin Commands
+ * @------------------------------------------------------------------
+ * 
  * @command ChangeHeight
  * @desc Toggles whether the character will be displayed above or below the overpass.
  * 
@@ -124,6 +148,9 @@
  * @type boolean
  * @default true
  * 
+ * @------------------------------------------------------------------
+ * @ Plugin Parameters
+ * @------------------------------------------------------------------
  * 
  * @param OverPathRegion
  * @desc Region ID set for bridge or other overpass sections.
@@ -153,7 +180,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.021 高機能な立体交差を実現します。
+ * @plugindesc v1.03 高機能な立体交差を実現します。
  * @author 砂川赳 (original トリアコンタン & Yoji Ojima)
  * @orderAfter NRP_EventCollisionEX
  * @orderAfter NRP_BushEX
@@ -175,13 +202,17 @@
  * 当プラグインはより高機能なＭＺ版に準拠しています。
  * その上でＭＶでも使用できるように改良しました。
  * 
+ * -------------------------------------------------------------------
  * ■注意点
+ * -------------------------------------------------------------------
  * このプラグインは、以下のプラグインよりも下に配置してください。
  * 
  * ・NRP_EventCollisionEX
  * ・NRP_BushEX
  * 
+ * -------------------------------------------------------------------
  * ■使用法
+ * -------------------------------------------------------------------
  * 上層（ＭＺにおけるレイヤー３～４）にタイルを配置すれば、
  * 立体交差として扱われます。
  * あとは『OverpassTile.js』と同じようにリージョンや地形タグで
@@ -190,18 +221,30 @@
  * 初期状態では、キャラクターは立体交差の下にいるものとして扱われます。
  * 立体交差の入口を通過すると、キャラクターが立体交差の上に移動します。
  * 
+ * -------------------------------------------------------------------
  * ■メモ欄
+ * -------------------------------------------------------------------
  * イベントのメモ欄に以下を指定すれば、
  * 最初から立体交差の上にいるものとして扱われます。
  * 
  * <OverpassHigher>
  * 
+ * また、以下を指定すればイベントは常に立体交差の上となり、
+ * 下層に移動することがなくなります。
+ * ※空飛ぶイベントなどを想定。
+ * 
+ * <OverpassFly>
+ * 
+ * -------------------------------------------------------------------
  * ■プラグインコマンド（ＭＺ）
+ * -------------------------------------------------------------------
  * ◆高さを変更
  * 対象となるキャラクターを指定し、立体交差との上下関係を変更します。
  * 詳細は実際のプラグインコマンドを確認してください。
  * 
+ * -------------------------------------------------------------------
  * ■プラグインコマンド（ＭＶ）
+ * -------------------------------------------------------------------
  * ◆NRP.OverpassTile.Higher [対象] [高さ（true/false）]
  * ＭＺ版と同じく対象を表示する高さを変更します。
  * ※高さを省略するとtrueになります。
@@ -226,11 +269,15 @@
  * パーティ４人を上層に移動します。
  * ※-2以下は隊列歩行の仲間になります。
  * 
+ * -------------------------------------------------------------------
  * ■謝辞
+ * -------------------------------------------------------------------
  * このプラグインはＲＰＧツクールＭＺ公式の
  * OverpassTile.js（トリアコンタン様＆Yoji Ojima様）を改修させて頂きました。
  *
+ * -------------------------------------------------------------------
  * ■参考：OverpassTile.jsの解説を引用
+ * -------------------------------------------------------------------
  * マップ上で橋などの立体交差を表現できます。
  * ツクールMV公式プラグイン「OverpassTile.js」のMZ向け機能強化版です。
  * 
@@ -249,6 +296,10 @@
  *
  * イベントの起動判定、衝突判定を考慮できます。
  * ・高さが異なる（橋の上と下にいる）イベントは起動、衝突しません。
+ * 
+ * @------------------------------------------------------------------
+ * @ プラグインコマンド
+ * @------------------------------------------------------------------
  * 
  * @command ChangeHeight
  * @text 高さを変更
@@ -274,6 +325,9 @@
  * @type boolean
  * @default true
  * 
+ * @------------------------------------------------------------------
+ * @ プラグインパラメータ
+ * @------------------------------------------------------------------
  * 
  * @param OverPathRegion
  * @text 立体交差リージョン
@@ -408,7 +462,7 @@ Game_CharacterBase.prototype.isMapPassableOnOverPath = function(x, y, d) {
 
             // →立体交差下に移動（追加）
             } else if (advancedOverPath) {
-                // 下層（レイヤー３～４）の通行判定
+                // 下層（レイヤー１～２）の通行判定
                 // 上層は☆として扱うため無視
                 return isPassableLowerLayer(this, advancedX, advancedY, d2);
 
@@ -431,7 +485,7 @@ Game_CharacterBase.prototype.isMapPassableOnOverPath = function(x, y, d) {
             $gameMap.setPassableSubject(this);
         }
 
-        // 移動元の移動判定と下層（レイヤー３～４）の通行判定を参照
+        // 移動元の移動判定と下層（レイヤー１～２）の通行判定を参照
         return isPassable(this, x, y, d)
             && isPassableLowerLayer(this, advancedX, advancedY, d2);
     }
@@ -446,6 +500,13 @@ Game_CharacterBase.prototype.refreshBushDepth = function() {
 };
 
 Game_CharacterBase.prototype.updateOverPath = function() {
+    // 常に上層
+    // →直接上層に移動した場合も上層に移動
+    if (this._overpassFly && this.isOnOverPath()) {
+        this._higher = true;
+        return;
+    }
+
     if (this.isOnGateway()) {
         this._higher = true;
     } else if (!this.isOnOverPath()) {
@@ -465,6 +526,11 @@ const _Game_CharacterBase_screenZ = Game_CharacterBase.prototype.screenZ;
 Game_CharacterBase.prototype.screenZ = function() {
     const z = _Game_CharacterBase_screenZ.apply(this, arguments);
 
+    // 飛行扱いの場合は既にＺ座標が高いのでそのまま
+    if (this._overpassFly) {
+        return z;
+    }
+
     // Ｚ座標を『3+2.5 = 5.5』に変更
     // 5:通常キャラの上、6:飛行船の影の中間
     // ※元のOverpassTile.jsの仕様では6ですが、
@@ -477,6 +543,10 @@ Game_CharacterBase.prototype.isHigherPriority = function() {
     return this._higher;
 };
 
+/**
+ * ●位置によって高度を更新
+ * ※フォロワーの制御のみに使用されている模様
+ */
 Game_CharacterBase.prototype.updateOverPathOnLocate = function() {
     this._higher = this.isOnOverPath() || this.isOnGateway();
 };
@@ -535,10 +605,19 @@ Game_Event.prototype.setupPageSettings = function() {
     _Game_Event_setupPageSettings.apply(this, arguments);
 
     // メモ欄から<OverpassHigher>を取得
-    let overpassHigher = this.event().meta.OverpassHigher;
-    if (overpassHigher === true) {
+    const overpassHigher = this.event().meta.OverpassHigher;
+    if (overpassHigher) {
         // 立体交差の上に配置
         this._higher = true;
+    }
+
+    // メモ欄から<OverpassFly>を取得
+    const overpassFly = this.event().meta.OverpassFly;
+    if (overpassFly) {
+        // 飛行イベントとして設定
+        this._overpassFly = true;
+        // プライオリティタイプを設定
+        this._priorityType = 2.5;
         return;
     }
 };
@@ -574,28 +653,28 @@ Game_Map.prototype.isGatewayOverPath = function(x, y) {
 };
 
 /**
- * 【独自】下層（レイヤー３～４）の通行判定
+ * 【独自】下層（レイヤー１～２）の通行判定
  */
 Game_Map.prototype.isPassableLowerLayer = function(x, y, d) {
     return this.checkPassageLowerLayer(x, y, (1 << (d / 2 - 1)) & 0x0f);
 };
 
 /**
- * 【独自】下層（レイヤー３～４）の通行判定（小型船）
+ * 【独自】下層（レイヤー１～２）の通行判定（小型船）
  */
 Game_Map.prototype.isBoatPassableLowerLayer = function(x, y) {
     return this.checkPassageLowerLayer(x, y, 0x0200);
 };
 
 /**
- * 【独自】下層（レイヤー３～４）の通行判定（大型船）
+ * 【独自】下層（レイヤー１～２）の通行判定（大型船）
  */
 Game_Map.prototype.isShipPassableLowerLayer = function(x, y) {
     return this.checkPassageLowerLayer(x, y, 0x0400);
 };
 
 /**
- * 【独自】下層（レイヤー３～４）の通行判定
+ * 【独自】下層（レイヤー１～２）の通行判定
  */
 Game_Map.prototype.checkPassageLowerLayer = function(x, y, bit) {
     const flags = this.tilesetFlags();
@@ -735,7 +814,7 @@ if (PluginManager.registerCommand) {
             return;
         }
 
-        // 速度変更
+        // 高度変更
         for (const target of targets) {
             target._higher = higher;
         }
@@ -769,7 +848,7 @@ Game_Interpreter.prototype.pluginCommand = function(command, args) {
             return;
         }
 
-        // 速度変更
+        // 高度変更
         for (const target of targets) {
             target._higher = higher;
         }
