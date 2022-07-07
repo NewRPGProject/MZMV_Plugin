@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Change the actor's equipment at will.
+ * @plugindesc v1.01 Change the actor's equipment at will.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/489100727.html
  *
@@ -26,7 +26,7 @@
  * "EquipType" corresponds to the registered value in the database.
  * (Default: 1:Weapon, 2:Shield, 3:Head, 4:Body, 5:Accessory)
  * 
- * WeaponId/ArmorId only needs to be specified for one of them.
+ * WeaponId/ArmorId/ItemId only needs to be specified for one of them.
  *
  * Both items can be formulated by changing to text mode.
  * Example: "$gameVariables.value(1)" is the value of variable 1.
@@ -56,7 +56,7 @@
  * 
  * @command ChangeEquipment
  * @desc Change the actor's equipment.
- * Only one WeaponId/ArmorId should be specified.
+ * Only one WeaponId/ArmorId/ItemId should be specified.
  * 
  * @arg ActorId
  * @type actor
@@ -76,6 +76,11 @@
  * @type armor
  * @desc Armor to be equipped.
  * 
+ * @arg ItemId
+ * @type item
+ * @desc Item to be equipped.
+ * Use with a plugin that can equip items.
+ * 
  * @------------------------------------------------------------------
  * @ [Plugin Parameters]
  * @------------------------------------------------------------------
@@ -83,7 +88,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 アクターの装備を自由に変更。
+ * @plugindesc v1.01 アクターの装備を自由に変更。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/489100727.html
  *
@@ -106,7 +111,7 @@
  * 装備タイプはデータベースの登録値に対応します。
  * （デフォルト：1:武器, 2:盾, 3:頭, 4:身体, 5:装飾品）
  * 
- * 武器／防具は片方だけ指定すればＯＫです。
+ * 武器／防具／アイテムは片方だけ指定すればＯＫです。
  *
  * いずれの項目もテキストモードに変更すれば、数式可です。
  * 例：『$gameVariables.value(1)』で変数１の値。
@@ -133,7 +138,7 @@
  * @command ChangeEquipment
  * @text 装備を変更
  * @desc アクターの装備を変更します。
- * 武器／防具は片方だけ指定してください。
+ * 武器／防具／アイテムは片方だけ指定してください。
  * 
  * @arg ActorId
  * @text アクター
@@ -156,6 +161,12 @@
  * @text 防具
  * @type armor
  * @desc 装備する防具です。
+ * 
+ * @arg ItemId
+ * @text アイテム
+ * @type item
+ * @desc 装備するアイテムです。
+ * アイテムを装備できるプラグインと併用してください。
  * 
  * @------------------------------------------------------------------
  * @ プラグインパラメータ
@@ -206,10 +217,27 @@ PluginManager.registerCommand(PLUGIN_NAME, "ChangeEquipment", function(args) {
     const equipType = eval(args.EquipType);
     const weaponId = eval(args.WeaponId);
     const armorId = eval(args.ArmorId);
-    // 武器と防具の有効なほうを取得
-    const id = weaponId || armorId;
-    // 変更実行
-    $gameActors.actor(actorId).changeEquipById(equipType, id)
+    const itemId = eval(args.ItemId);
+    const slotId = equipType - 1;
+    const actor = $gameActors.actor(actorId);
+    // 武器／防具／アイテムの有効なものを取得
+    let item;
+    // 武器
+    if (weaponId) {
+        item = $dataWeapons[weaponId];
+        actor.changeEquip(slotId, item);
+    // 防具
+    } else if (armorId) {
+        item = $dataArmors[armorId];
+        actor.changeEquip(slotId, item);
+    // アイテム
+    } else if (itemId) {
+        item = $dataItems[itemId];
+        // 通常は装備できないので強制
+        if (actor.tradeItemWithParty(item, actor.equips()[slotId])) {
+            actor.forceChangeEquip(slotId, item);
+        }
+    }
 });
 
 })();
