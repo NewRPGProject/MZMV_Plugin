@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Allow items to be equipped.
+ * @plugindesc v1.01 Allow items to be equipped.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489576403.htm
  *
@@ -112,7 +112,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 アイテムを装備できるようにする。
+ * @plugindesc v1.01 アイテムを装備できるようにする。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489576403.htm
  *
@@ -406,8 +406,8 @@ Game_Battler.prototype.onBattleEnd = function() {
  */
 const _Game_Battler_consumeItem = Game_Battler.prototype.consumeItem;
 Game_Battler.prototype.consumeItem = function(item) {
-    // 敵キャラの場合は処理終了
-    if (this.isEnemy()) {
+    // 戦闘時以外または敵キャラの場合は処理終了
+    if (!$gameParty.inBattle() || this.isEnemy()) {
         _Game_Battler_consumeItem.apply(this, arguments);
         return;
     }
