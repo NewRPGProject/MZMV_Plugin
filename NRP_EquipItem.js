@@ -5,7 +5,7 @@
  * @target MV MZ
  * @plugindesc v1.01 Allow items to be equipped.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
- * @url https://newrpg.seesaa.net/article/489576403.htm
+ * @url https://newrpg.seesaa.net/article/489576403.html
  *
  * @help Realize a system that allows you to equip items.
  * Equipped items can be used during battle.
@@ -114,7 +114,7 @@
  * @target MV MZ
  * @plugindesc v1.01 アイテムを装備できるようにする。
  * @author 砂川赳（http://newrpg.seesaa.net/）
- * @url https://newrpg.seesaa.net/article/489576403.htm
+ * @url https://newrpg.seesaa.net/article/489576403.html
  *
  * @help アイテムを装備できるシステムを実現します。
  * 装備したアイテムは戦闘中に使用できます。
