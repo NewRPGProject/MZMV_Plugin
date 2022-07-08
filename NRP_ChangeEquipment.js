@@ -21,15 +21,25 @@
  * -------------------------------------------------------------------
  * [Plugin Commands MZ]
  * -------------------------------------------------------------------
- * ◆ChangeEquipment
+ * ◆ChangeEquipmentAuto
  * Change the actor's equipment.
- * "EquipType" corresponds to the registered value in the database.
- * (Default: 1:Weapon, 2:Shield, 3:Head, 4:Body, 5:Accessory)
- * 
  * WeaponId/ArmorId/ItemId only needs to be specified for one of them.
+ * 
+ * The slot to equip is automatically obtained from the item data.
+ * If there are multiple identical equipment types, such as Dual Wield,
+ * the equipment location can be selected by the OrderNo.
  *
  * Both items can be formulated by changing to text mode.
  * Example: "$gameVariables.value(1)" is the value of variable 1.
+ * 
+ * ◆ChangeEquipment(Old)
+ * The equipment type must be specified here.
+ * ※"EquipType" corresponds to the registered value in the database.
+ * (Default: 1:Weapon, 2:Shield, 3:Head, 4:Body, 5:Accessory)
+ * 
+ * If the equipment slot has been changed by an external plugin,
+ * it is not recommended because there is a problem
+ * that the equipment cannot be changed properly.
  * 
  * -------------------------------------------------------------------
  * [Notice]
@@ -136,15 +146,24 @@
  * -------------------------------------------------------------------
  * ■プラグインコマンド（ＭＺ）
  * -------------------------------------------------------------------
- * ◆装備の変更
+ * ◆装備の変更（自動）
  * アクターの装備を変更します。
- * 装備タイプはデータベースの登録値に対応します。
- * （デフォルト：1:武器, 2:盾, 3:頭, 4:身体, 5:装飾品）
+ * 武器／防具／アイテムは一つだけ指定すればＯＫです。
  * 
- * 武器／防具／アイテムは片方だけ指定すればＯＫです。
+ * 装備するスロットはアイテム情報から自動的に取得します。
+ * 二刀流など同一の装備タイプが複数存在する場合は、
+ * 順序番号で装備箇所を選択できます。
  *
  * いずれの項目もテキストモードに変更すれば、数式可です。
  * 例：『$gameVariables.value(1)』で変数１の値。
+ * 
+ * ◆装備の変更（旧）
+ * こちらは装備タイプの指定が必須です。
+ * ※装備タイプはデータベースの登録値に対応します。
+ * （デフォルト：1:武器, 2:盾, 3:頭, 4:身体, 5:装飾品）
+ * 
+ * 外部プラグインで装備スロットが変更されていた場合、
+ * うまく装備変更できない問題があるため推奨しません。
  * 
  * -------------------------------------------------------------------
  * ■注意点
@@ -168,7 +187,7 @@
  * @command ChangeEquipmentAuto
  * @text 装備を変更（自動）
  * @desc アクターの装備を変更します。
- * 武器／防具／アイテムは片方だけ指定してください。
+ * 武器／防具／アイテムは一つだけ指定してください。
  * 
  * @arg ActorId
  * @text アクター
@@ -203,7 +222,7 @@
  * @command ChangeEquipment
  * @text 装備を変更（旧）
  * @desc アクターの装備を変更します。
- * 武器／防具／アイテムは片方だけ指定してください。
+ * 武器／防具／アイテムは一つだけ指定してください。
  * 
  * @arg ActorId
  * @text アクター
