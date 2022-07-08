@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Change the actor's equipment at will.
+ * @plugindesc v1.02 Change the actor's equipment at will.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/489100727.html
  *
@@ -54,7 +54,37 @@
  * @ [Plugin Commands]
  * @------------------------------------------------------------------
  * 
+ * @command ChangeEquipmentAuto
+ * @desc Change the actor's equipment.
+ * Only one WeaponId/ArmorId/ItemId should be specified.
+ * 
+ * @arg ActorId
+ * @type actor
+ * @desc Actor to change equipment.
+ * 
+ * @arg WeaponId
+ * @type weapon
+ * @desc Weapon to be equipped.
+ * 
+ * @arg ArmorId
+ * @type armor
+ * @desc Armor to be equipped.
+ * 
+ * @arg ItemId
+ * @type item
+ * @desc Item to be equipped.
+ * Use with a plugin that can equip items.
+ * 
+ * @arg OrderNo
+ * @type number
+ * @min 1
+ * @desc The order in which the same equip types are present.
+ * For example, specify 2 for the lower side of Dual Wield.
+ * 
+ * @------------------------------------------------------------------
+ * 
  * @command ChangeEquipment
+ * @text ChangeEquipment(Old)
  * @desc Change the actor's equipment.
  * Only one WeaponId/ArmorId/ItemId should be specified.
  * 
@@ -88,7 +118,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 アクターの装備を自由に変更。
+ * @plugindesc v1.02 アクターの装備を自由に変更。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/489100727.html
  *
@@ -135,8 +165,43 @@
  * @ プラグインコマンド
  * @------------------------------------------------------------------
  * 
+ * @command ChangeEquipmentAuto
+ * @text 装備を変更（自動）
+ * @desc アクターの装備を変更します。
+ * 武器／防具／アイテムは片方だけ指定してください。
+ * 
+ * @arg ActorId
+ * @text アクター
+ * @type actor
+ * @desc 装備を変更するアクターです。
+ * 
+ * @arg WeaponId
+ * @text 武器
+ * @type weapon
+ * @desc 装備する武器です。
+ * 
+ * @arg ArmorId
+ * @text 防具
+ * @type armor
+ * @desc 装備する防具です。
+ * 
+ * @arg ItemId
+ * @text アイテム
+ * @type item
+ * @desc 装備するアイテムです。
+ * アイテムを装備できるプラグインと併用してください。
+ * 
+ * @arg OrderNo
+ * @text 順序番号
+ * @type number
+ * @min 1
+ * @desc 同一の装備タイプが複数存在する場合の順番です。
+ * 例えば、二刀流の下側ならば2を指定してください。
+ * 
+ * @------------------------------------------------------------------
+ * 
  * @command ChangeEquipment
- * @text 装備を変更
+ * @text 装備を変更（旧）
  * @desc アクターの装備を変更します。
  * 武器／防具／アイテムは片方だけ指定してください。
  * 
@@ -210,6 +275,73 @@ if (!PluginManager.registerCommand) {
 }
 
 /**
+ * ●装備の変更（自動）
+ */
+PluginManager.registerCommand(PLUGIN_NAME, "ChangeEquipmentAuto", function(args) {
+    const actorId = eval(args.ActorId);
+    const weaponId = eval(args.WeaponId);
+    const armorId = eval(args.ArmorId);
+    const itemId = eval(args.ItemId);
+    const orderNo = eval(setDefault(args.OrderNo, 1));
+    const actor = $gameActors.actor(actorId);
+
+    // 武器／防具／アイテムの有効なものを取得
+    let dataItem;
+    // 武器
+    if (weaponId) {
+        dataItem = $dataWeapons[weaponId];
+    // 防具
+    } else if (armorId) {
+        dataItem = $dataArmors[armorId];
+    // アイテム
+    } else if (itemId) {
+        dataItem = $dataItems[itemId];
+    }
+
+    // 一旦、Game_Itemに変換して再取得
+    // ※NRP_EquipItemとの連携によってetypeIdを取得するため。
+    const item = new Game_Item(dataItem);
+    dataItem = item.object();
+    const equipType = dataItem.etypeId;
+
+    // アクターのスロット配列
+    const slots = actor.equipSlots();
+
+    let slotId = null;
+    // 装備タイプからスロットＩＤを求める。
+    for (let i = 0; i < slots.length; i++) {
+        if (equipType == slots[i]) {
+            // 順序番号の指定がある場合
+            if (orderNo >= 2) {
+                slotId = i + (orderNo - 1);
+                // スロットが存在した場合は確定
+                if (slots[slotId] == equipType) {
+                    break;
+                }
+                // スロットが存在しないので処理終了
+                return;
+            }
+            slotId = i;
+            break;
+        }
+    }
+
+    // 武器
+    if (weaponId) {
+        actor.changeEquip(slotId, dataItem);
+    // 防具
+    } else if (armorId) {
+        actor.changeEquip(slotId, dataItem);
+    // アイテム
+    } else if (itemId) {
+        // 通常は装備できないので強制
+        if (actor.tradeItemWithParty(dataItem, actor.equips()[slotId])) {
+            actor.forceChangeEquip(slotId, dataItem);
+        }
+    }
+});
+
+/**
  * ●装備の変更
  */
 PluginManager.registerCommand(PLUGIN_NAME, "ChangeEquipment", function(args) {
@@ -218,24 +350,24 @@ PluginManager.registerCommand(PLUGIN_NAME, "ChangeEquipment", function(args) {
     const weaponId = eval(args.WeaponId);
     const armorId = eval(args.ArmorId);
     const itemId = eval(args.ItemId);
-    const slotId = equipType - 1;
     const actor = $gameActors.actor(actorId);
+
     // 武器／防具／アイテムの有効なものを取得
-    let item;
+    const slotId = equipType - 1;
     // 武器
     if (weaponId) {
-        item = $dataWeapons[weaponId];
-        actor.changeEquip(slotId, item);
+        const dataItem = $dataWeapons[weaponId];
+        actor.changeEquip(slotId, dataItem);
     // 防具
     } else if (armorId) {
-        item = $dataArmors[armorId];
-        actor.changeEquip(slotId, item);
+        const dataItem = $dataArmors[armorId];
+        actor.changeEquip(slotId, dataItem);
     // アイテム
     } else if (itemId) {
-        item = $dataItems[itemId];
+        const dataItem = $dataItems[itemId];
         // 通常は装備できないので強制
-        if (actor.tradeItemWithParty(item, actor.equips()[slotId])) {
-            actor.forceChangeEquip(slotId, item);
+        if (actor.tradeItemWithParty(dataItem, actor.equips()[slotId])) {
+            actor.forceChangeEquip(slotId, dataItem);
         }
     }
 });
