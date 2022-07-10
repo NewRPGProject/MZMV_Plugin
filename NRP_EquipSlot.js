@@ -53,6 +53,7 @@
  * it would be easier to understand if it is
  * on a separate page from the normal equipment.
  * 
+ * ◆Procedure
  * Set the equipment type in "PagingEquipmentType" as a numerical value.
  * If 5 is specified, equipment types after 5
  * will be displayed on a separate page.
@@ -162,6 +163,7 @@
  * 例えば、着脱可能なスキルシステムを当プラグインで実現する場合など、
  * 通常の装備とは別ページにすると分かりやすいです。
  * 
+ * ◆手順
  * 『ページ切替する装備タイプ』に装備タイプを数値で設定してください。
  * 5を指定した場合、5以降の装備タイプが別ページに表示されます。
  * 
