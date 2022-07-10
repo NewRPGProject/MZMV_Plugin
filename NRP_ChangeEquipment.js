@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.02 Change the actor's equipment at will.
+ * @plugindesc v1.021 Change the actor's equipment at will.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/489100727.html
  *
@@ -128,7 +128,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.02 アクターの装備を自由に変更。
+ * @plugindesc v1.021 アクターの装備を自由に変更。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/489100727.html
  *
@@ -343,6 +343,11 @@ PluginManager.registerCommand(PLUGIN_NAME, "ChangeEquipmentAuto", function(args)
             slotId = i;
             break;
         }
+    }
+
+    // スロットが取得できなかった場合は終了
+    if (slotId == null) {
+        return;
     }
 
     // 武器
