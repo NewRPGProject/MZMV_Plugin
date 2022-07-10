@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Allow items to be equipped.
+ * @plugindesc v1.011 Allow items to be equipped.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489576403.html
  *
@@ -58,7 +58,9 @@
  * This will allow you to equip the relevant item
  * and use it in battle only when equipped.
  * 
+ * -------------------------------------------------------------------
  * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
@@ -112,7 +114,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 アイテムを装備できるようにする。
+ * @plugindesc v1.011 アイテムを装備できるようにする。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489576403.html
  *
@@ -459,9 +461,12 @@ Game_Actor.prototype.forceChangeEquip = function(slotId, item) {
     // 途中セーブに対して適用した場合、
     // スロット領域が存在しない問題があるため初期化する。
     if (this._equips[slotId] == null) {
-        this._equips[slotId] = new Game_Item();
+        for (let i = 0; i <= slotId; i++) {
+            if (this._equips[i] == null) {
+                this._equips[i] = new Game_Item();
+            }
+        }
     }
-
     _Game_Actor_prototype_forceChangeEquip.apply(this, arguments);
 };
 
@@ -473,9 +478,12 @@ Game_Actor.prototype.changeEquip = function(slotId, item) {
     // 途中セーブに対して適用した場合、
     // スロット領域が存在しない問題があるため初期化する。
     if (this._equips[slotId] == null) {
-        this._equips[slotId] = new Game_Item();
+        for (let i = 0; i <= slotId; i++) {
+            if (this._equips[i] == null) {
+                this._equips[i] = new Game_Item();
+            }
+        }
     }
-
     _Game_Actor_changeEquip.apply(this, arguments);
 };
 
