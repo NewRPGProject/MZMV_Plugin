@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.04 The windows can be page-turned left and right.
+ * @plugindesc v1.05 The windows can be page-turned left and right.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475347742.html
  *
@@ -14,12 +14,24 @@
  * For more information, please see below.
  * http://newrpg.seesaa.net/article/475347742.html
  * 
- * <Terms>
+ * -------------------------------------------------------------------
+ * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
  * The author is not responsible,
  * but we will respond to defects as far as possible.
+ * 
+ * @------------------------------------------------------------------
+ * @ [Plugin Parameters]
+ * @------------------------------------------------------------------
+ * 
+ * @param disableAutoPaging
+ * @type boolean
+ * @default false
+ * @desc No automatic paging.
+ * It is assumed to be specified in "pagingWindowList" and so on.
  * 
  * @param usePageCol1
  * @type boolean
@@ -155,7 +167,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 各種ウィンドウを左右でページ切替できるようにします。
+ * @plugindesc v1.05 各種ウィンドウを左右でページ切替できるようにします。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475347742.html
  *
@@ -165,10 +177,23 @@
  * 詳細は以下をご覧ください。
  * http://newrpg.seesaa.net/article/475347742.html
  * 
+ * -------------------------------------------------------------------
  * ■利用規約
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
+ * 
+ * @------------------------------------------------------------------
+ * @ プラグインパラメータ
+ * @------------------------------------------------------------------
+ * 
+ * @param disableAutoPaging
+ * @text ページ化を自動でしない
+ * @type boolean
+ * @default false
+ * @desc 自動でのページ化を行いません。
+ * 『ページ化ウィンドウ一覧』などで指定する想定です。
  * 
  * @param usePageCol1
  * @text 一列でもページを使用
@@ -352,6 +377,7 @@ function setDefault(str, def) {
 }
 
 const parameters = PluginManager.parameters("NRP_PageWindow");
+const pDisableAutoPaging = toBoolean(parameters["disableAutoPaging"], false);
 const pUsePageCol1 = toBoolean(parameters["usePageCol1"]);
 const pCursorReverse = toBoolean(parameters["cursorReverse"], false);
 const pNoStopCursor = toBoolean(parameters["noStopCursor"], false);
@@ -435,6 +461,11 @@ Window_Selectable.prototype.isUsePage = function() {
         return false;
     }
 
+    // ページ化を自動でしない場合は対象外
+    if (pDisableAutoPaging) {
+        return false;
+    }
+    
     // 一行の場合は対象外
     if (this.isHorizontal()) {
         return false;
