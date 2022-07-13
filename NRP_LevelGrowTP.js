@@ -49,7 +49,7 @@
  * [Note of Enemies]
  * -------------------------------------------------------------------
  * <MTP:?>
- * Set Max TP.
+ * Set Max TP. Formula is valid.
  * 
  * -------------------------------------------------------------------
  * [Note of Items]
@@ -201,7 +201,7 @@
  * ■敵キャラのメモ欄
  * -------------------------------------------------------------------
  * <MTP:?>
- * 最大ＴＰを設定します。
+ * 最大ＴＰを設定します。数式可。
  * 
  * -------------------------------------------------------------------
  * ■アイテムのメモ欄
@@ -500,45 +500,6 @@ if (pShowPopupTp) {
         return _Game_Battler_shouldPopupDamage.apply(this, arguments) || result.tpDamage !== 0;
     };
 }
-
-//-----------------------------------------------------------------------------
-// Game_Actor
-//-----------------------------------------------------------------------------
-
-// /**
-//  * ●アクター（＋職業）のパラメータ毎の基本能力値
-//  */
-// const _Game_Actor_paramBase = Game_Actor.prototype.paramBase;
-// Game_Actor.prototype.paramBase = function(paramId) {
-//     const ret = _Game_Actor_paramBase.apply(this, arguments);
-
-//     if (paramId == pTpParamId) {
-//         console.log(this.currentClass());
-//     }
-
-//     return ret;
-// };
-
-// /**
-//  * ●アクター（＋職業）のパラメータ毎の基本能力値
-//  */
-// const _Game_Actor_paramBase = Game_Actor.prototype.paramBase;
-// Game_Actor.prototype.paramBase = function(paramId) {
-//     // 最大ＴＰの場合
-//     if (paramId == pTpParamId) {
-//         const growCurveMTP = this.currentClass().meta.GrowCurveMTP;
-//         if (growCurveMTP) {
-//             const values = growCurveMTP.split(",");
-//             const start = values[0];
-//             const end = values[1];
-//             const growType = values[2];
-// console.log(calcLevelMTP(start, end, growType, this.level));
-//             return calcLevelMTP(start, end, growType, this.level);
-//         }
-//         return 100;
-//     }
-//     return _Game_Actor_paramBase.apply(this, arguments);
-// };
 
 //-----------------------------------------------------------------------------
 // Game_Enemy
