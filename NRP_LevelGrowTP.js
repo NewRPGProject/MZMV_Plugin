@@ -560,13 +560,13 @@ Game_Enemy.prototype.setup = function(enemyId, x, y) {
 const _Game_Enemy_paramBase = Game_Enemy.prototype.paramBase;
 Game_Enemy.prototype.paramBase = function(paramId) {
     if (paramId == pTpParamId) {
+        // eval参照用
+        const a = this;
         // 指定がある場合は採用
         const mtp = eval(this.enemy().meta.MTP);
         if (mtp != null) {
             return mtp;
         }
-        // eval参照用
-        const a = this;
         // デフォルト値
         return eval(pEnemyDefaultMTP);
     }
