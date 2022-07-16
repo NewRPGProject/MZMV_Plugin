@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Change the equipment slots at will.
+ * @plugindesc v1.02 Change the equipment slots at will.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489626316.html
  *
@@ -115,11 +115,16 @@
  * @type string
  * @desc Display the specified Equipment Type or later on a separate page.
  * Multiple items can be specified. (e.g.: 4,6)
+ * 
+ * @param StatusShowSlots
+ * @type number[]
+ * @desc Equipment type to be displayed on the status screen.
+ * If blank, it will be displayed until it fits in the window.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 装備スロットを自由に変更。
+ * @plugindesc v1.02 装備スロットを自由に変更。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489626316.html
  *
@@ -223,6 +228,12 @@
  * @type string
  * @desc 指定の装備タイプ以降を別ページに表示します。
  * 複数指定可能です。（例：4,6）
+ * 
+ * @param StatusShowSlots
+ * @text ステータスの表示スロット
+ * @type number[]
+ * @desc ステータス画面に表示する装備スロット（装備タイプ）です。
+ * 空白時はウィンドウに収まるまで全表示します。
  */
 
 (function() {
@@ -232,12 +243,13 @@
  * ●構造体をJSで扱えるように変換
  */
 function parseStruct1(arg) {
-    var ret = [];
-
-    JSON.parse(arg).forEach(function(str) {
+    if (arg == undefined || arg == "") {
+        return undefined;
+    }
+    const ret = [];
+    for (const str of JSON.parse(arg)) {
         ret.push(str);
-    });
-
+    }
     return ret;
 }
 function toBoolean(str, def) {
@@ -267,6 +279,7 @@ const pDefaultEquipSlots = parseStruct1(parameters["DefaultEquipSlots"]);
 const pAdjustInitEquip = toBoolean(parameters["AdjustInitEquip"], false);
 const pDualWieldPosition = toNumber(parameters["DualWieldPosition"], 2);
 const pPagingEquipmentType = parameters["PagingEquipmentType"];
+const pStatusShowSlots = parseStruct1(parameters["StatusShowSlots"]);
 
 //-----------------------------------------------------------------------------
 // Game_Actor
@@ -738,6 +751,29 @@ if (pPagingEquipmentType) {
                 this.cursorLeft();
             }
         }
+    };
+}
+
+//-----------------------------------------------------------------------------
+// Window_StatusEquip
+//-----------------------------------------------------------------------------
+
+if (pStatusShowSlots) {
+    /**
+     * 【上書】１ページ内に表示する項目数
+     */
+    Window_StatusEquip.prototype.maxVisibleItems = function() {
+        const slots = this._actor.equipSlots();
+        const filterSlots = slots.filter(slot => pStatusShowSlots.includes(String(slot)));
+        return filterSlots.length;
+    };
+
+    /**
+     * 【上書】全体の項目数
+     */
+    Window_StatusEquip.prototype.maxItems = function() {
+        // 表示する項目数と一致させる。
+        return this.maxVisibleItems();
     };
 }
 
