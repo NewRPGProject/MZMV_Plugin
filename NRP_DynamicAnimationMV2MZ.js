@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.04 It makes MV animations correspond to DynamicAnimationMZ.
+ * @plugindesc v1.041 It makes MV animations correspond to DynamicAnimationMZ.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -104,7 +104,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.04 ＭＶ用アニメーションをDynamicAnimationMZに対応させます。
+ * @plugindesc v1.041 ＭＶ用アニメーションをDynamicAnimationMZに対応させます。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -365,54 +365,55 @@ Sprite_AnimationMV.prototype.updatePosition = function() {
  * ※1/60秒ごとに実行される。
  */
 Sprite_AnimationMV.prototype.updateDynamicAnimation = function() {
-    var da = this.dynamicAnimation;
-    var a = da.referenceSubject;
-    var b = da.referenceTarget;
+    const da = this.dynamicAnimation;
+    const a = da.referenceSubject;
+    const b = da.referenceTarget;
 
-    var dataA = da.dataA;
-    var repeat = da.repeat;
-    var no = da.no; // 現在のD-Animation番号
-    var r = da.r; // 現在のリピート回数
-    var t = this._allDuration - this._duration - 1; // 現在の経過時間
-    var et = this._allDuration - 1 // 終了時間
+    const dataA = da.dataA;
+    const repeat = da.repeat;
+    const no = da.no; // 現在のD-Animation番号
+    const r = da.r; // 現在のリピート回数
+    const t = this._allDuration - this._duration - 1; // 現在の経過時間
+    const et = this._allDuration - 1 // 終了時間
 
-    var position = da.position; // 位置
-    var mirroring = da.mirroring; // ミラーリング
+    const position = da.position; // 位置
+    const mirroring = da.mirroring; // ミラーリング
 
     // 標準ターゲット座標取得
-    var screenX = da.screenX;
-    var screenY = da.screenY;
-    var defaultX = da.defaultX;
-    var defaultY = da.defaultY;
+    const screenX = da.screenX;
+    const screenY = da.screenY;
+    const defaultX = da.defaultX;
+    const defaultY = da.defaultY;
+    const allRangeX = da.baseAnimation.allRangeX;
+    const allRangeY = da.baseAnimation.allRangeY;
 
-    var targetNo = da.targetNo;
+    const targetNo = da.targetNo;
 
     // 始点
-    var sx = da.sx;
-    var sy = da.sy;
+    const sx = da.sx;
+    const sy = da.sy;
     // 終点
-    var ex = da.ex;
-    var ey = da.ey;
-    var arcX = da.arcX;
-    var arcY = da.arcY;
+    const ex = da.ex;
+    const ey = da.ey;
+    const arcX = da.arcX;
+    const arcY = da.arcY;
     // リアルタイム
-    var addX = da.addX;
-    var addY = da.addY;
-    var dx = da.dx;
-    var dy = da.dy;
-    var rotation = da.rotation;
-    var opacity = da.opacity;
-    var arrival = da.arrival;
-    var scale = da.scale;
-    var scaleX = da.scaleX;
-    var scaleY = da.scaleY;
+    const addX = da.addX;
+    const addY = da.addY;
+    const dx = da.dx;
+    const dy = da.dy;
+    const rotation = da.rotation;
+    let opacity = da.opacity;
+    const scale = da.scale;
+    const scaleX = da.scaleX;
+    const scaleY = da.scaleY;
     // リアルタイム円
-    var radiusX = da.radiusX;
-    var radiusY = da.radiusY;
-    var radX = da.radX;
-    var radY = da.radY;
-    var initRadX = da.initRadX;
-    var initRadY = da.initRadY;
+    const radiusX = da.radiusX;
+    const radiusY = da.radiusY;
+    let radX = da.radX;
+    let radY = da.radY;
+    const initRadX = da.initRadX;
+    const initRadY = da.initRadY;
     // マップ用項目
     const onScroll = da.onScroll;
     // 前回の位置が存在しない場合は開始地点
@@ -423,6 +424,7 @@ Sprite_AnimationMV.prototype.updateDynamicAnimation = function() {
         this.beforeY = sy;
     }
 
+    let arrival = da.arrival;
     // 到着フレーム数の指定がある場合
     if (arrival != undefined) {
         // レート分、倍にしておく。

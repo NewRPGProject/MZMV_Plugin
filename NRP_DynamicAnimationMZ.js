@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.191 Automate & super-enhance battle animations.
+ * @plugindesc v1.192 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -524,7 +524,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.191 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.192 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -1344,6 +1344,8 @@ Window_BattleLog.prototype.showDynamicAnimation = function (targets, action, mir
         baseData.animationNextDelay = animationNextDelay;
         baseData.defaultScreenX = defaultScreenX;
         baseData.defaultScreenY = defaultScreenY;
+        baseData.allRangeX = allRangeX;
+        baseData.allRangeY = allRangeY;
         baseData.mirrorAdjustX = pMirrorAdjustX;
         baseData.mirrorAdjustY = pMirrorAdjustY;
         baseData.targets = targets;
