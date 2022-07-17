@@ -29,6 +29,7 @@
  * @target MZ
  * @plugindesc v1.02 Use a map as title screen.
  * @author Takeshi Sunagawa（Original: Nolonar）
+ * @orderAfter ExtraGauge
  * @url https://github.com/Nolonar/RM_Plugins
  * 
  * @param mapId
@@ -120,6 +121,7 @@
  * @target MZ
  * @plugindesc v1.02 マップをタイトル画面として使用する。
  * @author 砂川赳（オリジナル：Nolonar様）
+ * @orderAfter ExtraGauge
  * @url https://github.com/Nolonar/RM_Plugins
  * 
  * @param mapId
@@ -375,5 +377,19 @@
     Scene_Load.prototype.onLoadSuccess = function () {
         Scene_Load_onLoadSuccess.call(this);
         resetWeather();
+    }
+
+    //=========================================================================
+    // ExtraGauge.jsとの競合解決
+    //=========================================================================
+    if (Scene_Base.prototype.addExtraGauge) {
+        const _Scene_Base_addExtraGauge = Scene_Base.prototype.addExtraGauge;
+        Scene_Base.prototype.addExtraGauge = function() {
+            // ゲージデータが存在しない場合は生成する。
+            if (!this._extraGauges) {
+                this.createExtraGauges();
+            }
+            _Scene_Base_addExtraGauge.apply(this, arguments);
+        };
     }
 })();
