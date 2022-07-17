@@ -27,7 +27,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.02 Use a map as title screen.
+ * @plugindesc v1.03 Use a map as title screen.
  * @author Takeshi Sunagawa（Original: Nolonar）
  * @orderAfter ExtraGauge
  * @url https://github.com/Nolonar/RM_Plugins
@@ -119,7 +119,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.02 マップをタイトル画面として使用する。
+ * @plugindesc v1.03 マップをタイトル画面として使用する。
  * @author 砂川赳（オリジナル：Nolonar様）
  * @orderAfter ExtraGauge
  * @url https://github.com/Nolonar/RM_Plugins
