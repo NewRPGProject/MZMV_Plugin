@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Level growth of TP.
+ * @plugindesc v1.01 Level growth of TP.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_AdditionalClasses
  * @orderAfter NRP_EnemyPercentParams
@@ -111,6 +111,11 @@
  * @default true
  * @desc Modifies the amount of recovery based on the TP regeneration rate to a value based on Max TP.
  * 
+ * @param NoChargeTpByDamage
+ * @type boolean
+ * @default true
+ * @desc Eliminate TP charge on damage.
+ * 
  * @param ShowPopupTp
  * @type boolean
  * @default true
@@ -158,7 +163,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 ＴＰをレベル成長させる。
+ * @plugindesc v1.01 ＴＰをレベル成長させる。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_AdditionalClasses
  * @orderAfter NRP_EnemyPercentParams
@@ -265,6 +270,12 @@
  * @default true
  * @desc ＴＰ再生率による回復量を最大ＴＰを基準とした値に修正します。
  * 
+ * @param NoChargeTpByDamage
+ * @text ダメージ時のＴＰ回復廃止
+ * @type boolean
+ * @default true
+ * @desc ダメージ時のＴＰ回復を行いません。
+ * 
  * @param ShowPopupTp
  * @text ＴＰをポップアップ表示
  * @type boolean
@@ -350,6 +361,7 @@ const pMaxTpName = parameters["MaxTpName"];
 const pPreserveTp = toBoolean(parameters["PreserveTp"], false);
 const pRecoverAllTp = toBoolean(parameters["RecoverAllTp"], false);
 const pApplyRegenerateTp = toBoolean(parameters["ApplyRegenerateTp"], false);
+const pNoChargeTpByDamage = toBoolean(parameters["NoChargeTpByDamage"], false);
 const pShowPopupTp = toBoolean(parameters["ShowPopupTp"], false);
 const pShowRegenerateTp = toBoolean(parameters["ShowRegenerateTp"], false);
 const pTpDamageColor = setDefault(parameters["TpDamageColor"], "#90ffff");
@@ -461,6 +473,16 @@ Game_BattlerBase.prototype.clearBuffs = function() {
 //-----------------------------------------------------------------------------
 // Game_Battler
 //-----------------------------------------------------------------------------
+
+if (pNoChargeTpByDamage) {
+    /**
+     * 【上書】ダメージ時のＴＰ回復をしない。
+     */
+    Game_Battler.prototype.chargeTpByDamage = function(damageRate) {
+        // const value = Math.floor(50 * damageRate * this.tcr);
+        // this.gainSilentTp(value);
+    };
+}
 
 if (pApplyRegenerateTp || (pShowPopupTp && pShowRegenerateTp)) {
     /**
