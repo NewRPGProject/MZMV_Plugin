@@ -33,6 +33,20 @@
  * and rights indication are also optional.
  * The author is not responsible,
  * but will deal with defects to the extent possible.
+ * 
+ * @------------------------------------------------------------------
+ * @ Plugin Parameters
+ * @------------------------------------------------------------------
+ * 
+ * @param CounterExtension
+ * @type boolean
+ * @default true
+ * @desc Extend the effective range of the counter attribute so that events more than 2 squares away can be activated.
+ * 
+ * @param TableImageNotExtension
+ * @type boolean
+ * @default false
+ * @desc Disable the specification to extend table tiles by 12 dots.
  */
 
 /*:ja
