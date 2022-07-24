@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.05 The windows can be page-turned left and right.
+ * @plugindesc v1.051 The windows can be page-turned left and right.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475347742.html
  *
@@ -167,7 +167,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.05 各種ウィンドウを左右でページ切替できるようにします。
+ * @plugindesc v1.051 各種ウィンドウを左右でページ切替できるようにします。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475347742.html
  *
@@ -397,6 +397,22 @@ const pPagingSaveList = parameters["pagingSaveList"];
 const pPagingBattleCommand = parameters["pagingBattleCommand"];
 const pPagingWindowList = parseStruct1(parameters["pagingWindowList"]);
 const pNoPagingWindowList = parseStruct1(parameters["noPagingWindowList"]);
+
+// ----------------------------------------------------------------------------
+// Window_Selectable
+// ----------------------------------------------------------------------------
+
+/**
+ * ●初期化
+ */
+const _Window_Selectable_initialize = Window_Selectable.prototype.initialize;
+Window_Selectable.prototype.initialize = function() {
+    // 時々、this._listを参照するプラグインがあるので初期化しておく。
+    if (!this._list) {
+        this._list = [];
+    }
+    _Window_Selectable_initialize.apply(this, arguments);
+};
 
 /**
  * 【独自】選択領域の合計
@@ -935,6 +951,10 @@ Window_Selectable.prototype.updateArrows = function() {
     this.upArrowVisible = false;
 };
 
+// ----------------------------------------------------------------------------
+// Window
+// ----------------------------------------------------------------------------
+
 /**
  * ●ページ切替矢印作成
  */
@@ -1069,9 +1089,10 @@ Window.prototype._updateArrows = function() {
     this._rightPageArrowSprite.visible = this.isOpen() && this.rightPageArrowVisible;
 };
 
-/**
- * ●【MZ用】不具合対応
- */
+// ----------------------------------------------------------------------------
+// 【MZ用】不具合対応
+// ----------------------------------------------------------------------------
+
 if (Utils.RPGMAKER_NAME != "MV") {
     var _Window_Command_maxItems = Window_Command.prototype.maxItems;
     Window_Command.prototype.maxItems = function() {
