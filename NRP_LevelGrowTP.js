@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Level growth of TP.
+ * @plugindesc v1.02 Level growth of TP.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_AdditionalClasses
  * @orderAfter NRP_EnemyPercentParams
@@ -163,7 +163,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 ＴＰをレベル成長させる。
+ * @plugindesc v1.02 ＴＰをレベル成長させる。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_AdditionalClasses
  * @orderAfter NRP_EnemyPercentParams
@@ -420,6 +420,18 @@ function setMtpData(dataArray) {
 //-----------------------------------------------------------------------------
 // Game_BattlerBase
 //-----------------------------------------------------------------------------
+
+Game_BattlerBase.prototype.paramBasePlus = function(paramId) {
+    // 初期化されてない場合は初期化
+    // ※途中セーブ対応
+    if (paramId == pTpParamId  && this._paramPlus[pTpParamId] == null) {
+        this._paramPlus[pTpParamId] = 0;
+        this._buffs[pTpParamId] = 0;
+        this._buffTurns[pTpParamId] = 0;
+    }
+
+    return Math.max(0, this.paramBase(paramId) + this.paramPlus(paramId));
+};
 
 if (pPreserveTp) {
     /**
