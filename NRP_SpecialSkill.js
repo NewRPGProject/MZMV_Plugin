@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Implementation of the special skill system.
+ * @plugindesc v1.001 Implementation of the special skill system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489968387.html
  *
@@ -398,7 +398,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 奥義システムの実装。
+ * @plugindesc v1.001 奥義システムの実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489968387.html
  *
@@ -1068,6 +1068,9 @@ const _Game_Battler_onBattleStart = Game_Battler.prototype.onBattleStart;
 Game_Battler.prototype.onBattleStart = function(advantageous) {
     _Game_Battler_onBattleStart.apply(this, arguments);
 
+    // 途中適用対策
+    this.clearSpecialGaugesIfNecessary();
+
     // eval参照用
     const a = this;
 
@@ -1174,6 +1177,9 @@ function getRegenerateValue(a, stateData, index) {
  * 【独自】奥義ゲージの値を加算
  */
 Game_Battler.prototype.addSpecialGauge = function(index, value) {
+    // 途中適用対策
+    this.clearSpecialGaugesIfNecessary();
+
     // 値がなければ処理停止
     if (!value) {
         return;
@@ -1209,6 +1215,16 @@ Game_Battler.prototype.addSpecialGauge = function(index, value) {
     // 値が満タンになった場合は演出実行
     if (this._specialGauges[index] == gaugeMax && gaugeData.ChargedAnimation) {
         callAnimation(this, eval(gaugeData.ChargedAnimation));
+    }
+}
+
+/**
+ * 【独自】必要なら奥義ゲージを初期化
+ * ※途中適用向けの対策
+ */
+Game_Battler.prototype.clearSpecialGaugesIfNecessary = function() {
+    if (!this._specialGauges) {
+        this.clearSpecialGauges();
     }
 }
 
@@ -1367,10 +1383,12 @@ BattleManager.endAction = function() {
     const a = BattleManager._subject;
     const action = this._action;
 
-    for (let i = 0; i < a._specialGauges.length; i++) {
-        const actionEndValue = getActionEndValue(a, action.item(), i);
-        // ゲージに加算
-        a.addSpecialGauge(i, actionEndValue);
+    if (action) {
+        for (let i = 0; i < a._specialGauges.length; i++) {
+            const actionEndValue = getActionEndValue(a, action.item(), i);
+            // ゲージに加算
+            a.addSpecialGauge(i, actionEndValue);
+        }
     }
 
     _BattleManager_endAction.apply(this, arguments);
@@ -1413,6 +1431,9 @@ if (pShowMenu) {
     const _Window_StatusBase_drawActorSimpleStatus = Window_StatusBase.prototype.drawActorSimpleStatus;
     Window_StatusBase.prototype.drawActorSimpleStatus = function(actor, x, y) {
         _Window_StatusBase_drawActorSimpleStatus.apply(this, arguments);
+
+        // 途中適用対策
+        actor.clearSpecialGaugesIfNecessary();
         // eval参照用
         const a = actor;
 
@@ -1470,6 +1491,8 @@ if (pShowBattle) {
         const x = this.nameX(rect);
         const y = this.nameY(rect);
 
+        // 途中適用対策
+        actor.clearSpecialGaugesIfNecessary();
         // eval参照用
         const a = actor;
 
@@ -1785,7 +1808,7 @@ function isGaugeConditionOK(index, a) {
     if (!a.isActor()) {
         return false;
     }
-    
+
     // ついでに値が無効だった場合は初期化しておく。
     if (!a._specialGauges[index]) {
         a._specialGauges[index] = 0;
