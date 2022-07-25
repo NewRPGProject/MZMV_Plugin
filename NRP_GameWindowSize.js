@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.04 Resize the entire game window & add to the options.
+ * @plugindesc v1.05 Resize the entire game window & add to the options.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475413177.html
  *
@@ -169,7 +169,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 ゲーム全体のウィンドウサイズを変更＆オプションに追加
+ * @plugindesc v1.05 ゲーム全体のウィンドウサイズを変更＆オプションに追加
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/475413177.html
  *
@@ -426,8 +426,8 @@ function changeWindowSize() {
     if (pWindowWidth || pWindowHeight) {
         const dw = getWindowWidth() - window.innerWidth;
         const dh = getWindowHeight() - window.innerHeight;
-        window.moveBy(-dw / 2, -dh / 2);
         window.resizeBy(dw, dh);
+        window.moveBy(-dw / 2, -dh / 2);
     }
 }
 
