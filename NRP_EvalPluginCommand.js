@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Enable formulas and control characters in plugin commands.
+ * @plugindesc v1.031 Enable formulas and control characters in plugin commands.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475509661.html
  *
@@ -39,10 +39,15 @@
  * @type boolean
  * @default false
  * @desc Enables formula evaluation of parameters.
+ * 
+ * @param ignoreDoubleBackslash
+ * @type boolean
+ * @default true
+ * @desc Malfunctions are prevented by ignoring "\\" in the parameters.
  */
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 プラグインコマンドで数式や制御文字を使用可能に
+ * @plugindesc v1.031 プラグインコマンドで数式や制御文字を使用可能に
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475509661.html
  *
@@ -73,6 +78,12 @@
  * @type boolean
  * @default false
  * @desc パラメータの数式評価（eval）を有効にします。
+ * 
+ * @param ignoreDoubleBackslash
+ * @text 『\\』を無視
+ * @type boolean
+ * @default true
+ * @desc パラメータ内の『\\』を無視することで誤動作を防止します。
  */
 (function() {
 "use strict";
@@ -91,8 +102,9 @@ function toBoolean(val, def) {
 }
 
 const PLUGIN_NAME = "NRP_EvalPluginCommand";
-var parameters = PluginManager.parameters(PLUGIN_NAME);
-var pEnableEvaluate = toBoolean(parameters["enableEvaluate"], false);
+const parameters = PluginManager.parameters(PLUGIN_NAME);
+const pEnableEvaluate = toBoolean(parameters["enableEvaluate"], false);
+const pIgnoreDoubleBackslash = toBoolean(parameters["ignoreDoubleBackslash"], true);
 
 // MVの場合
 if (Utils.RPGMAKER_NAME == "MV") {
@@ -215,6 +227,13 @@ function convertParam(param) {
  */
 function convertEscapeCharacters(originalText) {
     let tmpText = originalText;
+
+    // 『\\』を含む場合は誤動作するので無視
+    if (pIgnoreDoubleBackslash && tmpText.match(/\\/)) {
+        // 元の値を返す。
+        return originalText;
+    }
+
     /* eslint no-control-regex: 0 */
     tmpText = tmpText.replace(/\\/g, "\x1b");
     tmpText = tmpText.replace(/\x1b\x1b/g, "\\");
