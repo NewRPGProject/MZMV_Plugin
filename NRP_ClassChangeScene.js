@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.032 A class change system will be implemented.
+ * @plugindesc v1.04 A class change system will be implemented.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -365,7 +365,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.032 転職システムを実装する。
+ * @plugindesc v1.04 転職システムを実装する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -1058,6 +1058,20 @@ Scene_ClassChange.prototype.initialize = function() {
 };
 
 /**
+ * ●アクターの設定
+ */
+Scene_ClassChange.prototype.updateActor = function() {
+    let actor = $gameActors.actor($gameParty._menuActorId);
+
+    // チェック処理は行わない。
+    // if (!this.members().includes(actor)) {
+    //     actor = this.members()[0];
+    // }
+
+    this._actor = actor;
+};
+
+/**
  * ●更新処理
  */
 Scene_ClassChange.prototype.update = function() {
@@ -1489,7 +1503,7 @@ Windows_SelectClasses.prototype.makeItemList = function() {
     // 転職条件を満たすか判定
     for (const classInfo of mClassList) {
         // 対象のアクターでない場合
-        if (classInfo.actors && classInfo.actors.length && !classInfo.actors.includes(this._actor.actorId())) {
+        if (classInfo.actors && classInfo.actors.length && !this.isActorConditionOK(classInfo.actors)) {
             continue;
         // 対象のスイッチがオンでない場合
         } else if (classInfo.switch && !$gameSwitches.value(classInfo.switch)) {
@@ -1510,6 +1524,14 @@ Windows_SelectClasses.prototype.makeItemList = function() {
     }
 
     this._data = classes;
+};
+
+/**
+ * ●アクター条件を満たすかどうか？
+ */
+Windows_SelectClasses.prototype.isActorConditionOK = function(actorIds) {
+    // 引数は文字列配列、this._actor.actorId()は数字なので==で比較
+    return actorIds.some(id => id == this._actor.actorId());
 };
 
 /**
@@ -2281,7 +2303,6 @@ Windows_ClassInfo.prototype.updateOrigin = function() {
 
     const baseX = this._scrollX - (this._scrollX % blockWidth);
     const baseY = this._scrollY - (this._scrollY % blockHeight);
-
     if (baseX !== this._scrollBaseX || baseY !== this._scrollBaseY) {
         this.updateScrollBase(baseX, baseY);
         this.paint();
@@ -2626,6 +2647,13 @@ function loadClassImage() {
     for (const actor of $gameParty.members()) {
         // ※あえて_faceNameを直接参照
         ImageManager.loadFace(actor._faceName);
+    }
+
+    // パーティにいないアクターが指定されていた場合
+    const tmpActor = $gameActors.actor($gameParty._menuActorId);
+    if (!$gameParty.members().includes(tmpActor)) {
+        // 顔グラを読み込んでおく。
+        ImageManager.loadFace(tmpActor._faceName);
     }
 };
 

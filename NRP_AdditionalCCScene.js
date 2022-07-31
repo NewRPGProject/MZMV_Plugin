@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.014 Implemented a class change screen for multiple classes.
+ * @plugindesc v1.02 Implemented a class change screen for multiple classes.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -417,7 +417,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.014 多重職業用の転職画面を実装。
+ * @plugindesc v1.02 多重職業用の転職画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -1151,6 +1151,20 @@ Scene_AdditionalCC.prototype.initialize = function() {
     this._isSelectActor = false;
     // 職業画像の読込
     loadClassImage();
+};
+
+/**
+ * ●アクターの設定
+ */
+Scene_AdditionalCC.prototype.updateActor = function() {
+    let actor = $gameActors.actor($gameParty._menuActorId);
+
+    // チェック処理は行わない。
+    // if (!this.members().includes(actor)) {
+    //     actor = this.members()[0];
+    // }
+
+    this._actor = actor;
 };
 
 /**
@@ -1916,7 +1930,7 @@ Windows_SelectClasses.prototype.makeItemList = function() {
     // 転職条件を満たすか判定
     for (const classInfo of mClassList) {
         // 対象のアクターでない場合
-        if (classInfo.actors && classInfo.actors.length && !classInfo.actors.includes(this._actor.actorId())) {
+        if (classInfo.actors && classInfo.actors.length && !this.isActorConditionOK(classInfo.actors)) {
             continue;
         // 対象のスイッチがオンでない場合
         } else if (classInfo.switch && !$gameSwitches.value(classInfo.switch)) {
@@ -1947,6 +1961,14 @@ Windows_SelectClasses.prototype.makeItemList = function() {
             this._data.push(null);
         }
     }
+};
+
+/**
+ * ●アクター条件を満たすかどうか？
+ */
+Windows_SelectClasses.prototype.isActorConditionOK = function(actorIds) {
+    // 引数は文字列配列、this._actor.actorId()は数字なので==で比較
+    return actorIds.some(id => id == this._actor.actorId());
 };
 
 /**
@@ -2215,7 +2237,7 @@ Windows_ClassInfo.prototype.drawAllItems = function() {
  * ●アクター名を表示
  */
 Windows_ClassInfo.prototype.drawActorName = function(actor, x, y, width) {
-    return Window_StatusBase.prototype.drawActorName.apply(this, arguments);
+    Window_StatusBase.prototype.drawActorName.apply(this, arguments);
 };
 
 /**
@@ -3237,6 +3259,13 @@ function loadClassImage() {
     for (const actor of $gameParty.members()) {
         // ※あえて_faceNameを直接参照
         ImageManager.loadFace(actor._faceName);
+    }
+
+    // パーティにいないアクターが指定されていた場合
+    const tmpActor = $gameActors.actor($gameParty._menuActorId);
+    if (!$gameParty.members().includes(tmpActor)) {
+        // 顔グラを読み込んでおく。
+        ImageManager.loadFace(tmpActor._faceName);
     }
 };
 
