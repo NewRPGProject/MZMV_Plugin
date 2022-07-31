@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.04 A class change system will be implemented.
+ * @plugindesc v1.041 A class change system will be implemented.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -365,7 +365,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.04 転職システムを実装する。
+ * @plugindesc v1.041 転職システムを実装する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -2651,7 +2651,7 @@ function loadClassImage() {
 
     // パーティにいないアクターが指定されていた場合
     const tmpActor = $gameActors.actor($gameParty._menuActorId);
-    if (!$gameParty.members().includes(tmpActor)) {
+    if (tmpActor && !$gameParty.members().includes(tmpActor)) {
         // 顔グラを読み込んでおく。
         ImageManager.loadFace(tmpActor._faceName);
     }

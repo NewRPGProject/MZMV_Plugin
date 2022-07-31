@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.02 Implemented a class change screen for multiple classes.
+ * @plugindesc v1.021 Implemented a class change screen for multiple classes.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -417,7 +417,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.02 多重職業用の転職画面を実装。
+ * @plugindesc v1.021 多重職業用の転職画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -3263,7 +3263,7 @@ function loadClassImage() {
 
     // パーティにいないアクターが指定されていた場合
     const tmpActor = $gameActors.actor($gameParty._menuActorId);
-    if (!$gameParty.members().includes(tmpActor)) {
+    if (tmpActor && !$gameParty.members().includes(tmpActor)) {
         // 顔グラを読み込んでおく。
         ImageManager.loadFace(tmpActor._faceName);
     }
