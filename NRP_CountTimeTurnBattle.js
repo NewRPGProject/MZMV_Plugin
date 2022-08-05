@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.05 A dream battle system that forcefully blends turn-based and CTB.
+ * @plugindesc v1.051 A dream battle system that forcefully blends turn-based and CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -79,7 +79,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.05 ターン制とＣＴＢを無理やり融合させた夢の戦闘システムを実現します。
+ * @plugindesc v1.051 ターン制とＣＴＢを無理やり融合させた夢の戦闘システムを実現します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -583,6 +583,11 @@ Game_BattlerBase.prototype.turnCount = function() {
  * ●基本WTを計算する。
  */
 Game_Battler.prototype.makeBaseWt = function() {
+    // 敏捷性が０以下ならNumber型の最大値（たぶん9007199254740991）を設定
+    if (this.agi <= 0) {
+        this._baseWt = Number.MAX_SAFE_INTEGER;
+        return;
+    }
     // 100000 / 敏捷性
     this._baseWt = parseInt(100000 / this.agi);
 };
@@ -599,6 +604,10 @@ Game_Battler.prototype.getAddWt = function() {
         
     // なければagiを参照する。
     } else {
+        // 敏捷性が０以下ならNumber型の最大値（たぶん9007199254740991）を設定
+        if (this.agi <= 0) {
+            return Number.MAX_SAFE_INTEGER;
+        }
         addWt = parseInt(100000 / this.agi);
     }
     return addWt;

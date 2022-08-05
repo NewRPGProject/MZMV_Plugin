@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.13 Change the battle system to CTB.
+ * @plugindesc v1.131 Change the battle system to CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -223,7 +223,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.13 戦闘システムをＣＴＢへ変更します。
+ * @plugindesc v1.131 戦闘システムをＣＴＢへ変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -1128,6 +1128,11 @@ Game_Battler.prototype.turnCount = function() {
  * 【独自】基本WTを計算する。
  */
 Game_Battler.prototype.makeBaseWt = function() {
+    // 敏捷性が０以下ならNumber型の最大値（たぶん9007199254740991）を設定
+    if (this.agi <= 0) {
+        this._baseWt = Number.MAX_SAFE_INTEGER;
+        return;
+    }
     // 100000 / 敏捷性
     this._baseWt = parseInt(100000 / this.agi);
 };
@@ -1144,6 +1149,10 @@ Game_Battler.prototype.getAddWt = function() {
 
     // なければagiを参照する。
     } else {
+        // 敏捷性が０以下ならNumber型の最大値（たぶん9007199254740991）を設定
+        if (this.agi <= 0) {
+            return Number.MAX_SAFE_INTEGER;
+        }
         addWt = parseInt(100000 / this.agi);
     }
     return addWt;
@@ -1218,11 +1227,15 @@ Game_Action.prototype.speed = function() {
 const _Game_Action_prototype_applyItemEffect = Game_Action.prototype.applyItemEffect;
 Game_Action.prototype.applyItemEffect = function(target, effect) {
     // 効果前の敏捷性を保持
-    var beforeAgi = target.agi;
+    const beforeAgi = target.agi;
     
     // 元の処理
     _Game_Action_prototype_applyItemEffect.apply(this, arguments);
 
+    // 敏捷性が０以下なら処理しない
+    if (beforeAgi <= 0) {
+        return;
+    }
     if (target.agi != beforeAgi) {
         // 敏捷性が変化したので、WTも変化させる。
         target.setWt(parseInt(target.wt / (target.agi / beforeAgi)));
