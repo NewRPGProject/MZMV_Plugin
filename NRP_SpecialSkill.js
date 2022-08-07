@@ -38,7 +38,7 @@
  * 
  * ◆<SpecialSkill:[special type]>
  * Set the skill as special skill.
- * If the special type is 1, as mentioned above,
+ * If <SpecialSkill:1>, as mentioned above,
  * it corresponds to the first in the SpecialTypeList.
  * 
  * ◆<SpecialSkillCost:100>
@@ -428,7 +428,7 @@
  * 
  * ◆<SpecialSkill:[奥義タイプ]>
  * スキルを奥義スキルとして設定します。
- * 前述の通り奥義タイプが1ならば、奥義タイプ一覧の１番目に対応します。
+ * <SpecialSkill:1>ならば、奥義タイプ一覧の１番目に対応します。
  * 
  * ◆<SpecialSkillCost:100>
  * 奥義ゲージを100ポイント消費します。
