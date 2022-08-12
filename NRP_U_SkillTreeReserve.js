@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
 @target MV MZ
-@plugindesc v1.00 Added reservation function to the skill tree
+@plugindesc v1.001 Added reservation function to the skill tree
 @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
 @base SkillTree
 @base SkillTree_LayoutEx
@@ -149,7 +149,7 @@ Change the display of skills with insufficient SP. Display translucent if SP is 
 
 /*:ja
 @target MV MZ
-@plugindesc v1.00 スキルツリーに予約機能を追加
+@plugindesc v1.001 スキルツリーに予約機能を追加
 @author 砂川赳（http://newrpg.seesaa.net/）
 @base SkillTree
 @base SkillTree_LayoutEx
@@ -998,5 +998,46 @@ Window_Message.prototype.checkToNotClose = function() {
         }
     }
 };
+
+// ----------------------------------------------------------------------------
+// ＭＺ対応
+// ----------------------------------------------------------------------------
+if (Utils.RPGMAKER_NAME != "MV") {
+    /**
+     * ●ウィンドウ内の画像の色を変更
+     */
+    if (!Bitmap.prototype.adjustTone) {
+        /**
+         * Changes the color tone of the entire bitmap.
+         *
+         * @method adjustTone
+         * @param {Number} r The red strength in the range (-255, 255)
+         * @param {Number} g The green strength in the range (-255, 255)
+         * @param {Number} b The blue strength in the range (-255, 255)
+         */
+        Bitmap.prototype.adjustTone = function(r, g, b) {
+            if ((r || g || b) && this.width > 0 && this.height > 0) {
+                var context = this.context;
+                var imageData = context.getImageData(0, 0, this.width, this.height);
+                var pixels = imageData.data;
+                for (var i = 0; i < pixels.length; i += 4) {
+                    pixels[i + 0] += r;
+                    pixels[i + 1] += g;
+                    pixels[i + 2] += b;
+                }
+                context.putImageData(imageData, 0, 0);
+                this._setDirty();
+            }
+        };
+
+        /**
+         * @method _setDirty
+         * @private
+         */
+        Bitmap.prototype._setDirty = function() {
+            this._dirty = true;
+        };
+    }
+}
 
 })();
