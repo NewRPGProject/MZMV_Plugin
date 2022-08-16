@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.131 Change the battle system to CTB.
+ * @plugindesc v1.14 Change the battle system to CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -147,6 +147,12 @@
  * @desc The number of battler to calculate the turn order.
  * This is the number of battler to be displayed. default 9.
  *
+ * @param calcGuardCommand
+ * @parent <Basic>
+ * @type boolean
+ * @default true
+ * @desc When the cursor is hovered over a guard command, the order display is calculated according to speed.
+ * 
  * @param <Battle Start>
  *
  * @param showPartyCommand
@@ -223,7 +229,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.131 戦闘システムをＣＴＢへ変更します。
+ * @plugindesc v1.14 戦闘システムをＣＴＢへ変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -354,6 +360,13 @@
  * @default 9
  * @desc ターン順序の計算を行う人数。これが表示される人数になります。
  * 指定なしなら9。
+ * 
+ * @param calcGuardCommand
+ * @text 防御選択時に計算
+ * @parent <Basic>
+ * @type boolean
+ * @default true
+ * @desc 防御コマンドにカーソルを合わせた際、速度補正に応じて順序表示の計算を行います。
  *
  * @param <Battle Start>
  * @text ＜戦闘開始関連＞
@@ -463,6 +476,7 @@ function toNumber(str, def) {
 const parameters = PluginManager.parameters("NRP_CountTimeBattle");
     
 const pNumber = toNumber(parameters["number"], 9);
+const pCalcGuardCommand = toBoolean(parameters["calcGuardCommand"], true);
 const pShowPartyCommand = toNumber(parameters["showPartyCommand"], 0);
 const pActorStartRandomWt = toNumber(parameters["actorStartRandomWt"], 0);
 const pEnemyStartRandomWt = toNumber(parameters["enemyStartRandomWt"], 20);
@@ -1303,6 +1317,55 @@ Window_BattleEnemy.prototype.show = function() {
     // 対象選択時、行動予測のために行動順序再計算
     BattleManager.reMakeActionOrders();
 };
+
+//-----------------------------------------------------------------------------
+// Window_ActorCommand
+//-----------------------------------------------------------------------------
+
+if (pCalcGuardCommand) {
+    /*
+    * Window_ActorCommand.prototype.refreshCursorが未定義の場合は事前に定義
+    * ※これをしておかないと以後のWindow_Selectable側への追記が反映されない。
+    */
+    if (Window_ActorCommand.prototype.refreshCursor == Window_Selectable.prototype.refreshCursor) {
+        Window_ActorCommand.prototype.refreshCursor = function() {
+            Window_Selectable.prototype.refreshCursor.apply(this, arguments);
+        }
+    }
+
+    /**
+     * ●カーソルのリフレッシュ
+     */
+    const _Window_ActorCommand_refreshCursor = Window_ActorCommand.prototype.refreshCursor;
+    Window_ActorCommand.prototype.refreshCursor = function() {
+        _Window_ActorCommand_refreshCursor.apply(this, arguments);
+
+        const index = this._index;
+
+        // 選択項目が存在しない場合は終了
+        if (!this._list || !this._list[index]) {
+            return;
+        }
+
+        const actor = this.actor();
+        // 現在の行動情報を保持
+        const keepActions = actor._actions;
+        actor.clearActions();
+
+        // 防御
+        if (this.commandSymbol(index) == "guard") {
+            const action = new Game_Action(actor);
+            action.setGuard();
+            // アクターに防御をセット
+            actor.setAction(0, action);
+        }
+
+        // 行動予測のために行動順序再計算
+        BattleManager.reMakeActionOrders();
+        // 行動情報を元に戻す。
+        actor._actions = keepActions;
+    };
+}
 
 //-----------------------------------------------------------------------------
 // ＭＺ対応
