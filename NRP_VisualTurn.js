@@ -4,16 +4,16 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.16 The order of actions is displayed on the battle screen.
+ * @plugindesc v1.161 The order of actions is displayed on the battle screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
  * @help This plugin performs the same screen display process as CTB and CTTB.
  * Be sure to place this plugin below the plugins that control those turns.
  *
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * [Note]
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * You can specify individual images
  * by writing the following in the actor and enemy's note.
  * 
@@ -59,15 +59,19 @@
  * For more information, please see below.
  * http://newrpg.seesaa.net/article/472840225.html
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * [Terms]
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
  * The author is not responsible,
  * but will deal with defects to the extent possible.
  *
+ * @------------------------------------------------------------------
+ * @ [Plugin Parameters]
+ * @------------------------------------------------------------------
+ * 
  * @param <Window>
  *
  * @param dispNumber
@@ -285,16 +289,16 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.16 行動順序を戦闘画面へ表示します。
+ * @plugindesc v1.161 行動順序を戦闘画面へ表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
  * @help CTBやCTTBに共通した画面表示処理を行います。
  * このプラグインは必ずターン制御を行うプラグインよりも下に配置してください。
  *
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * ■メモ欄
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * アクター、敵キャラのメモ欄に以下を記述すれば、
  * 画像の個別指定が可能です。
  * 
@@ -337,13 +341,17 @@
  * その他、細かい仕様については、以下をご覧ください。
  * http://newrpg.seesaa.net/article/472840225.html
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * ■利用規約
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
  *
+ * @------------------------------------------------------------------
+ * @ プラグインパラメータ
+ * @------------------------------------------------------------------
+ * 
  * @param <Window>
  * @text ＜ウィンドウ関連＞
  * @desc 見出しです。
@@ -1407,6 +1415,7 @@ Window_BattleCtb.prototype.drawSymbolCommon = function(drawArgs) {
     const pw = drawArgs.pw;
     const ph = drawArgs.ph;
     const width = drawArgs.width;
+    const height = drawArgs.height;
 
     const bitmap = drawArgs.bitmap;
     const battler = drawArgs.battler;
@@ -1419,7 +1428,10 @@ Window_BattleCtb.prototype.drawSymbolCommon = function(drawArgs) {
     if (battler._selected) {
         // 白枠表示
         if (pselectedHighlightType == "square") {
-            this.drawSelected(x, dy + 2, width, ph + 4);
+            // シンボルを描画
+            this.contents.blt(bitmap, sx, sy, sw, sh, dx, dy, pw, ph);
+            // 白枠をかぶせる。（※幅は小さいほうに合わせる）
+            this.drawSelected(dx, dy, Math.min(pw, width), Math.min(ph, height));
 
         // 画像を白表示
         } else {
@@ -1473,6 +1485,8 @@ function makeDrawArgs(x, y, width, height, imageWidth, imageHeight) {
 
     // 描画用の引数配列
     const drawArgs = {};
+    drawArgs.x = x;
+    drawArgs.y = y;
     drawArgs.pw = pw;
     drawArgs.ph = ph;
     drawArgs.sw = sw;
@@ -1569,7 +1583,7 @@ Window_BattleCtb.prototype.drawBorderCtb = function(x, y, width, height, battler
  */
 Window_BattleCtb.prototype.drawSelected = function(x, y, width, height) {
     // 白の半透明
-    var color = "rgba(255, 255, 255, 0.5)";
+    const color = "rgba(255, 255, 255, 0.5)";
     this.contents.fillRect(x, y, width, height, color);
 }
 
@@ -1719,14 +1733,14 @@ Scene_Battle.prototype.startPartyCommandSelection = function() {
  */
 var _BattleManager_startInput = BattleManager.startInput;
 BattleManager.startInput = function() {
-    _BattleManager_startInput.apply(this);
-    
     // 行動順序表示
     // パーティコマンドとの重複処理になるけれど、その場合は無視されるので問題ない。
     if (getDispNumber() > 0) {
         NrpVisualTurn._ctbWindow.show();
         NrpVisualTurn._ctbWindow.open();
     }
+    
+    _BattleManager_startInput.apply(this);
 };
 
 /**
