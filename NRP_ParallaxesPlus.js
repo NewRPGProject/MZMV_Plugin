@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.001 Display parallaxes freely.
+ * @plugindesc v1.002 Display parallaxes freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488413806.html
  *
@@ -352,7 +352,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.001 自在に遠景（近景）を表示します。
+ * @plugindesc v1.002 自在に遠景（近景）を表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488413806.html
  *
@@ -1131,7 +1131,7 @@ Spriteset_Base.prototype.update = function() {
  */
 Spriteset_Base.prototype.updateParallaxPlus = function() {
     // 存在しない場合は処理しない。
-    if (this._parallaxPlus.length == 0) {
+    if (!this._parallaxPlus || this._parallaxPlus.length == 0) {
         return;
     }
 
