@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.37 Creates a combination skill.
+ * @plugindesc v1.371 Creates a combination skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/474570191.html
  * 
@@ -70,7 +70,7 @@
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
  * The author is not responsible,
- * but we will respond to defects as far as possible.
+ * but will deal with defects to the extent possible.
  * 
  * @param <For CTB>
  * @desc This item is designed for CTB.
@@ -164,7 +164,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.37 合体技を実現します。
+ * @plugindesc v1.371 合体技を実現します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/474570191.html
  *
@@ -1304,7 +1304,7 @@ Game_BattlerBase.prototype.canInput = function() {
 /**
  * ●パーティコマンド作成
  */
-var _Window_PartyCommand_makeCommandList = Window_PartyCommand.prototype.makeCommandList;
+const _Window_PartyCommand_makeCommandList = Window_PartyCommand.prototype.makeCommandList;
 Window_PartyCommand.prototype.makeCommandList = function() {
     // 元処理実行
     _Window_PartyCommand_makeCommandList.call(this);
@@ -1323,7 +1323,7 @@ Window_PartyCommand.prototype.makeCommandList = function() {
 /**
  * ●パーティコマンドに関数紐付け
  */
-var _Scene_Battle_createPartyCommandWindow = Scene_Battle.prototype.createPartyCommandWindow;
+const _Scene_Battle_createPartyCommandWindow = Scene_Battle.prototype.createPartyCommandWindow;
 Scene_Battle.prototype.createPartyCommandWindow = function() {
     // 元処理実行
     _Scene_Battle_createPartyCommandWindow.call(this);
@@ -1374,12 +1374,19 @@ Scene_Battle.prototype.needsInputWindowChange = function() {
 };
 
 /**
+ * 【独自】合体技用ウィンドウとして設定
+ */
+Window_SkillList.prototype.setCombinationMode = function(isCombination) {
+    this._isCombination = isCombination;
+};
+
+/**
  * ●スキル選択候補表示
  */
-var _Window_SkillList_makeItemList = Window_SkillList.prototype.makeItemList;
+const _Window_SkillList_makeItemList = Window_SkillList.prototype.makeItemList;
 Window_SkillList.prototype.makeItemList = function() {
-    // スキルタイプの指定がない場合
-    if (!this._stypeId && this._actor) {
+    // 合体技の場合かつスキルタイプの指定がない場合
+    if (this._isCombination && !this._stypeId && this._actor) {
         // スキルタイプの区別なく表示
         this._data = this._actor.skills();
         return;
@@ -1392,7 +1399,7 @@ Window_SkillList.prototype.makeItemList = function() {
 /**
  * ●アクター取得
  */
-var _BattleManager_actor = BattleManager.actor;
+const _BattleManager_actor = BattleManager.actor;
 BattleManager.actor = function() {
     // 合体技選択中
     if (this._selectPartyCombination) {
@@ -1405,7 +1412,7 @@ BattleManager.actor = function() {
 /**
  * ●スキル確定時
  */
-var _Scene_Battle_onSkillOk = Scene_Battle.prototype.onSkillOk;
+const _Scene_Battle_onSkillOk = Scene_Battle.prototype.onSkillOk;
 Scene_Battle.prototype.onSkillOk = function() {
     // 合体技選択時ならセット
     if (BattleManager._selectPartyCombination) {
@@ -1433,7 +1440,7 @@ Scene_Battle.prototype.onSkillOk = function() {
 /**
  * ●スキルキャンセル時
  */
-var _Scene_Battle_onSkillCancel = Scene_Battle.prototype.onSkillCancel;
+const _Scene_Battle_onSkillCancel = Scene_Battle.prototype.onSkillCancel;
 Scene_Battle.prototype.onSkillCancel = function() {
     // 元処理実行
     _Scene_Battle_onSkillCancel.call(this);
@@ -1449,7 +1456,7 @@ Scene_Battle.prototype.onSkillCancel = function() {
 /**
  * ●パーティコマンド選択開始
  */
-var _Scene_Battle_startPartyCommandSelection = Scene_Battle.prototype.startPartyCommandSelection;
+const _Scene_Battle_startPartyCommandSelection = Scene_Battle.prototype.startPartyCommandSelection;
 Scene_Battle.prototype.startPartyCommandSelection = function() {
     // 元処理内で選択位置が初期化されてしまうため保持しておく。
     var keepIndex = this._partyCommandWindow._index;
@@ -1594,6 +1601,7 @@ Scene_CombinationSkill.prototype.createItemWindow = function() {
     this._itemWindow.setHelpWindow(this._helpWindow);
     this._itemWindow.setHandler('ok',     this.onItemOk.bind(this));
     this._itemWindow.setHandler('cancel', this.popScene.bind(this));
+    this._itemWindow.setCombinationMode(true);
     this.addWindow(this._itemWindow);
 };
 
