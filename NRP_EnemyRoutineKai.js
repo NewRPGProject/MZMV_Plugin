@@ -3,19 +3,20 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.07 Improve the enemy's action routine.
+ * @plugindesc v1.08 Improve the enemy's action routine.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/473218336.html
  *
  * @help Improve the enemy's action routine as follows.
  * 
- * 1. Re-select actions not only at the start of the turn
- *    but also just before the action.
- * 2. Select the target with the least amount of HP & MP recovery.
- * 3. Do not use the MP drain skill on an opponent with 0 MP.
- * 4. Do not overlay already active states.
- * 5. Do not overlay already limited buffs or debuffs.
- * 6. Do not heal, cure, or revive if there is no valid target.
+ * - Re-select actions not only at the start of the turn
+ *   but also just before the action.
+ * - Select the target with the least amount of HP & MP recovery.
+ * - Do not use the MP drain skill on an opponent with 0 MP.
+ * - Do not overlay already active states.
+ * - Do not overlay already limited buffs or debuffs.
+ * - Do not heal, cure, or revive if there is no valid target.
+ * - If there is only one, the substitution skill is not used.
  * 
  * [Individual Settings]
  * You can also make individual settings
@@ -125,11 +126,17 @@
  * @default false
  * @desc If ON, the target's resistance is checked
  * and the invalid state is not used.
+ * 
+ * @param improveSubstitute
+ * @parent <Effect>
+ * @type boolean
+ * @default true
+ * @desc If ON, it will not use skills with substitute state with only one.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.07 敵行動ルーチンを改善します。
+ * @plugindesc v1.08 敵行動ルーチンを改善します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/473218336.html
  *
@@ -141,6 +148,7 @@
  * ・既にかかっているステートを重ねがけしない。
  * ・既に限界となっている能力変化を重ねがけしない。
  * ・有効な対象が存在しない場合、回復や治療、蘇生を行わない。
+ * ・一人しかいない場合、身代わりスキルを使用しない。
  * 
  * ■個別設定
  * 敵キャラのメモ欄に以下を記入すれば個別設定も可能です。
@@ -257,6 +265,13 @@
  * @type boolean
  * @default false
  * @desc ONならば対象の耐性を確認し、無効なステートは使用しません。
+ * 
+ * @param improveSubstitute
+ * @text 身代わりを改善
+ * @parent <Effect>
+ * @type boolean
+ * @default true
+ * @desc ONならば一人しかいない状態で身代わりステート付きのスキルを使用しません。
  */
 (function() {
 "use strict";
@@ -273,20 +288,21 @@ function toBoolean(val, def) {
     return val.toLowerCase() == "true";
 }
 
-var parameters = PluginManager.parameters("NRP_EnemyRoutineKai");
+const parameters = PluginManager.parameters("NRP_EnemyRoutineKai");
     
-var pResetAction = toBoolean(parameters["resetAction"], true);
-var pTestApply = toBoolean(parameters["testApply"], true);
+const pResetAction = toBoolean(parameters["resetAction"], true);
+const pTestApply = toBoolean(parameters["testApply"], true);
 
-var pControlRecover = toBoolean(parameters["controlRecover"], true);
-var pIfHpRecover = setDefault(parameters["ifHpRecover"], "b.hpRate() < 1.0");
-var pIfMpRecover = setDefault(parameters["ifMpRecover"], "b.mpRate() < 1.0");
-var pControlMpDrain = toBoolean(parameters["controlMpDrain"], true);
-var pControlForDead = toBoolean(parameters["controlForDead"], true);
+const pControlRecover = toBoolean(parameters["controlRecover"], true);
+const pIfHpRecover = setDefault(parameters["ifHpRecover"], "b.hpRate() < 1.0");
+const pIfMpRecover = setDefault(parameters["ifMpRecover"], "b.mpRate() < 1.0");
+const pControlMpDrain = toBoolean(parameters["controlMpDrain"], true);
+const pControlForDead = toBoolean(parameters["controlForDead"], true);
 
-var pControlActorEffect = toBoolean(parameters["controlActorEffect"], true);
-var pControlEnemyEffect = toBoolean(parameters["controlEnemyEffect"], true);
-var pWatchResist = toBoolean(parameters["watchResist"], true);
+const pControlActorEffect = toBoolean(parameters["controlActorEffect"], true);
+const pControlEnemyEffect = toBoolean(parameters["controlEnemyEffect"], true);
+const pWatchResist = toBoolean(parameters["watchResist"], true);
+const pImproveSubstitute = toBoolean(parameters["improveSubstitute"], true);
 
 /**
  * ●行動再決定を行うか？
@@ -795,6 +811,14 @@ Game_Action.prototype.testApplyEnemy = function(target) {
             return true;
         // 何らかの使用効果が得られるなら有効
         } else if (this.hasItemAnyValidEffects(target)) {
+            // ただし、身代わりスキルの場合
+            if (pImproveSubstitute && this.isForFriend() && this.isSubstituteSkill()) {
+                // 人数が一人だと無効
+                if (this.friendsUnit().aliveMembers().length == 1) {
+                    return false;
+                }
+            }
+            // それ以外は有効
             return true;
         }
     }
@@ -829,6 +853,31 @@ Game_Action.prototype.testItemEffect = function(target, effect) {
     // 元処理実行
     return _Game_Action_testItemEffect.apply(this, arguments);
 };
+
+/**
+ * 【独自】身代わりスキルかどうか？
+ */
+Game_Action.prototype.isSubstituteSkill = function() {
+    // 使用効果に身代わりステートがあるか確認
+    return this.item().effects.some(effect => isEffectSubstitute(effect));
+};
+
+/**
+ * ●使用効果が身代わりかどうか？
+ */
+function isEffectSubstitute(effect) {
+    // ステート付加である
+    if (effect.code == Game_Action.EFFECT_ADD_STATE) {
+        // さらにステート情報を確認
+        const dataState = $dataStates[effect.dataId];
+        // 特徴が特殊フラグかつ身代わりである。
+        if (dataState.traits.some(trait => trait.code == Game_BattlerBase.TRAIT_SPECIAL_FLAG
+                && trait.dataId == Game_BattlerBase.FLAG_ID_SUBSTITUTE)) {
+            return true;
+        }
+    }
+    return false;
+}
 
 /**
  * ●エネミーに対する戦闘行動の強制
