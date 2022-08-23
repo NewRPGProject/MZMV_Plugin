@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.14 Change the battle system to CTB.
+ * @plugindesc v1.15 Change the battle system to CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -153,6 +153,12 @@
  * @default true
  * @desc When the cursor is hovered over a guard command, the order display is calculated according to speed.
  * 
+ * @param showActionUser
+ * @parent <Basic>
+ * @type boolean
+ * @default true
+ * @desc When selecting an action, the current actor is displayed at the top.
+ * 
  * @param <Battle Start>
  *
  * @param showPartyCommand
@@ -229,7 +235,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.14 戦闘システムをＣＴＢへ変更します。
+ * @plugindesc v1.15 戦闘システムをＣＴＢへ変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -367,6 +373,13 @@
  * @type boolean
  * @default true
  * @desc 防御コマンドにカーソルを合わせた際、速度補正に応じて順序表示の計算を行います。
+ * 
+ * @param showActionUser
+ * @text 行動選択時に行動者を表示
+ * @parent <Basic>
+ * @type boolean
+ * @default true
+ * @desc 行動選択時、先頭に現在の行動者を表示します。
  *
  * @param <Battle Start>
  * @text ＜戦闘開始関連＞
@@ -477,6 +490,7 @@ const parameters = PluginManager.parameters("NRP_CountTimeBattle");
     
 const pNumber = toNumber(parameters["number"], 9);
 const pCalcGuardCommand = toBoolean(parameters["calcGuardCommand"], true);
+const pShowActionUser = toBoolean(parameters["showActionUser"], true);
 const pShowPartyCommand = toNumber(parameters["showPartyCommand"], 0);
 const pActorStartRandomWt = toNumber(parameters["actorStartRandomWt"], 0);
 const pEnemyStartRandomWt = toNumber(parameters["enemyStartRandomWt"], 20);
@@ -669,8 +683,11 @@ BattleManager.selectPreviousCommand = function() {
     } while (!this.actor().canInput());
 };
 
+// makeActionOrders時に現在の行動者を先頭に追加するか？
+let mAddActionUser = false;
+
 /**
- * 【独自】行動順序の作成
+ * 【上書】行動順序の作成
  */
 BattleManager.makeActionOrders = function() {
     // WTとバトラーの組のリスト
@@ -733,6 +750,12 @@ BattleManager.makeActionOrders = function() {
     });
 
     this._actionBattlers = battlers;
+
+    // 先頭に現在の行動者を追加
+    if (mAddActionUser && this.actor()) {
+        this._actionBattlers.unshift(this.actor());
+        this._actionBattlers.pop();
+    }
 };
 
 /**
@@ -747,9 +770,13 @@ BattleManager.reMakeActionOrders = function() {
     // 速度補正後のWTを加算する。
     subject.setWt(subject.wt + subject.getAddWt());
 
+    // 行動予測時に先頭に行動者を表示するかどうか？
+    if (subject.action(0) && pShowActionUser) {
+        mAddActionUser = true;
+    }
     // 行動順序再計算
     BattleManager.makeActionOrders();
-
+    mAddActionUser = false;
     // ＷＴを元に戻す。
     subject.setWt(tmpWt);
 }
@@ -1344,6 +1371,11 @@ if (pCalcGuardCommand) {
 
         // 選択項目が存在しない場合は終了
         if (!this._list || !this._list[index]) {
+            return;
+            
+        // 入力中でない場合は終了
+        // ※行動確定後に再度更新が走らないようにするための措置
+        } else if (!BattleManager.isInputting()) {
             return;
         }
 
