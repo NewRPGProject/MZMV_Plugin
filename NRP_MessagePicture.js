@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Display a picture when showing text.
+ * @plugindesc v1.01 Display a picture when showing text.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -315,7 +315,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 文章の表示時に立ち絵を表示する。
+ * @plugindesc v1.01 文章の表示時に立ち絵を表示する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -772,9 +772,9 @@ function showPicture(pictureData) {
         // 画像を更新
         pictureSprite.updateBitmap();
 
-        // 既に読込済の画像ならば位置更新
+        // 既に読込済の画像ならば描画更新
         if (pictureSprite.bitmap.isReady()) {
-            pictureSprite.updatePosition();
+            pictureSprite.update();
             
         // 画像が読み込めてない場合
         } else {
@@ -1067,7 +1067,7 @@ Window_Message.prototype.checkToNotClose = function() {
     // ここでisClosingであっても、次のメッセージがあれば再びopenになる。
     _Window_Message_checkToNotClose.apply(this, arguments);
 
-    // この時点でもisClosingでならば、本当に閉じる。
+    // この時点でもisClosingならば、本当に閉じる。
     // メッセージ終了と判断して、ピクチャを削除する。
     if (this.isClosing()) {
         erasePicture();
