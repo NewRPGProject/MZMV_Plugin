@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.011 Allow items to be equipped.
+ * @plugindesc v1.02 Allow items to be equipped.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489576403.html
  *
@@ -30,15 +30,11 @@
  * -------------------------------------------------------------------
  * [Use of multiple slots]
  * -------------------------------------------------------------------
- * Multiple slots can be specified for EquipItemSlot.
+ * Combined with the plugin (NRP_EquipSlot.js) that freely changes
+ * equipment slots, multiple slots can be designated for items.
  * 
- * For example, if you want to be able to equip up to three items,
- * you can add Equipment Types in the database and specify "6,7,8".
- * 
- * Another option is to use a plugin
- * that allows variable equipment slots.
- * I can't vouch for this, as each plugin behaves differently,
- * but some seem to work well.
+ * Specify multiple slots (equipment type) specified in "EquipItemSlot"
+ * according to the instructions on the NRP_EquipSlot.js side.
  * 
  * -------------------------------------------------------------------
  * [Original Command]
@@ -75,7 +71,6 @@
  * @type string
  * @default 6
  * @desc The slot (equipment type) to equip the item.
- * Multiple slots are allowed. (e.g. 6,7,8)
  * 
  * @param AutoEquipMode
  * @type boolean
@@ -114,7 +109,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.011 アイテムを装備できるようにする。
+ * @plugindesc v1.02 アイテムを装備できるようにする。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489576403.html
  *
@@ -140,15 +135,11 @@
  * -------------------------------------------------------------------
  * ■複数スロットの使用
  * -------------------------------------------------------------------
- * 『アイテム装備スロット』には複数のスロットを指定することもできます。
+ * 装備スロットを自由に変更するプラグイン（NRP_EquipSlot.js）と
+ * 組み合わせることで、複数のスロットをアイテム用に指定できます。
  * 
- * 例えば、三つまでアイテムを装備できるようにしたいという場合は、
- * データベースの装備タイプを追加した上で、
- * 『6,7,8』というように指定すればＯＫです。
- * 
- * 他にも、装備スロットを可変にするプラグインを使う手もあります。
- * プラグイン毎に挙動が異なるため、確約はできませんが、
- * うまく動作するものもある模様です。
+ * 『アイテム装備スロット』で指定したスロット（装備タイプ）を
+ * NRP_EquipSlot.js側の説明に従って、複数指定してください。
  * 
  * -------------------------------------------------------------------
  * ■独自コマンド
@@ -183,7 +174,6 @@
  * @type string
  * @default 6
  * @desc アイテムを装備するスロット（装備タイプ）です。
- * 複数可。（例：6,7,8）
  * 
  * @param AutoEquipMode
  * @text 装備を自動的に許可
@@ -488,19 +478,25 @@ Game_Actor.prototype.changeEquip = function(slotId, item) {
 };
 
 /**
- * ●装備スロット取得
+ * 配列指定されている場合は、その順番のスロットをアイテム用に上書き。
+ * ※基本的には非推奨の方法
  */
-const _Game_Actor_equipSlots = Game_Actor.prototype.equipSlots;
-Game_Actor.prototype.equipSlots = function() {
-    const slots = _Game_Actor_equipSlots.apply(this, arguments);
-    for (let i = 0; i < slots.length; i++) {
-        // 該当のスロットは全て装備アイテムに
-        if (DEFAULT_SLOTS.includes(i)) {
-            slots[i] = DEFAULT_EQUIP_TYPE;
+if (DEFAULT_SLOTS.length >= 2) {
+    /**
+     * ●装備スロット取得
+     */
+    const _Game_Actor_equipSlots = Game_Actor.prototype.equipSlots;
+    Game_Actor.prototype.equipSlots = function() {
+        const slots = _Game_Actor_equipSlots.apply(this, arguments);
+        for (let i = 0; i < slots.length; i++) {
+            // 該当のスロットは全て装備アイテムに
+            if (DEFAULT_SLOTS.includes(i)) {
+                slots[i] = DEFAULT_EQUIP_TYPE;
+            }
         }
-    }
-    return slots;
-};
+        return slots;
+    };
+}
 
 // 一時的に装備アイテムの変更を禁止
 let mEquipItemChangeNG = false;

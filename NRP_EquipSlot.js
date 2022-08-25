@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Change the equipment slots at will.
+ * @plugindesc v1.03 Change the equipment slots at will.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489626316.html
  *
@@ -124,7 +124,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 装備スロットを自由に変更。
+ * @plugindesc v1.03 装備スロットを自由に変更。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489626316.html
  *
@@ -160,6 +160,11 @@
  * これで装飾品のスロットが２つ追加されます。
  * ※スロット数はマイナスも可能です。
  * 　ただし、プラスとマイナスを組み合わせた場合の挙動は保証しません。
+ * 
+ * 複数の装備タイプを追加したい場合は以下のように記述できます。
+ * 
+ * <AddEquipSlot:5, 2>
+ * <AddEquipSlot2:6, 2>
  * 
  * -------------------------------------------------------------------
  * ■別ページに表示
@@ -324,7 +329,7 @@ if (pAdjustInitEquip) {
                 const initSet = initEquipMap.set;
 
                 // 装備タイプが一致する場合
-                // ※ただし、設定済の場合は除顔
+                // ※ただし、設定済の場合は除外
                 if (!initSet && initEtype == slotEType) {
                     // 初期装備を設定
                     this._equips[i].setEquip(slotEType === 1, initEquipId);
@@ -373,28 +378,21 @@ Game_Actor.prototype.equipSlots = function() {
     const objects = this.traitObjects().concat(this.skills());
     for (const object of objects) {
         const addEquipSlot = object.meta.AddEquipSlot;
-        // タグが存在する場合
-        if (addEquipSlot) {
-            // カンマ区切りを分解
-            const addEquipSlotArray = addEquipSlot.split(",");
-            const etype = eval(addEquipSlotArray[0]);
-            const count = eval(addEquipSlotArray[1]) || 1;
-            // 値が＋の場合はスロット追加
-            if (count > 0) {
-                for (let i = 0; i < count; i++) {
-                    slots.push(etype);
-                }
-            // 値が－の場合はスロット除去
-            } else if (count < 0) {
-                for (let i = 0; i > count; i--) {
-                    const deleteIndex = slots.indexOf(etype);
-                    if (deleteIndex >= 0) {
-                        slots.splice(deleteIndex, 1);
-                    }
-                }
+        changeSlots(slots, addEquipSlot);
+
+        // <AddEquipSlot2>, <AddEquipSlot3>というように数値が尽きるまで処理
+        // ※最大１００までループ
+        for (let i = 2; i <= 100; i++) {
+            const addEquipSlotNumber = object.meta["AddEquipSlot" + i];
+            // 該当のタグがなければ終了
+            if (!addEquipSlotNumber) {
+                break;
             }
+            // 該当のタグがあれば処理
+            changeSlots(slots, addEquipSlotNumber);
         }
     }
+
     // スロットを数値順でソート
     slots.sort((a, b) => a - b);
 
@@ -407,6 +405,35 @@ Game_Actor.prototype.equipSlots = function() {
 
     return slots;
 };
+
+/**
+ * ●スロット情報を変更
+ */
+function changeSlots(slots, addEquipSlot) {
+    // タグが存在しない場合
+    if (!addEquipSlot) {
+        return;
+    }
+
+    // カンマ区切りを分解
+    const addEquipSlotArray = addEquipSlot.split(",");
+    const etype = eval(addEquipSlotArray[0]);
+    const count = eval(addEquipSlotArray[1]) || 1;
+    // 値が＋の場合はスロット追加
+    if (count > 0) {
+        for (let i = 0; i < count; i++) {
+            slots.push(etype);
+        }
+    // 値が－の場合はスロット除去
+    } else if (count < 0) {
+        for (let i = 0; i > count; i--) {
+            const deleteIndex = slots.indexOf(etype);
+            if (deleteIndex >= 0) {
+                slots.splice(deleteIndex, 1);
+            }
+        }
+    }
+}
 
 //-----------------------------------------------------------------------------
 // ページ切替機能（Scene_Equip & Window_EquipSlot）
