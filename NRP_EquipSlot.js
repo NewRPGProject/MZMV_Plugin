@@ -44,6 +44,12 @@
  *   However, the behavior of a combination
  *   of plus and minus is not guaranteed.
  * 
+ * If you want to add multiple Equipment Types, you can write
+ * 
+ * <AddEquipSlot:5, 2>
+ * <AddEquipSlot2:6, 2>
+ * <AddEquipSlot3:7>
+ * 
  * -------------------------------------------------------------------
  * [Show on another page]
  * -------------------------------------------------------------------
@@ -165,6 +171,7 @@
  * 
  * <AddEquipSlot:5, 2>
  * <AddEquipSlot2:6, 2>
+ * <AddEquipSlot3:7>
  * 
  * -------------------------------------------------------------------
  * ■別ページに表示
