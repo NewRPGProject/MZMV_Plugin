@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.161 The order of actions is displayed on the battle screen.
+ * @plugindesc v1.162 The order of actions is displayed on the battle screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -289,7 +289,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.161 行動順序を戦闘画面へ表示します。
+ * @plugindesc v1.162 行動順序を戦闘画面へ表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -671,6 +671,10 @@ BattleManager.makeActionOrders = function() {
 
     // 表示処理を呼び出し。
     NrpVisualTurn.visualTurnList(this._actionBattlers);
+    if (this.isInputting() && NrpVisualTurn._ctbWindow.isClosed()) {
+        NrpVisualTurn._ctbWindow.show();
+        NrpVisualTurn._ctbWindow.open();
+    }
 }
 
 function NrpVisualTurn() {
