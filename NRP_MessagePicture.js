@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Display a picture when showing text.
+ * @plugindesc v1.02 Display a picture when showing text.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -79,14 +79,6 @@
  * Also, as for \MPD[], it is valid within the text.
  * You can use it when you want
  * to change the expression many times in a sentence.
- * 
- * -------------------------------------------------------------------
- * [Integration with PicturePriorityCustomize.js]
- * -------------------------------------------------------------------
- * When used with PicturePriorityCustomize.js (Triacontane),
- * it is possible to display the picture above the message window.
- * Adjust PictureId according
- * to the PicturePriorityCustomize.js settings.
  * 
  * -------------------------------------------------------------------
  * [Terms]
@@ -311,11 +303,35 @@
  * @option 2:Multiply @value 2
  * @option 3:Screen @value 3
  * @desc This is a blend mode of drawing a picture.
+ * 
+ * @param ShowAboveWindow
+ * @parent <PictureSetting>
+ * @type boolean
+ * @default false
+ * @desc Displays the picture above the message window.
+ * 
+ * @param ShowBelowMessages
+ * @parent <PictureSetting>
+ * @type boolean
+ * @default false
+ * @desc If "ShowAboveWindow" is on, the picture is displayed below the message.
+ * 
+ * @param AdjustMessageX
+ * @parent ShowBelowMessages
+ * @type number
+ * @default 16
+ * @desc Adjust the X coordinate of messages when "ShowBelowMessages" is on.
+ * 
+ * @param AdjustMessageY
+ * @parent ShowBelowMessages
+ * @type number
+ * @default 20
+ * @desc Adjust the Y coordinate of messages when "ShowBelowMessages" is on.
  */
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 文章の表示時に立ち絵を表示する。
+ * @plugindesc v1.02 文章の表示時に立ち絵を表示する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -395,14 +411,6 @@
  * 
  * また、\MPD[]に関しては本文内でも有効です。
  * 文章内で何度も表情を変えたい場合などに使えます。
- * 
- * -------------------------------------------------------------------
- * ■PicturePriorityCustomize.jsとの連携
- * -------------------------------------------------------------------
- * PicturePriorityCustomize.js（トリアコンタン様）と併用すれば、
- * ピクチャを会話ウィンドウより上に表示することも可能です。
- * PicturePriorityCustomize.jsの設定に合わせて、
- * ピクチャ番号を調整してください。
  * 
  * -------------------------------------------------------------------
  * ■利用規約
@@ -487,6 +495,34 @@
  * @option 3:スクリーン @value 3
  * @default 0
  * @desc ピクチャを描画する合成方法です。
+ * 
+ * @param ShowAboveWindow
+ * @parent <PictureSetting>
+ * @text ウィンドウより上に表示
+ * @type boolean
+ * @default false
+ * @desc ピクチャをメッセージウィンドウより上に表示します。
+ * 
+ * @param ShowBelowMessages
+ * @parent <PictureSetting>
+ * @text 文章より下に表示
+ * @type boolean
+ * @default false
+ * @desc 『ウィンドウより上に表示』がオンの場合に、ピクチャを文章より下に表示します。
+ * 
+ * @param AdjustMessageX
+ * @parent ShowBelowMessages
+ * @text 文章のＸ座標調整
+ * @type number
+ * @default 16
+ * @desc 『文章より下に表示』がオンの場合に、文章のＸ座標を調整します。
+ * 
+ * @param AdjustMessageY
+ * @parent ShowBelowMessages
+ * @text 文章のＹ座標調整
+ * @type number
+ * @default 20
+ * @desc 『文章より下に表示』がオンの場合に、文章のＹ座標を調整します。
  * 
  * @param <Control>
  * @text ＜制御＞
@@ -690,7 +726,7 @@ function parseStruct2(arg) {
 const PLUGIN_NAME = "NRP_MessagePicture";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pPictureList = parseStruct2(parameters["PictureList"]);
-const pPictureId = toNumber(parameters["PictureId"]);
+let pPictureId = toNumber(parameters["PictureId"]);
 const pOrigin = parameters["Origin"];
 const pX = parameters["X"];
 const pY = parameters["Y"];
@@ -698,9 +734,22 @@ const pScaleX = parameters["ScaleX"];
 const pScaleY = parameters["ScaleY"];
 const pOpacity = parameters["Opacity"];
 const pBlendMode = parameters["BlendMode"];
+const pShowAboveWindow = toBoolean(parameters["ShowAboveWindow"]);
+const pShowBelowMessages = toBoolean(parameters["ShowBelowMessages"]);
+const pAdjustMessageX = toNumber(parameters["AdjustMessageX"], 0);
+const pAdjustMessageY = toNumber(parameters["AdjustMessageY"], 0);
 const pControlCharacterPicture = parameters["ControlCharacterPicture"].toUpperCase(); // 大文字化
 const pControlCharacterDifference = parameters["ControlCharacterDifference"].toUpperCase(); // 大文字化
 const pDisableSwitch = toNumber(parameters["DisableSwitch"]);
+
+// ----------------------------------------------------------------------------
+// ピクチャをウィンドウより上に表示する場合は別コンテナとなるので、
+// 番号も適当に別のものを振る。
+// ----------------------------------------------------------------------------
+
+if (pShowAboveWindow) {
+    pPictureId = 9999;
+}
 
 // ----------------------------------------------------------------------------
 // Game_Interpreter
@@ -768,7 +817,7 @@ function showPicture(pictureData) {
     if (needsRefresh(mPictureData, pictureData)) {
         // Sprite_Pictureを取得
         const spriteset = getSpriteset();
-        const pictureSprite = spriteset._pictureContainer.children.find(p => p._pictureId == mPictureId);
+        const pictureSprite = getPictureSprite(spriteset, mPictureId);
         // 画像を更新
         pictureSprite.updateBitmap();
 
@@ -778,10 +827,22 @@ function showPicture(pictureData) {
             
         // 画像が読み込めてない場合
         } else {
-            // 前の画像が残らないように一瞬だけ非表示
-            pictureSprite.visible = false;
+            // 待機モードにする
+            pictureSprite._waitMessagePicture = true;
         }
     }
+}
+
+/**
+ * ●ピクチャスプライトを取得
+ */
+function getPictureSprite(spriteset, pictureId) {
+    // メッセージピクチャ用のコンテナがある場合は優先
+    if (spriteset._messagePictureContainer) {
+        return spriteset._messagePictureContainer.children.find(p => p._pictureId == pictureId);
+    }
+    // それ以外は通常のコンテナから取得
+    return spriteset._pictureContainer.children.find(p => p._pictureId == pictureId);
 }
 
 /**
@@ -994,16 +1055,22 @@ function getNewValue(oldValue, newValue) {
 }
 
 // ----------------------------------------------------------------------------
-// Game_Screen
+// Sprite_Picture
 // ----------------------------------------------------------------------------
 
-/**
- * ●ピクチャの最大値
- */
-const _Game_Screen_maxPictures = Game_Screen.prototype.maxPictures;
-Game_Screen.prototype.maxPictures = function() {
-    // 101以上のピクチャを使う場合は領域を増やしておく。
-    return Math.max(pPictureId, _Game_Screen_maxPictures.apply(this, arguments));
+const _Sprite_Picture_updateBitmap = Sprite_Picture.prototype.updateBitmap;
+Sprite_Picture.prototype.updateBitmap = function() {
+    // 画像が読み込めるまで描画停止
+    if (this._waitMessagePicture) {
+        if (this.bitmap.isReady()) {
+            this._waitMessagePicture = false;
+        } else {
+            this.visible = false;
+            return;
+        }
+    }
+
+    _Sprite_Picture_updateBitmap.apply(this, arguments);
 };
 
 // ----------------------------------------------------------------------------
@@ -1064,14 +1131,17 @@ function obtainEscapeParamEx(textState) {
  */
 const _Window_Message_checkToNotClose = Window_Message.prototype.checkToNotClose;
 Window_Message.prototype.checkToNotClose = function() {
-    // ここでisClosingであっても、次のメッセージがあれば再びopenになる。
-    _Window_Message_checkToNotClose.apply(this, arguments);
-
-    // この時点でもisClosingならば、本当に閉じる。
-    // メッセージ終了と判断して、ピクチャを削除する。
-    if (this.isClosing()) {
-        erasePicture();
+    // isOpenからisClosingに転じたタイミングで処理
+    if (this.isOpen()) {
+        _Window_Message_checkToNotClose.apply(this, arguments);
+        // 表示するメッセージがないなら、メッセージ終了と判断してピクチャを削除
+        if (this.isClosing() && !$gameMessage.hasText()) {
+            erasePicture();
+        }
+        return;
     }
+
+    _Window_Message_checkToNotClose.apply(this, arguments);
 };
 
 // ----------------------------------------------------------------------------
@@ -1091,6 +1161,101 @@ Window_NameBox.prototype.windowWidth = function() {
     }
     return _Window_NameBox_windowWidth.apply(this, arguments);
 };
+
+// ----------------------------------------------------------------------------
+// Game_Screen
+// ----------------------------------------------------------------------------
+
+/**
+ * ●ウィンドウより上に表示がオンの場合は、
+ * 　独立したコンテナを使うため拡張しない。
+ */
+if (!pShowAboveWindow) {
+    /**
+     * ●ピクチャの最大値
+     */
+    const _Game_Screen_maxPictures = Game_Screen.prototype.maxPictures;
+    Game_Screen.prototype.maxPictures = function() {
+        // 101以上のピクチャを使う場合は領域を増やしておく。
+        return Math.max(pPictureId, _Game_Screen_maxPictures.apply(this, arguments));
+    };
+}
+
+// ----------------------------------------------------------------------------
+// ピクチャをウィンドウより上に表示
+// ----------------------------------------------------------------------------
+
+if (pShowAboveWindow) {
+    const _Scene_Base_createWindowLayer = Scene_Base.prototype.createWindowLayer;
+    Scene_Base.prototype.createWindowLayer = function() {
+        _Scene_Base_createWindowLayer.apply(this, arguments);
+
+        // シーン直下にメッセージ用コンテナを追加
+        if (this._spriteset) {
+            this.addChild(this._spriteset._messagePictureContainer);
+        }
+    };
+
+    const _Spriteset_Base_createPictures = Spriteset_Base.prototype.createPictures;
+    Spriteset_Base.prototype.createPictures = function() {
+        _Spriteset_Base_createPictures.apply(this, arguments);
+
+        const rect = this.pictureContainerRect();
+        this._messagePictureContainer = new Sprite();
+        this._messagePictureContainer.setFrame(rect.x, rect.y, rect.width, rect.height);
+        this._messagePictureContainer.addChild(new Sprite_Picture(pPictureId));
+    };
+}
+
+// ----------------------------------------------------------------------------
+// メッセージをピクチャより下に表示
+// ----------------------------------------------------------------------------
+
+if (pShowBelowMessages) {
+    /**
+     * ●ウィンドウ生成
+     */
+    const _Scene_Message_createMessageWindow = Scene_Message.prototype.createMessageWindow;
+    Scene_Message.prototype.createMessageWindow = function() {
+        _Scene_Message_createMessageWindow.apply(this, arguments);
+
+        // メッセージ用のスプライトをシーン直下に追加
+        this.addChild(this._messageWindow._contentsSprite);
+    };
+
+    /**
+     * ●配置更新
+     */
+    const _Window_Message_updatePlacement = Window_Message.prototype.updatePlacement;
+    Window_Message.prototype.updatePlacement = function() {
+        _Window_Message_updatePlacement.apply(this, arguments);
+
+        // メッセージ用スプライトも移動
+        this._contentsSprite.x = this.x + pAdjustMessageX;
+        this._contentsSprite.y = this.y + pAdjustMessageY;
+    };
+
+    /*
+    * Window_Message.prototype.closeが未定義の場合は事前に定義
+    * ※これをしておかないと以後のWindow_Base側への追記が反映されない。
+    */
+    if (Window_Message.prototype.close == Window_Base.prototype.close) {
+        Window_Message.prototype.close = function() {
+            Window_Base.prototype.close.apply(this, arguments);
+        }
+    }
+
+    /**
+     * ●ウィンドウを閉じる。
+     */
+    const _Window_Message_close = Window_Message.prototype.close;
+    Window_Message.prototype.close = function() {
+        _Window_Message_close.apply(this, arguments);
+
+        // メッセージ用スプライトもクリア。
+        this.contents.clear();
+    };
+}
 
 // ----------------------------------------------------------------------------
 // 共通関数
