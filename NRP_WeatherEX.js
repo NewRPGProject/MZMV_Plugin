@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.002 Extend the weather function.
+ * @plugindesc v1.01 Extend the weather function.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481701865.html
  *
@@ -11,12 +11,16 @@
  * You can specify powers that would normally be impossible,
  * or create your original weather.
  * 
- * ■Features
+ * -------------------------------------------------------------------
+ * [Features]
+ * -------------------------------------------------------------------
  * - Change weather power, direction, speed, color, etc. freely.
  * - Causes the specified image to fall.
  * - Enable weather even in battle.
  * 
- * ■Usage
+ * -------------------------------------------------------------------
+ * [Usage]
+ * -------------------------------------------------------------------
  * You can adjust the behavior of the existing weather
  * by adjusting the plugin parameters.
  * 
@@ -28,7 +32,9 @@
  * by making detailed settings in the "TemplateList".
  * The created weather can be called up with plugin commands.
  * 
- * ■Plugin Commando (MZ)
+ * -------------------------------------------------------------------
+ * [Plugin Commando (MZ)]
+ * -------------------------------------------------------------------
  * > ChangeWeather
  * Change the weather.
  * The settings can be recalled by specifying the "TemplateId".
@@ -45,7 +51,9 @@
  * If you want to exit, just specify the type as "none".
  * You can also use the regular event command.
  * 
- * ■Plugin Commando (MV)
+ * -------------------------------------------------------------------
+ * [Plugin Commando (MV)]
+ * -------------------------------------------------------------------
  * > NRP.WeatherEX.Id [TemplateId]
  * The process is the same as the MZ version.
  * ※It is not case sensitive. Do not include > or [].
@@ -71,12 +79,18 @@
  * NRP.WeatherEX.Wait true
  * NRP.WeatherEX.Type rain
  * 
+ * -------------------------------------------------------------------
  * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
  * The author is not responsible,
  * but will deal with defects to the extent possible.
+ * 
+ * @------------------------------------------------------------------
+ * @ Plugin Command
+ * @------------------------------------------------------------------
  * 
  * @command ChangeWeather
  * @desc Create and run your original weather.
@@ -111,7 +125,9 @@
  * @arg Option
  * @type struct<Option>
  * 
- * 
+ * @------------------------------------------------------------------
+ * @ Plugin Parameters
+ * @------------------------------------------------------------------
  * 
  * @param WeatherOnBattle
  * @desc The weather is also displayed during battle.
@@ -135,13 +151,20 @@
  * @type number
  * @default 54
  * 
+ * @param Z
+ * @desc Priority. 0:Lower tile, 1:Lower character, 3:Normal character,
+ * 4:Upper tile, 5:Upper character, 7:Balloon, 8:Animation
+ * @type number @min -99999 @max 99999 @decimals 2
+ * 
  * @param TemplateList
  * @type struct<OriginalWeather>[]
  * @default ["{\"BaseSetting\":\"\",\"TemplateId\":\"colorful\",\"Type\":\"snow\",\"Power\":\"10\",\"Duration\":\"1\",\"Wait\":\"false\",\"DimmerLevel\":\"0\",\"Image\":\"\",\"NoImageSetting\":\"\",\"Color\":\"[Math.randomInt(255), Math.randomInt(255), Math.randomInt(255)]\",\"IndividualBitmap\":\"true\",\"ParticleWidth\":\"30\",\"ParticleHeight\":\"\",\"SpeedSetting\":\"\",\"SpeedX\":\"\",\"SpeedY\":\"\",\"PositionSetting\":\"\",\"StartWidth\":\"Graphics.width + 100\",\"StartHeight\":\"Graphics.height + 200\",\"AdjustStartX\":\"-100\",\"AdjustStartY\":\"-200\",\"DisplaySetting\":\"\",\"BlendColor\":\"\",\"BlendMode\":\"1\",\"Scale\":\"1 + Math.random()\",\"Angle\":\"\",\"OpacitySetting\":\"\",\"StartOpacityBase\":\"160\",\"StartOpacityRandom\":\"60\",\"ReduceOpacity\":\"3\",\"EndOpacity\":\"40\"}","{\"BaseSetting\":\"\",\"TemplateId\":\"sandstorm\",\"Type\":\"storm\",\"Power\":\"20\",\"Duration\":\"1\",\"Wait\":\"false\",\"DimmerLevel\":\"\",\"Image\":\"\",\"NoImageSetting\":\"\",\"Color\":\"#A05050\",\"IndividualBitmap\":\"false\",\"ParticleWidth\":\"2\",\"ParticleHeight\":\"40\",\"SpeedSetting\":\"\",\"SpeedX\":\"-10.0\",\"SpeedY\":\"1.0\",\"PositionSetting\":\"\",\"StartWidth\":\"Graphics.width + 300\",\"StartHeight\":\"Graphics.height + 200\",\"AdjustStartX\":\"-100\",\"AdjustStartY\":\"-200\",\"DisplaySetting\":\"\",\"BlendColor\":\"\",\"BlendMode\":\"1\",\"Scale\":\"1 + Math.random()\",\"Angle\":\"85\",\"OpacitySetting\":\"\",\"StartOpacityBase\":\"160\",\"StartOpacityRandom\":\"60\",\"ReduceOpacity\":\"\",\"EndOpacity\":\"40\"}","{\"BaseSetting\":\"\",\"TemplateId\":\"earthlight\",\"Type\":\"snow\",\"Power\":\"5\",\"Duration\":\"1\",\"Wait\":\"false\",\"DimmerLevel\":\"0\",\"Image\":\"\",\"NoImageSetting\":\"\",\"Color\":\"\",\"IndividualBitmap\":\"\",\"ParticleWidth\":\"10\",\"ParticleHeight\":\"\",\"SpeedSetting\":\"\",\"SpeedX\":\"0.0\",\"SpeedY\":\"-5.0\",\"PositionSetting\":\"\",\"StartWidth\":\"Graphics.width + 100\",\"StartHeight\":\"Graphics.height + 200\",\"AdjustStartX\":\"-100\",\"AdjustStartY\":\"-100\",\"DisplaySetting\":\"\",\"BlendColor\":\"\",\"BlendMode\":\"1\",\"Scale\":\"1 + Math.random()\",\"Angle\":\"\",\"OpacitySetting\":\"\",\"StartOpacityBase\":\"160\",\"StartOpacityRandom\":\"60\",\"ReduceOpacity\":\"\",\"EndOpacity\":\"40\"}"]
  * @desc This is a list of defined weather templates.
  * You can also add new templates.。
  */
-
+//-------------------------------------------------------------
+// OriginalWeather
+//-------------------------------------------------------------
 /*~struct~OriginalWeather:
  * @param BaseSetting
  * 
@@ -313,7 +336,9 @@
  * @type number @min 1 @max 255
  * @default 40
  */
-
+//-------------------------------------------------------------
+// Option
+//-------------------------------------------------------------
 /*~struct~Option:
  * @param BaseSetting
  * 
@@ -445,19 +470,23 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.002 天候機能を拡張します。
+ * @plugindesc v1.01 天候機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481701865.html
  *
  * @help 天候機能を拡張します。
  * 通常は不可能な強さを指定したり、オリジナルの天候を作ったりできます。
  * 
+ * -------------------------------------------------------------------
  * ■特徴
+ * -------------------------------------------------------------------
  * ・天候の強さ、向き、速度、色などを自由に変更
  * ・指定した画像を降らせる
  * ・戦闘時も天候を有効に
  * 
+ * -------------------------------------------------------------------
  * ■使用方法
+ * -------------------------------------------------------------------
  * プラグインパラメータを調整すれば、
  * 既存の天候の挙動を調整できます。
  * 
@@ -469,7 +498,9 @@
  * オリジナルの天候を作成可能です。
  * 作成した天候はプラグインコマンドで呼び出します。
  * 
+ * -------------------------------------------------------------------
  * ■プラグインコマンド（ＭＺ）
+ * -------------------------------------------------------------------
  * 『天候の設定』
  * 天候を変更します。
  * テンプレートＩＤを指定すれば、設定を呼び出すことが可能です。
@@ -486,7 +517,9 @@
  * なお、終了する場合はタイプを『なし』に指定すればＯＫです。
  * 普通のイベントコマンドでも問題ありません。
  * 
+ * -------------------------------------------------------------------
  * ■プラグインコマンド（ＭＶ）
+ * -------------------------------------------------------------------
  * > NRP.WeatherEX.Id [テンプレートＩＤ]
  * 処理内容はＭＺ版と同じです。
  * ※大文字小文字は不問。>や[]は含めないでください。
@@ -512,10 +545,16 @@
  * NRP.WeatherEX.Wait true
  * NRP.WeatherEX.Type rain
  * 
+ * -------------------------------------------------------------------
  * ■利用規約
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
+ * 
+ * @------------------------------------------------------------------
+ * @ プラグインコマンド
+ * @------------------------------------------------------------------
  * 
  * @command ChangeWeather
  * @text 天候の設定
@@ -559,7 +598,9 @@
  * @text オプション
  * @type struct<Option>
  * 
- * 
+ * @------------------------------------------------------------------
+ * @ プラグインパラメータ
+ * @------------------------------------------------------------------
  * 
  * @param WeatherOnBattle
  * @text 戦闘中も天候を表示
@@ -589,6 +630,12 @@
  * @type number
  * @default 54
  * 
+ * @param Z
+ * @text Ｚ座標
+ * @desc 表示優先度。0:下層, 1:キャラ下, 3:キャラ, 4:上層
+ * 5:キャラ上, 6:飛行船影, 7:フキダシ, 8:アニメ, 9:目的地
+ * @type number @min -99999 @max 99999 @decimals 2
+ * 
  * @param TemplateList
  * @text テンプレート一覧
  * @type struct<OriginalWeather>[]
@@ -596,7 +643,9 @@
  * @desc 定義された天候テンプレートの一覧です。
  * 新しいテンプレートの追加も可能です。
  */
-
+//-------------------------------------------------------------
+// OriginalWeather
+//-------------------------------------------------------------
 /*~struct~OriginalWeather:ja
  * @param BaseSetting
  * @text 基本設定
@@ -807,7 +856,9 @@
  * @type number @min 1 @max 255
  * @default 40
  */
-
+//-------------------------------------------------------------
+// Option
+//-------------------------------------------------------------
 /*~struct~Option:ja
  * @param BaseSetting
  * @text 基本設定
@@ -1039,6 +1090,7 @@ const pWeatherOnBattle = toBoolean(parameters["WeatherOnBattle"], false);
 const pMaxSpritesByPower = toNumber(parameters["MaxSpritesByPower"], 10);
 const pDimmerLevel = toNumber(parameters["DimmerLevel"], 6);
 const pDimmerLimit = toNumber(parameters["DimmerLimit"]);
+const pZ = toNumber(parameters["Z"]);
 const pTemplateList = parseStruct2(parameters["TemplateList"]);
 
 //----------------------------------------
@@ -1129,8 +1181,8 @@ function readArgs(params, args) {
         params.image = setArg(option.Image, params.image);
         params.color = setArg(option.Color, params.color);
         params.individualBitmap = setArg(toBoolean(option.IndividualBitmap), params.individualBitmap);
-        params.particleWidth = setArg(option.Width, params.particleWidth);
-        params.particleHeight = setArg(option.Height, params.particleHeight);
+        params.particleWidth = setArg(option.ParticleWidth, params.particleWidth);
+        params.particleHeight = setArg(option.ParticleHeight, params.particleHeight);
         params.speedX = setArg(toNumber(option.SpeedX), params.speedX);
         params.speedY = setArg(toNumber(option.SpeedY), params.speedY);
         params.startWidth = setArg(option.StartWidth, params.startWidth);
@@ -1810,6 +1862,22 @@ Game_Screen.prototype.updateWeather = function() {
 // Spriteset_Map
 //-----------------------------------------------------------
 
+// Ｚ座標の指定がある場合
+if (pZ) {
+    /**
+     * ●天候の作成
+     */
+    const _Spriteset_Map_createWeather = Spriteset_Map.prototype.createWeather;
+    Spriteset_Map.prototype.createWeather = function() {
+        _Spriteset_Map_createWeather.apply(this, arguments);
+
+        // Ｚソートの対象となる親に追加する。
+        this.removeChild(this._weather);
+        getWeatherParent(this).addChild(this._weather);
+        this._weather.z = pZ;
+    };
+}
+
 /**
  * 【独自】独自の天候を作成
  */
@@ -1817,7 +1885,17 @@ Spriteset_Map.prototype.createOriginalWeather = function(params) {
     this.clearOriginalWeather();
 
     this._originalWeather = new OriginalWeather(params);
-    this.addChild(this._originalWeather);
+
+    // Ｚ座標の指定がある場合
+    if (pZ) {
+        // Ｚソートの対象となる親に追加する。
+        getWeatherParent(this).addChild(this._originalWeather);
+        this._originalWeather.z = pZ;
+
+    // それ以外は通常通り
+    } else {
+        this.addChild(this._originalWeather);
+    }
 };
 
 /**
@@ -1865,6 +1943,21 @@ Spriteset_Map.prototype.updateWeather = function() {
 
     _Spriteset_Map_updateWeather.apply(this, arguments);
 };
+
+/**
+ * ●現在の画面で天候の親とする要素を取得する。
+ */
+function getWeatherParent(spriteset) {
+    // 戦闘
+    // ※$gameParty.inBattle()がセットされるより
+    // 　早く呼び出されることがあるので、こちらで判定を行う。
+    if (spriteset._battleField) {
+        return spriteset._battleField;
+    // マップ
+    } else {
+        return spriteset._tilemap;
+    }
+}
 
 //-----------------------------------------------------------
 // Spriteset_Battle
