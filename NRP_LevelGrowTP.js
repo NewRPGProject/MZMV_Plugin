@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.02 Level growth of TP.
+ * @plugindesc v1.021 Level growth of TP.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_AdditionalClasses
  * @orderAfter NRP_EnemyPercentParams
@@ -163,7 +163,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.02 ＴＰをレベル成長させる。
+ * @plugindesc v1.021 ＴＰをレベル成長させる。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_AdditionalClasses
  * @orderAfter NRP_EnemyPercentParams
@@ -469,7 +469,10 @@ Game_BattlerBase.prototype.maxTp = function() {
 const _Game_BattlerBase_clearParamPlus = Game_BattlerBase.prototype.clearParamPlus;
 Game_BattlerBase.prototype.clearParamPlus = function() {
     _Game_BattlerBase_clearParamPlus.apply(this, arguments);
-    this._paramPlus[pTpParamId] = 0;
+
+    for (let i = 8; i <= pTpParamId; i++) {
+        this._paramPlus[i] = 0;
+    }
 };
 
 /**
@@ -478,8 +481,11 @@ Game_BattlerBase.prototype.clearParamPlus = function() {
 const _Game_BattlerBase_clearBuffs = Game_BattlerBase.prototype.clearBuffs;
 Game_BattlerBase.prototype.clearBuffs = function() {
     _Game_BattlerBase_clearBuffs.apply(this, arguments);
-    this._buffs[pTpParamId] = 0;
-    this._buffTurns[pTpParamId] = 0;
+
+    for (let i = 8; i <= pTpParamId; i++) {
+        this._buffs[i] = 0;
+        this._buffTurns[i] = 0;
+    }
 };
 
 //-----------------------------------------------------------------------------
