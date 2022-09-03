@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Change the display priority for each picture.
+ * @plugindesc v1.02 Change the display priority for each picture.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/485015972.html
  *
@@ -100,6 +100,11 @@
  * @ Plugin Parameters
  * @------------------------------------------------------------------
  * 
+ * @param DefaultZ
+ * @type number @min -99999 @max 99999 @decimals 2
+ * @desc The display priority initially set for the picture.
+ * If blank, the standard Maker behavior is followed.
+ * 
  * @param ReleaseOnTransfer
  * @type boolean
  * @default false
@@ -108,7 +113,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 ピクチャ毎に表示優先度を変更します。
+ * @plugindesc v1.02 ピクチャ毎に表示優先度を変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/485015972.html
  *
@@ -222,6 +227,12 @@
  * @ プラグインパラメータ
  * @------------------------------------------------------------------
  * 
+ * @param DefaultZ
+ * @text 初期Ｚ座標
+ * @type number @min -99999 @max 99999 @decimals 2
+ * @desc ピクチャに初期設定する表示優先度です。
+ * 空白の場合はツクールの標準動作に従います。
+ * 
  * @param ReleaseOnTransfer
  * @text 移動時にＺ座標を解除
  * @type boolean
@@ -249,6 +260,7 @@ function toNumber(str, def) {
 
 const PLUGIN_NAME = "NRP_PicturePriority";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
+const pDefaultZ = toNumber(parameters["DefaultZ"]);
 const pReleaseOnTransfer = toBoolean(parameters["ReleaseOnTransfer"], false);
 
 // ----------------------------------------------------------------------------
@@ -350,6 +362,9 @@ Game_Interpreter.prototype.pluginCommand = function(command, args) {
 // Spriteset_Base
 // ----------------------------------------------------------------------------
 
+/**
+ * ●ピクチャの作成
+ */
 const _Spriteset_Base_createPictures = Spriteset_Base.prototype.createPictures;
 Spriteset_Base.prototype.createPictures = function() {
     _Spriteset_Base_createPictures.apply(this, arguments);
@@ -416,7 +431,7 @@ Sprite_Picture.prototype.updatePosition = function() {
  * 【独自】Ｚ座標を指定し、さらにピクチャの親を移行する。
  */
 Sprite_Picture.prototype.setZ = function(z) {
-    const picture = this.picture()
+    const picture = this.picture();
     if (!picture) {
         return;
     }
@@ -486,6 +501,31 @@ Sprite_Picture.prototype.restoreContainer = function(spriteset) {
 // ----------------------------------------------------------------------------
 
 /**
+ * ●ピクチャの表示
+ */
+const _Game_Screen_showPicture = Game_Screen.prototype.showPicture;
+Game_Screen.prototype.showPicture = function(
+    pictureId, name, origin, x, y, scaleX, scaleY, opacity, blendMode
+) {
+    _Game_Screen_showPicture.apply(this, arguments);
+
+    // 表示したピクチャを再取得
+    const realPictureId = this.realPictureId(pictureId);
+    const gamePicture = this._pictures[realPictureId];
+
+    // Ｚ座標の初期値がある場合は設定
+    if (pDefaultZ) {
+        gamePicture.setZ(pDefaultZ);
+
+        // Sprite_Pictureを取得
+        const spriteset = getSpriteset();
+        // Sprite_PictureにＺ座標を設定
+        const spritePicture = spriteset.getPictureFromId(pictureId);
+        spritePicture.setZ(pDefaultZ);
+    }
+};
+
+/**
  * ●ピクチャの消去
  */
 const _Game_Screen_erasePicture = Game_Screen.prototype.erasePicture;
@@ -515,7 +555,7 @@ Game_Player.prototype.performTransfer = function() {
         for (let i = 0; i < $gameScreen._pictures.length; i++) {
             const picture = $gameScreen._pictures[i];
             if (picture) {
-                picture.setZ(null);
+                picture.setZ(pDefaultZ);
             }
         }
     }
