@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Change the display priority for each picture.
+ * @plugindesc v1.021 Change the display priority for each picture.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/485015972.html
  *
@@ -113,7 +113,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 ピクチャ毎に表示優先度を変更します。
+ * @plugindesc v1.021 ピクチャ毎に表示優先度を変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/485015972.html
  *
@@ -521,7 +521,9 @@ Game_Screen.prototype.showPicture = function(
         const spriteset = getSpriteset();
         // Sprite_PictureにＺ座標を設定
         const spritePicture = spriteset.getPictureFromId(pictureId);
-        spritePicture.setZ(pDefaultZ);
+        if (spritePicture) {
+            spritePicture.setZ(pDefaultZ);
+        }
     }
 };
 
