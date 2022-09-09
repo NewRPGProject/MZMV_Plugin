@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.021 Implemented a class change screen for multiple classes.
+ * @plugindesc v1.022 Implemented a class change screen for multiple classes.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -417,7 +417,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.021 多重職業用の転職画面を実装。
+ * @plugindesc v1.022 多重職業用の転職画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -3326,7 +3326,7 @@ function isClassEnabled(item, actor) {
     // 職業の重複禁止
     } else if (pNoDuplicate) {
         // 誰かが既にその職業へ就いている場合
-        if ($gameActors._data.some(actor => actor.additionalClass(item.id))) {
+        if ($gameActors._data.some(dataActor => dataActor && dataActor.additionalClass(item.id))) {
             return false;
         }
     }

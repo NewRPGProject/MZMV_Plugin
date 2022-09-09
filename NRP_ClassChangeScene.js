@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.041 A class change system will be implemented.
+ * @plugindesc v1.042 A class change system will be implemented.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -365,7 +365,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.041 転職システムを実装する。
+ * @plugindesc v1.042 転職システムを実装する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483459448.html
  *
@@ -2703,7 +2703,7 @@ function isClassEnabled(item, actor) {
     // 職業の重複禁止
     } else if (pNoDuplicate) {
         // 誰かが既にその職業へ就いている場合
-        if ($gameActors._data.some(actor => actor._classId == item.id)) {
+        if ($gameActors._data.some(dataActor => dataActor && dataActor._classId == item.id)) {
             return false;
         }
     }
