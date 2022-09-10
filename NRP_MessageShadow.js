@@ -57,7 +57,7 @@
  * @param ShadowColor
  * @type string
  * @default #00000080
- * @desc The color (red, green, blue, opacity) of the shadow of the character. Enter each color as a hexadecimal number from 00~FF.
+ * @desc The RGBA values (red, green, blue, opacity) of the shadow color of the character. Input in hexadecimal(00~FF).
  * 
  * @param <Target>
  * 
@@ -153,7 +153,7 @@
  * @text 影の色
  * @type string
  * @default #00000080
- * @desc 文字の影の色（赤、緑、青、不透明度）です。
+ * @desc 文字の影色のＲＧＢＡ値（赤、緑、青、不透明度）です。
  * 各色を00~FFまでの16進数で入力してください。
  * 
  * @param <Target>
