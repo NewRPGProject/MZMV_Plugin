@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.17 When executing skills, call motion freely.
+ * @plugindesc v1.171 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -556,7 +556,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.17 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.171 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -4040,6 +4040,19 @@ BattleManager.endAction = function() {
                 if (battler.isStateAffected(battler.deathStateId())) {
                     this._logWindow.displayAddedStates(battler);
                 }
+            }
+        }
+
+        // ステータス表示を更新するため、スプライトを取得
+        // ※ＨＰの色表示などを正しく更新させるため
+        const additionalSprites = SceneManager._scene._statusWindow._additionalSprites;
+        // 保有する属性名でループ
+        for (const statusName in additionalSprites) {
+            // 属性名を元に各スプライトを取得
+            const statusSprite = additionalSprites[statusName];
+            // redraw関数を持っている場合（Sprite_Gaugeを想定）のみ再描画
+            if (statusSprite.redraw) {
+                statusSprite.redraw();
             }
         }
     }
