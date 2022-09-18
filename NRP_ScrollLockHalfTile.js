@@ -55,11 +55,11 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 画面の描画幅が半端な場合にスクロールをロック。
+ * @plugindesc v1.00 画面の描画幅が半端な場合にスクロールを固定。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/491567097.html
  *
- * @help 画面の描画サイズが半端な場合にスクロールをロックします。
+ * @help 画面の描画サイズが半端な場合にスクロールを固定します。
  * 具体的には画面幅に対応するタイル数が偶数の場合を想定しています。
  * 
  * 例えば、画面の横幅を９６０ピクセルとした場合、
