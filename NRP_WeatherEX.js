@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Extend the weather function.
+ * @plugindesc v1.011 Extend the weather function.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481701865.html
  *
@@ -470,7 +470,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 天候機能を拡張します。
+ * @plugindesc v1.011 天候機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481701865.html
  *
@@ -1863,7 +1863,7 @@ Game_Screen.prototype.updateWeather = function() {
 //-----------------------------------------------------------
 
 // Ｚ座標の指定がある場合
-if (pZ) {
+if (pZ != null) {
     /**
      * ●天候の作成
      */
