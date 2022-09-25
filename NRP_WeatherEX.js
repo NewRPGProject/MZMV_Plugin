@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.011 Extend the weather function.
+ * @plugindesc v1.012 Extend the weather function.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481701865.html
  *
@@ -470,7 +470,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.011 天候機能を拡張します。
+ * @plugindesc v1.012 天候機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481701865.html
  *
@@ -1904,7 +1904,14 @@ Spriteset_Map.prototype.createOriginalWeather = function(params) {
 Spriteset_Map.prototype.clearOriginalWeather = function() {
     // 既に存在していた場合は削除
     if (this._originalWeather) {
-        this.removeChild(this._originalWeather);
+        // Ｚ座標の指定がある場合
+        if (pZ) {
+            getWeatherParent(this).removeChild(this._originalWeather);
+
+        // それ以外は通常通り
+        } else {
+            this.removeChild(this._originalWeather);
+        }
     }
 };
 
