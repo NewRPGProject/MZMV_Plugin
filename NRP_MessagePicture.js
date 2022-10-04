@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.03 Display a picture when showing text.
+ * @plugindesc v1.031 Display a picture when showing text.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -367,7 +367,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.03 文章の表示時に立ち絵を表示する。
+ * @plugindesc v1.031 文章の表示時に立ち絵を表示する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -459,7 +459,7 @@
  * 
  * 付属ピクチャは『ピクチャリスト』『差分リスト』のいずれにも設定できます。
  * 特に『差分リスト』の場合は、ベースとなるピクチャを空欄にすれば、
- * 付属ピクチャのみを変更させることができます。
+ * 付属ピクチャのみを変更できます。
  * 
  * -------------------------------------------------------------------
  * ■利用規約
@@ -910,8 +910,8 @@ function showPicture(pictureData) {
     );
 
     // 付属ピクチャがあれば生成
-    if (pictureData.AttachedPictures) {
-        const attachedPictures = JSON.parse(pictureData.AttachedPictures);
+    if (pictureData.attachedPictures) {
+        const attachedPictures = pictureData.attachedPictures;
         let pictureId = pictureParams[0];
 
         for (const diffPicture of attachedPictures) {
@@ -924,6 +924,13 @@ function showPicture(pictureData) {
                     pictureParams[6], pictureParams[7], pictureParams[8], pictureParams[9]
                 );
             }
+        }
+
+    // なければ削除
+    } else {
+        // 差分も削除
+        for (let i = 0; i < mMaxAttachedPictures; i++) {
+            $gameScreen.erasePicture(mPictureId + i + 1);
         }
     }
 
@@ -1137,7 +1144,6 @@ function setDifferenceData(pictureData, setDiffId) {
             if (setDiffId == diffId && isSwitchOk(diff.Switch)) {
                 // 差分情報を元にピクチャデータを補正＆上書
                 newData.Picture = getNewValue(pictureData.Picture, diff.Picture);
-                newData.AttachedPictures = diff.AttachedPictures;
                 newData.Switch = diff.Switch;
                 newData.Origin = getNewValue(pictureData.Origin, diff.Origin);
                 newData.ScaleX = getNewValue(pictureData.ScaleX, diff.ScaleX);
@@ -1147,6 +1153,20 @@ function setDifferenceData(pictureData, setDiffId) {
                 // 調整座標だけは別計算にする。
                 newData.DiffAdjustX = toNumber(diff.AdjustX, 0);
                 newData.DiffAdjustY = toNumber(diff.AdjustY, 0);
+                // 付属ピクチャ
+                let attachedPictures = [];
+                // まずは基本側の付属情報を取得
+                if (pictureData.AttachedPictures) {
+                    attachedPictures = JSON.parse(pictureData.AttachedPictures);
+                }
+                // 付属側の付属情報と比較し、指定のある項目のみ差分側を反映
+                if (diff.AttachedPictures) {
+                    const diffAttachedPictures = JSON.parse(diff.AttachedPictures);
+                    for (let i = 0; i < mMaxAttachedPictures; i++) {
+                        attachedPictures[i] = getNewValue(attachedPictures[i], diffAttachedPictures[i]);
+                    }
+                }
+                newData.attachedPictures = attachedPictures;
                 break;
             }
         }
