@@ -12,8 +12,8 @@
  * by referring to the string in the name box.
  * 
  * The image is designed to be replaced with a difference.
- * ※It is assumed that the entire picture will be replaced,
- *   even if it is a difference.
+ * It is also possible to replace only the differences
+ * in costumes and facial expressions.
  * 
  * It does not have advanced features comparable to existing plugins,
  * such as multiple picture display or animation.
@@ -375,7 +375,7 @@
  * 名前欄の文字列を参照し、自動で表示することが可能です。
  * 
  * また、差分なども想定した作りになっています。
- * ※差分といっても、ピクチャ全体を差し替える想定です。
+ * 衣装や表情などの差分だけを差し替えることも可能です。
  * 
  * ピクチャの複数表示やアニメーションといった
  * 既存のプラグインに匹敵するような高度な機能はありません。
