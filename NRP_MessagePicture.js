@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.02 Display a picture when showing text.
+ * @plugindesc v1.03 Display a picture when showing text.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -81,6 +81,21 @@
  * to change the expression many times in a sentence.
  * 
  * -------------------------------------------------------------------
+ * [Show Attached Pictures]
+ * -------------------------------------------------------------------
+ * AttachedPictures allows you to layer additional pictures
+ * on top of the base picture.
+ * 
+ * For example, in combination with a switch, a character's costume
+ * during a conversation can be changed depending on the situation.
+ * 
+ * AttachedPictures can be set
+ * to either "PictureList" or "DifferenceList".
+ * In particular, in the case of "DifferenceList",
+ * only AttachedPictures can be changed
+ * if the base picture is left blank.
+ * 
+ * -------------------------------------------------------------------
  * [Terms]
  * -------------------------------------------------------------------
  * There are no restrictions.
@@ -104,6 +119,7 @@
  * @type number @min 0
  * @default 101
  * @desc The number to be used for the picture.
+ * AttachedPictures will be sequential numbers following this.
  * 
  * @param Origin
  * @parent <PictureSetting>
@@ -194,7 +210,17 @@
  * @param Picture
  * @type file
  * @dir img/pictures
- * @desc The picture to be displayed.
+ * @desc This is the base picture for the display.
+ * 
+ * @param AttachedPictures
+ * @type file[]
+ * @dir img/pictures
+ * @desc A picture that is overlaid on top of a picture.
+ * 
+ * @param Switch
+ * @type switch
+ * @desc Switch to enable display.
+ * The highest setting among the conditions is displayed.
  * 
  * @param DifferenceList
  * @type struct<Difference>[]
@@ -258,7 +284,17 @@
  * @param Picture
  * @type file
  * @dir img/pictures
- * @desc The picture to be displayed.
+ * @desc This is the base picture for the display.
+ * 
+ * @param AttachedPictures
+ * @type file[]
+ * @dir img/pictures
+ * @desc A picture that is overlaid on top of a picture.
+ * 
+ * @param Switch
+ * @type switch
+ * @desc Switch to enable display.
+ * The highest setting among the conditions is displayed.
  * 
  * @param Origin
  * @parent <PictureSetting>
@@ -331,7 +367,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.02 文章の表示時に立ち絵を表示する。
+ * @plugindesc v1.03 文章の表示時に立ち絵を表示する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -413,6 +449,19 @@
  * 文章内で何度も表情を変えたい場合などに使えます。
  * 
  * -------------------------------------------------------------------
+ * ■付属ピクチャの表示
+ * -------------------------------------------------------------------
+ * 付属ピクチャを指定すれば、
+ * ベースとなるピクチャの上にさらにピクチャを重ねられます。
+ * 
+ * 例えば、スイッチと組み合わせれば、
+ * 状況によって会話時のキャラクターの衣装を変更できます。
+ * 
+ * 付属ピクチャは『ピクチャリスト』『差分リスト』のいずれにも設定できます。
+ * 特に『差分リスト』の場合は、ベースとなるピクチャを空欄にすれば、
+ * 付属ピクチャのみを変更させることができます。
+ * 
+ * -------------------------------------------------------------------
  * ■利用規約
  * -------------------------------------------------------------------
  * 特に制約はありません。
@@ -437,6 +486,7 @@
  * @type number @min 0
  * @default 101
  * @desc 立ち絵のピクチャに使用する番号です。
+ * 付属ピクチャはこれに続く連番となります。
  * 
  * @param Origin
  * @parent <PictureSetting>
@@ -569,7 +619,19 @@
  * @text ピクチャ
  * @type file
  * @dir img/pictures
- * @desc 表示するピクチャです。
+ * @desc 表示のベースとなるピクチャです。
+ * 
+ * @param AttachedPictures
+ * @text 付属ピクチャ
+ * @type file[]
+ * @dir img/pictures
+ * @desc ピクチャの上にさらに重ねて表示されるピクチャです。
+ * 
+ * @param Switch
+ * @text スイッチ
+ * @type switch
+ * @desc 表示を有効にするスイッチです。
+ * 条件を満たした中で最も上の設定が表示されます。
  * 
  * @param DifferenceList
  * @text 差分リスト
@@ -644,7 +706,19 @@
  * @text ピクチャ
  * @type file
  * @dir img/pictures
- * @desc 表示するピクチャです。
+ * @desc 表示のベースとなるピクチャです。
+ * 
+ * @param AttachedPictures
+ * @text 付属ピクチャ
+ * @type file[]
+ * @dir img/pictures
+ * @desc ピクチャの上にさらに重ねて表示されるピクチャです。
+ * 
+ * @param Switch
+ * @text スイッチ
+ * @type switch
+ * @desc 表示を有効にするスイッチです。
+ * 条件を満たした中で最も上の設定が表示されます。
  * 
  * @param Origin
  * @text 原点
@@ -759,6 +833,28 @@ if (pShowAboveWindow) {
 let mPictureId = null;
 // 現在表示中のピクチャデータ（差分なし）
 let mPictureData = null;
+// 付属ピクチャの最大数
+let mMaxAttachedPictures = getMaxAttachedPictures();;
+
+/**
+ * ●付属ピクチャの最大数を取得
+ */
+function getMaxAttachedPictures() {
+    // 付属ピクチャの最大数を取得
+    let diffMax = 0;
+    // 全ピクチャのリストをループし、一致する情報を取得
+    for (const pictureData of pPictureList) {
+        // 差分を取得
+        const differenceList = parseStruct2(pictureData.DifferenceList);
+        for (const diff of differenceList) {
+            if (diff.AttachedPictures) {
+                const attachedPictures = JSON.parse(diff.AttachedPictures);
+                diffMax = Math.max(diffMax, attachedPictures.length);
+            }
+        }
+    }
+    return diffMax;
+}
 
 /**
  * ●文章の表示
@@ -813,6 +909,24 @@ function showPicture(pictureData) {
         pictureParams[6], pictureParams[7], pictureParams[8], pictureParams[9]
     );
 
+    // 付属ピクチャがあれば生成
+    if (pictureData.AttachedPictures) {
+        const attachedPictures = JSON.parse(pictureData.AttachedPictures);
+        let pictureId = pictureParams[0];
+
+        for (const diffPicture of attachedPictures) {
+            // 追加の数だけピクチャＩＤを加算
+            pictureId++;
+            // 付属ピクチャの表示
+            if (diffPicture) {
+                $gameScreen.showPicture(
+                    pictureId, diffPicture, pictureParams[2], point.x, point.y,
+                    pictureParams[6], pictureParams[7], pictureParams[8], pictureParams[9]
+                );
+            }
+        }
+    }
+
     // リフレッシュが必要かの判定
     if (needsRefresh(mPictureData, pictureData)) {
         // Sprite_Pictureを取得
@@ -834,6 +948,17 @@ function showPicture(pictureData) {
 }
 
 /**
+ * ●スイッチが有効かどうか？
+ */
+function isSwitchOk(targetSwitch) {
+    // スイッチの指定がない場合は常にＯＫ
+    if (!targetSwitch) {
+        return true;
+    }
+    return $gameSwitches.value(targetSwitch);
+}
+
+/**
  * ●ピクチャスプライトを取得
  */
 function getPictureSprite(spriteset, pictureId) {
@@ -851,6 +976,13 @@ function getPictureSprite(spriteset, pictureId) {
 function erasePicture() {
     if (mPictureId) {
         $gameScreen.erasePicture(mPictureId);
+        
+        // 差分も削除
+        for (let i = 0; i < mMaxAttachedPictures; i++) {
+            $gameScreen.erasePicture(mPictureId + i + 1);
+        }
+
+        // 変数クリア
         mPictureId = null;
         mPictureData = null;
     }
@@ -910,6 +1042,11 @@ function getMatchPictureData(name) {
 
     // 全ピクチャのリストをループし、一致する情報を取得
     for (const picture of pPictureList) {
+        // スイッチが有効でない場合は飛ばす
+        if (!isSwitchOk(picture.Switch)) {
+            continue;
+        }
+
         // 名前欄に登録ＩＤの指定が存在した場合は優先使用
         if (isMatch) {
             // 0の場合は非表示と見なす。
@@ -996,9 +1133,12 @@ function setDifferenceData(pictureData, setDiffId) {
             // 大文字変換
             const diffId = diff.DiffId.toUpperCase();
             // 名前欄に指定されているＩＤと一致
-            if (setDiffId == diffId) {
+            // かつ、スイッチが有効
+            if (setDiffId == diffId && isSwitchOk(diff.Switch)) {
                 // 差分情報を元にピクチャデータを補正＆上書
-                newData.Picture = diff.Picture;
+                newData.Picture = getNewValue(pictureData.Picture, diff.Picture);
+                newData.AttachedPictures = diff.AttachedPictures;
+                newData.Switch = diff.Switch;
                 newData.Origin = getNewValue(pictureData.Origin, diff.Origin);
                 newData.ScaleX = getNewValue(pictureData.ScaleX, diff.ScaleX);
                 newData.ScaleY = getNewValue(pictureData.ScaleY, diff.ScaleY);
@@ -1089,6 +1229,12 @@ Window_Base.prototype.processEscapeCharacter = function(code, textState) {
             break;
         case pControlCharacterDifference:
             id = obtainEscapeParamEx(textState);
+
+            // 名前欄の場合は既に処理済なので終了
+            if (this instanceof Window_NameBox) {
+                return;
+            }
+
             if (mPictureData) {
                 // 差分を反映
                 const pictureData = setDifferenceData(mPictureData, id);
@@ -1177,7 +1323,7 @@ if (!pShowAboveWindow) {
     const _Game_Screen_maxPictures = Game_Screen.prototype.maxPictures;
     Game_Screen.prototype.maxPictures = function() {
         // 101以上のピクチャを使う場合は領域を増やしておく。
-        return Math.max(pPictureId, _Game_Screen_maxPictures.apply(this, arguments));
+        return Math.max(pPictureId + mMaxAttachedPictures, _Game_Screen_maxPictures.apply(this, arguments));
     };
 }
 
@@ -1204,6 +1350,11 @@ if (pShowAboveWindow) {
         this._messagePictureContainer = new Sprite();
         this._messagePictureContainer.setFrame(rect.x, rect.y, rect.width, rect.height);
         this._messagePictureContainer.addChild(new Sprite_Picture(pPictureId));
+
+        // 自動的に差分の最大数を取得して拡張
+        for (let i = 0; i < mMaxAttachedPictures; i++) {
+            this._messagePictureContainer.addChild(new Sprite_Picture(pPictureId + i + 1));
+        }
     };
 }
 
