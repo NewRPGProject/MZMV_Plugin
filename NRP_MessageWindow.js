@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Adjust the message window.
+ * @plugindesc v1.001 Adjust the message window.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -146,7 +146,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 メッセージウィンドウを調整する。
+ * @plugindesc v1.001 メッセージウィンドウを調整する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -376,9 +376,10 @@ if (typeof Scene_Message !== "undefined") {
         // 縦幅
         let wh = this.calcWindowHeight(4, false) + 8;
         if (pWindowHeight != null) {
-            // とりあえず最大領域を確保しておく。
-            // ※値が小さいとはみ出した文字が表示されないため。
-            wh = Graphics.height;
+            // ダミーのウィンドウを定義して計算
+            // ※この値は選択肢を呼んだ場合に参照される。
+            const dummyWindow = new Window_Message(new Rectangle(0,0,0,0));
+            wh = dummyWindow.calcWindowHeight();
         }
         // 座標はそのまま（updatePlacementで処理）
         const wx = (Graphics.boxWidth - ww) / 2;
@@ -452,7 +453,7 @@ Window_Message.prototype.updatePlacement = function() {
     }
     // 縦幅の更新
     if (pWindowHeight != null) {
-        this.height = eval(pWindowHeight);
+        this.height = this.calcWindowHeight();
     }
     // いずれかを更新した場合
     if (pWindowWidth != null || pWindowHeight != null) {
@@ -473,6 +474,13 @@ Window_Message.prototype.updatePlacement = function() {
     if (pWindowY != null) {
         this.y = eval(pWindowY);
     }
+};
+
+/**
+ * 【独自】ウィンドウの高さを計算する。
+ */
+Window_Message.prototype.calcWindowHeight = function() {
+    return eval(pWindowHeight);
 };
 
 if (pLineHeight != null) {
