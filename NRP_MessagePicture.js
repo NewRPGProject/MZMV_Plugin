@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.031 Display a picture when showing text.
+ * @plugindesc v1.04 Display a picture when showing text.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -367,7 +367,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.031 文章の表示時に立ち絵を表示する。
+ * @plugindesc v1.04 文章の表示時に立ち絵を表示する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -834,7 +834,7 @@ let mPictureId = null;
 // 現在表示中のピクチャデータ（差分なし）
 let mPictureData = null;
 // 付属ピクチャの最大数
-let mMaxAttachedPictures = getMaxAttachedPictures();;
+let mMaxAttachedPictures = getMaxAttachedPictures();
 
 /**
  * ●付属ピクチャの最大数を取得
@@ -886,7 +886,7 @@ Game_Interpreter.prototype.command101 = function(params) {
     // ピクチャを表示
     showPicture(pictureData);
 
-    // 現在表示中のピクチャデータ（差分なし）を保持
+    // 現在表示中のピクチャデータ（付属込）を保持
     mPictureData = pictureData;
 
     return _Game_Interpreter_command101.apply(this, arguments);
@@ -914,6 +914,11 @@ function showPicture(pictureData) {
         const attachedPictures = pictureData.attachedPictures;
         let pictureId = pictureParams[0];
 
+        // 先に差分を削除
+        for (let i = 0; i < mMaxAttachedPictures; i++) {
+            $gameScreen.erasePicture(mPictureId + i + 1);
+        }
+
         for (const diffPicture of attachedPictures) {
             // 追加の数だけピクチャＩＤを加算
             pictureId++;
@@ -936,20 +941,14 @@ function showPicture(pictureData) {
 
     // リフレッシュが必要かの判定
     if (needsRefresh(mPictureData, pictureData)) {
-        // Sprite_Pictureを取得
         const spriteset = getSpriteset();
-        const pictureSprite = getPictureSprite(spriteset, mPictureId);
-        // 画像を更新
-        pictureSprite.updateBitmap();
 
-        // 既に読込済の画像ならば描画更新
-        if (pictureSprite.bitmap.isReady()) {
-            pictureSprite.update();
-            
-        // 画像が読み込めてない場合
-        } else {
-            // 待機モードにする
-            pictureSprite._waitMessagePicture = true;
+        // 立絵画像毎に更新
+        for (const picture of spriteset.getMessagePictures()) {
+            picture.update();
+            picture.updateBitmap();
+            // 非表示にしておく。
+            picture.visible = false;
         }
     }
 }
@@ -969,12 +968,7 @@ function isSwitchOk(targetSwitch) {
  * ●ピクチャスプライトを取得
  */
 function getPictureSprite(spriteset, pictureId) {
-    // メッセージピクチャ用のコンテナがある場合は優先
-    if (spriteset._messagePictureContainer) {
-        return spriteset._messagePictureContainer.children.find(p => p._pictureId == pictureId);
-    }
-    // それ以外は通常のコンテナから取得
-    return spriteset._pictureContainer.children.find(p => p._pictureId == pictureId);
+    return spriteset.getMessagePictureContainer().children.find(p => p._pictureId == pictureId);
 }
 
 /**
@@ -1220,17 +1214,93 @@ function getNewValue(oldValue, newValue) {
 
 const _Sprite_Picture_updateBitmap = Sprite_Picture.prototype.updateBitmap;
 Sprite_Picture.prototype.updateBitmap = function() {
-    // 画像が読み込めるまで描画停止
-    if (this._waitMessagePicture) {
-        if (this.bitmap.isReady()) {
-            this._waitMessagePicture = false;
-        } else {
+    // 立絵の場合
+    if (this.isMessagePicture()) {
+        const spriteset = getSpriteset();
+        if (!spriteset) {
+            _Sprite_Picture_updateBitmap.apply(this, arguments);
+            return;
+        }
+
+        // 他に読込未完了のピクチャがあるなら停止
+        if (!spriteset._isMessgePicturesReady) {
+            // 非表示にしておく。
             this.visible = false;
             return;
         }
     }
 
     _Sprite_Picture_updateBitmap.apply(this, arguments);
+};
+
+/**
+ * 【独自】立絵を構成するピクチャかどうかを判定
+ */
+Sprite_Picture.prototype.isMessagePicture = function() {
+    const pictureId = this._pictureId;
+    const maxPictureId = pPictureId + mMaxAttachedPictures;
+    // ピクチャが立絵の対象の場合
+    if (pictureId >= pPictureId && pictureId <= maxPictureId) {
+        return true;
+    }
+    return false;
+};
+
+// ----------------------------------------------------------------------------
+// Spriteset_Base
+// ----------------------------------------------------------------------------
+
+/**
+ * ●更新処理
+ */
+const _Spriteset_Base_update = Spriteset_Base.prototype.update;
+Spriteset_Base.prototype.update = function() {
+    this._isMessgePicturesReady = this.checkMessgePicturesReady();
+
+    _Spriteset_Base_update.apply(this, arguments);
+};
+
+/**
+ * 【独自】メッセージ用ピクチャの読込が完了しているか？
+ */
+Spriteset_Base.prototype.checkMessgePicturesReady = function() {
+    // ピクチャの配列を取得
+    // ※NRP_PicturePriorityなどでピクチャの参照場所が変わるので考慮
+    const pictures = this.getMessagePictures();
+
+    // ピクチャ毎にループ
+    for (const spritePicture of pictures) {
+        if (!spritePicture || !spritePicture.bitmap) {
+            continue;
+        }
+        const bitmap = spritePicture.bitmap;
+        // 読込状況をチェック
+        if (bitmap && !bitmap.isReady()) {
+            // 未完了ならばfalse
+            return false;
+        }
+    }
+
+    return true;
+};
+
+/**
+ * 【独自】立絵ピクチャの配列を取得
+ */
+Spriteset_Base.prototype.getMessagePictures = function() {
+    const container = this.getMessagePictureContainer();
+    return container.children.filter(p => p.isMessagePicture());
+};
+
+/**
+ * 【独自】立絵ピクチャのコンテナを取得
+ */
+Spriteset_Base.prototype.getMessagePictureContainer = function() {
+    // 独自コンテナがある場合はそちらを優先
+    if (this._messagePictureContainer) {
+        return this._messagePictureContainer;
+    }
+    return this._pictureContainer;
 };
 
 // ----------------------------------------------------------------------------
