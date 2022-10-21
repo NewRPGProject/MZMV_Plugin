@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.04 Display a picture when showing text.
+ * @plugindesc v1.041 Display a picture when showing text.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -367,7 +367,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.04 文章の表示時に立ち絵を表示する。
+ * @plugindesc v1.041 文章の表示時に立ち絵を表示する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -1422,9 +1422,22 @@ if (!pShowAboveWindow) {
 // ----------------------------------------------------------------------------
 
 if (pShowAboveWindow) {
-    const _Scene_Base_createWindowLayer = Scene_Base.prototype.createWindowLayer;
-    Scene_Base.prototype.createWindowLayer = function() {
-        _Scene_Base_createWindowLayer.apply(this, arguments);
+    // const _Scene_Base_createWindowLayer = Scene_Base.prototype.createWindowLayer;
+    // Scene_Base.prototype.createWindowLayer = function() {
+    //     _Scene_Base_createWindowLayer.apply(this, arguments);
+
+    //     // シーン直下にメッセージ用コンテナを追加
+    //     if (this._spriteset) {
+    //         this.addChild(this._spriteset._messagePictureContainer);
+    //     }
+    // };
+
+    /**
+     * ●各表示オブジェクトの生成
+     */
+    const _Scene_Map_createDisplayObjects = Scene_Map.prototype.createDisplayObjects;
+    Scene_Map.prototype.createDisplayObjects = function() {
+        _Scene_Map_createDisplayObjects.apply(this, arguments);
 
         // シーン直下にメッセージ用コンテナを追加
         if (this._spriteset) {
@@ -1432,6 +1445,22 @@ if (pShowAboveWindow) {
         }
     };
 
+    /**
+     * ●各表示オブジェクトの生成
+     */
+    const _Scene_Battle_createDisplayObjects = Scene_Battle.prototype.createDisplayObjects;
+    Scene_Battle.prototype.createDisplayObjects = function() {
+        _Scene_Battle_createDisplayObjects.apply(this, arguments);
+
+        // シーン直下にメッセージ用コンテナを追加
+        if (this._spriteset) {
+            this.addChild(this._spriteset._messagePictureContainer);
+        }
+    };
+
+    /**
+     * ●ピクチャの生成
+     */
     const _Spriteset_Base_createPictures = Spriteset_Base.prototype.createPictures;
     Spriteset_Base.prototype.createPictures = function() {
         _Spriteset_Base_createPictures.apply(this, arguments);
