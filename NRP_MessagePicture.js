@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.041 Display a picture when showing text.
+ * @plugindesc v1.042 Display a picture when showing text.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -367,7 +367,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.041 文章の表示時に立ち絵を表示する。
+ * @plugindesc v1.042 文章の表示時に立ち絵を表示する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -1482,12 +1482,34 @@ if (pShowAboveWindow) {
 // ----------------------------------------------------------------------------
 
 if (pShowBelowMessages) {
+    // /**
+    //  * ●ウィンドウ生成
+    //  */
+    // const _Scene_Message_createMessageWindow = Scene_Message.prototype.createMessageWindow;
+    // Scene_Message.prototype.createMessageWindow = function() {
+    //     _Scene_Message_createMessageWindow.apply(this, arguments);
+
+    //     // メッセージ用のスプライトをシーン直下に追加
+    //     this.addChild(this._messageWindow._contentsSprite);
+    // };
+
     /**
-     * ●ウィンドウ生成
+     * ●各表示オブジェクトの生成
      */
-    const _Scene_Message_createMessageWindow = Scene_Message.prototype.createMessageWindow;
-    Scene_Message.prototype.createMessageWindow = function() {
-        _Scene_Message_createMessageWindow.apply(this, arguments);
+    const _Scene_Map_createMessageWindow2 = Scene_Map.prototype.createDisplayObjects;
+    Scene_Map.prototype.createDisplayObjects = function() {
+        _Scene_Map_createMessageWindow2.apply(this, arguments);
+
+        // メッセージ用のスプライトをシーン直下に追加
+        this.addChild(this._messageWindow._contentsSprite);
+    };
+
+    /**
+     * ●各表示オブジェクトの生成
+     */
+    const _Scene_Battle_createMessageWindow2 = Scene_Battle.prototype.createDisplayObjects;
+    Scene_Battle.prototype.createDisplayObjects = function() {
+        _Scene_Battle_createMessageWindow2.apply(this, arguments);
 
         // メッセージ用のスプライトをシーン直下に追加
         this.addChild(this._messageWindow._contentsSprite);
