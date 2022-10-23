@@ -3,8 +3,8 @@
 //=============================================================================
 
 /*:
- * @target MZ
- * @plugindesc v1.04 Adjusts the timing of damage display and enemy defeats.
+ * @target MV MZ
+ * @plugindesc v1.05 Adjusts the timing of damage display and enemy defeats.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475196493.html
  *
@@ -83,8 +83,8 @@
  * @desc Set the wait method when the enemy is defeated.
  */
 /*:ja
- * @target MZ
- * @plugindesc v1.04 ダメージ表示や敵の撃破処理のタイミングを調整します。
+ * @target MV MZ
+ * @plugindesc v1.05 ダメージ表示や敵の撃破処理のタイミングを調整します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475196493.html
  *
@@ -445,7 +445,7 @@ function setDamageWait() {
     // 最終ヒット
     } else if (BattleManager._targets.length == 0) {
         if (pDamageWait != undefined) {
-            priorityWait = pDamageInterval;
+            priorityWait = pDamageWait;
         }
     }
 }
