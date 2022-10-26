@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.042 Display a picture when showing text.
+ * @plugindesc v1.043 Display a picture when showing text.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -367,7 +367,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.042 文章の表示時に立ち絵を表示する。
+ * @plugindesc v1.043 文章の表示時に立ち絵を表示する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -1320,12 +1320,8 @@ Window_Base.prototype.processEscapeCharacter = function(code, textState) {
         case pControlCharacterDifference:
             id = obtainEscapeParamEx(textState);
 
-            // 名前欄の場合は既に処理済なので終了
-            if (this instanceof Window_NameBox) {
-                return;
-            }
-
-            if (mPictureData) {
+            // メッセージかつデータがある場合のみ処理
+            if (this instanceof Window_Message && mPictureData) {
                 // 差分を反映
                 const pictureData = setDifferenceData(mPictureData, id);
                 // ピクチャを表示
