@@ -2,12 +2,12 @@
 // NRP_RememberSkillTypes.js
 //=============================================================================
 /*:
- * @target MV MZ
+ * @target MZ
  * @plugindesc v1.00 Retain cursor position for each skill type.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/492931243.html
  *
- * @help In the standard functionality of RPG Maker MV - MZ,
+ * @help In the standard functionality of RPG Maker MZ,
  * using Special after Magic resets
  * the memory of the cursor position of the selected Magic.
  * 
@@ -40,12 +40,12 @@
  */
 
 /*:ja
- * @target MV MZ
+ * @target MZ
  * @plugindesc v1.00 カーソル位置をスキルタイプ毎に保持する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/492931243.html
  *
- * @help ツクールＭＶ～ＭＺの標準機能では、
+ * @help ツクールＭＺの標準機能では、
  * 魔法の後に必殺技を使用すると、選択していた魔法スキルの
  * カーソル位置の記憶がリセットされてしまいます。
  * 
