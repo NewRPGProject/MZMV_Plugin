@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Implement a map selection & transfer screen.
+ * @plugindesc v1.02 Implement a map selection & transfer screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484927929.html
  *
@@ -551,6 +551,11 @@
  * @desc The number of the icon to be displayed next to the spot name.
  * You can right-click to "Insert Icon Number".
  * 
+ * @param NameColor
+ * @type number
+ * @desc Change the text color of the Spot name.
+ * Specify the system color number.
+ * 
  * @param DispSwitch
  * @type switch
  * @desc This switch is the condition for displaying the icon.
@@ -559,7 +564,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 マップ選択＆移動画面を実装します。
+ * @plugindesc v1.02 マップ選択＆移動画面を実装します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484927929.html
  *
@@ -1145,6 +1150,12 @@
  * @type text
  * @desc 地点名の横に表示するアイコンの番号です。
  * 右クリックで『アイコン番号の挿入』ができます。
+ * 
+ * @param NameColor
+ * @text 文字色
+ * @type number
+ * @desc 地点名の文字色を変更します。
+ * システムカラーの番号を指定してください。
  * 
  * @param DispSwitch
  * @text 表示スイッチ
@@ -2133,6 +2144,7 @@ Windows_SelectSpots.prototype.drawItemName = function(item, x, y) {
 
         // 全体の描画幅を取得
         let drawWidth = this.innerWidth - 20;
+        let color = null;
 
         // アイコンを描画（逆順にして右から順に描画）
         let iconX = x + drawWidth + 8;
@@ -2149,12 +2161,31 @@ Windows_SelectSpots.prototype.drawItemName = function(item, x, y) {
 
             const iconIndex = eval(iconInfo.IconIndex);
             this.drawIcon(iconIndex, iconX, y);
+
+            // 最初の色を優先
+            if (color == null) {
+                color = toNumber(iconInfo.NameColor);
+            }
         }
 
         // 地点名の描画
         this.resetTextColor();
+        // 色指定がある場合は変更
+        if (color != null) {
+            this.changeTextColor(ColorManager.textColor(color));
+        }
         this.drawTextEx(item.SpotName, x + textMargin, y, drawWidth);
     }
+};
+
+/**
+ * ●文字列描画処理
+ * ※Window_Base.prototype.drawTextExとほぼ同じだがフォントリセットしない。
+ */
+Windows_SelectSpots.prototype.drawTextEx = function(text, x, y, width) {
+    const textState = this.createTextState(text, x, y, width);
+    this.processAllText(textState);
+    return textState.outputWidth;
 };
 
 /**
@@ -2451,6 +2482,15 @@ Windows_MapDisplay.prototype.drawSymbol = function(x, y, symbol) {
  * ●現在地シンボルの描画
  */
 Windows_MapDisplay.prototype.drawCurrentPoint = function() {
+    const fieldMapId = this._item.fieldMapId;
+    const fieldMap = getFieldInfo(fieldMapId);
+
+    // フィールド情報が取得できない。
+    // または、現在のフィールドと一致しない
+    if (!fieldMap || fieldMapId != $gameVariables.value(fieldMap.currentMapIdVariable)) {
+        return;
+    }
+    
     const fieldX = this.getFieldPlayerX();
     const fieldY = this.getFieldPlayerY();
     // 座標を取得できなければ終了
