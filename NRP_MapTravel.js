@@ -2155,12 +2155,14 @@ Windows_SelectSpots.prototype.drawItemName = function(item, x, y) {
                 continue;
             }
 
-            // アイコン幅分だけ左へ移動
-            iconX -= iconDrawWidth;
-            drawWidth -= iconDrawWidth;
+            if (iconInfo.IconIndex) {
+                // アイコン幅分だけ左へ移動
+                iconX -= iconDrawWidth;
+                drawWidth -= iconDrawWidth;
 
-            const iconIndex = eval(iconInfo.IconIndex);
-            this.drawIcon(iconIndex, iconX, y);
+                const iconIndex = eval(iconInfo.IconIndex);
+                this.drawIcon(iconIndex, iconX, y);
+            }
 
             // 最初の色を優先
             if (color == null) {
