@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Implement a map selection & transfer screen.
+ * @plugindesc v1.021 Implement a map selection & transfer screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484927929.html
  *
@@ -564,7 +564,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 マップ選択＆移動画面を実装します。
+ * @plugindesc v1.021 マップ選択＆移動画面を実装します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484927929.html
  *
@@ -2185,6 +2185,22 @@ Windows_SelectSpots.prototype.drawItemName = function(item, x, y) {
  * ※Window_Base.prototype.drawTextExとほぼ同じだがフォントリセットしない。
  */
 Windows_SelectSpots.prototype.drawTextEx = function(text, x, y, width) {
+    // ＭＶ対応
+    if (Utils.RPGMAKER_NAME == "MV") {
+        if (text) {
+            let textState = { index: 0, x: x, y: y, left: x };
+            textState.text = this.convertEscapeCharacters(text);
+            textState.height = this.calcTextHeight(textState, false);
+            while (textState.index < textState.text.length) {
+                this.processCharacter(textState);
+            }
+            return textState.x - x;
+        } else {
+            return 0;
+        }
+    }
+
+    // ＭＺ
     const textState = this.createTextState(text, x, y, width);
     this.processAllText(textState);
     return textState.outputWidth;
