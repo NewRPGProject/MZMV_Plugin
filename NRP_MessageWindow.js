@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.001 Adjust the message window.
+ * @plugindesc v1.002 Adjust the message window.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -146,7 +146,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.001 メッセージウィンドウを調整する。
+ * @plugindesc v1.002 メッセージウィンドウを調整する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -446,17 +446,31 @@ Window_Message.prototype.initialize = function(rect) {
  */
 const _Window_Message_updatePlacement = Window_Message.prototype.updatePlacement;
 Window_Message.prototype.updatePlacement = function() {
+    let changeFlg = false;
+
     // ※サイズを参照して配置を決めているため、先に設定しておく。
     // 横幅の更新
     if (pWindowWidth != null) {
-        this.width = eval(pWindowWidth);
+        const width = eval(pWindowWidth);
+        if (this.width != width) {
+            this.width = width;
+            changeFlg = true;
+        }
     }
     // 縦幅の更新
     if (pWindowHeight != null) {
-        this.height = this.calcWindowHeight();
+        const height = this.calcWindowHeight();
+        if (this.height != height) {
+            this.height = height;
+            changeFlg = true;
+        }
     }
+
     // いずれかを更新した場合
-    if (pWindowWidth != null || pWindowHeight != null) {
+    if (changeFlg) {
+        // 描画領域を更新
+        // これをやらないと文字が表示されなくなる。
+        this.createContents();
         // サイズを文章の表示領域へ反映
         // これをやらないと改ページ判定がおかしくなる。
         this.contents.resize(this.width, this.height)
