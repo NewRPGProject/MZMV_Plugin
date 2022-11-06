@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.011 Add the original vehicles.
+ * @plugindesc v1.02 Add the original vehicles.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_VehiclePassage
  * @url http://newrpg.seesaa.net/article/482502348.html
@@ -383,7 +383,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.011 オリジナルの乗物を追加します。
+ * @plugindesc v1.02 オリジナルの乗物を追加します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_VehiclePassage
  * @url http://newrpg.seesaa.net/article/482502348.html
@@ -1029,8 +1029,8 @@ PluginManager.registerCommand(PLUGIN_NAME, "SetVehicleLocation", function(args) 
         if (!mapId) {
             mapId = $gameMap.mapId();
         }
-        const x = eval(getCommandValue(args.X)) ?? 0;
-        const y = eval(getCommandValue(args.Y)) ?? 0;
+        const x = nvl(eval(getCommandValue(args.X)));
+        const y = nvl(eval(getCommandValue(args.Y)));
 
         vehicle.setLocation(mapId, x, y);
     }
@@ -1182,8 +1182,8 @@ Game_Interpreter.prototype.pluginCommand = function(command, args) {
             if (!mapId) {
                 mapId = $gameMap.mapId();
             }
-            const x = eval(args[2]) ?? 0;
-            const y = eval(args[3]) ?? 0;
+            const x = nvl(eval(args[2]));
+            const y = nvl(eval(args[3]));
 
             vehicle.setLocation(mapId, x, y);
         }
@@ -2082,6 +2082,16 @@ Game_Player.prototype.vehicleId = function() {
 //----------------------------------------
 // その他共通関数
 //----------------------------------------
+
+/**
+ * ●nullなら0変換
+ */
+function nvl(val) {
+    if (!val) {
+        return 0;
+    }
+    return val;
+}
 
 /**
  * ●通行設定が指定のタイルセットで有効か？
