@@ -38,6 +38,12 @@
  * This is an ID to identify the vehicle.
  * This is required when you want to operate it from a plugin command.
  * 
+ * ※Do not use the following values for your ID!!!
+ *   Since they are used as IDs for existing rides.
+ *   It will not be processed correctly.
+ * 
+ * 0, 1, 2, boat, ship, airship
+ * 
  * ◆VehicleType
  * The type of vehicle to be used as the base.
  * If you want to fly in the sky, make it an airship.
@@ -87,7 +93,7 @@
  * Forcibly disembark from the current ride without making a landing decision.
  * This is useful when you want to control the vehicle during the same event.
  * 
-* [Plugin Command (MV)]
+ * [Plugin Command (MV)]
  * ※No distinction is made between individual capital letters.
  *   Also, do not include [].
  * 
@@ -416,6 +422,12 @@
  * ◆オリジナルＩＤ
  * 乗物を識別するためのＩＤです。
  * プラグインコマンドから操作したい場合などに必要となります。
+ * 
+ * ※以下の値をＩＤに使用しないでください！
+ * 　既存の乗り物のＩＤとして使用されているので、
+ * 　正常に処理できなくなります。
+ * 
+ * 0, 1, 2, boat, ship, airship
  * 
  * ◆乗物タイプ
  * ベースとする乗物の種別です。
