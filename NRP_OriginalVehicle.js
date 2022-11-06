@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Add the original vehicles.
+ * @plugindesc v1.021 Add the original vehicles.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_VehiclePassage
  * @url http://newrpg.seesaa.net/article/482502348.html
@@ -383,7 +383,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 オリジナルの乗物を追加します。
+ * @plugindesc v1.021 オリジナルの乗物を追加します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_VehiclePassage
  * @url http://newrpg.seesaa.net/article/482502348.html
