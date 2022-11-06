@@ -2027,46 +2027,51 @@ Game_Player.prototype.isInShip = function() {
 //----------------------------------------
 
 /**
- * ●戦闘背景１
+ * MZの場合のみ
  */
-const _Sprite_Battleback_overworldBattleback1Name = Sprite_Battleback.prototype.overworldBattleback1Name;
-Sprite_Battleback.prototype.overworldBattleback1Name = function() {
-    const vehicle = $gamePlayer.vehicle();
-    // オリジナル乗物だった場合
-    if (vehicle instanceof Original_Vehicle) {
-        // 歩行時の戦闘背景を使用する
-        if (vehicle.useWalkingBattleback()) {
-            return this.normalBattleback1Name();
+if (Utils.RPGMAKER_NAME != "MV") {
+    /**
+     * ●戦闘背景１
+     */
+    const _Sprite_Battleback_overworldBattleback1Name = Sprite_Battleback.prototype.overworldBattleback1Name;
+    Sprite_Battleback.prototype.overworldBattleback1Name = function() {
+        const vehicle = $gamePlayer.vehicle();
+        // オリジナル乗物だった場合
+        if (vehicle instanceof Original_Vehicle) {
+            // 歩行時の戦闘背景を使用する
+            if (vehicle.useWalkingBattleback()) {
+                return this.normalBattleback1Name();
 
-        // 戦闘背景１
-        } else if (vehicle.overworldBattleback1Name()) {
-            return vehicle.overworldBattleback1Name();
+            // 戦闘背景１
+            } else if (vehicle.overworldBattleback1Name()) {
+                return vehicle.overworldBattleback1Name();
+            }
         }
-    }
 
-    return _Sprite_Battleback_overworldBattleback1Name.apply(this, arguments);
-};
+        return _Sprite_Battleback_overworldBattleback1Name.apply(this, arguments);
+    };
 
-/**
- * ●戦闘背景２
- */
-const _Sprite_Battleback_overworldBattleback2Name = Sprite_Battleback.prototype.overworldBattleback2Name;
-Sprite_Battleback.prototype.overworldBattleback2Name = function() {
-    const vehicle = $gamePlayer.vehicle();
-    // オリジナル乗物だった場合
-    if (vehicle instanceof Original_Vehicle) {
-        // 歩行時の戦闘背景を使用する
-        if (vehicle.useWalkingBattleback()) {
-            return this.normalBattleback2Name();
+    /**
+     * ●戦闘背景２
+     */
+    const _Sprite_Battleback_overworldBattleback2Name = Sprite_Battleback.prototype.overworldBattleback2Name;
+    Sprite_Battleback.prototype.overworldBattleback2Name = function() {
+        const vehicle = $gamePlayer.vehicle();
+        // オリジナル乗物だった場合
+        if (vehicle instanceof Original_Vehicle) {
+            // 歩行時の戦闘背景を使用する
+            if (vehicle.useWalkingBattleback()) {
+                return this.normalBattleback2Name();
 
-        // 戦闘背景２
-        } else if (vehicle.overworldBattleback2Name()) {
-            return vehicle.overworldBattleback2Name();
+            // 戦闘背景２
+            } else if (vehicle.overworldBattleback2Name()) {
+                return vehicle.overworldBattleback2Name();
+            }
         }
-    }
 
-    return _Sprite_Battleback_overworldBattleback2Name.apply(this, arguments);
-};
+        return _Sprite_Battleback_overworldBattleback2Name.apply(this, arguments);
+    };
+}
 
 //----------------------------------------
 // スクリプト用追加関数
