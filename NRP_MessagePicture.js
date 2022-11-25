@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.043 Display a picture when showing text.
+ * @plugindesc v1.05 Display a picture when showing text.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -340,11 +340,22 @@
  * @option 3:Screen @value 3
  * @desc This is a blend mode of drawing a picture.
  * 
+ * @param FadeInDuration
+ * @parent <PictureSetting>
+ * @type number
+ * @desc The fade-in time of the picture.
+ * 60 corresponds to one second.
+ * 
  * @param ShowAboveWindow
  * @parent <PictureSetting>
  * @type boolean
  * @default false
  * @desc Displays the picture above the message window.
+ * 
+ * @param LimitMessageWidth
+ * @parent <PictureSetting>
+ * @type number
+ * @desc Limit the width of the message to the specified value when displaying a picture. Text is automatically reduced in size.
  * 
  * @param ShowBelowMessages
  * @parent <PictureSetting>
@@ -367,7 +378,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.043 文章の表示時に立ち絵を表示する。
+ * @plugindesc v1.05 文章の表示時に立ち絵を表示する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -546,12 +557,25 @@
  * @default 0
  * @desc ピクチャを描画する合成方法です。
  * 
+ * @param FadeInDuration
+ * @parent <PictureSetting>
+ * @text フェードイン時間
+ * @type number
+ * @desc ピクチャのフェードイン時間です。
+ * 60が一秒に相当します。
+ * 
  * @param ShowAboveWindow
  * @parent <PictureSetting>
  * @text ウィンドウより上に表示
  * @type boolean
  * @default false
  * @desc ピクチャをメッセージウィンドウより上に表示します。
+ * 
+ * @param LimitMessageWidth
+ * @parent <PictureSetting>
+ * @text 文章の横幅制限
+ * @type number
+ * @desc ピクチャ表示時、文章の横幅を指定した値に制限します。文字は自動的に縮小されます。
  * 
  * @param ShowBelowMessages
  * @parent <PictureSetting>
@@ -808,7 +832,9 @@ const pScaleX = parameters["ScaleX"];
 const pScaleY = parameters["ScaleY"];
 const pOpacity = parameters["Opacity"];
 const pBlendMode = parameters["BlendMode"];
+const pFadeInDuration = toNumber(parameters["FadeInDuration"]);
 const pShowAboveWindow = toBoolean(parameters["ShowAboveWindow"]);
+const pLimitMessageWidth = toNumber(parameters["LimitMessageWidth"]);
 const pShowBelowMessages = toBoolean(parameters["ShowBelowMessages"]);
 const pAdjustMessageX = toNumber(parameters["AdjustMessageX"], 0);
 const pAdjustMessageY = toNumber(parameters["AdjustMessageY"], 0);
@@ -904,8 +930,8 @@ function showPicture(pictureData) {
     const point = Game_Interpreter.prototype.picturePoint(pictureParams);
 
     // ピクチャの表示
-    $gameScreen.showPicture(
-        pictureParams[0], pictureParams[1], pictureParams[2], point.x, point.y,
+    showPictureAndMove(
+        pictureParams[0], pictureParams[1], pictureParams[1], pictureParams[2], point.x, point.y,
         pictureParams[6], pictureParams[7], pictureParams[8], pictureParams[9]
     );
 
@@ -924,8 +950,8 @@ function showPicture(pictureData) {
             pictureId++;
             // 付属ピクチャの表示
             if (diffPicture) {
-                $gameScreen.showPicture(
-                    pictureId, diffPicture, pictureParams[2], point.x, point.y,
+                showPictureAndMove(
+                    pictureId, pictureParams[1], diffPicture, pictureParams[2], point.x, point.y,
                     pictureParams[6], pictureParams[7], pictureParams[8], pictureParams[9]
                 );
             }
@@ -950,6 +976,40 @@ function showPicture(pictureData) {
             // 非表示にしておく。
             picture.visible = false;
         }
+    }
+}
+
+/**
+ * ●ピクチャを表示および移動する
+ * ※フェードインなども考慮
+ */
+function showPictureAndMove(pictureId, basePicture, picture, origin, x, y, scaleX, scaleY, opacity, blendMode) {
+    let fadeFlag = false; 
+
+    // フェードイン時間が設定されている場合
+    if (pFadeInDuration) {
+        // ピクチャが表示中ではない。
+        // または、ベースピクチャに変化がある場合
+        if (!mPictureData || mPictureData.Picture != basePicture) {
+            fadeFlag = true;
+        }
+    }
+
+    // フェードインする場合
+    if (fadeFlag) {
+        // ピクチャの表示
+        // pictureId, name, origin, x, y, scaleX, scaleY, opacity, blendMode
+        $gameScreen.showPicture(pictureId, picture, origin, x, y, scaleX, scaleY, 0, blendMode);
+        // pictureId, origin, x, y, scaleX, scaleY, opacity, blendMode, duration, easingType
+        $gameScreen.movePicture(
+            pictureId, origin, x, y, scaleX, scaleY, opacity, blendMode, pFadeInDuration, 0
+        );
+
+    // 瞬間表示
+    } else {
+        // ピクチャの表示
+        // pictureId, name, origin, x, y, scaleX, scaleY, opacity, blendMode
+        $gameScreen.showPicture(pictureId, picture, origin, x, y, scaleX, scaleY, opacity, blendMode);
     }
 }
 
@@ -1471,10 +1531,83 @@ if (pShowAboveWindow) {
             this._messagePictureContainer.addChild(new Sprite_Picture(pPictureId + i + 1));
         }
     };
+
+    // -----------------------------------------------------------------------
+    // ピクチャ表示時、文章の横幅を制限
+    // -----------------------------------------------------------------------
+    if (pLimitMessageWidth) {
+        // サイズ調整
+        let mTextScale = null;
+
+        /**
+         * ●メッセージ開始
+         */
+        const _Window_Message_startMessage = Window_Message.prototype.startMessage;
+        Window_Message.prototype.startMessage = function() {
+            // 初期化
+            mTextScale = null;
+
+            // 表示中のピクチャがない場合は即終了
+            if (!mPictureData) {
+                _Window_Message_startMessage.apply(this, arguments);
+                return;
+            }
+
+            // 文章情報を取得
+            const text = $gameMessage.allText();
+            const textState = this.createTextState(text, 0, 0, 0);
+
+            // 全行を確認して最大の横幅を求める。
+            let maxWidth = 0;
+            const lineTexts = textState.text.split("\n");
+            for (const lineText of lineTexts) {
+                maxWidth = Math.max(maxWidth, this.contents.measureTextWidth(lineText));
+            }
+
+            // 文章の横幅を元に縮小率を求める。
+            if (maxWidth > pLimitMessageWidth) {
+                mTextScale = pLimitMessageWidth / maxWidth;
+            }
+
+            _Window_Message_startMessage.apply(this, arguments);
+        };
+
+        // Window_Message.prototype.processNewLine = function(textState) {
+        //     this._lineShowFast = false;
+        //     Window_Base.prototype.processNewLine.call(this, textState);
+        //     if (this.needsNewPage(textState)) {
+        //         this.startPause();
+        //     }
+        // };
+
+        /*
+        * Window_Message.prototype.textWidthが未定義の場合は事前に定義
+        * ※これをしておかないと以後のWindow_Base側への追記が反映されない。
+        */
+        if (Window_Message.prototype.textWidth == Window_Base.prototype.textWidth) {
+            Window_Message.prototype.textWidth = function(text,) {
+                return Window_Base.prototype.textWidth.apply(this, arguments);
+            }
+        }
+
+        /**
+         * ●文章の横幅を取得
+         */
+        const _Window_Message_textWidth = Window_Message.prototype.textWidth;
+        Window_Message.prototype.textWidth = function(text) {
+            let width = _Window_Message_textWidth.apply(this, arguments);
+
+            if (mTextScale) {
+                return width * mTextScale;
+            }
+
+            return width;
+        };
+    }
 }
 
 // ----------------------------------------------------------------------------
-// メッセージをピクチャより下に表示
+// ピクチャをメッセージより下に表示
 // ----------------------------------------------------------------------------
 
 if (pShowBelowMessages) {
@@ -1524,9 +1657,9 @@ if (pShowBelowMessages) {
     };
 
     /*
-    * Window_Message.prototype.closeが未定義の場合は事前に定義
-    * ※これをしておかないと以後のWindow_Base側への追記が反映されない。
-    */
+     * Window_Message.prototype.closeが未定義の場合は事前に定義
+     * ※これをしておかないと以後のWindow_Base側への追記が反映されない。
+     */
     if (Window_Message.prototype.close == Window_Base.prototype.close) {
         Window_Message.prototype.close = function() {
             Window_Base.prototype.close.apply(this, arguments);
