@@ -51,6 +51,7 @@
  * @type select
  * @option home @value home
  * @option current @value current
+ * @default home
  * @desc Coordinates used for judging. In the case of a home, it will no longer be affected by levitation or other performances.
  */
 /*~struct~Range:
@@ -137,6 +138,7 @@
  * @type select
  * @option ホーム座標 @value home
  * @option 現在座標 @value current
+ * @default home
  * @desc 判定に使用する座標です。ホーム座標の場合、浮遊などの移動演出に左右されなくなります。
  */
 /*~struct~Range:ja
