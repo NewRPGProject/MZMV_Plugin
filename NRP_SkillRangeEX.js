@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.072 Extends the effective range of skills and items.
+ * @plugindesc v1.08 Extends the effective range of skills and items.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_VisualTurn
  * @orderBefore NRP_DynamicAnimationMZ
@@ -46,6 +46,12 @@
  * @default ["{\"name\":\"縦\",\"id\":\"vertical\",\"rangeIf\":\"40 >= Math.abs(b.x - c.x)\",\"screenAnimationX\":\"b.x\",\"screenAnimationY\":\"\",\"mainTargetAllIf\":\"c1._battler.isEnemy() ? c1.x > c2.x : c1.x < c2.x\",\"noSide\":\"false\"}","{\"name\":\"横\",\"id\":\"horizontal\",\"rangeIf\":\"40 >= Math.abs(b.y - b.height / 2 - (c.y - c.height / 2))\",\"screenAnimationX\":\"\",\"screenAnimationY\":\"b.y - b.height / 2\",\"mainTargetAllIf\":\"c1._battler.isEnemy() ? c1.y > c2.y : c1.y < c2.y\",\"noSide\":\"false\"}","{\"name\":\"グループ\",\"id\":\"group\",\"rangeIf\":\"b._battler.isEnemy() ? b._battler.enemyId() == c._battler.enemyId() : true\",\"screenAnimationX\":\"\",\"screenAnimationY\":\"\",\"mainTargetAllIf\":\"\",\"noSide\":\"false\"}","{\"name\":\"円\",\"id\":\"circle\",\"rangeIf\":\"100**2 >= Math.max(Math.abs(c.x - b.x) - c.width / 2, 0)**2 + Math.max(Math.abs(c.y - c.height / 2 - (b.y - b.height / 2)) - c.height / 2, 0)**2\",\"screenAnimationX\":\"b.x\",\"screenAnimationY\":\"b.y - b.height / 2\",\"mainTargetAllIf\":\"(c1.x - a.x)**2 + (c1.y - a.y)**2 < (c2.x - a.x)**2 + (c2.y - a.y)**2\",\"noSide\":\"false\"}","{\"name\":\"十字\",\"id\":\"cross\",\"rangeIf\":\"40 >= Math.abs(b.x - c.x) || 40 >= Math.abs(b.y - b.height / 2 - (c.y - c.height / 2))\",\"screenAnimationX\":\"b.x\",\"screenAnimationY\":\"b.y - b.height / 2\",\"mainTargetAllIf\":\"\",\"noSide\":\"false\"}","{\"name\":\"直線\",\"id\":\"line\",\"rangeIf\":\"40 >= Math.abs(a.y - a.height / 2 + (b.y - b.height / 2 - (a.y - a.height / 2)) / (b.x - a.x) * (c.x - a.x) - (c.y - c.height / 2))\",\"screenAnimationX\":\"\",\"screenAnimationY\":\"\",\"mainTargetAllIf\":\"\",\"noSide\":\"false\"}","{\"name\":\"自分周辺\",\"id\":\"around\",\"rangeIf\":\"250**2 >= Math.max(Math.abs(c.x - a.x) - c.width / 2, 0)**2 + Math.max(Math.abs(c.y - c.height / 2 - (a.y - a.height / 2)) - c.height / 2, 0)**2\",\"screenAnimationX\":\"a.x\",\"screenAnimationY\":\"a.y - a.height / 2\",\"mainTargetAllIf\":\"\",\"noSide\":\"false\"}","{\"name\":\"敵味方全員\",\"id\":\"all\",\"rangeIf\":\"true\",\"screenAnimationX\":\"\",\"screenAnimationY\":\"\",\"mainTargetAllIf\":\"\",\"noSide\":\"true\"}","{\"name\":\"自分以外\",\"id\":\"allOther\",\"rangeIf\":\"a != c\",\"screenAnimationX\":\"\",\"screenAnimationY\":\"\",\"mainTargetAllIf\":\"\",\"noSide\":\"true\"}","{\"name\":\"ＬＶ５の倍数\",\"id\":\"lv5\",\"rangeIf\":\"c._battler.level % 5 == 0\",\"screenAnimationX\":\"\",\"screenAnimationY\":\"\",\"mainTargetAllIf\":\"\",\"noSide\":\"false\"}"]
  * @desc List of defined ranges.
  * New ranges can be added.
+ * 
+ * @param baseCoordinate
+ * @type select
+ * @option home @value home
+ * @option current @value current
+ * @desc Coordinates used for judging. In the case of a home, it will no longer be affected by levitation or other performances.
  */
 /*~struct~Range:
  * @param name
@@ -85,7 +91,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.072 スキル及びアイテムの効果範囲を拡張します。
+ * @plugindesc v1.08 スキル及びアイテムの効果範囲を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_VisualTurn
  * @orderBefore NRP_DynamicAnimationMZ
@@ -125,6 +131,13 @@
  * @default ["{\"name\":\"縦\",\"id\":\"vertical\",\"rangeIf\":\"40 >= Math.abs(b.x - c.x)\",\"screenAnimationX\":\"b.x\",\"screenAnimationY\":\"\",\"mainTargetAllIf\":\"c1._battler.isEnemy() ? c1.x > c2.x : c1.x < c2.x\",\"noSide\":\"false\"}","{\"name\":\"横\",\"id\":\"horizontal\",\"rangeIf\":\"40 >= Math.abs(b.y - b.height / 2 - (c.y - c.height / 2))\",\"screenAnimationX\":\"\",\"screenAnimationY\":\"b.y - b.height / 2\",\"mainTargetAllIf\":\"c1._battler.isEnemy() ? c1.y > c2.y : c1.y < c2.y\",\"noSide\":\"false\"}","{\"name\":\"グループ\",\"id\":\"group\",\"rangeIf\":\"b._battler.isEnemy() ? b._battler.enemyId() == c._battler.enemyId() : true\",\"screenAnimationX\":\"\",\"screenAnimationY\":\"\",\"mainTargetAllIf\":\"\",\"noSide\":\"false\"}","{\"name\":\"円\",\"id\":\"circle\",\"rangeIf\":\"100**2 >= Math.max(Math.abs(c.x - b.x) - c.width / 2, 0)**2 + Math.max(Math.abs(c.y - c.height / 2 - (b.y - b.height / 2)) - c.height / 2, 0)**2\",\"screenAnimationX\":\"b.x\",\"screenAnimationY\":\"b.y - b.height / 2\",\"mainTargetAllIf\":\"(c1.x - a.x)**2 + (c1.y - a.y)**2 < (c2.x - a.x)**2 + (c2.y - a.y)**2\",\"noSide\":\"false\"}","{\"name\":\"十字\",\"id\":\"cross\",\"rangeIf\":\"40 >= Math.abs(b.x - c.x) || 40 >= Math.abs(b.y - b.height / 2 - (c.y - c.height / 2))\",\"screenAnimationX\":\"b.x\",\"screenAnimationY\":\"b.y - b.height / 2\",\"mainTargetAllIf\":\"\",\"noSide\":\"false\"}","{\"name\":\"直線\",\"id\":\"line\",\"rangeIf\":\"40 >= Math.abs(a.y - a.height / 2 + (b.y - b.height / 2 - (a.y - a.height / 2)) / (b.x - a.x) * (c.x - a.x) - (c.y - c.height / 2))\",\"screenAnimationX\":\"\",\"screenAnimationY\":\"\",\"mainTargetAllIf\":\"\",\"noSide\":\"false\"}","{\"name\":\"自分周辺\",\"id\":\"around\",\"rangeIf\":\"250**2 >= Math.max(Math.abs(c.x - a.x) - c.width / 2, 0)**2 + Math.max(Math.abs(c.y - c.height / 2 - (a.y - a.height / 2)) - c.height / 2, 0)**2\",\"screenAnimationX\":\"a.x\",\"screenAnimationY\":\"a.y - a.height / 2\",\"mainTargetAllIf\":\"\",\"noSide\":\"false\"}","{\"name\":\"敵味方全員\",\"id\":\"all\",\"rangeIf\":\"true\",\"screenAnimationX\":\"\",\"screenAnimationY\":\"\",\"mainTargetAllIf\":\"\",\"noSide\":\"true\"}","{\"name\":\"自分以外\",\"id\":\"allOther\",\"rangeIf\":\"a != c\",\"screenAnimationX\":\"\",\"screenAnimationY\":\"\",\"mainTargetAllIf\":\"\",\"noSide\":\"true\"}","{\"name\":\"ＬＶ５の倍数\",\"id\":\"lv5\",\"rangeIf\":\"c._battler.level % 5 == 0\",\"screenAnimationX\":\"\",\"screenAnimationY\":\"\",\"mainTargetAllIf\":\"\",\"noSide\":\"false\"}"]
  * @desc 定義された効果範囲の一覧です。
  * 新しい範囲を追加することも可能です。
+ * 
+ * @param baseCoordinate
+ * @text 基準座標
+ * @type select
+ * @option ホーム座標 @value home
+ * @option 現在座標 @value current
+ * @desc 判定に使用する座標です。ホーム座標の場合、浮遊などの移動演出に左右されなくなります。
  */
 /*~struct~Range:ja
  * @param name
@@ -183,13 +196,19 @@ function parseStruct(arg) {
 
     return ret;
 }
-
 function toBoolean(val) {
     return (val == true || val == "true") ? true : false;
+}
+function setDefault(str, def) {
+    if (str == undefined || str == "") {
+        return def;
+    }
+    return str;
 }
 
 const parameters = PluginManager.parameters("NRP_SkillRangeEX");
 const pRangeList = parseStruct(parameters["rangeList"]);
+const pBaseCoordinate = setDefault(parameters["baseCoordinate"]);
 
 // 主対象保持用
 var mainTarget;
@@ -477,6 +496,10 @@ function setActorSpriteSize(sprite) {
     }
 }
 
+//-----------------------------------------------------------------------------
+// Game_Action
+//-----------------------------------------------------------------------------
+
 /**
  * ●本来は連続効果を処理するための関数っぽいですが、
  * 競合の関係でここの前方に、範囲拡張処理を記述します。
@@ -488,6 +511,10 @@ Game_Action.prototype.repeatTargets = function(targets) {
 
     return _Game_Action_repeatTargets.call(this, targets);
 }
+
+//-----------------------------------------------------------------------------
+// Sprite_Animation
+//-----------------------------------------------------------------------------
 
 if (Utils.RPGMAKER_NAME == "MV") {
     /**
@@ -668,6 +695,34 @@ Sprite_Animation.prototype.targetPosition = function(renderer) {
     return pos;
 };
 
+//-----------------------------------------------------------------------------
+// Sprite_Battler
+//-----------------------------------------------------------------------------
+
+/**
+ * ●参照するＸ座標
+ */
+Sprite_Battler.prototype.srX = function() {
+    if (pBaseCoordinate == "current") {
+        return this.x;
+    }
+    return this._homeX;
+};
+
+/**
+ * ●参照するＹ座標
+ */
+Sprite_Battler.prototype.srY = function() {
+    if (pBaseCoordinate == "current") {
+        return this.y;
+    }
+    return this._homeY;
+};
+
+//-----------------------------------------------------------------------------
+// Window_BattleActor
+//-----------------------------------------------------------------------------
+
 /**
  * ●味方の選択時
  */
@@ -711,6 +766,10 @@ Window_BattleActor.prototype.hide = function() {
     // 無差別技を想定し、敵側の選択も解除しておく
     $gameTroop.select(null);
 };
+
+//-----------------------------------------------------------------------------
+// Window_BattleEnemy
+//-----------------------------------------------------------------------------
 
 /**
  * ●敵の選択時
