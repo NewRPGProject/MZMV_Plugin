@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Implement an appearance direction at the start of the battle.
+ * @plugindesc v1.01 Implement an appearance direction at the start of the battle.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @url http://newrpg.seesaa.net/article/485942538.html
@@ -91,7 +91,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 戦闘開始時に登場演出を実行します。
+ * @plugindesc v1.01 戦闘開始時に登場演出を実行します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @url http://newrpg.seesaa.net/article/485942538.html
@@ -218,6 +218,10 @@ Game_Unit.prototype.onBattleStart = function(advantageous) {
         // 登場演出
         BattleManager._spriteset.enemiesAppear();
     }
+
+    // アクター位置の自動設定を禁止解除
+    // ※DynamicMotionで参照する値
+    BattleManager._noUpdateTargetPosition = false;
 };
 
 //-----------------------------------------------------------------------------
