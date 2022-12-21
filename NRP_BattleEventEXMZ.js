@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.041 Extends the functionality of battle events.
+ * @plugindesc v1.05 Extends the functionality of battle events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_EnemyRoutineKai
  * @url http://newrpg.seesaa.net/article/477489099.html
@@ -210,7 +210,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.041 バトルイベントの機能を拡張します。
+ * @plugindesc v1.05 バトルイベントの機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_EnemyRoutineKai
  * @url http://newrpg.seesaa.net/article/477489099.html
@@ -738,14 +738,12 @@ Window_BattleLog.prototype.startAction = function(subject, action, targets) {
             return;
         }
     }
-
     const item = action.item();
     // スキルメモ欄に<NoStartAction>が設定されているなら開始演出を省略
     if (item.meta.NoStartAction) {
-        // アニメーションとウェイトだけを残す
-        this.push('showAnimation', subject, targets.clone(), item.animationId);
-        var numMethods = this._methods.length;
-        if (this._methods.length === numMethods) {
+        // アニメーションが設定されている場合は、アニメーションとウェイトだけを残す
+        if (item.animationId) {
+            this.push('showAnimation', subject, targets.clone(), item.animationId);
             this.push('wait');
         }
         return;
@@ -753,6 +751,25 @@ Window_BattleLog.prototype.startAction = function(subject, action, targets) {
     
     // 元処理実行
     _Window_BattleLog_startAction.apply(this, arguments);
+};
+
+/**
+ * ●アクション終了処理
+ */
+const _Window_BattleLog_endAction = Window_BattleLog.prototype.endAction;
+Window_BattleLog.prototype.endAction = function(subject) {
+    const action = BattleManager._action;
+    if (action) {
+        const item = action.item();
+        // スキルメモ欄に<NoStartAction>が設定されているなら終了演出を省略
+        // ただし、アニメーションが未設定の場合のみ
+        if (item.meta.NoStartAction && !item.animationId) {
+            return;
+        }
+    }
+
+    // 元処理実行
+    _Window_BattleLog_endAction.apply(this, arguments);
 };
 
 /**

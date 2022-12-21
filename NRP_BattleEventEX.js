@@ -2,7 +2,7 @@
 // NRP_BattleEventEX.js
 //=============================================================================
 /*:
- * @plugindesc v1.051 Extends the functionality of battle events.
+ * @plugindesc v1.06 Extends the functionality of battle events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help The following enhancements have been made to the battle Event.
@@ -86,7 +86,7 @@
  */
 
 /*:ja
- * @plugindesc v1.051 バトルイベントの機能を拡張します。
+ * @plugindesc v1.06 バトルイベントの機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help 以下の調整によって、バトルイベントの機能を拡張します。
@@ -347,15 +347,14 @@ BattleManager.getNextSubject = function() {
 /**
  * ●アクション開始メッセージ＆演出
  */
-var _Window_BattleLog_startAction = Window_BattleLog.prototype.startAction;
+const _Window_BattleLog_startAction = Window_BattleLog.prototype.startAction;
 Window_BattleLog.prototype.startAction = function(subject, action, targets) {
-    var item = action.item();
+    const item = action.item();
     // スキルメモ欄に<NoStartAction>が設定されているなら開始演出を省略
     if (item.meta.NoStartAction) {
-        // アニメーションとウェイトだけを残す
-        this.push('showAnimation', subject, targets.clone(), item.animationId);
-        var numMethods = this._methods.length;
-        if (this._methods.length === numMethods) {
+        // アニメーションが設定されている場合は、アニメーションとウェイトだけを残す
+        if (item.animationId) {
+            this.push('showAnimation', subject, targets.clone(), item.animationId);
             this.push('wait');
         }
         return;
@@ -363,6 +362,25 @@ Window_BattleLog.prototype.startAction = function(subject, action, targets) {
     
     // 元処理実行
     _Window_BattleLog_startAction.apply(this, arguments);
+};
+
+/**
+ * ●アクション終了処理
+ */
+const _Window_BattleLog_endAction = Window_BattleLog.prototype.endAction;
+Window_BattleLog.prototype.endAction = function(subject) {
+    const action = BattleManager._action;
+    if (action) {
+        const item = action.item();
+        // スキルメモ欄に<NoStartAction>が設定されているなら終了演出を省略
+        // ただし、アニメーションが未設定の場合のみ
+        if (item.meta.NoStartAction && !item.animationId) {
+            return;
+        }
+    }
+
+    // 元処理実行
+    _Window_BattleLog_endAction.apply(this, arguments);
 };
 
 /**
