@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.04 Extends the functionality of the bushes attribute.
+ * @plugindesc v1.041 Extends the functionality of the bushes attribute.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore OverpassTile
  * @url http://newrpg.seesaa.net/article/481013577.html
@@ -285,7 +285,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 茂み属性の機能を拡張します。
+ * @plugindesc v1.041 茂み属性の機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore OverpassTile
  * @url http://newrpg.seesaa.net/article/481013577.html
@@ -864,6 +864,8 @@ Game_Interpreter.prototype.characterAndFollower = function(param) {
 // DataManager
 //-----------------------------------------------------------------------------
 
+let mLoadFlg = false;
+
 /**
  * ●ロード時、セーブデータの展開
  */
@@ -871,12 +873,32 @@ const _DataManager_extractSaveContents = DataManager.extractSaveContents;
 DataManager.extractSaveContents = function(contents) {
     _DataManager_extractSaveContents.apply(this, arguments);
 
-    // タイル情報に反映
-    setTilesetInfo();
-    // 足元が茂みなら反映
-    if ($gameMap.isBush($gamePlayer.x, $gamePlayer.y)) {
-        $gamePlayer.refreshBushDepth();
+    // ロード時はGame_Map.prototype.setupEventsを通らないので、
+    // ここでフラグを立てて、$dataMapの読込後に実行
+    mLoadFlg = true;
+};
+
+//-----------------------------------------------------------------------------
+// Scene_Map
+//-----------------------------------------------------------------------------
+
+/**
+ * ●マップロード時
+ */
+const _Scene_Map_onMapLoaded = Scene_Map.prototype.onMapLoaded;
+Scene_Map.prototype.onMapLoaded = function() {
+    if (mLoadFlg) {
+        mLoadFlg = false;
+
+        // タイル情報に反映
+        setTilesetInfo();
+        // 足元が茂みなら反映
+        if ($gameMap.isBush($gamePlayer.x, $gamePlayer.y)) {
+            $gamePlayer.refreshBushDepth();
+        }
     }
+
+    _Scene_Map_onMapLoaded.apply(this, arguments);
 };
 
 //-----------------------------------------------------------------------------
