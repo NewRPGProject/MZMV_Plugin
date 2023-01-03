@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v2.01 Gives an afterimage effect to the battler or character.
+ * @plugindesc v2.02 Gives an afterimage effect to the battler or character.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483120023.html
  *
@@ -132,7 +132,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.01 バトラー＆キャラクターに残像効果を付与します。
+ * @plugindesc v2.02 バトラー＆キャラクターに残像効果を付与します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483120023.html
  *
@@ -346,7 +346,14 @@ Battler_Afterimage.prototype.start = function() {
     // 合成方法
     this._blendMode = pBlendMode;
 
-    const battlerSprite = getSpriteset().findTargetSprite(this.battler());
+    const spriteset = getSpriteset();
+    let battlerSprite = spriteset.findTargetSprite(this.battler());
+    // タイミングによってはアクターを取得できないことがあるので、更新して再取得
+    if (!battlerSprite && this.battler().isActor() && spriteset.updateActors) {
+        spriteset.updateActors();
+        battlerSprite = spriteset.findTargetSprite(this.battler());
+    }
+
     battlerSprite._afterimages = [];
     battlerSprite._makeAfterimage = true;
 
