@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.001 Set detailed settings for battleback and encounter rates.
+ * @plugindesc v1.01 Set detailed settings for battleback and encounter rates.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481820874.html
  *
@@ -117,6 +117,15 @@
  * @desc Specify the Tile Id to be targeted.
  * Multiple ids can be specified. (Example: 1,3~5)
  * 
+ * @param VehicleType
+ * @parent <Condition>
+ * @type select
+ * @option walk @value
+ * @option boat
+ * @option ship
+ * @option airship
+ * @desc The type of vehicle to be covered.
+ * 
  * @param <Contents>
  * 
  * @param EncounterRate
@@ -142,7 +151,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.001 戦闘背景やエンカウント率を詳細設定。
+ * @plugindesc v1.01 戦闘背景やエンカウント率を詳細設定。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481820874.html
  *
@@ -269,6 +278,16 @@
  * @desc 対象とするタイルＩＤを指定します。
  * 複数指定も可能です。（例：1,3~5）
  * 
+ * @param VehicleType
+ * @text 乗物タイプ
+ * @parent <Condition>
+ * @type select
+ * @option 歩行 @value
+ * @option 小型船 @value boat
+ * @option 大型船 @value ship
+ * @option 飛行船 @value airship
+ * @desc 対象とする乗物のタイプを指定します。
+ * 
  * @param <Contents>
  * @text ＜内容＞
  * 
@@ -391,6 +410,7 @@ for (const setting of pSettingList) {
     setting.regionIds = makeArray(setting.RegionId);
     setting.autotileTypes = makeArray(setting.AutotileType);
     setting.tileIds = makeArray(setting.TileId);
+    setting.vehicleType = setDefault(setting.VehicleType);
     setting.encounterRate = toNumber(setting.EncounterRate);
     setting.battleback1 = setDefault(setting.Battleback1);
     setting.battleback2 = setDefault(setting.Battleback2);
@@ -459,6 +479,34 @@ Sprite_Battleback.prototype.normalBattleback2Name = function() {
     }
     
     return _Sprite_Battleback_normalBattleback2Name.apply(this, arguments);
+};
+
+/**
+ * ●戦闘背景１（乗物）
+ */
+const _Sprite_Battleback_shipBattleback1Name = Sprite_Battleback.prototype.shipBattleback1Name;
+Sprite_Battleback.prototype.shipBattleback1Name = function() {
+    const setting = getMatchSetting($gamePlayer.x, $gamePlayer.y);
+    // 条件設定が取得できた場合
+    if (setting && setting.battleback1 != undefined) {
+        return setting.battleback1;
+    }
+
+    return _Sprite_Battleback_shipBattleback1Name.apply(this, arguments);
+};
+
+/**
+ * ●戦闘背景２（乗物）
+ */
+const _Sprite_Battleback_shipBattleback2Name = Sprite_Battleback.prototype.shipBattleback2Name;
+Sprite_Battleback.prototype.shipBattleback2Name = function() {
+    const setting = getMatchSetting($gamePlayer.x, $gamePlayer.y);
+    // 条件設定が取得できた場合
+    if (setting && setting.battleback2 != undefined) {
+        return setting.battleback2;
+    }
+
+    return _Sprite_Battleback_shipBattleback2Name.apply(this, arguments);
 };
 
 //----------------------------------------
@@ -542,7 +590,7 @@ function isValidSetting(settingId, tileset) {
 //----------------------------------------
 
 /**
- * ●現在のキャラクター位置に一致するエンカウント率設定を取得する。
+ * ●現在のキャラクター位置に一致する地形設定を取得する。
  */
 function getMatchSetting(x, y) {
     const tileset = $gameMap.tileset();
@@ -613,7 +661,7 @@ function getMatchSetting(x, y) {
 
         // タイルＩＤの一致を確認
         if  (setting.tileIds && setting.tileIds.length > 0) {
-            // 未取得ならタイルＩｄを取得
+            // 未取得ならタイルＩＤを取得
             if (tileId === undefined) {
                 const layerNo = getValidLayer(x, y);
                 tileId = $gameMap.tileId(x, y, layerNo);
@@ -623,6 +671,14 @@ function getMatchSetting(x, y) {
                 return tileId != id;
             });
             if (noMatch) {
+                continue;
+            }
+        }
+
+        // 乗物タイプの一致を確認
+        if (setting.vehicleType) {
+            // 乗物タイプが不一致なら次へ
+            if (setting.vehicleType != $gamePlayer._vehicleType) {
                 continue;
             }
         }
