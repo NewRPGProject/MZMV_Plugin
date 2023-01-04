@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.002 Display parallaxes freely.
+ * @plugindesc v1.01 Display parallaxes freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488413806.html
  *
@@ -352,7 +352,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.002 自在に遠景（近景）を表示します。
+ * @plugindesc v1.01 自在に遠景（近景）を表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488413806.html
  *
@@ -1081,8 +1081,14 @@ ParallaxPlus.prototype.setSize = function() {
 ParallaxPlus.prototype.setMapPosition = function(diffX, diffY) {
     // マップＸ座標の指定がある場合は補正
     if (this.mapX != null) {
+        let displayX = 0;
+        // 非戦闘時はマップ上の表示座標を取得
+        if (!$gameParty.inBattle()) {
+            displayX = $gameMap.displayX();
+        }
+
         // 表示座標 = 配置座標 - 現在の画面座標
-        this.x = (this.mapX - $gameMap.displayX()) * $gameMap.tileWidth() + this.shiftX;
+        this.x = (this.mapX - displayX) * $gameMap.tileWidth() + this.shiftX;
         // 横ループマップの場合
         if (!$gameParty.inBattle() && $gameMap.isLoopHorizontal()) {
             const mapWidth = $gameMap.width() * $gameMap.tileWidth();
@@ -1096,8 +1102,14 @@ ParallaxPlus.prototype.setMapPosition = function(diffX, diffY) {
     }
     // マップＹ座標の指定がある場合は補正
     if (this.mapY != null) {
+        let displayY = 0;
+        // 非戦闘時はマップ上の表示座標を取得
+        if (!$gameParty.inBattle()) {
+            displayY = $gameMap.displayY();
+        }
+
         // 表示座標 = 配置座標 - 現在の画面座標
-        this.y = (this.mapY - $gameMap.displayY()) * $gameMap.tileHeight() + this.shiftY;
+        this.y = (this.mapY - displayY) * $gameMap.tileHeight() + this.shiftY;
         // 縦ループマップの場合
         if (!$gameParty.inBattle() && $gameMap.isLoopVertical()) {
             const mapHeight = $gameMap.height() * $gameMap.tileHeight();
