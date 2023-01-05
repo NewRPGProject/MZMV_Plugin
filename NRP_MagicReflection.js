@@ -32,6 +32,7 @@
  * 
  * <MagicRefrection:[SettingId]>
  * 
+ * ※Do not include [].
  * ※Unlike the standard, the hit type will be ignored.
  * 
  * ■Note of skills
@@ -164,6 +165,7 @@
  * 
  * <MagicRefrection:[設定ＩＤ]>
  * 
+ * ※[]は含めないでください。
  * ※標準とは異なり、命中タイプは無視するようになります。
  * 
  * ■スキルのメモ欄
