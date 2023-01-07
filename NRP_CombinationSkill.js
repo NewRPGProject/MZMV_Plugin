@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.371 Creates a combination skill.
+ * @plugindesc v1.38 Creates a combination skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/474570191.html
  * 
@@ -164,7 +164,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.371 合体技を実現します。
+ * @plugindesc v1.38 合体技を実現します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/474570191.html
  *
@@ -1394,6 +1394,32 @@ Window_SkillList.prototype.makeItemList = function() {
 
     // 元処理実行
     _Window_SkillList_makeItemList.call(this);
+};
+
+/*
+ * Window_BattleSkill.prototype.makeItemListが未定義の場合は事前に定義
+ * ※これをしておかないと以後のWindow_SkillList側への追記が反映されない。
+ */
+if (Window_BattleSkill.prototype.makeItemList == Window_SkillList.prototype.makeItemList) {
+    Window_BattleSkill.prototype.makeItemList = function() {
+        Window_SkillList.prototype.makeItemList.apply(this, arguments);
+    }
+}
+
+/**
+ * ●スキル選択候補表示（戦闘時）
+ */
+const _Window_BattleSkill_makeItemList = Window_BattleSkill.prototype.makeItemList;
+Window_BattleSkill.prototype.makeItemList = function() {
+    // スキルタイプの指定がない場合
+    if (!this._stypeId && this._actor) {
+        // スキルタイプの区別なく表示
+        this._data = this._actor.skills();
+        return;
+    }
+
+    // 元処理実行
+    _Window_BattleSkill_makeItemList.call(this);
 };
 
 /**
