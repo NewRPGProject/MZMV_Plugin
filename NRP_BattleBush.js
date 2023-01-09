@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Apply the bush effect to the battle background.
+ * @plugindesc v1.01 Apply the bush effect to the battle background.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_ShadowAndLevitate
  * @url http://newrpg.seesaa.net/article/486468229.html
@@ -18,7 +18,7 @@
  * -------------------------------------------------------------------
  * [Usage]
  * -------------------------------------------------------------------
- * Settings are made for each "battlebacks1" file.
+ * Settings are made for each "battlebacks" file.
  * Please specify the file in the "SettingList".
  * Separate settings can be made for actors and enemies.
  * 
@@ -142,6 +142,12 @@
  * @desc The battle background you want to set the bush effect.
  * If specified, the bush effect will be enabled.
  * 
+ * @param Battleback2
+ * @type file
+ * @dir img/battlebacks2
+ * @desc The battle background you want to set the bush effect.
+ * If specified, the bush effect will be enabled.
+ * 
  * @param <Actor Setting>
  * 
  * @param ActorBushDepth
@@ -177,7 +183,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 戦闘背景に茂み効果を適用します。
+ * @plugindesc v1.01 戦闘背景に茂み効果を適用します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_ShadowAndLevitate
  * @url http://newrpg.seesaa.net/article/486468229.html
@@ -191,7 +197,7 @@
  * -------------------------------------------------------------------
  * ■使用方法
  * -------------------------------------------------------------------
- * 設定は『battlebacks1（戦闘背景１）』のファイル毎に行います。
+ * 設定は『戦闘背景（battlebacks）』のファイル毎に行います。
  * 『設定リスト』にファイルを指定してください。
  * アクターと敵キャラで別々の設定も可能です。
  * 
@@ -329,6 +335,13 @@
  * @desc 茂み効果を設定する戦闘背景（下）です。
  * 指定すれば茂み効果が有効になります。
  * 
+ * @param Battleback2
+ * @text 戦闘背景２
+ * @type file
+ * @dir img/battlebacks2
+ * @desc 茂み効果を設定する戦闘背景（上）です。
+ * 指定すれば茂み効果が有効になります。
+ * 
  * @param <Actor Setting>
  * @text ＜アクターの設定＞
  * 
@@ -432,6 +445,7 @@ const pShadowOnlyAir = toBoolean(parameters["ShadowOnlyAir"], false);
  */
 for (const setting of pSettingList) {
     setting.battleback1 = setDefault(setting.Battleback1);
+    setting.battleback2 = setDefault(setting.Battleback2);
     setting.actorBushDepth = setDefault(setting.ActorBushDepth, pActorBushDepth);
     setting.actorBushOpacity = setDefault(setting.ActorBushOpacity, pActorBushOpacity);
     setting.enemyBushDepth = setDefault(setting.EnemyBushDepth, pEnemyBushDepth);
@@ -452,25 +466,44 @@ Spriteset_Battle.prototype.createBattleback = function() {
     _Spriteset_Battle_createBattleback.apply(this, arguments);
 
     // ＭＺとＭＶで取得先が異なる。
-    let battleBack1Name;
+    let battleback1Name;
+    let battleback2Name;
     // ＭＺ
     if (this._back1Sprite.battleback1Name) {
-        battleBack1Name = this._back1Sprite.battleback1Name();
+        battleback1Name = this._back1Sprite.battleback1Name();
+        battleback2Name = this._back2Sprite.battleback2Name();
     // ＭＶ
     } else if (this.battleback1Name) {
-        battleBack1Name = this.battleback1Name();
+        battleback1Name = this.battleback1Name();
+        battleback2Name = this.battleback2Name();
     }
 
     // 条件に一致する茂み情報を反映
-    const setting = getMatchSetting(battleBack1Name);
+    const setting = getMatchSetting(battleback1Name, battleback2Name);
     this._bushSetting = setting;
 };
 
 /**
- * ●戦闘背景１に一致する設定を取得する。
+ * ●戦闘背景に一致する設定を取得する。
  */
-function getMatchSetting(battleback1Name) {
-    return pSettingList.find(setting => setting.battleback1 == battleback1Name);
+function getMatchSetting(battleback1Name, battleback2Name) {
+    // 戦闘背景１、戦闘背景２の条件が一致するか？
+    const battlebackSettings = pSettingList.find(setting =>
+        isMatch(setting.battleback1, battleback1Name)
+        && isMatch(setting.battleback2, battleback2Name)
+    );
+    return battlebackSettings;
+}
+
+/**
+ * ●設定が一致するか確認
+ */
+function isMatch(settingValue, compareValue) {
+    // 設定値が存在しない場合は有効と判定
+    if (settingValue == null) {
+        return true;
+    }
+    return settingValue == compareValue;
 }
 
 //-----------------------------------------------------------------------------
