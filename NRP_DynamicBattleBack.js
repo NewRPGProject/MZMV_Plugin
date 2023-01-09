@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Display DynamicAnimation to match the battle background.
+ * @plugindesc v1.03 Display DynamicAnimation to match the battle background.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488123194.html
  *
@@ -65,9 +65,13 @@
 //-----------------------------------------------------------------------------
 // BattlebackSetting
 //-----------------------------------------------------------------------------
-/*~struct~BattlebackSetting:ja
+/*~struct~BattlebackSetting:
+ * @param Memo
+ * @type string
+ * @desc This is a memo for identification.
+ * It is not used for processing.
+ * 
  * @param <Condition>
- * @text ＜条件＞
  *
  * @param Battleback1
  * @parent <Condition>
@@ -102,7 +106,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 戦闘背景に合わせてDynamicAnimationを表示。
+ * @plugindesc v1.03 戦闘背景に合わせてDynamicAnimationを表示。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488123194.html
  *
@@ -160,6 +164,12 @@
 // BattlebackSetting
 //-----------------------------------------------------------------------------
 /*~struct~BattlebackSetting:ja
+ * @param Memo
+ * @text メモ
+ * @type string
+ * @desc 判別用のメモです。
+ * 分かりやすい名前を付けてください。
+ * 
  * @param <Condition>
  * @text ＜条件＞
  *
