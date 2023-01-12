@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Change the equipment slots at will.
+ * @plugindesc v1.04 Change the equipment slots at will.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489626316.html
  *
@@ -132,7 +132,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 装備スロットを自由に変更。
+ * @plugindesc v1.04 装備スロットを自由に変更。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489626316.html
  *
@@ -498,9 +498,13 @@ if (pPagingEquipmentType) {
      */
     const _Window_EquipSlot_cursorUp = Window_EquipSlot.prototype.cursorUp;
     Window_EquipSlot.prototype.cursorUp = function(wrap) {
-        // 移動先が現在のページの最小要素を下回っていた場合は末尾に移動
-        if (wrap && this._index - 1 < this.pageTopIndex()) {
-            this.select(this.pageLastIndex());
+        // 移動先が現在のページの最小要素を下回っていた場合
+        if (this._index - 1 < this.pageTopIndex()) {
+            // 連続移動でない場合は末尾に移動
+            if (wrap) {
+                this.select(this.pageLastIndex());
+            }
+            // 連続移動の場合は停止
             return;
         }
         _Window_EquipSlot_cursorUp.apply(this, arguments);
@@ -511,9 +515,13 @@ if (pPagingEquipmentType) {
      */
     const _Window_EquipSlot_cursorDown = Window_EquipSlot.prototype.cursorDown;
     Window_EquipSlot.prototype.cursorDown = function(wrap) {
-        // 移動先が現在のページの最大要素を超えていた場合は先頭に移動
-        if (wrap && this._index + 1 > this.pageLastIndex()) {
-            this.select(this.pageTopIndex());
+        // 移動先が現在のページの最大要素を超えていた場合
+        if (this._index + 1 > this.pageLastIndex()) {
+            // 連続移動でない場合は先頭に移動
+            if (wrap) {
+                this.select(this.pageTopIndex());
+            }
+            // 連続移動の場合は停止
             return;
         }
         _Window_EquipSlot_cursorDown.apply(this, arguments);
@@ -525,6 +533,7 @@ if (pPagingEquipmentType) {
     Window_EquipSlot.prototype.cursorRight = function(wrap) {
         // ページ切替前に表示上の位置を取得
         const posIndex = this.posIndex();
+        // 次のページへ
         this._pageNo++;
         // 最大ページを超えたら0ページへループ
         if (this._pageNo > this.maxPageNo()) {
@@ -547,6 +556,7 @@ if (pPagingEquipmentType) {
     Window_EquipSlot.prototype.cursorLeft = function(wrap) {
         // ページ切替前に表示上の位置を取得
         const posIndex = this.posIndex();
+        // 前のページヘ
         this._pageNo--;
         // マイナスになったら最大ページループ
         if (this._pageNo < 0) {
@@ -564,7 +574,7 @@ if (pPagingEquipmentType) {
     };
 
     /**
-     * 【上書】画面上のインデックス
+     * 【独自】画面上のインデックス
      */
     Window_EquipSlot.prototype.posIndex = function() {
         return this.index() - this.topIndex();
@@ -580,20 +590,12 @@ if (pPagingEquipmentType) {
         //-----------------------------------------------
         // ページ数を元に先頭のインデックスを求める。
         //-----------------------------------------------
-        // 先頭の装備タイプ
-        const topEquipType = mPagingEquipmentTypes[this._pageNo - 1];
-
-        // アクターの現装備タイプでループ
-        const slots = this._actor.equipSlots();
-        for (let i = 0; i < slots.length; i++) {
-            const slotId = slots[i];
-            // ページ切替する装備タイプがあれば、そこでインデックスを返す
-            if (slotId == topEquipType) {
-                return i
-            }
+        let index = 0;
+        // 各ページ毎の項目数を加算
+        for (let p = 0; p < this._pageNo; p++) {
+            index += this.pageItemsCount(p);
         }
-
-        return this.topRow() * this.maxCols();
+        return index;
     };
 
     /**
@@ -608,7 +610,15 @@ if (pPagingEquipmentType) {
      * 【独自】ページ末尾要素のインデックス
      */
     Window_EquipSlot.prototype.pageLastIndex = function() {
-        return this.topIndex() + this.maxVisibleItems() - 1;
+        return this.topIndex() + this.maxPageAllRows() - 1;
+    };
+
+    /**
+     * 【上書】スクロール計算用の縦幅
+     */
+    Window_EquipSlot.prototype.overallHeight = function() {
+        // ページ毎の行数で計算
+        return this.maxPageAllRows() * this.itemHeight();
     };
 
     /**
@@ -620,7 +630,16 @@ if (pPagingEquipmentType) {
         if (index > this.pageLastIndex()) {
             index = this.pageLastIndex();
         }
-        return _Window_EquipSlot_select.call(this, index);
+        _Window_EquipSlot_select.call(this, index);
+    };
+
+    /**
+     * ●スムース選択
+     */
+    Window_EquipSlot.prototype.smoothSelect = function(index) {
+        this.select(index);
+        // ↓相性が悪いようなので注釈化
+        // this.ensureCursorVisible(true);
     };
 
     /**
@@ -703,9 +722,9 @@ if (pPagingEquipmentType) {
     }
 
     /**
-     * 【上書】表示する項目数
+     * 【独自】スクロール分を含めたページ内の全行数
      */
-    Window_EquipSlot.prototype.maxVisibleItems = function() {
+    Window_EquipSlot.prototype.maxPageAllRows = function() {
         if (!this._actor) {
             return 0;
         }
@@ -716,8 +735,14 @@ if (pPagingEquipmentType) {
         let i = 0;
         for (i = topIndex; i < slots.length; i++) {
             const slotId = slots[i];
-            // ページ切替する装備タイプがあれば、そこでインデックスを返す
-            if (mPagingEquipmentTypes[this._pageNo] && mPagingEquipmentTypes[this._pageNo] == slotId) {
+
+            // ページ先頭のスロットＩＤは除外
+            if (slotId == slots[topIndex]) {
+                continue;
+
+            // 該当のスロットＩＤに対してページ切替を行うかどうか？
+            } else if (existPagingEquipmentType(this._pageNo, slotId)) {
+                // 切り替えるタイミングでのインデックス（i）を保持
                 break;
             }
         }
@@ -725,7 +750,32 @@ if (pPagingEquipmentType) {
     };
 
     /**
-     * 【上書】指定ページに表示する項目数
+     * 【上書】画面内に表示する項目数
+     */
+    Window_EquipSlot.prototype.maxVisibleItems = function() {
+        return this.maxPageAllRows();
+
+        // ↓スクロール対応用（未実装）
+        // ページ内に収まる行数とページ内の全行数の小さいほう
+        // return Math.min(this.maxPageRows(), this.maxPageAllRows());
+    };
+
+    /**
+     * ●該当のスロットＩＤに対してページ切替を行うかどうか？
+     */
+    function existPagingEquipmentType(pageNo, slotId) {
+        // 現在ページから最終ページまでをチェック
+        for (let i = pageNo; i < mPagingEquipmentTypes.length; i++) {
+            // ページ切替する装備タイプがあれば、そこでインデックスを返す
+            if (mPagingEquipmentTypes[i] && mPagingEquipmentTypes[i] == slotId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 【独自】指定ページに表示する項目数
      */
     Window_EquipSlot.prototype.pageItemsCount = function(pageNo) {
         if (!this._actor) {
@@ -739,7 +789,7 @@ if (pPagingEquipmentType) {
         for (let i = 0; i <= mPagingEquipmentTypes.length; i++) {
             pageSlots[i] = [];
         }
-
+        // アクターのスロット毎にループ
         for (const slot of slots) {
             let pushFlg = false;
 
@@ -757,8 +807,14 @@ if (pPagingEquipmentType) {
             }
         }
 
-        // 指定ページの件数を取得
-        return pageSlots[pageNo].length;
+        // 空のページは除去
+        const filterPageSlots = pageSlots.filter(pageSlot => pageSlot.length > 0);
+
+        // 有効なページなら指定ページの件数を取得
+        if (filterPageSlots[pageNo]) {
+            return filterPageSlots[pageNo].length;
+        }
+        return 0;
     };
 
     /**
