@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Display DynamicAnimation to match the battle background.
+ * @plugindesc v1.04 Display DynamicAnimation to match the battle background.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488123194.html
  *
@@ -61,6 +61,11 @@
  * @type struct<BattlebackSetting>[]
  * @default
  * @desc List of settings for each battle background.
+ * 
+ * @param WaitLoadImage
+ * @type boolean
+ * @default true
+ * @desc When displaying an image in a common event, wait for fade-in until image loading is complete.
  */
 //-----------------------------------------------------------------------------
 // BattlebackSetting
@@ -106,7 +111,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 戦闘背景に合わせてDynamicAnimationを表示。
+ * @plugindesc v1.04 戦闘背景に合わせてDynamicAnimationを表示。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488123194.html
  *
@@ -159,6 +164,13 @@
  * @type struct<BattlebackSetting>[]
  * @default
  * @desc 戦闘背景毎の設定一覧です。
+ * 
+ * @param WaitLoadImage
+ * @text 画像のロードを待つ
+ * @type boolean
+ * @default true
+ * @desc コモンイベント内で画像の表示を指定した場合、
+ * 画像の読込完了までフェードインを待ちます。
  */
 //-----------------------------------------------------------------------------
 // BattlebackSetting
@@ -252,6 +264,7 @@ function parseStruct2(arg) {
 const PLUGIN_NAME = "NRP_DynamicBattleBack";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pBattlebackSettingList = parseStruct2(parameters["BattlebackSettingList"]);
+const pWaitLoadImage = toBoolean(parameters["WaitLoadImage"], true);
 
 /**
  * ●効率化のため事前変換
@@ -360,6 +373,36 @@ Game_Troop.prototype.onBattleStart = function(advantageous) {
         this._interpreter.update();
     }
 };
+
+//-----------------------------------------------------------------------------
+// Scene_Battle
+//-----------------------------------------------------------------------------
+
+/**
+ * ●画像のロードを待つ
+ */
+if (pWaitLoadImage) {
+    /*
+    * Scene_Battle.prototype.updateFadeが未定義の場合は事前に定義
+    * ※これをしておかないと以後のGame_Unit側への追記が反映されない。
+    */
+    if (Scene_Battle.prototype.updateFade == Scene_Base.prototype.updateFade) {
+        Scene_Battle.prototype.updateFade = function() {
+            Scene_Base.prototype.updateFade.apply(this, arguments);
+        }
+    }
+
+    /**
+     * ●フェード処理の更新
+     */
+    const _Scene_Battle_updateFade = Scene_Battle.prototype.updateFade;
+    Scene_Battle.prototype.updateFade = function() {
+        if (!ImageManager.isReady()) {
+            return;
+        }
+        _Scene_Battle_updateFade.apply(this, arguments);
+    };
+}
 
 //-----------------------------------------------------------------------------
 // 共通
