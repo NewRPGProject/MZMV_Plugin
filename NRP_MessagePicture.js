@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.05 Display a picture when showing text.
+ * @plugindesc v1.06 Display a picture when showing text.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -378,7 +378,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.05 文章の表示時に立ち絵を表示する。
+ * @plugindesc v1.06 文章の表示時に立ち絵を表示する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -1610,7 +1610,7 @@ if (pShowAboveWindow) {
 // ピクチャをメッセージより下に表示
 // ----------------------------------------------------------------------------
 
-if (pShowBelowMessages) {
+if (pShowAboveWindow && pShowBelowMessages) {
     // /**
     //  * ●ウィンドウ生成
     //  */
@@ -1650,6 +1650,13 @@ if (pShowBelowMessages) {
     const _Window_Message_updatePlacement = Window_Message.prototype.updatePlacement;
     Window_Message.prototype.updatePlacement = function() {
         _Window_Message_updatePlacement.apply(this, arguments);
+
+        // シーンが戦闘とマップ以外の場合は対象外
+        // ※外部プラグインから両シーン以外からメッセージが呼び出されることを想定
+        if (!(SceneManager._scene instanceof Scene_Battle)
+                && !(SceneManager._scene instanceof Scene_Map)) {
+            return;
+        }
 
         // メッセージ用スプライトも移動
         this._contentsSprite.x = this.x + pAdjustMessageX;

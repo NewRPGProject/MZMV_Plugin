@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.002 Adjust the message window.
+ * @plugindesc v1.01 Adjust the message window.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -116,6 +116,10 @@
  * @dir img/system
  * @desc A mask image that applies semi-transparent processing to the window. For MZ only.
  * 
+ * @param NoMaskOpacity
+ * @parent MaskImage
+ * @desc The opacity of the message window if the mask could not be applied to it.
+ * 
  * @param FixIconY
  * @parent <MessageWindow>
  * @type boolean
@@ -146,7 +150,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.002 メッセージウィンドウを調整する。
+ * @plugindesc v1.01 メッセージウィンドウを調整する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -266,6 +270,11 @@
  * @desc ウィンドウに半透明処理を施すマスク画像です。
  * この機能はＭＺ専用です。
  * 
+ * @param NoMaskOpacity
+ * @parent MaskImage
+ * @text マスク対象外の不透明度
+ * @desc メッセージウィンドウにマスクを適用できなかった場合の不透明度です。
+ * 
  * @param FixIconY
  * @parent <MessageWindow>
  * @text アイコンのＹ座標修正
@@ -350,6 +359,7 @@ const pAdjustMessageY = toNumber(parameters["AdjustMessageY"], 0);
 const pMessageFontSize = setDefault(parameters["MessageFontSize"]);
 const pWindowOpacity = setDefault(parameters["WindowOpacity"]);
 const pMaskImage = setDefault(parameters["MaskImage"]);
+const pNoMaskOpacity = setDefault(parameters["NoMaskOpacity"]);
 const pFixIconY = toBoolean(parameters["FixIconY"]);
 const pNameBoxAdjustX = setDefault(parameters["NameBoxAdjustX"]);
 const pNameBoxAdjustY = setDefault(parameters["NameBoxAdjustY"]);
@@ -415,6 +425,8 @@ if (typeof Scene_Message !== "undefined") {
 // Window_Message
 // ----------------------------------------------------------------------------
 
+let mInitialHeight = 0;
+
 /**
  * ●メッセージウィンドウの初期化
  */
@@ -438,6 +450,38 @@ Window_Message.prototype.initialize = function(rect) {
     // メッセージ用スプライトを位置調整
     this.contentsSprite().x += pAdjustMessageX;
     this.contentsSprite().y += pAdjustMessageY;
+
+    mInitialHeight = this.height;
+};
+
+/*
+ * Window_Message.prototype.createContentsが未定義の場合は事前に定義
+ * ※これをしておかないと以後のWindow_Base側への追記が反映されない。
+ */
+if (Window_Message.prototype.createContents == Window_Base.prototype.createContents) {
+    Window_Message.prototype.createContents = function() {
+        Window_Base.prototype.createContents.apply(this, arguments);
+    }
+}
+
+/**
+ * ●コンテンツ作成
+ */
+const _Window_Message_createContents = Window_Message.prototype.createContents;
+Window_Message.prototype.createContents = function() {
+    _Window_Message_createContents.apply(this, arguments);
+
+    // 縦幅が変更されている場合はマスクの対象外なのでクリアする。
+    // ※想定の縦幅以外はうまく表示できないため
+    if (this._maskSprite && mInitialHeight != this.height) {
+        this.backSprite().mask = null;
+        this._maskSprite.visible = false;
+
+        // マスク対象外の不透明度
+        if (pNoMaskOpacity != null) {
+            this.backOpacity = eval(pNoMaskOpacity);
+        }
+    }
 };
 
 /**
