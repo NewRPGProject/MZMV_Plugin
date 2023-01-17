@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.04 Display DynamicAnimation to match the battle background.
+ * @plugindesc v1.05 Display DynamicAnimation to match the battle background.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488123194.html
  *
@@ -62,6 +62,11 @@
  * @default
  * @desc List of settings for each battle background.
  * 
+ * @param CommonCommonEvent
+ * @type common_event
+ * @desc A common event that is executed at battle start.
+ * It is executed before each common event.
+ * 
  * @param WaitLoadImage
  * @type boolean
  * @default true
@@ -111,7 +116,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 戦闘背景に合わせてDynamicAnimationを表示。
+ * @plugindesc v1.05 戦闘背景に合わせてDynamicAnimationを表示。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488123194.html
  *
@@ -164,6 +169,12 @@
  * @type struct<BattlebackSetting>[]
  * @default
  * @desc 戦闘背景毎の設定一覧です。
+ * 
+ * @param CommonCommonEvent
+ * @text 共通コモンイベント
+ * @type common_event
+ * @desc 戦闘開始直後に実行するコモンイベントです。
+ * 背景毎のコモンイベントより先に実行されます。
  * 
  * @param WaitLoadImage
  * @text 画像のロードを待つ
@@ -264,6 +275,7 @@ function parseStruct2(arg) {
 const PLUGIN_NAME = "NRP_DynamicBattleBack";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pBattlebackSettingList = parseStruct2(parameters["BattlebackSettingList"]);
+const pCommonCommonEvent = toNumber(parameters["CommonCommonEvent"]);
 const pWaitLoadImage = toBoolean(parameters["WaitLoadImage"], true);
 
 /**
@@ -364,8 +376,15 @@ const _Game_Troop_onBattleStart = Game_Troop.prototype.onBattleStart;
 Game_Troop.prototype.onBattleStart = function(advantageous) {
     _Game_Troop_onBattleStart.apply(this, arguments);
 
+    // 共通コモンイベントを実行
+    if (pCommonCommonEvent) {
+        $gameTemp.reserveCommonEvent(pCommonCommonEvent);
+        this._interpreter.setupReservedCommonEvent();
+        this._interpreter.update();
+    }
+
     const spriteset = getSpriteset();
-    // コモンイベントを実行
+    // 背景毎のコモンイベントを実行
     for (const setting of spriteset._battleBackDynamicSettings) {
         const commonEvent = eval(setting.commonEvent);
         $gameTemp.reserveCommonEvent(commonEvent);
