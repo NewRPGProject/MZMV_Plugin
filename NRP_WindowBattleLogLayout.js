@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.04 Change the layout of the battle log.
+ * @plugindesc v1.041 Change the layout of the battle log.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter SimpleMsgSideViewMZ
  * @url http://newrpg.seesaa.net/article/474864758.html
@@ -145,7 +145,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 戦闘メッセージのレイアウトを変更します。
+ * @plugindesc v1.041 戦闘メッセージのレイアウトを変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter SimpleMsgSideViewMZ
  * @url http://newrpg.seesaa.net/article/474864758.html
@@ -413,14 +413,18 @@ Window_BattleLog.prototype.refresh = function() {
 
         var x;
         if (pX) {
-            x = eval(pX);
+            try {
+                x = eval(pX);
+            } catch (e) {}
         } else {
             x = this.x;
         }
 
         var y;
         if (pY) {
-            y = eval(pY);
+            try {
+                y = eval(pY);
+            } catch (e) {}
         } else {
             y = this.y;
         }
