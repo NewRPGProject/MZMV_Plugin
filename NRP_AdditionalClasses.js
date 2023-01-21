@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.011 Multiple classes allow for a highly flexible growth system.
+ * @plugindesc v1.02 Multiple classes allow for a highly flexible growth system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -446,7 +446,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.011 多重職業によって自由度の高い成長システムを実現。
+ * @plugindesc v1.02 多重職業によって自由度の高い成長システムを実現。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -1606,13 +1606,16 @@ Game_Actor.prototype.currentAdditionalClass = function(index) {
  * 【独自】追加職業の配列を取得（AdditionalClass型）
  */
 Game_Actor.prototype.additionalClasses = function() {
-    return this._additionalClassIds.map(classId => classId && new AdditionalClass(this, classId));
+    // 空欄を除去
+    const additionalClassIds = this._additionalClassIds.filter(classId => classId);
+    return additionalClassIds.map(classId => new AdditionalClass(this, classId));
 };
 
 /**
  * 【独自】追加職業の配列を取得（JSON）
  */
 Game_Actor.prototype.additionalClassObjects = function() {
+    // こちらは構造を残すため、空欄は除去しない。
     return this._additionalClassIds.map(classId => classId && $dataClasses[classId]);
 };
 
