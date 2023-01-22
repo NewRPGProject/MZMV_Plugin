@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Extend the functionality of the state in various ways.
+ * @plugindesc v1.01 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -264,7 +264,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 ステートの機能を色々と拡張します。
+ * @plugindesc v1.01 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -929,6 +929,12 @@ if (pAlwaysUpdateState) {
      */
     const _Game_Battler_addState = Game_Battler.prototype.addState;
     Game_Battler.prototype.addState = function(stateId) {
+        // 死亡時は無限ループとなるので対象外。
+        if (this.deathStateId() == stateId) {
+            _Game_Battler_addState.apply(this, arguments);
+            return;
+        }
+
         // this.isStateAffected(stateId)を強制falseにする。
         mIsStateAffectedFalse = true;
         _Game_Battler_addState.apply(this, arguments);
