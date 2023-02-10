@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.051 The windows can be page-turned left and right.
+ * @plugindesc v1.06 The windows can be page-turned left and right.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475347742.html
  *
@@ -123,6 +123,14 @@
  * 
  * @param <Setting Exceptions>
  * 
+ * @param pagingEquipSlotList
+ * @parent <Setting Exceptions>
+ * @type select
+ * @option @value
+ * @option ON @value ON
+ * @option OFF @value OFF
+ * @desc Sets whether the equipment slot list will be paged. Ignore the above settings and force override them.
+ * 
  * @param pagingEquipList
  * @parent <Setting Exceptions>
  * @type select
@@ -167,7 +175,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.051 各種ウィンドウを左右でページ切替できるようにします。
+ * @plugindesc v1.06 各種ウィンドウを左右でページ切替できるようにします。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475347742.html
  *
@@ -299,15 +307,25 @@
  * @param <Setting Exceptions>
  * @text ＜例外設定＞
  * 
+ * @param pagingEquipSlotList
+ * @text 装備ｽﾛｯﾄ一覧のページ化
+ * @parent <Setting Exceptions>
+ * @type select
+ * @option @value
+ * @option ON @value ON
+ * @option OFF @value OFF
+ * @desc 装備スロット一覧をページ化するかを設定します。
+ * 上記の設定を無視して、強制的に設定を上書きします。
+ * 
  * @param pagingEquipList
- * @text 装備一覧のページ化
+ * @text 装備品一覧のページ化
  * @parent <Setting Exceptions>
  * @type select
  * @option @value
  * @option ON @value ON
  * @option OFF @value OFF
  * @default ON
- * @desc 装備一覧をページ化するかを設定します。
+ * @desc 装備品一覧をページ化するかを設定します。
  * 上記の設定を無視して、強制的に設定を上書きします。
  * 
  * @param pagingSaveList
@@ -392,6 +410,7 @@ const pPageCursorLeftAdjustY = toNumber(parameters["pageCursorLeftAdjustY"], 0);
 const pPageCursorRightAdjustX = toNumber(parameters["pageCursorRightAdjustX"], 0);
 const pPageCursorRightAdjustY = toNumber(parameters["pageCursorRightAdjustY"], 0);
 // 例外設定
+const pPagingEquipSlotList = parameters["pagingEquipSlotList"];
 const pPagingEquipList = parameters["pagingEquipList"];
 const pPagingSaveList = parameters["pagingSaveList"];
 const pPagingBattleCommand = parameters["pagingBattleCommand"];
@@ -504,7 +523,20 @@ Window_Options.prototype.isUsePage = function() {
 }
 
 /**
- * 【独自】装備一覧をページ処理の対象とするかどうか？
+ * 【独自】装備スロット一覧をページ処理の対象とするかどうか？
+ */
+if (pPagingEquipSlotList) {
+    Window_EquipSlot.prototype.isUsePage = function() {
+        if (pPagingEquipSlotList == "ON") {
+            return true;
+        } else if (pPagingEquipSlotList == "OFF") {
+            return false;
+        }
+    };
+}
+
+/**
+ * 【独自】装備品一覧をページ処理の対象とするかどうか？
  */
 if (pPagingEquipList) {
     Window_EquipItem.prototype.isUsePage = function() {
@@ -794,7 +826,7 @@ Window_Selectable.prototype.cursorLeft = function(wrap) {
  */
 Window_Selectable.prototype.setPageTopRow = function() {
     // 現在ページ番号 * 最大ページ行数 * 行幅
-    var scrollY = this.pageNo() * this.maxPageRows() * this.itemHeight();
+    const scrollY = this.pageNo() * this.maxPageRows() * this.itemHeight();
 
     if (this._scrollY !== scrollY) {
         this._scrollY = scrollY;
@@ -933,7 +965,7 @@ function isWrap(wrap) {
 /**
  * ●ページ切替矢印更新
  */
-var _Window_Selectable_updateArrows = Window_Selectable.prototype.updateArrows;
+const _Window_Selectable_updateArrows = Window_Selectable.prototype.updateArrows;
 Window_Selectable.prototype.updateArrows = function() {
     _Window_Selectable_updateArrows.apply(this, arguments);
 
