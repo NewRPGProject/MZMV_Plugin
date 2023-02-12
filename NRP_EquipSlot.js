@@ -135,7 +135,7 @@
  * @plugindesc v1.05 装備スロットを自由に変更。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489626316.html
- *
+ * 
  * @help 装備スロットを自由に変更します。
  * 
  * 標準では装備タイプとアクターの装備スロットは１対１ですが、
