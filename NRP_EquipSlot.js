@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.04 Change the equipment slots at will.
+ * @plugindesc v1.05 Change the equipment slots at will.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489626316.html
  *
@@ -132,7 +132,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 装備スロットを自由に変更。
+ * @plugindesc v1.05 装備スロットを自由に変更。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489626316.html
  *
@@ -301,6 +301,9 @@ const pStatusShowSlots = parseStruct1(parameters["StatusShowSlots"]);
 // Game_Actor
 //-----------------------------------------------------------------------------
 
+// スロット保持用
+let mSlots;
+
 if (pAdjustInitEquip) {
     /**
      * 【上書】装備の初期化
@@ -350,6 +353,9 @@ if (pAdjustInitEquip) {
                 }
             }
         }
+
+        // スロット情報を記憶
+        this._oldSlots = slots;
 
         // 無効な装備を外す。
         this.releaseUnequippableItems(true);
@@ -416,6 +422,150 @@ Game_Actor.prototype.equipSlots = function() {
 
     return slots;
 };
+
+/**
+ * ●装備できないアイテムを解除する。
+ */
+const _Game_Actor_releaseUnequippableItems = Game_Actor.prototype.releaseUnequippableItems;
+Game_Actor.prototype.releaseUnequippableItems = function(forcing) {
+    // スロット情報を取得
+    const slots = this.equipSlots();
+
+    // スロット情報を記憶してない場合は記憶
+    if (!this._oldSlots) {
+        this._oldSlots = slots;
+    }
+
+    //-----------------------------------------------------------------------
+    // スロット情報に変化がないかチェックし、変化があれば装備欄を調整
+    // ※以下、非常に難解な処理につき注意！
+    //
+    // スロット情報（slots）には[1,2,3,3,4,4]というように、
+    // 装備タイプの配列が格納されているが、
+    // この要素が[1,2,3,4,4]というように変化した時の対応が非常にややこしい。
+    //
+    // というのも、これに対応する装備情報（this.equips()）は装備品の配列だが、
+    // 空データも許容されるため、その際の装備タイプが分からない。
+    // 従って、スロット情報が変化した時、以前の装備との対応が分からなくなる。
+    //
+    // そんなわけで、前回のスロット情報（this._oldSlots）を保持＆参照することで、
+    // どうにかこうにか対応情報を復元している。
+    //-----------------------------------------------------------------------
+    if (!equalSlots(this._oldSlots, slots)) {
+        // 装備タイプと装備（複数）をマッピング
+        const equipsMap = new Map();
+        // 初期化（装備タイプ毎に空の配列を作成）
+        for (let equipType = 1; equipType < $dataSystem.equipTypes.length; equipType++) {
+            equipsMap.set(equipType, []);
+        }
+        // 現在の装備を取得
+        const equips = this.equips();
+        // 配列を取得して要素を追加
+        for (const equip of equips) {
+            if (equip) {
+                const equipArray = equipsMap.get(equip.etypeId);
+                equipArray.push(equip);
+                equipsMap.set(equip.etypeId, equipArray);
+            }
+        }
+
+        //---------------------------------------------------------
+        // 装備タイプ毎にチェックし、equipsMapへスロットの変更を反映
+        //---------------------------------------------------------
+        for (let equipType = 1; equipType < $dataSystem.equipTypes.length; equipType++) {
+            // 各装備タイプについて、数が変わっているか？
+            const newSlotTypeCount = slots.filter(s => s == equipType).length;
+            const oldSlotTypeCount = this._oldSlots.filter(s => s == equipType).length;
+
+            // スロットの数が減少した。
+            if (newSlotTypeCount < oldSlotTypeCount) {
+                // 差分を取得
+                const dif = oldSlotTypeCount - newSlotTypeCount;
+                // 装備タイプに該当する装備（配列）を取得
+                const equipArray = equipsMap.get(equipType);
+                // 装備タイプの末尾から減少分を削る。
+                for (let i = 0; i < dif; i++) {
+                    // 既に目的のサイズ以下の場合は終了
+                    if (equipArray.length <= newSlotTypeCount) {
+                        break;
+                    }
+                    // 末尾を削除
+                    equipArray.pop();
+                }
+            }
+        }
+
+        //----------------------------------------------
+        // equipsMapを装備用オブジェクトに変換
+        // ※slotsに対応する配列
+        //----------------------------------------------
+        const newEquips = [];
+
+        // 再度、装備タイプ毎に反映
+        for (let equipType = 1; equipType < $dataSystem.equipTypes.length; equipType++) {
+            // 装備タイプに該当する装備（配列）を取得
+            const equipArray = equipsMap.get(equipType);
+            // 該当の装備タイプの数を取得
+            const slotTypeCount = slots.filter(s => s == equipType).length;
+
+            for (let i = 0; i < slotTypeCount; i++) {
+                if (equipArray && equipArray[i]) {
+                    newEquips.push(new Game_Item(equipArray[i]));
+                } else {
+                    newEquips.push(new Game_Item());
+                }
+            }
+        }
+
+        // 削除用配列
+        const removeEquips = [];
+
+        //--------------------------------------------------------------
+        // this._equipsとnewEquipsを比較し、無効になった装備を削除登録。
+        //--------------------------------------------------------------
+        for (const equip of this._equips) {
+            if (equip.object()) {
+                // 個数を比較（二重カウントにならないよう削除用の要素も連結）
+                const newItemCount = newEquips.concat(removeEquips).filter(e => e.object() == equip.object()).length;
+                const oldItemCount = this._equips.filter(e => e.object() == equip.object()).length;
+
+                const dif = oldItemCount - newItemCount;
+                for (let i = 0; i < dif; i++) {
+                    // 削除要素を配列に追加
+                    removeEquips.push(equip);
+                }
+            }
+        }
+
+        // 削除要素を末尾に追加して、上書き。
+        // ※削除要素はreleaseUnequippableItemsの元の処理で解除処理が実行される。
+        // ※こうしないと装備が二重解除されて増加する模様。
+        this._equips = newEquips.concat(removeEquips);
+
+        // スロット情報を保持しておく。
+        this._oldSlots = slots;
+    }
+
+    // 元の処理を実行
+    _Game_Actor_releaseUnequippableItems.apply(this, arguments);
+};
+
+/**
+ * ●スロットの内容が等しいか確認
+ */
+function equalSlots(slotsA, slotsB) {
+    if (slotsA.length != slotsB.length) {
+        return false;
+    }
+
+    for (let i = 0; i < slotsA.length; i++) {
+        if (slotsA[i] != slotsB[i]) {
+            return false;
+        }
+    }
+    // 全て一致
+    return true;
+}
 
 /**
  * ●スロット情報を変更
