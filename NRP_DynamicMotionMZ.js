@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.171 When executing skills, call motion freely.
+ * @plugindesc v1.172 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -556,7 +556,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.171 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.172 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -2649,12 +2649,23 @@ Sprite.prototype.startDynamicMotion = function(dynamicMotion) {
     }
 
     // 影非表示
-    if (dm.noShadow != undefined) {
+    if (dm.noShadow != undefined && this._shadowSprite) {
         motion._noShadow = dm.noShadow;
+        // 即時反映し、影非表示フラグを反映
+        if (motion._noShadow) {
+            this._shadowSprite.visible = false;
+            this._shadowSprite.noShadow = true;
+        } else if (motion._noShadow === false) {
+            this._shadowSprite.visible = true;
+            this._shadowSprite.noShadow = false;
+        }
     }
 
     // 効果音
     if (dm.playSe != undefined) {
+        // 注釈や空白は不要なので除去
+        dm.playSe = dm.playSe.split("//")[0];
+        dm.playSe = dm.playSe.trim();
         // "{"で始まる場合はObject指定
         if (dm.playSe.startsWith("{")) {
             AudioManager.playSe(JSON.parse(dm.playSe))
@@ -3520,6 +3531,12 @@ Sprite_Actor.prototype.stepForward = function() {
  */
 const _Sprite_Actor_updateShadow = Sprite_Actor.prototype.updateShadow;
 Sprite_Actor.prototype.updateShadow = function() {
+    // 影非表示
+    if (this._shadowSprite && this._shadowSprite.noShadow) {
+        this._shadowSprite.visible = false;
+        return;
+    }
+
     _Sprite_Actor_updateShadow.apply(this, arguments);
 
     this.updateDynamicShadow();
@@ -3531,12 +3548,6 @@ Sprite_Actor.prototype.updateShadow = function() {
 Sprite_Actor.prototype.updateDynamicShadow = function() {
     const motion = this._setDynamicMotion;
     if (!motion || !this._shadowSprite) {
-        return;
-    }
-
-    // 影非表示
-    if (motion._noShadow) {
-        this._shadowSprite.visible = false;
         return;
     }
 

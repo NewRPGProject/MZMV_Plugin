@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.262 Automate & super-enhance battle animations.
+ * @plugindesc v1.263 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help Call battle animations freely from skills (items).
@@ -488,7 +488,7 @@
  */
 
 /*:ja
- * @plugindesc v1.262 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.263 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在に戦闘アニメーションを呼び出します。
@@ -2662,6 +2662,9 @@ DynamicAnimation.prototype.evaluate = function (spriteAnimation) {
 
     // 効果音
     if (baseAnimation.playSe != undefined) {
+        // 注釈や空白は不要なので除去
+        baseAnimation.playSe = baseAnimation.playSe.split("//")[0];
+        baseAnimation.playSe = baseAnimation.playSe.trim();
         // "{"で始まる場合はObject指定
         if (baseAnimation.playSe.startsWith("{")) {
             AudioManager.playSe(JSON.parse(baseAnimation.playSe))

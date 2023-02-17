@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.192 Automate & super-enhance battle animations.
+ * @plugindesc v1.193 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -524,7 +524,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.192 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.193 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -2832,6 +2832,9 @@ DynamicAnimation.prototype.evaluate = function (spriteAnimation) {
 
     // 効果音
     if (baseAnimation.playSe != undefined) {
+        // 注釈や空白は不要なので除去
+        baseAnimation.playSe = baseAnimation.playSe.split("//")[0];
+        baseAnimation.playSe = baseAnimation.playSe.trim();
         // "{"で始まる場合はObject指定
         if (baseAnimation.playSe.startsWith("{")) {
             AudioManager.playSe(JSON.parse(baseAnimation.playSe))
