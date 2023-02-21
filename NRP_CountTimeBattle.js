@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.15 Change the battle system to CTB.
+ * @plugindesc v1.151 Change the battle system to CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -235,7 +235,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.15 戦闘システムをＣＴＢへ変更します。
+ * @plugindesc v1.151 戦闘システムをＣＴＢへ変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -576,6 +576,11 @@ BattleManager.initMembers = function() {
  */
 BattleManager.startInput = function() {
     let callPartyCommand = false;
+
+    // ＭＶではターン開始直後に付加したステートが表示されないので対応
+    if (Utils.RPGMAKER_NAME == "MV") {
+        this.refreshStatus();
+    }
 
     // パーティコマンドの表示を行う場合
     // ※戦闘開始時かつ奇襲ではない場合が条件
