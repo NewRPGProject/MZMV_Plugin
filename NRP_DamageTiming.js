@@ -367,7 +367,6 @@ if (pDamageSameTime) {
 
         _BattleManager_startAction.apply(this, arguments);
     };
-    
 }
 
 /**
