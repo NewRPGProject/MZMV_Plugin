@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.05 Adjusts the timing of damage display and enemy defeats.
+ * @plugindesc v1.051 Adjusts the timing of damage display and enemy defeats.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475196493.html
  *
@@ -53,7 +53,7 @@
  * 
  * @param damageWait
  * @parent <Damage Wait>
- * @type number
+ * @type number @min 1
  * @default 16
  * @desc It's a wait after damage (including recovery and misses).
  * This will be the wait for the last hit.
@@ -84,7 +84,7 @@
  */
 /*:ja
  * @target MV MZ
- * @plugindesc v1.05 ダメージ表示や敵の撃破処理のタイミングを調整します。
+ * @plugindesc v1.051 ダメージ表示や敵の撃破処理のタイミングを調整します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475196493.html
  *
@@ -136,7 +136,7 @@
  * @param damageWait
  * @text ダメージ後のウェイト
  * @parent <Damage Wait>
- * @type number
+ * @type number @min 1
  * @default 16
  * @desc ダメージ処理後（回復やミスも含む）のウェイトです。
  * こちらは最終ヒット時のウェイトになります。
