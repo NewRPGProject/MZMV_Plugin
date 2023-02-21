@@ -87,7 +87,7 @@
  * @plugindesc v1.051 ダメージ表示や敵の撃破処理のタイミングを調整します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475196493.html
- *
+ * 
  * @help ダメージ表示や敵の撃破処理のタイミングを調整します。
  * SimpleMsgSideViewと併用すれば、ダメージの一括表示も可能です。
  * ※メッセージ表示かつ一括表示だと色々とおかしくなります。
