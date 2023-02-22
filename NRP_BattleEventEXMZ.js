@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.05 Extends the functionality of battle events.
+ * @plugindesc v1.051 Extends the functionality of battle events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_EnemyRoutineKai
  * @url http://newrpg.seesaa.net/article/477489099.html
@@ -210,7 +210,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.05 バトルイベントの機能を拡張します。
+ * @plugindesc v1.051 バトルイベントの機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_EnemyRoutineKai
  * @url http://newrpg.seesaa.net/article/477489099.html
@@ -651,10 +651,18 @@ BattleManager.startAction = function() {
 
     const action = subject.currentAction();
     
-    // 行動が取得できなかったり、敵味方が全滅していれば終了
+    // 行動が取得できなかったり、対象が全滅していれば終了
     // ※戦闘行動の強制などで味方の全滅後に敵が行動した場合など
     // （これがないと落ちる）
-    if (!action.item() || $gameParty.isAllDead() || $gameTroop.isAllDead()) {
+    if (!action.item()) {
+        this._phase = "action";
+        return;
+    // 対象が敵
+    } else if (action.isForOpponent() && action.opponentsUnit().isAllDead()) {
+        this._phase = "action";
+        return;
+    // 対象が味方
+    } else if (action.isForFriend() && action.friendsUnit().isAllDead()) {
         this._phase = "action";
         return;
     }

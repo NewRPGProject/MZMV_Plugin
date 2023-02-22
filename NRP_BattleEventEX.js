@@ -2,7 +2,7 @@
 // NRP_BattleEventEX.js
 //=============================================================================
 /*:
- * @plugindesc v1.06 Extends the functionality of battle events.
+ * @plugindesc v1.061 Extends the functionality of battle events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help The following enhancements have been made to the battle Event.
@@ -86,7 +86,7 @@
  */
 
 /*:ja
- * @plugindesc v1.06 バトルイベントの機能を拡張します。
+ * @plugindesc v1.061 バトルイベントの機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help 以下の調整によって、バトルイベントの機能を拡張します。
@@ -261,7 +261,15 @@ BattleManager.startAction = function() {
     // 行動が取得できなかったり、敵味方が全滅していれば終了
     // ※戦闘行動の強制などで味方の全滅後に敵が行動した場合など
     // （これがないと落ちる）
-    if (!action.item() || $gameParty.isAllDead() || $gameTroop.isAllDead()) {
+    if (!action.item()) {
+        this._phase = "action";
+        return;
+    // 対象が敵
+    } else if (action.isForOpponent() && action.opponentsUnit().isAllDead()) {
+        this._phase = "action";
+        return;
+    // 対象が味方
+    } else if (action.isForFriend() && action.friendsUnit().isAllDead()) {
         this._phase = "action";
         return;
     }
