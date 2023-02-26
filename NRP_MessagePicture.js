@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.06 Display a picture when showing text.
+ * @plugindesc v1.061 Display a picture when showing text.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -378,7 +378,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.06 文章の表示時に立ち絵を表示する。
+ * @plugindesc v1.061 文章の表示時に立ち絵を表示する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -1551,8 +1551,11 @@ if (pShowAboveWindow) {
             if (!mPictureData) {
                 _Window_Message_startMessage.apply(this, arguments);
                 return;
+            } else if (mPictureData.Picture == "" && mPictureData.DifferenceList == "") {
+                _Window_Message_startMessage.apply(this, arguments);
+                return;
             }
-
+            
             // 文章情報を取得
             const text = $gameMessage.allText();
             const textState = this.createTextState(text, 0, 0, 0);
