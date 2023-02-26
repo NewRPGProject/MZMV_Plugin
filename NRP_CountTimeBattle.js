@@ -21,7 +21,7 @@
  * -------------------------------------------------------------------
  * [Notice]
  * -------------------------------------------------------------------
- *  * If the state "Auto-removal Timing" is "Action End",
+ * If the state "Auto-removal Timing" is "Action End",
  * the effect will expire at the individual's turn.
  * In the case of "Turn End," the effect
  * is determined in everyone's turn.
@@ -35,6 +35,8 @@
  * Be sure to change the Guard Skill setting that is in the default.
  * If Speed is left at 2000, it will be "my turn all the time".
  * Also, "Action End" is recommended for Auto-removal of guard state.
+ * 
+ * It does not support multiple actions by the actor.
  * 
  * The fight and escape party commands are not initially displayed.
  * They are displayed when Cancel is pressed.
@@ -264,6 +266,8 @@
  * デフォルトにある防御の設定は必ず変えてください。
  * 速度補正が2000のままだと「ずっと俺のターン」になります。
  * また、防御ステートの自動解除は『行動終了時』を推奨します。
+ * 
+ * アクターの複数回行動には対応していません。
  * 
  * 戦う、逃げるのパーティコマンドは初期表示しません。
  * キャンセルを押すと表示するようになっています。
