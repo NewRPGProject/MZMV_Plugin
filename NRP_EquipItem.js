@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Allow items to be equipped.
+ * @plugindesc v1.03 Allow items to be equipped.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489576403.html
  *
@@ -109,7 +109,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 アイテムを装備できるようにする。
+ * @plugindesc v1.03 アイテムを装備できるようにする。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489576403.html
  *
@@ -306,6 +306,55 @@ function makeTargets(targetId) {
 const DEFAULT_SLOTS = makeTargets(pEquipItemSlot);
 // 装備アイテムとして扱う装備タイプ
 const DEFAULT_EQUIP_TYPE = DEFAULT_SLOTS[0];
+
+//-----------------------------------------------------------------------------
+// Scene_Boot
+//-----------------------------------------------------------------------------
+
+/**
+ * ●ＤＢのロード完了後
+ */
+const _Scene_Boot_onDatabaseLoaded = Scene_Boot.prototype.onDatabaseLoaded;
+Scene_Boot.prototype.onDatabaseLoaded = function() {
+    // アイテムデータに装備情報を書込
+    setItemData($dataItems);
+
+    _Scene_Boot_onDatabaseLoaded.apply(this, arguments);
+};
+
+/**
+ * ●データを書込
+ */
+function setItemData(dataArray) {
+    for (const data of dataArray) {
+        // 名前が設定されているデータのみが対象
+        if (data && data.name) {
+            setObjectParams(data);
+        }
+    }
+}
+
+/**
+ * ●JSONオブジェクトに値を設定
+ */
+function setObjectParams(object) {
+    // アイテムかつ装備タイプが指定されている場合
+    if (isEquipItem(object)) {
+        // 装備タイプを書き込み
+        const equipSlots = getEquipSlots(object);
+        // とりあえず先頭の値
+        object.etypeId = equipSlots[0];
+        // 本来存在しない項目によってundefinedエラーとならないように空で定義しておく。
+        object.traits = [];
+        object.params = [];
+        // 各パラメータも0で初期化
+        // ※パラメータの配列は先頭の職業を参照する。
+        const params = $dataClasses[1].params;
+        for (let i = 0; i < params.length; i++) {
+            object.params[i] = 0;
+        }
+    }
+}
 
 //-----------------------------------------------------------------------------
 // Game_BattlerBase
@@ -528,28 +577,15 @@ Game_Actor.prototype.isEquipChangeOk = function(slotId) {
 //-----------------------------------------------------------------------------
 
 /**
- * ●JSONオブジェクトを取得
+ * ●装備できるかどうか？
+ * ※外部プラグインからの参照用
  */
-const _Game_Item_object = Game_Item.prototype.object;
-Game_Item.prototype.object = function() {
-    const object = _Game_Item_object.apply(this, arguments);
-    // アイテムかつ装備タイプが指定されている場合
-    if (object && this.isItem() && isEquipItem(object)) {
-        // 装備タイプを書き込み
-        const equipSlots = getEquipSlots(object);
-        // とりあえず先頭の値
-        object.etypeId = equipSlots[0];
-        // 本来存在しない項目によってundefinedエラーとならないように空で定義しておく。
-        object.traits = [];
-        object.params = [];
-        // 各パラメータも0で初期化
-        // ※パラメータの配列は先頭のアクターを参照する。
-        const params = $gameActors.actor(1).currentClass().params;
-        for (let i = 0; i < params.length; i++) {
-            object.params[i] = 0;
-        }
+const _Game_Item_isEquipItem = Game_Item.prototype.isEquipItem;
+Game_Item.prototype.isEquipItem = function() {
+    if (this.isItem() && isEquipItem($dataItems[this._itemId])) {
+        return true;
     }
-    return object;
+    return _Game_Item_isEquipItem.apply(this, arguments);
 };
 
 //-----------------------------------------------------------------------------
