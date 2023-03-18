@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.061 Display a picture when showing text.
+ * @plugindesc v1.07 Display a picture when showing text.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -378,7 +378,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.061 文章の表示時に立ち絵を表示する。
+ * @plugindesc v1.07 文章の表示時に立ち絵を表示する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -1092,24 +1092,20 @@ function getMatchPictureData(name) {
     let nameResistId = null;
     // マッチしたかどうか？
     let isMatch = false;
-
     // 名前欄に対する\MP[登録ＩＤ]の一致状況を取得
-    const matchStrs = upperName.match(".*\\" + pControlCharacterPicture + "\\[(.*)\\].*");
+    const matchStrs = upperName.match(".*\\" + pControlCharacterPicture + "\\[(.*?)\\].*");
     if (matchStrs) {
         // 登録ＩＤを抜き出す。
         nameResistId = matchStrs[1];
         isMatch = true;
-    }
 
-    // 全ピクチャのリストをループし、一致する情報を取得
-    for (const picture of pPictureList) {
-        // スイッチが有効でない場合は飛ばす
-        if (!isSwitchOk(picture.Switch)) {
-            continue;
-        }
+        // 全ピクチャのリストをループし、一致する情報を取得
+        for (const picture of pPictureList) {
+            // スイッチが有効でない場合は飛ばす
+            if (!isSwitchOk(picture.Switch)) {
+                continue;
+            }
 
-        // 名前欄に登録ＩＤの指定が存在した場合は優先使用
-        if (isMatch) {
             // 0の場合は非表示と見なす。
             if (!nameResistId || nameResistId == "0") {
                 return null;
@@ -1127,18 +1123,27 @@ function getMatchPictureData(name) {
             }
         }
 
-        // 名前欄で自動認識
-        if (picture.TargetString) {
-            // 大文字変換
-            const targetString = picture.TargetString.toUpperCase();
-            // 部分一致
-            if (upperName.indexOf(targetString) >= 0) {
-                retPicture = picture;
-                break;
-            // 変換後の名前欄でも確認
-            } else if (convertName.indexOf(targetString) >= 0) {
-                retPicture = picture;
-                break;
+    // 名前欄で自動認識する場合
+    } else {
+        // 全ピクチャのリストをループし、一致する情報を取得
+        for (const picture of pPictureList) {
+            // スイッチが有効でない場合は飛ばす
+            if (!isSwitchOk(picture.Switch)) {
+                continue;
+            }
+
+            if (picture.TargetString) {
+                // 大文字変換
+                const targetString = picture.TargetString.toUpperCase();
+                // 部分一致
+                if (upperName.indexOf(targetString) >= 0) {
+                    retPicture = picture;
+                    break;
+                // 変換後の名前欄でも確認
+                } else if (convertName.indexOf(targetString) >= 0) {
+                    retPicture = picture;
+                    break;
+                }
             }
         }
     }
