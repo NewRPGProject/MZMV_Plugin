@@ -49,6 +49,14 @@
  * will play the second animation in WeaponsX.png.
  * In addition, it will execute the motion defined above.
  * 
+ * You can also specify an image directly on the DynamicMotion side.
+ * The following is an example of specifying Weapons2.png.
+ * 
+ * <D-Motion:attack>
+ * weaponImage = Weapons2
+ * weaponIndex = 2
+ * </D-Motion>
+ * 
  * Motion can be specified other than the usual
  * "swing", "thrust", and "missile" motions.
  * For example, you can use the "item" motion
@@ -290,6 +298,14 @@
  * 
  * と、記述した場合、WeaponsX.pngの２つ目のアニメーションを再生し、
  * さらに上で定義したモーションを実行します。
+ * 
+ * なお、DynamicMotion側で直接画像を指定することもできます。
+ * 以下はWeapons2.pngを指定した例です。
+ * 
+ * <D-Motion:attack>
+ * weaponImage = Weapons2
+ * weaponIndex = 2
+ * </D-Motion>
  * 
  * モーションには通常使用する『振り』『突き』『飛び道具』以外も指定できます。
  * 例えば『アイテム』のモーションを使って、剣を上に掲げるなど、
