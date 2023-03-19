@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.172 When executing skills, call motion freely.
+ * @plugindesc v1.18 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -556,7 +556,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.172 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.18 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -2232,6 +2232,8 @@ DynamicMotion.prototype.initialize = function (baseMotion, performer, target) {
     this.motionStartPattern = baseMotion.motionStartPattern;
     this.weaponId = baseMotion.weaponId;
     this.weaponType = baseMotion.weaponType;
+    this.weaponImage = baseMotion.weaponImage;
+    this.weaponIndex = baseMotion.weaponIndex;
     this.arcX = baseMotion.arcX;
     this.arcY = baseMotion.arcY;
     this.addX = baseMotion.addX;
@@ -2350,6 +2352,13 @@ DynamicMotion.prototype.getDefaultY = function (a, b, screenY) {
 
     return defaultY;
 };
+
+/**
+ * ●武器を使うかどうか？
+ */
+DynamicMotion.prototype.isUseWeapon = function() {
+    return this.motion == "attack" || this.weaponId || this.weaponType || this.weaponImage  || this.weaponIndex;
+}
 
 /**
  * ●Game_Battlerの初期化
@@ -2513,14 +2522,19 @@ Sprite_Battler.prototype.isWaitAnimationMotion = function(dynamicMotion) {
     return false;
 }
 
+// DynamicMotion保持用
+let mDynamicMotion = null;
+
 /**
  * 【独自】動的モーションの呼び出し
  * ※マップ版と共有するためSpriteに定義する。
  */
 Sprite.prototype.startDynamicMotion = function(dynamicMotion) {
-    var bm = dynamicMotion.baseMotion;
-    var dm = dynamicMotion;
+    let bm = dynamicMotion.baseMotion;
+    let dm = dynamicMotion;
     this.dynamicMotion = dm;
+    mDynamicMotion = dm;
+
     // 実行用のモーション情報
     const motion = this._setDynamicMotion;
 
@@ -2884,6 +2898,9 @@ Sprite.prototype.startDynamicMotion = function(dynamicMotion) {
             interpreter.setDynamicDuration(dynamicMotion);
         }
     }
+
+    // 初期化
+    mDynamicMotion = null;
 };
 
 /**
@@ -2918,8 +2935,8 @@ Sprite.prototype.startDynamicSvMotion = function(dynamicMotion) {
         this._motionStartPattern = eval(dm.motionStartPattern);
     }
 
-    // attackの場合は武器を振る
-    if (dm.motion == "attack"){
+    // 武器を表示する場合
+    if (dm.isUseWeapon()) {
         var weaponId;
         if (dm.weaponId) {
             weaponId = eval(dm.weaponId);
@@ -2936,6 +2953,8 @@ Sprite.prototype.startDynamicSvMotion = function(dynamicMotion) {
         if (this._weaponSprite) {
             this._weaponSprite._weaponImageId = 0;
             this._weaponSprite.updateFrame();
+            // アクターの動きも同期
+            this.updateFrame();
         }
         this.startMotion(dm.motion);
     }
@@ -3019,46 +3038,82 @@ Sprite_Actor.prototype.refreshMotion = function() {
     if (this._weaponSprite.bitmap) {
         this._weaponSprite._weaponImageId = 0;
         this._weaponSprite.updateFrame();
+        // アクターの動きも同期
+        this.updateFrame();
     }
 
     _Sprite_Actor_refreshMotion.call(this);
 };
 
+// 武器タイプ
+let mWtypeId = null;
+
 /**
  * 【独自】アタックモーション
  */
 Game_Battler.prototype.performAttackDynamicMotion = function(weaponId, weaponType) {
-    var wtypeId;
+    mWtypeId = null;
     // 武器ＩＤをクリア
     this.setWeaponId(null);
 
     // weaponTypeの指定がある場合は優先
     if (weaponType != undefined) {
-        wtypeId = weaponType;
+        mWtypeId = weaponType;
     // それ以外は武器ＩＤから取得
     } else {
-        var weapons;
+        let weapons;
         // 武器IDの指定があれば取得
         if (weaponId != undefined) {
             weapons = [$dataWeapons[weaponId]];
             this.setWeaponId(weaponId);
-        } else {
-            weapons = this.weapons();
+            mWtypeId = weapons[0] ? weapons[0].wtypeId : 0;
         }
-        wtypeId = weapons[0] ? weapons[0].wtypeId : 0;
     }
 
-    const attackMotion = $dataSystem.attackMotions[wtypeId];
-    if (attackMotion) {
-        if (attackMotion.type === 0) {
-            this.requestMotion('thrust');
-        } else if (attackMotion.type === 1) {
-            this.requestMotion('swing');
-        } else if (attackMotion.type === 2) {
-            this.requestMotion('missile');
-        }
-        this.startWeaponAnimation(attackMotion.weaponImageId);
+    if (this.performAttack) {
+        this.performAttack();
     }
+
+    mWtypeId = null;
+};
+
+/**
+ * ●武器振り演出
+ */
+const _Game_Actor_performAttack = Game_Actor.prototype.performAttack;
+Game_Actor.prototype.performAttack = function() {
+    // DynamicMotionでの指定があれば、そちらを優先。
+    if (mDynamicMotion) {
+        // attack以外のモーションが指定されている場合
+        if (mDynamicMotion.motion && mDynamicMotion.motion != "attack") {
+            const weapons = this.weapons();
+            let wtypeId = weapons[0] ? weapons[0].wtypeId : 0;
+            if (mWtypeId) {
+                wtypeId = mWtypeId;
+            }
+            const attackMotion = $dataSystem.attackMotions[wtypeId];
+            this.requestMotion(mDynamicMotion.motion);
+            this.startWeaponAnimation(attackMotion.weaponImageId);
+            return;
+        // attackモーションが指定されており、かつ武器タイプが指定されている。
+        } else if (mWtypeId) {
+            const attackMotion = $dataSystem.attackMotions[mWtypeId];
+            // 通常攻撃用のモーションを判定
+            if (attackMotion) {
+                if (attackMotion.type === 0) {
+                    this.requestMotion("thrust");
+                } else if (attackMotion.type === 1) {
+                    this.requestMotion("swing");
+                } else if (attackMotion.type === 2) {
+                    this.requestMotion("missile");
+                }
+                this.startWeaponAnimation(attackMotion.weaponImageId);
+                return;
+            }
+        }
+    }
+
+    _Game_Actor_performAttack.apply(this, arguments);
 };
 
 /**
@@ -3076,10 +3131,25 @@ Sprite_Weapon.prototype.setWeaponId = function(weaponId) {
 }
 
 /**
+ * 【独自】武器画像の設定
+ */
+Sprite_Weapon.prototype.setWeaponImage = function(weaponImage) {
+    this._weaponImage = weaponImage;
+}
+
+/**
+ * 【独自】武器画像インデックスの設定
+ */
+Sprite_Weapon.prototype.setWeaponIndex = function(weaponIndex) {
+    this._weaponIndex = weaponIndex;
+}
+
+/**
  * ●武器の表示準備
  */
 const _Sprite_Weapon_setup = Sprite_Weapon.prototype.setup;
 Sprite_Weapon.prototype.setup = function(weaponImageId) {
+    const dm = this.parent.dynamicMotion;
     this._weaponId = 0;
     
     // アクターに武器ＩＤが設定されている場合は反映
@@ -3090,6 +3160,12 @@ Sprite_Weapon.prototype.setup = function(weaponImageId) {
         actor._weaponId = null;
     }
 
+    // DynamicMotionの武器情報を設定
+    if (dm) {
+        this.setWeaponImage(dm.weaponImage);
+        this.setWeaponIndex(dm.weaponIndex);
+    }
+
     // 開始モーションの指定がある場合
     if (this.parent._motionStartPattern) {
         this._weaponImageId = weaponImageId;
@@ -3097,6 +3173,8 @@ Sprite_Weapon.prototype.setup = function(weaponImageId) {
         this._pattern = this.parent._motionStartPattern;
         this.loadBitmap();
         this.updateFrame();
+        // アクターの動きも同期
+        this.parent.updateFrame();
         return;
     }
 
@@ -3431,6 +3509,7 @@ Game_Actor.prototype.performAction = function(action) {
         // やや冗長だけど競合を減らすため、
         // Game_Battler.prototype.performActionを呼び出す。
         Game_Battler.prototype.performAction.call(this, action);
+
         // 1:常に無
         if (pSetStartMotion == 1) {
             return;
@@ -3448,8 +3527,7 @@ Game_Actor.prototype.performAction = function(action) {
  * 【独自】動的モーションかの判定処理
  */
 Game_Action.prototype.isDynamicMotion = function() {
-    const item = this.item();
-    const note = item.note;
+    const note = this.getDynamicNote();
 
     // 省略タグを考慮
     var tagNameSet = "(?:" + TAG_NAME + ")";
