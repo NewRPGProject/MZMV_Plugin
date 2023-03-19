@@ -24,6 +24,37 @@
  *   the same weapon can be swung and thrust.
  * 
  * -------------------------------------------------------------------
+ * [For DynamicMotion]
+ * -------------------------------------------------------------------
+ * Although it takes some effort, when combined with DynamicMotion,
+ * complex movements such as swinging and thrusting
+ * with the same weapon are possible.
+ * 
+ * First, modify system/WeaponsX.png to create multiple weapon actions
+ * such as "swing" and "thrust" in one image.
+ * 
+ * Next, register the created image
+ * in the "WeaponInfoList" of the Plugin Parameters.
+ * The motions that can be set here
+ * are the standard ones used for normal attacks.
+ * 
+ * In addition, define motions for each index in "IndexList.
+ * This allows the motion to be called on the DynamicMotion side.
+ * 
+ * <D-Motion:attack>
+ * weaponIndex = 2
+ * </D-Motion>
+ * 
+ * For example, the above description
+ * will play the second animation in WeaponsX.png.
+ * In addition, it will execute the motion defined above.
+ * 
+ * Motion can be specified other than the usual
+ * "swing", "thrust", and "missile" motions.
+ * For example, you can use the "item" motion
+ * to raise a sword above the ground.
+ * 
+ * -------------------------------------------------------------------
  * [Note of Actors]
  * -------------------------------------------------------------------
  * <WeaponX:?>
