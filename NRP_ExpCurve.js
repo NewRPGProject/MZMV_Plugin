@@ -2,7 +2,7 @@
 // NRP_ExpCurve.js
 //=============================================================================
 /*:
- * @target MZ
+ * @target MZ MV
  * @plugindesc v1.00 Set up a formula for the EXP Curve.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/498685311.html
@@ -80,7 +80,7 @@
 
 /*:ja
  * @target MZ MV
- * @plugindesc v1.00 経験値曲線の数式を設定します。
+ * @plugindesc v1.00 経験値曲線の数式を設定する。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/498685311.html
  *
@@ -168,32 +168,6 @@
 (function() {
 "use strict";
 
-/**
- * ●構造体（二重配列）をJSで扱えるように変換
- */
-function parseStruct2(arg) {
-    const ret = [];
-    if (arg) {
-        for (const str of JSON.parse(arg)) {
-            ret.push(JSON.parse(str));
-        }
-    }
-    return ret;
-}
-function toNumber(str, def) {
-    if (str == undefined || str == "") {
-        return def;
-    }
-    return isNaN(str) ? def : +(str || def);
-}
-function toBoolean(str, def) {
-    if (str === true || str === "true") {
-        return true;
-    } else if (str === false || str === "false") {
-        return false;
-    }
-    return def;
-}
 function setDefault(str, def) {
     if (str == undefined || str == "") {
         return def;
