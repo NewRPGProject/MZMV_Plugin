@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Implemented a system of recovery after action.
+ * @plugindesc v1.001 Implemented a system of recovery after action.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/498761194.html
  *
@@ -195,7 +195,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 行動後に回復するシステムを実装。
+ * @plugindesc v1.001 行動後に回復するシステムを実装。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/498761194.html
  *
@@ -458,6 +458,10 @@ const _Game_Battler_regenerateHp = Game_Battler.prototype.regenerateHp;
 Game_Battler.prototype.regenerateHp = function() {
     _Game_Battler_regenerateHp.apply(this, arguments);
 
+    if (!BattleManager._action) {
+        return;
+    }
+
     const item = BattleManager._action.item();
     const value = this.recoverAfterActionHp(item);
     if (value) {
@@ -476,6 +480,10 @@ const _Game_Battler_regenerateMp = Game_Battler.prototype.regenerateMp;
 Game_Battler.prototype.regenerateMp = function() {
     _Game_Battler_regenerateMp.apply(this, arguments);
 
+    if (!BattleManager._action) {
+        return;
+    }
+
     const item = BattleManager._action.item();
     const value = this.recoverAfterActionMp(item);
     if (value) {
@@ -493,6 +501,10 @@ Game_Battler.prototype.regenerateMp = function() {
 const _Game_Battler_regenerateTp = Game_Battler.prototype.regenerateTp;
 Game_Battler.prototype.regenerateTp = function() {
     _Game_Battler_regenerateTp.apply(this, arguments);
+
+    if (!BattleManager._action) {
+        return;
+    }
 
     const item = BattleManager._action.item();
     const value = this.recoverAfterActionTp(item);
