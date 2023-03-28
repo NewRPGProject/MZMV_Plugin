@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.02 Multiple classes allow for a highly flexible growth system.
+ * @plugindesc v1.03 Multiple classes allow for a highly flexible growth system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -178,6 +178,10 @@
  * The author is not responsible,
  * but will deal with defects to the extent possible.
  * 
+ * @------------------------------------------------------------------
+ * @ [Plugin Commands]
+ * @------------------------------------------------------------------
+ * 
  * @command AddClass
  * @desc Set the additional class to actor.
  * 
@@ -200,7 +204,7 @@
  * @type class
  * @desc The class to add.
  * 
- * 
+ * @------------------------------------------------------------------
  * 
  * @command RemoveClass
  * @desc Remove the additional class from the actor.
@@ -236,7 +240,7 @@
  * @default false
  * @desc Fill in the gaps after removing them.
  * 
- * 
+ * @------------------------------------------------------------------
  * 
  * @command ChangeExp
  * @desc Modify the experience values of additional classes.
@@ -277,7 +281,7 @@
  * @desc The additional classes to target.
  * If not specified, all classes that are in service are targeted.
  * 
- * 
+ * @------------------------------------------------------------------
  * 
  * @command ChangeLevel
  * @desc Change the level of the additional class.
@@ -318,7 +322,7 @@
  * @desc The additional classes to target.
  * If not specified, all classes that are in service are targeted.
  * 
- * 
+ * @------------------------------------------------------------------
  * 
  * @command GetInformation
  * @desc Get information about the additional classes that the actor is in.
@@ -355,6 +359,9 @@
  * @desc This is the registration position of the target class.
  * Start from 0.
  * 
+ * @------------------------------------------------------------------
+ * @ [Plugin Parameters]
+ * @------------------------------------------------------------------
  * 
  * @param ParamPlus
  * @type boolean
@@ -438,6 +445,15 @@
  * @default true
  * @desc Show additional class in the class column. (Hide normal class.) First additional class (index = 0) is targeted.
  * 
+ * @param ShowLevelOnMenu
+ * @parent OverwriteClassField
+ * @type select
+ * @option
+ * @option simple
+ * @option full
+ * @desc Additional class levels are displayed on the menu screen.
+ * Some screen width is required for full.
+ * 
  * @param ShowLevelOnStatus
  * @type boolean
  * @default true
@@ -446,7 +462,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.02 多重職業によって自由度の高い成長システムを実現。
+ * @plugindesc v1.03 多重職業によって自由度の高い成長システムを実現。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -608,6 +624,10 @@
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
  * 
+ * @------------------------------------------------------------------
+ * @ プラグインコマンド
+ * @------------------------------------------------------------------
+ * 
  * @command AddClass
  * @text 職業の追加
  * @desc 追加職業をアクターに設定します。
@@ -635,7 +655,7 @@
  * @type class
  * @desc 追加する職業です。
  * 
- * 
+ * @------------------------------------------------------------------
  * 
  * @command RemoveClass
  * @text 職業の削除
@@ -679,7 +699,7 @@
  * @default false
  * @desc 削除後に隙間を詰めます。
  * 
- * 
+ * @------------------------------------------------------------------
  * 
  * @command ChangeExp
  * @text 経験値の増減
@@ -728,7 +748,7 @@
  * @desc 対象とする追加職業です。
  * 未指定なら就いている職業全てを対象とします。
  * 
- * 
+ * @------------------------------------------------------------------
  * 
  * @command ChangeLevel
  * @text レベルの増減
@@ -777,7 +797,7 @@
  * @desc 対象とする追加職業です。
  * 未指定なら就いている職業全てを対象とします。
  * 
- * 
+ * @------------------------------------------------------------------
  * 
  * @command GetInformation
  * @text 追加職業の情報を取得
@@ -822,7 +842,9 @@
  * @desc 対象とする職業の登録位置です。
  * 0から開始します。
  * 
- * 
+ * @------------------------------------------------------------------
+ * @ プラグインパラメータ
+ * @------------------------------------------------------------------
  * 
  * @param ParamPlus
  * @text パラメータを加算
@@ -923,6 +945,16 @@
  * @desc 追加職業を職業欄に表示します。（通常の職業は非表示）
  * 先頭の追加職業（インデックス=0）のみが対象です。
  * 
+ * @param ShowLevelOnMenu
+ * @parent OverwriteClassField
+ * @text メニューにレベル表示
+ * @type select
+ * @option 非表示 @value
+ * @option 数字のみ @value simple
+ * @option 全表示 @value full
+ * @desc 追加職業のレベルをメニュー画面に表示します。
+ * ただし、全表示にはある程度の画面幅が必要です。
+ * 
  * @param ShowLevelOnStatus
  * @text ステータスにレベル表示
  * @type boolean
@@ -991,6 +1023,7 @@ const pBenchClassExpRate = setDefault(parameters["BenchClassExpRate"]);
 const pUnificationExp = toBoolean(parameters["UnificationExp"], false);
 const pNoDuplicateExp = toBoolean(parameters["NoDuplicateExp"], false);
 const pOverwriteClassField = toBoolean(parameters["OverwriteClassField"], true);
+const pShowLevelOnMenu = setDefault(parameters["ShowLevelOnMenu"]);
 const pShowLevelOnStatus = toBoolean(parameters["ShowLevelOnStatus"], true);
 
 //----------------------------------------
@@ -2059,6 +2092,37 @@ if (pOverwriteClassField) {
             width = width || 168;
             this.resetTextColor();
             this.drawText(additionalClass.name, x, y, width);
+        }
+    }
+
+    if (pShowLevelOnMenu) {
+        /**
+         * 【上書】職業の表示
+         */
+        Window_MenuStatus.prototype.drawActorClass = function(actor, x, y, width) {
+            Window_StatusBase.prototype.drawActorClass.apply(this, arguments);
+
+            // 追加職業のレベルをさらに表示
+            const additionalClass = actor.mainAdditionalClass();
+            if (additionalClass) {
+                // 幅を取得
+                const classNameWidth = this.textSizeEx(additionalClass.name).width;
+                x += classNameWidth + this.itemPadding();
+
+                // 数字のみ
+                if (pShowLevelOnMenu == "simple") {
+                    this.drawText(additionalClass.level, x, y, 30, "right");
+
+                // 全表示
+                } else if (pShowLevelOnMenu == "full") {
+                    this.changeTextColor(ColorManager.systemColor());
+                    this.drawText(pLvName, x, y, this.innerWidth - x - this.itemPadding() * 2 - 40, "right");
+                    this.resetTextColor();
+                    // 追加職業のレベル描画を追加
+                    x += 40;
+                    this.drawText(additionalClass.level, x, y, this.innerWidth - x - this.itemPadding() * 2, "right");
+                }
+            }
         }
     }
 }
