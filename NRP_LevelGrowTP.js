@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.021 Level growth of TP.
+ * @plugindesc v1.03 Level growth of TP.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_AdditionalClasses
  * @orderAfter NRP_EnemyPercentParams
@@ -15,6 +15,9 @@
  * Max TP is calculated using the same formula
  * as the ability value curve in the Class database.
  * It is handled as similarly as possible to other parameters.
+ * 
+ * You can also refer to the maximum TP
+ * in the skill formula with "a.mtp".
  * 
  * -------------------------------------------------------------------
  * [Note of Classes]
@@ -163,7 +166,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.021 ＴＰをレベル成長させる。
+ * @plugindesc v1.03 ＴＰをレベル成長させる。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_AdditionalClasses
  * @orderAfter NRP_EnemyPercentParams
@@ -174,6 +177,8 @@
  * 
  * 最大ＴＰは職業ＤＢの能力値曲線と同一の計算式で算出します。
  * なるべく他のパラメータと同様の感覚で扱えるようにしています。
+ * 
+ * スキルの計算式でも『a.mtp』で最大ＴＰを参照できます。
  * 
  * -------------------------------------------------------------------
  * ■職業のメモ欄
@@ -356,7 +361,7 @@ function setDefault(str, def) {
 
 const PLUGIN_NAME = "NRP_LevelGrowTP";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
-const pTpParamId = toNumber(parameters["TpParamId"], 8);
+const pTpParamId = toNumber(parameters["TpParamId"], 10);
 const pMaxTpName = parameters["MaxTpName"];
 const pPreserveTp = toBoolean(parameters["PreserveTp"], false);
 const pRecoverAllTp = toBoolean(parameters["RecoverAllTp"], false);
@@ -369,6 +374,20 @@ const pTpRecoverColor = setDefault(parameters["TpRecoverColor"], "#ffff80");
 const pEnemyDefaultMTP = parameters["EnemyDefaultMTP"];
 const pEnemyStartTP = toNumber(parameters["EnemyStartTP"], 100);
 const pTargetNoNameData = toBoolean(parameters["TargetNoNameData"], false);
+
+//-----------------------------------------------------------------------------
+// 最大ＴＰの定義
+//-----------------------------------------------------------------------------
+
+Object.defineProperties(Game_BattlerBase.prototype, {
+    // Maximum Tactical Points
+    mtp: {
+        get: function() {
+            return this.maxTp();
+        },
+        configurable: true
+    }
+});
 
 //-----------------------------------------------------------------------------
 // Scene_Boot
