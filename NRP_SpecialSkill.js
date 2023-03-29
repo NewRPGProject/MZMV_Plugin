@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.001 Implementation of the special skill system.
+ * @plugindesc v1.01 Implementation of the special skill system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489968387.html
  *
@@ -398,7 +398,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.001 奥義システムの実装。
+ * @plugindesc v1.01 奥義システムの実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489968387.html
  *
@@ -1424,13 +1424,60 @@ Window_SkillList.prototype.drawSkillCost = function(skill, x, y, width) {
 // Window_StatusBase
 //-----------------------------------------------------------------------------
 
+// タイプの一時保存用
+let mTempType = null;
+
+/**
+ * ●ゲージの設置
+ */
+const _Window_StatusBase_placeGauge = Window_StatusBase.prototype.placeGauge;
+Window_StatusBase.prototype.placeGauge = function(actor, type, x, y) {
+    mTempType = type;
+    _Window_StatusBase_placeGauge.apply(this, arguments);
+    mTempType = null;
+};
+
+/**
+ * ●ゲージスプライトの生成
+ */
+const _Window_StatusBase_createInnerSprite = Window_StatusBase.prototype.createInnerSprite;
+Window_StatusBase.prototype.createInnerSprite = function(key, spriteClass) {
+    const sprite = _Window_StatusBase_createInnerSprite.apply(this, arguments);
+
+    // 奥義ゲージの場合
+    if (mTempType.startsWith(STATUS_TYPE)) {
+        // ステータスタイプを設定して、ビットマップを再生成
+        // ※本来はsprite.setupで生成されるが、
+        //   その時点ではステータスタイプが設定されておらず、
+        //   奥義ゲージ家どうか判別できないので、ここで対応する。
+        sprite._statusType = mTempType;
+        sprite.createBitmap();
+    }
+
+    return sprite;
+};
+
+//-----------------------------------------------------------------------------
+// Window_MenuStatus
+//-----------------------------------------------------------------------------
+
 if (pShowMenu) {
+    /**
+     * Window_MenuStatusのメソッドが未定義の場合は事前に定義
+     * ※これをしておかないと以後のWindow_StatusBase側への追記が反映されない。
+     */
+    if (Window_MenuStatus.prototype.drawActorSimpleStatus == Window_StatusBase.prototype.drawActorSimpleStatus) {
+        Window_MenuStatus.prototype.drawActorSimpleStatus = function(actor, x, y) {
+            Window_StatusBase.prototype.drawActorSimpleStatus.apply(this, arguments);
+        }
+    }
+
     /**
      * ●アクターのメニュー画面のステータス描画
      */
-    const _Window_StatusBase_drawActorSimpleStatus = Window_StatusBase.prototype.drawActorSimpleStatus;
-    Window_StatusBase.prototype.drawActorSimpleStatus = function(actor, x, y) {
-        _Window_StatusBase_drawActorSimpleStatus.apply(this, arguments);
+    const _Window_MenuStatus_drawActorSimpleStatus = Window_MenuStatus.prototype.drawActorSimpleStatus;
+    Window_MenuStatus.prototype.drawActorSimpleStatus = function(actor, x, y) {
+        _Window_MenuStatus_drawActorSimpleStatus.apply(this, arguments);
 
         // 途中適用対策
         actor.clearSpecialGaugesIfNecessary();
@@ -1682,6 +1729,17 @@ Sprite_Gauge.prototype.specialGaugeIndex = function() {
     // ステータスタイプから固定文字列を除去して数値を取得
     return toNumber(this._statusType.replace(STATUS_TYPE, ""));
 };
+
+// /**
+//  * ●ゲージの背景色
+//  */
+// const _Sprite_Gauge_gaugeBackColor = Sprite_Gauge.prototype.gaugeBackColor;
+// Sprite_Gauge.prototype.gaugeBackColor = function() {
+//     if (this.isSpecialGauge()) {
+//         // return ColorManager.textColor(19);
+//     }
+//     return _Sprite_Gauge_gaugeBackColor.apply(this, arguments);
+// };
 
 //-----------------------------------------------------------------------------
 // 共通
