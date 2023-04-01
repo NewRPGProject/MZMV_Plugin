@@ -1449,7 +1449,7 @@ Window_StatusBase.prototype.createInnerSprite = function(key, spriteClass) {
         // ステータスタイプを設定して、ビットマップを再生成
         // ※本来はsprite.setupで生成されるが、
         //   その時点ではステータスタイプが設定されておらず、
-        //   奥義ゲージ家どうか判別できないので、ここで対応する。
+        //   奥義ゲージかどうか判別できないので、ここで対応する。
         sprite._statusType = mTempType;
         sprite.createBitmap();
     }
