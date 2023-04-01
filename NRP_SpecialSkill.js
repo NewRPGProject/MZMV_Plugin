@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Implementation of the special skill system.
+ * @plugindesc v1.011 Implementation of the special skill system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489968387.html
  *
@@ -398,7 +398,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 奥義システムの実装。
+ * @plugindesc v1.011 奥義システムの実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489968387.html
  *
@@ -1445,7 +1445,7 @@ Window_StatusBase.prototype.createInnerSprite = function(key, spriteClass) {
     const sprite = _Window_StatusBase_createInnerSprite.apply(this, arguments);
 
     // 奥義ゲージの場合
-    if (mTempType.startsWith(STATUS_TYPE)) {
+    if (mTempType && mTempType.startsWith(STATUS_TYPE)) {
         // ステータスタイプを設定して、ビットマップを再生成
         // ※本来はsprite.setupで生成されるが、
         //   その時点ではステータスタイプが設定されておらず、
