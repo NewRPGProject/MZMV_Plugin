@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.023 Implemented a class change screen for multiple classes.
+ * @plugindesc v1.03 Implemented a class change screen for multiple classes.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -417,7 +417,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.023 多重職業用の転職画面を実装。
+ * @plugindesc v1.03 多重職業用の転職画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
