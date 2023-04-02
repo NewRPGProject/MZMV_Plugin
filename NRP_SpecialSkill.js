@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.011 Implementation of the special skill system.
+ * @plugindesc v1.02 Implementation of the special skill system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489968387.html
  *
@@ -249,6 +249,14 @@
  * 
  * @-----------------------------------------------------------
  * 
+ * @param ShowSkillStatus
+ * @parent <GaugeLayout>
+ * @type boolean
+ * @default true
+ * @desc Displays a special gauge on the skill screen.
+ * 
+ * @-----------------------------------------------------------
+ * 
  * @param ShowStatus
  * @parent <GaugeLayout>
  * @type boolean
@@ -398,7 +406,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.011 奥義システムの実装。
+ * @plugindesc v1.02 奥義システムの実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489968387.html
  *
@@ -650,6 +658,15 @@
  * 
  * @-----------------------------------------------------------
  * 
+ * @param ShowSkillStatus
+ * @parent <GaugeLayout>
+ * @text スキル画面に表示
+ * @type boolean
+ * @default true
+ * @desc スキル画面に奥義ゲージを表示します。
+ * 
+ * @-----------------------------------------------------------
+ * 
  * @param ShowStatus
  * @parent <GaugeLayout>
  * @text ステータス画面に表示
@@ -881,6 +898,7 @@ const pGaugeFlash = toBoolean(parameters["GaugeFlash"], false);
 const pShowMenu = toBoolean(parameters["ShowMenu"], false);
 const pMenuStartGaugeX = toNumber(parameters["MenuStartGaugeX"]);
 const pMenuStartGaugeY = toNumber(parameters["MenuStartGaugeY"]);
+const pShowSkillStatus = toBoolean(parameters["ShowSkillStatus"], false);
 const pShowStatus = toBoolean(parameters["ShowStatus"], false);
 const pStatusStartGaugeX = toNumber(parameters["StatusStartGaugeX"]);
 const pStatusStartGaugeY = toNumber(parameters["StatusStartGaugeY"]);
@@ -1478,6 +1496,44 @@ if (pShowMenu) {
     const _Window_MenuStatus_drawActorSimpleStatus = Window_MenuStatus.prototype.drawActorSimpleStatus;
     Window_MenuStatus.prototype.drawActorSimpleStatus = function(actor, x, y) {
         _Window_MenuStatus_drawActorSimpleStatus.apply(this, arguments);
+
+        // 途中適用対策
+        actor.clearSpecialGaugesIfNecessary();
+        // eval参照用
+        const a = actor;
+
+        // 登録したゲージの数だけループ
+        for (let i = 0; i < pSpecialTypeList.length; i++) {
+            // ゲージが有効かどうか？
+            if (isGaugeConditionOK(i, a)) {
+                // ゲージを表示
+                this.placeGauge(a, STATUS_TYPE + i, x + pMenuStartGaugeX, y + pMenuStartGaugeY + i * pGaugeInterval);
+            }
+        }
+    };
+}
+
+//-----------------------------------------------------------------------------
+// Window_SkillStatus
+//-----------------------------------------------------------------------------
+
+if (pShowSkillStatus) {
+    /**
+     * Window_SkillStatusのメソッドが未定義の場合は事前に定義
+     * ※これをしておかないと以後のWindow_StatusBase側への追記が反映されない。
+     */
+    if (Window_SkillStatus.prototype.drawActorSimpleStatus == Window_StatusBase.prototype.drawActorSimpleStatus) {
+        Window_SkillStatus.prototype.drawActorSimpleStatus = function(actor, x, y) {
+            Window_StatusBase.prototype.drawActorSimpleStatus.apply(this, arguments);
+        }
+    }
+
+    /**
+     * ●アクターのスキル画面のステータス描画
+     */
+    const _Window_SkillStatus_drawActorSimpleStatus = Window_SkillStatus.prototype.drawActorSimpleStatus;
+    Window_SkillStatus.prototype.drawActorSimpleStatus = function(actor, x, y) {
+        _Window_SkillStatus_drawActorSimpleStatus.apply(this, arguments);
 
         // 途中適用対策
         actor.clearSpecialGaugesIfNecessary();
