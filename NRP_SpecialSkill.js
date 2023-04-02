@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.02 Implementation of the special skill system.
+ * @plugindesc v1.021 Implementation of the special skill system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489968387.html
  *
@@ -406,7 +406,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.02 奥義システムの実装。
+ * @plugindesc v1.021 奥義システムの実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489968387.html
  *
@@ -1475,6 +1475,25 @@ Window_StatusBase.prototype.createInnerSprite = function(key, spriteClass) {
     return sprite;
 };
 
+/**
+ * 【独自】奥義ゲージの描画
+ */
+Window_StatusBase.prototype.drawSpecialGauge = function(actor, x, y) {
+    // 途中適用対策
+    actor.clearSpecialGaugesIfNecessary();
+    // eval参照用
+    const a = actor;
+
+    // 登録したゲージの数だけループ
+    for (let i = 0; i < pSpecialTypeList.length; i++) {
+        // ゲージが有効かどうか？
+        if (isGaugeConditionOK(i, a)) {
+            // ゲージを表示
+            this.placeGauge(a, STATUS_TYPE + i, x + pMenuStartGaugeX, y + pMenuStartGaugeY + i * pGaugeInterval);
+        }
+    }
+};
+
 //-----------------------------------------------------------------------------
 // Window_MenuStatus
 //-----------------------------------------------------------------------------
@@ -1497,19 +1516,8 @@ if (pShowMenu) {
     Window_MenuStatus.prototype.drawActorSimpleStatus = function(actor, x, y) {
         _Window_MenuStatus_drawActorSimpleStatus.apply(this, arguments);
 
-        // 途中適用対策
-        actor.clearSpecialGaugesIfNecessary();
-        // eval参照用
-        const a = actor;
-
-        // 登録したゲージの数だけループ
-        for (let i = 0; i < pSpecialTypeList.length; i++) {
-            // ゲージが有効かどうか？
-            if (isGaugeConditionOK(i, a)) {
-                // ゲージを表示
-                this.placeGauge(a, STATUS_TYPE + i, x + pMenuStartGaugeX, y + pMenuStartGaugeY + i * pGaugeInterval);
-            }
-        }
+        // 奥義ゲージの描画
+        this.drawSpecialGauge(actor, x, y);
     };
 }
 
@@ -1535,19 +1543,8 @@ if (pShowSkillStatus) {
     Window_SkillStatus.prototype.drawActorSimpleStatus = function(actor, x, y) {
         _Window_SkillStatus_drawActorSimpleStatus.apply(this, arguments);
 
-        // 途中適用対策
-        actor.clearSpecialGaugesIfNecessary();
-        // eval参照用
-        const a = actor;
-
-        // 登録したゲージの数だけループ
-        for (let i = 0; i < pSpecialTypeList.length; i++) {
-            // ゲージが有効かどうか？
-            if (isGaugeConditionOK(i, a)) {
-                // ゲージを表示
-                this.placeGauge(a, STATUS_TYPE + i, x + pMenuStartGaugeX, y + pMenuStartGaugeY + i * pGaugeInterval);
-            }
-        }
+        // 奥義ゲージの描画
+        this.drawSpecialGauge(actor, x, y);
     };
 }
 
