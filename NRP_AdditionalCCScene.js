@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.022 Implemented a class change screen for multiple classes.
+ * @plugindesc v1.023 Implemented a class change screen for multiple classes.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -417,7 +417,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.022 多重職業用の転職画面を実装。
+ * @plugindesc v1.023 多重職業用の転職画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -1897,6 +1897,37 @@ Windows_ClassSlot.prototype.setInfoWindow = function(window) {
     this._infoWindow = window;
 };
 
+/**
+ * ●文字列の出力
+ * ※Windows_Baseの関数をオーバーライド
+ */
+Windows_ClassSlot.prototype.flushTextState = function(textState) {
+    const text = textState.buffer;
+    const rtl = textState.rtl;
+    
+    // 指定したwidthに合わせるように調整
+    // ただし、アイコン出力時はtextが空白になるので考慮
+    let width = 0;
+    if (text) {
+        width = textState.width || this.textWidth(text);
+    }
+    // const width = this.textWidth(text);
+
+    const height = textState.height;
+    const x = rtl ? textState.x - width : textState.x;
+    const y = textState.y;
+    if (textState.drawing) {
+        this.contents.drawText(text, x, y, width, height);
+    }
+    textState.x += rtl ? -width : width;
+    textState.buffer = this.createTextBuffer(rtl);
+    const outputWidth = Math.abs(textState.x - textState.startX);
+    if (textState.outputWidth < outputWidth) {
+        textState.outputWidth = outputWidth;
+    }
+    textState.outputHeight = y - textState.startY + height;
+};
+
 //-----------------------------------------------------------------------------
 // Windows_SelectClasses
 //
@@ -2124,6 +2155,37 @@ Windows_SelectClasses.prototype.selectCurrentClass = function() {
 
     // 該当が存在しなかった場合は先頭を設定
     this.select(0);
+};
+
+/**
+ * ●文字列の出力
+ * ※Windows_Baseの関数をオーバーライド
+ */
+Windows_SelectClasses.prototype.flushTextState = function(textState) {
+    const text = textState.buffer;
+    const rtl = textState.rtl;
+    
+    // 指定したwidthに合わせるように調整
+    // ただし、アイコン出力時はtextが空白になるので考慮
+    let width = 0;
+    if (text) {
+        width = textState.width || this.textWidth(text);
+    }
+    // const width = this.textWidth(text);
+
+    const height = textState.height;
+    const x = rtl ? textState.x - width : textState.x;
+    const y = textState.y;
+    if (textState.drawing) {
+        this.contents.drawText(text, x, y, width, height);
+    }
+    textState.x += rtl ? -width : width;
+    textState.buffer = this.createTextBuffer(rtl);
+    const outputWidth = Math.abs(textState.x - textState.startX);
+    if (textState.outputWidth < outputWidth) {
+        textState.outputWidth = outputWidth;
+    }
+    textState.outputHeight = y - textState.startY + height;
 };
 
 //-----------------------------------------------------------------------------
