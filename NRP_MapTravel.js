@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.021 Implement a map selection & transfer screen.
+ * @plugindesc v1.022 Implement a map selection & transfer screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484927929.html
  *
@@ -564,7 +564,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.021 マップ選択＆移動画面を実装します。
+ * @plugindesc v1.022 マップ選択＆移動画面を実装します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484927929.html
  *
@@ -2687,12 +2687,12 @@ function isUpdateSpot(spot) {
 
 if (pShowMenuCommand) {
     /**
-     * ●メニューコマンド追加（メインコマンド）
+     * ●メニューコマンド追加（独自コマンド）
      */
-    const _Window_MenuCommand_addMainCommands = Window_MenuCommand.prototype.addMainCommands;
-    Window_MenuCommand.prototype.addMainCommands = function() {
+    const _Window_MenuCommand_addOriginalCommands = Window_MenuCommand.prototype.addOriginalCommands;
+    Window_MenuCommand.prototype.addOriginalCommands = function() {
         // 元処理実行
-        _Window_MenuCommand_addMainCommands.call(this);
+        _Window_MenuCommand_addOriginalCommands.call(this);
 
         // 非表示スイッチが存在かつオフの場合は無効
         if (pMenuCommandSwitch && !$gameSwitches.value(pMenuCommandSwitch)) {
