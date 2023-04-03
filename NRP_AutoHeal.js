@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.001 It enables the "Auto Heal" command.
+ * @plugindesc v1.002 It enables the "Auto Heal" command.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/480069638.html
  * 
@@ -292,7 +292,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.001 自動回復コマンド（まんたん）を実現
+ * @plugindesc v1.002 自動回復コマンド（まんたん）を実現
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/480069638.html
  *
@@ -746,12 +746,12 @@ function getCommandValue(value) {
 //-----------------------------------------------------------------------------
 
 /**
- * ●メニューコマンド追加（メインコマンド）
+ * ●メニューコマンド追加（独自コマンド）
  */
-var _Window_MenuCommand_addMainCommands = Window_MenuCommand.prototype.addMainCommands;
-Window_MenuCommand.prototype.addMainCommands = function() {
+const _Window_MenuCommand_addOriginalCommands = Window_MenuCommand.prototype.addOriginalCommands;
+Window_MenuCommand.prototype.addOriginalCommands = function() {
     // 元処理実行
-    _Window_MenuCommand_addMainCommands.call(this);
+    _Window_MenuCommand_addOriginalCommands.call(this);
 
     // 指定位置に自動回復コマンドを挿入
     // ※標準では並び替えの下
