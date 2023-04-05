@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Change the performance of the skill.
+ * @plugindesc v1.01 Change the performance of the skill.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/498025725.html
  *
@@ -50,10 +50,10 @@
  * <EnhanceDamageRate:150>
  * 1.5 times the damage when enhanced.
  * 
- * <EnhanceMpCostRateRate:50>
+ * <EnhanceMpCostRate:50>
  * 0.5 times the consume MP when enhanced.
  * 
- * <EnhanceTpCostRateRate:50>
+ * <EnhanceTpCostRate:50>
  * 0.5 times the consume TP when enhanced.
  * 
  * <EnhanceSuccessRate:150>
@@ -138,6 +138,12 @@
  * @default 1
  * @desc The behavior when reinforcement is stacked. If Overwrite, the maximum damage multiplier is given priority.
  * 
+ * @param UsePlusStyle
+ * @type boolean
+ * @default false
+ * @desc Changes the enhancement formula to additive.
+ * If off, multiplication is used.
+ * 
  * @param <DefaultEnhance>
  * @desc Initial value at the time of enhancement.
  * 
@@ -170,7 +176,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 スキルの性能を変化させる。
+ * @plugindesc v1.01 スキルの性能を変化させる。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/498025725.html
  *
@@ -211,10 +217,10 @@
  * <EnhanceDamageRate:150>
  * 強化時のダメージを１．５倍にします。
  * 
- * <EnhanceMpCostRateRate:50>
+ * <EnhanceMpCostRate:50>
  * 強化時の消費ＭＰを０．５倍にします。
  * 
- * <EnhanceTpCostRateRate:50>
+ * <EnhanceTpCostRate:50>
  * 強化時の消費ＴＰを０．５倍にします。
  * 
  * <EnhanceSuccessRate:150>
@@ -294,6 +300,13 @@
  * @desc 強化を重ねた場合の挙動です。
  * 重複無効の場合はダメージ倍率の最大値が優先されます。
  * 
+ * @param UsePlusStyle
+ * @text 加算方式を使用
+ * @type boolean
+ * @default false
+ * @desc 強化の計算式を加算方式に変更します。
+ * オフの場合は乗算方式が使用されます。
+ * 
  * @param <DefaultEnhance>
  * @text ＜強化の初期値＞
  * @desc 強化時の初期値です。
@@ -352,6 +365,7 @@ const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pEnhanceSkillType = textToArray(parameters["EnhanceSkillType"]);
 const pEnhanceItem = toBoolean(parameters["EnhanceItem"], false);
 const pOverlaySettings = toNumber(parameters["OverlaySettings"], 0);
+const pUsePlusStyle = toBoolean(parameters["UsePlusStyle"], false);
 const pEnhanceDamageRate = toNumber(parameters["EnhanceDamageRate"]);
 const pEnhanceMpCostRate = toNumber(parameters["EnhanceMpCostRate"]);
 const pEnhanceTpCostRate = toNumber(parameters["EnhanceTpCostRate"]);
@@ -379,15 +393,11 @@ Game_Action.prototype.makeDamageValue = function(target, critical) {
     }
 
     // 強化有の場合
-    const objects = this.subject().enhanceObjects(this.item());
-    if (objects.length > 0) {
-        for (const object of objects) {
-            // 優先レートを取得
-            const rate = getRate(object, object.meta.EnhanceDamageRate, pEnhanceDamageRate);
-            // 属性強化率を計算
-            if (rate != null) {
-                ret *= rate / 100;
-            }
+    const rate = this.enhanceDamageRate();
+    if (rate != 1) {
+        // 属性強化率を計算
+        if (rate != null) {
+            ret *= rate;
         }
         // 四捨五入
         ret = Math.round(ret);
@@ -433,14 +443,12 @@ const _Game_Action_itemHit = Game_Action.prototype.itemHit;
 Game_Action.prototype.itemHit = function(/*target*/) {
     let ret =_Game_Action_itemHit.apply(this, arguments);
 
+    const rate = this.enhanceSuccessRate();
     // 強化有の場合
-    const objects = this.subject().enhanceObjects(this.item());
-    for (const object of objects) {
-        // 優先レートを取得
-        const rate = getRate(object, object.meta.EnhanceSuccessRate, pEnhanceSuccessRate);
+    if (rate != 1) {
         // 成功率を計算
         if (rate != null) {
-            ret *= rate / 100;
+            ret *= rate;
         }
     }
 
@@ -463,19 +471,12 @@ Game_Action.prototype.itemEffectAddAttackState = function(target, effect) {
  */
 const _Game_Action_itemEffectAddNormalState = Game_Action.prototype.itemEffectAddNormalState;
 Game_Action.prototype.itemEffectAddNormalState = function(target, effect) {
+    const rate = this.enhanceStateRate();
     // 強化有の場合
-    const objects = this.subject().enhanceObjects(this.item());
-    if (objects.length > 0) {
+    if (rate != 1) {
         // 複製して別オブジェクトにする。
         const newEffect = {...effect};
-        for (const object of objects) {
-            // 優先レートを取得
-            const rate = getRate(object, object.meta.EnhanceStateRate, pEnhanceStateRate);
-            // ステート付加率（effect.value1）を補正
-            if (rate != null) {
-                newEffect.value1 *= rate / 100;
-            }
-        }
+        newEffect.value1 *= rate;
         _Game_Action_itemEffectAddNormalState.call(this, target, newEffect);
         return;
     }
@@ -483,6 +484,71 @@ Game_Action.prototype.itemEffectAddNormalState = function(target, effect) {
     // そのまま
     _Game_Action_itemEffectAddNormalState.apply(this, arguments);
 };
+
+/**
+ * 【独自】ダメージ補正を取得
+ */
+Game_Action.prototype.enhanceDamageRate = function() {
+    return getEnhanceRate(this, "EnhanceDamageRate", pEnhanceDamageRate);
+};
+
+/**
+ * 【独自】命中補正を取得
+ */
+Game_Action.prototype.enhanceSuccessRate = function() {
+    return getEnhanceRate(this, "EnhanceSuccessRate", pEnhanceSuccessRate);
+};
+
+/**
+ * 【独自】異常命中補正を取得
+ */
+Game_Action.prototype.enhanceStateRate = function() {
+    return getEnhanceRate(this, "EnhanceStateRate", pEnhanceStateRate);
+};
+
+/**
+ * 【独自】消費ＭＰ補正を取得
+ */
+Game_Action.prototype.enhanceMpCostRate = function() {
+    return getEnhanceRate(this, "EnhanceMpCostRate", pEnhanceMpCostRate);
+};
+
+/**
+ * 【独自】消費ＴＰ補正を取得
+ */
+Game_Action.prototype.enhanceTpCostRate = function() {
+    return getEnhanceRate(this, "EnhanceTpCostRate", pEnhanceTpCostRate);
+};
+
+/**
+ * ●強化倍率を求める。
+ */
+function getEnhanceRate(action, metaName, defaultRate) {
+    let enhanceRate = 1;
+
+    // 強化有の場合
+    const objects = action.subject().enhanceObjects(action.item());
+    if (objects.length > 0) {
+        for (const object of objects) {
+            // 優先レートを取得
+            const rate = getRate(object, object.meta[metaName], defaultRate);
+            // 消費ＭＰを補正
+            if (rate != null) {
+                // 加算方式
+                if (pUsePlusStyle) {
+                    enhanceRate += (rate - 100) / 100;
+                // 乗算方式
+                } else {
+                    enhanceRate *= rate / 100;
+                }
+            }
+        }
+        // 少数第二位で四捨五入
+        enhanceRate = Math.round(enhanceRate * 100) / 100;
+    }
+
+    return enhanceRate;
+}
 
 //-----------------------------------------------------------------------------
 // Game_BattlerBase
@@ -497,15 +563,10 @@ Game_BattlerBase.prototype.attackStatesRate = function(stateId) {
 
     // Game_Action.prototype.itemEffectAddAttackStateから引き継ぎ
     if (mAction) {
+        const rate = mAction.enhanceStateRate();
         // 強化有の場合
-        const objects = this.enhanceObjects(mAction.item());
-        for (const object of objects) {
-            // 優先レートを取得
-            const rate = getRate(object, object.meta.EnhanceStateRate, pEnhanceStateRate);
-            // ステート付加率を補正
-            if (rate != null) {
-                ret *= rate / 100;
-            }
+        if (rate != 1) {
+            ret *= rate;
         }
     }
 
@@ -517,18 +578,16 @@ Game_BattlerBase.prototype.attackStatesRate = function(stateId) {
  */
 const _Game_BattlerBase_skillMpCost = Game_BattlerBase.prototype.skillMpCost;
 Game_BattlerBase.prototype.skillMpCost = function(skill) {
+    const action = new Game_Action(this);
+    action.setSkill(skill.id);
+    const rate = action.enhanceMpCostRate();
     // 強化有の場合
-    const objects = this.enhanceObjects(skill);
-    if (objects.length > 0) {
+    if (rate != 1) {
         // 複製して別オブジェクトにする。
         const newSkill = {...skill};
-        for (const object of objects) {
-            // 優先レートを取得
-            const rate = getRate(object, object.meta.EnhanceMpCostRate, pEnhanceMpCostRate);
-            // 消費ＭＰを補正
-            if (rate != null) {
-                newSkill.mpCost *= rate / 100;
-            }
+        // 消費ＭＰを補正
+        if (rate != null) {
+            newSkill.mpCost *= rate;
         }
         // 元の処理を呼び出し（切捨も実行される。）
         return _Game_BattlerBase_skillMpCost.call(this, newSkill);
@@ -543,18 +602,16 @@ Game_BattlerBase.prototype.skillMpCost = function(skill) {
  */
 const _Game_BattlerBase_skillTpCost = Game_BattlerBase.prototype.skillTpCost;
 Game_BattlerBase.prototype.skillTpCost = function(skill) {
+    const action = new Game_Action(this);
+    action.setSkill(skill.id);
+    const rate = action.enhanceTpCostRate();
     // 強化有の場合
-    const objects = this.enhanceObjects(skill);
-    if (objects.length > 0) {
+    if (rate != 1) {
         // 複製して別オブジェクトにする。
         const newSkill = {...skill};
-        for (const object of objects) {
-            // 優先レートを取得
-            const rate = getRate(object, object.meta.EnhanceTpCostRate, pEnhanceTpCostRate);
-            // 消費ＴＰを補正
-            if (rate != null) {
-                newSkill.tpCost *= rate / 100;
-            }
+        // 消費ＴＰを補正
+        if (rate != null) {
+            newSkill.tpCost *= rate;
         }
         // ＭＰと異なり切捨処理がないので、ここで実行する。
         newSkill.tpCost = Math.floor(newSkill.tpCost);
@@ -594,6 +651,7 @@ Game_BattlerBase.prototype.enhanceObjects = function(item) {
 
     // メモ欄を参照するオブジェクトを全取得
     let traitObjects = this.traitObjects();
+
     // スキルが有効な場合はパッシブスキルとして連結
     // ※通常はアクターのみ
     if (this.skills) {
