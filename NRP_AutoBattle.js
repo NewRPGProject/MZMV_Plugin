@@ -8,6 +8,8 @@
  * @url https://newrpg.seesaa.net/article/498941158.html
  *
  * @help Add an auto-battle command.
+ * The battle will be executed automatically
+ * until the cancel key is pressed.
  * 
  * Initially, it behaves like an auto-battle
  * with special flag of traits,
@@ -72,6 +74,7 @@
  * @url https://newrpg.seesaa.net/article/498941158.html
  *
  * @help 自動戦闘コマンドを追加します。
+ * キャンセルキーを押すまで自動で戦闘を実行するようになります。
  * 
  * 初期状態では特徴の特殊フラグの自動戦闘と同様の挙動を取りますが、
  * 通常攻撃だけをさせることも可能です。
