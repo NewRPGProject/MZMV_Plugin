@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.08 Setting the battler's shadow & adding the levitation effect
+ * @plugindesc v1.09 Setting the battler's shadow & adding the levitation effect
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base animatedSVEnemies
  * @base NRP_DynamicMotionMZ
@@ -14,7 +14,7 @@
  * @help Configure the settings regarding the battler's shadow.
  * You can also make the battler float in the air.
  * 
- * ■Key Features
+ * ◆Key Features
  * ・Create a shadow similar to the actor on an enemy.
  * ・Change the size and position of the battler's shadow.
  * ・Also, the size of the shadow will match the image size of the battler
@@ -22,13 +22,17 @@
  * ・And create a state floating battler.
  * ・This plugin supports DynamicMotion and animatedSVEnemies.js.
  * 
- * ■Install
+ * -------------------------------------------------------------------
+ * [Install]
+ * -------------------------------------------------------------------
  * If used in conjunction with the following plugins,
  * please register below them.
  * ・NRP_DynamicMotion.js or NRP_DynamicMotionMZ.js
  * ・animatedSVEnemies.js
  * 
- * ■Usage
+ * -------------------------------------------------------------------
+ * [Usage]
+ * -------------------------------------------------------------------
  * You set the shadow settings in the plugin parameters.
  * In addition, the shadow of the enemy does not appear
  * just by installing the plugin. "EnemyMakeShadow" must be turned on.
@@ -37,7 +41,9 @@
  * in the notes for enemy and actor.
  * ※<BattlerFloat> is also valid only for states.
  * 
- * ■Note Settings
+ * -------------------------------------------------------------------
+ * [Note Settings]
+ * -------------------------------------------------------------------
  * <MakeShadow> / <MakeShadow:false>
  * Enable / disable shadows.
  * 
@@ -58,6 +64,11 @@
  * <ShadowOpacity:?>
  * Changes the opacity of the shadow; it becomes opaque at 255.
  * 
+ * <ShadowImage:?>
+ * Change the shadow image.
+ * Specify the image name (no extension required) directly
+ * under img/system.
+ * 
  * <BattlerFloat> / <BattlerFloat:?>
  * The battler will float in the air.
  * The height depends on the settings of the plugin parameters.
@@ -74,7 +85,9 @@
  * <BattlerFloat>, <FloatAmplitude>, and <FloatPeriodicTime>.
  * For example, you can create a state like the FF series Levitate.
  * 
- * ■Automatic adjustment of shadow size
+ * -------------------------------------------------------------------
+ * [Automatic adjustment of shadow size]
+ * -------------------------------------------------------------------
  * By default, "EnemyShadowScaleX", "EnemyShadowScaleY"
  * is set to the following formula.
  * 
@@ -93,7 +106,9 @@
  * For more information on other plugins, please see below.
  * http://newrpg.seesaa.net/article/478654833.html
  * 
+ * -------------------------------------------------------------------
  * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
@@ -264,7 +279,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.08 バトラーの影を設定＆浮遊効果の追加
+ * @plugindesc v1.09 バトラーの影を設定＆浮遊効果の追加
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @orderAfter animatedSVEnemies
  * @orderAfter NRP_DynamicMotionMZ
@@ -273,7 +288,7 @@
  * @help バトラーの影に関する設定を行います。
  * また、バトラーを宙に浮かせる演出ができます。
  * 
- * ■主な特徴
+ * ◆主な特徴
  * ・敵キャラにアクターと同じような影を作成可能
  * ・バトラーの影の大きさや位置を変更可能
  * ・バトラーの画像サイズに合わせた自動調整も可能
@@ -281,12 +296,16 @@
  * ・バトラーを浮遊させるステートを作成可能
  * ・DynamicMotionおよびanimatedSVEnemies.jsに対応
  * 
+ * -------------------------------------------------------------------
  * ■導入
+ * -------------------------------------------------------------------
  * 以下のプラグインと併用する場合は、それらよりも下に登録してください。
  * ・NRP_DynamicMotion.js or NRP_DynamicMotionMZ.js
  * ・animatedSVEnemies.js
  * 
+ * -------------------------------------------------------------------
  * ■使用方法
+ * -------------------------------------------------------------------
  * プラグインパラメータで、影の設定をしてください。
  * なお、プラグインを導入しただけでは敵キャラの影は表示されません。
  * 『影を作成』をオンにする必要があります。
@@ -294,7 +313,9 @@
  * 敵キャラおよびアクターのメモ欄に以下を記載すれば、個別の設定も可能です。
  * ※<BattlerFloat>のみステートにも有効です。
  * 
+ * -------------------------------------------------------------------
  * ■メモ欄の設定
+ * -------------------------------------------------------------------
  * <MakeShadow> / <MakeShadow:false>
  * 影を有効／無効にします。
  * 
@@ -312,6 +333,10 @@
  * <ShadowOpacity:?>
  * 影の不透明度を変更します。255で不透明になります。
  * 
+ * <ShadowImage:?>
+ * 影の画像を変更します。
+ * img/system 直下の画像名（拡張子不要）を指定してください。
+ * 
  * <BattlerFloat> / <BattlerFloat:?>
  * バトラーが宙に浮きます。高さはプラグインパラメータの設定値に従います。
  * 高さを数値で個別に指定することも可能です。
@@ -327,7 +352,9 @@
  * の３項目のみステートのメモ欄でも有効です。
  * 例えば、ＦＦシリーズのレビテトのようなステートが作成できます。
  * 
+ * -------------------------------------------------------------------
  * ■影幅の自動調整
+ * -------------------------------------------------------------------
  * 初期状態では敵の『影の拡大率Ｘ』『影の拡大率Ｙ』に
  * 以下のような数式が設定されています。
  * 
@@ -345,7 +372,9 @@
  * その他、プラグインの詳細は以下をご覧ください。
  * http://newrpg.seesaa.net/article/478654833.html
  * 
+ * -------------------------------------------------------------------
  * ■利用規約
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
@@ -947,6 +976,12 @@ Sprite_Battler.prototype.initBattlerShadow = function() {
     }
     // 元の値を保持しておく。
     this._shadowSprite.originalOpacity = this._shadowSprite.opacity;
+
+    // 影画像の設定
+    const shadowImage = meta.ShadowImage
+    if (shadowImage) {
+        this._shadowSprite.bitmap = ImageManager.loadSystem(shadowImage);
+    }
 
     // 影を設定した
     this._isSetShadow = true;
