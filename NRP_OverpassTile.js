@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Realize a high-performance overpass.
+ * @plugindesc v1.031 Realize a high-performance overpass.
  * @author Takeshi Sunagawa (original triacontane & Yoji Ojima)
  * @orderAfter NRP_EventCollisionEX
  * @orderAfter NRP_BushEX
@@ -180,7 +180,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 高機能な立体交差を実現します。
+ * @plugindesc v1.031 高機能な立体交差を実現します。
  * @author 砂川赳 (original トリアコンタン & Yoji Ojima)
  * @orderAfter NRP_EventCollisionEX
  * @orderAfter NRP_BushEX
@@ -928,16 +928,22 @@ Game_Vehicle.prototype.findCollisionData = function(x, y) {
 
 /**
  * ●乗り物の乗降時の判定
- * ※RegionBase.jsとの競合対策
  */
 const _Game_Vehicle_isLandOk = Game_Vehicle.prototype.isLandOk;
 Game_Vehicle.prototype.isLandOk = function(x, y, d) {
+    // ※RegionBase.jsとの競合対策
     // RegionBaseの関数が有効な場合
     if ($gameMap.setPassableSubject) {
         // ロード直後、一度もsetPassableSubjectが呼ばれないまま、
         // 乗降を実行するとエラーになるので対処
         $gameMap.setPassableSubject(this);
     }
+
+    // 現在地が立体交差の下で、かつ上陸先が通行不可の場合は乗降禁止
+    if (this.isOnOverPath() && !this._higher && !$gameMap.isPassableLowerLayer(x, y, d)) {
+        return false;
+    }
+
     return _Game_Vehicle_isLandOk.apply(this, arguments);
 }
 
