@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Add an auto-battle command.
+ * @plugindesc v1.001 Add an auto-battle command.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/498941158.html
  *
@@ -69,7 +69,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 自動戦闘コマンドを追加します。
+ * @plugindesc v1.001 自動戦闘コマンドを追加します。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/498941158.html
  *
@@ -279,7 +279,6 @@ BattleManager.updateTurnEnd = function() {
 BattleManager.setAutoBattleActions = function() {
     // ＴＰＢは即時ターン開始
     if (this.isTpb && this.isTpb()) {
-        this.startTurn();
         return;
     }
 
@@ -298,17 +297,30 @@ BattleManager.setAutoBattleActions = function() {
 };
 
 /**
- * 【独自】突撃モードの設定
+ * 【独自】自動戦闘モードの設定
  */
 BattleManager.setAutoBattleMode = function(mode) {
     this._autoBattleMode = mode;
 };
 
 /**
- * 【独自】突撃モードの判定
+ * 【独自】自動戦闘モードの判定
  */
 BattleManager.isAutoBattleMode = function() {
     return this._autoBattleMode;
+};
+
+/**
+ * ●アクターの入力キャンセル時
+ */
+const _BattleManager_cancelActorInput = BattleManager.cancelActorInput;
+BattleManager.cancelActorInput = function() {
+    // ＴＰＢかつ自動戦闘時は詠唱ポーズを解除してしまうので処理しない
+    if (this.isTpb && this.isTpb() && BattleManager.isAutoBattleMode()) {
+        return;
+    }
+
+    _BattleManager_cancelActorInput.apply(this, arguments);
 };
 
 // ----------------------------------------------------------------------------
