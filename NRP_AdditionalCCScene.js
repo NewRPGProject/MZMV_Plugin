@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.03 Implemented a class change screen for multiple classes.
+ * @plugindesc v1.04 Implemented a class change screen for multiple classes.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -296,6 +296,12 @@
  * @desc Displays the command only when the switch is on.
  * If it is blank, it will always be displayed.
  * 
+ * @param DisableSwitch
+ * @parent <Menu Command>
+ * @type switch
+ * @desc Disallow command only when switch is on.
+ * Always allow if blank.
+ * 
  * @param ClassChangeSymbol
  * @parent <Menu Command>
  * @type text
@@ -417,7 +423,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.03 多重職業用の転職画面を実装。
+ * @plugindesc v1.04 多重職業用の転職画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -748,6 +754,13 @@
  * @desc スイッチがオンの時のみコマンドを表示します。
  * 空白なら常に表示します。
  * 
+ * @param DisableSwitch
+ * @parent <Menu Command>
+ * @text 禁止するスイッチ
+ * @type switch
+ * @desc スイッチがオンの時のみコマンドを禁止（灰色）します。
+ * 空白なら常に許可します。
+ * 
  * @param ClassChangeSymbol
  * @parent <Menu Command>
  * @text [上級]転職記号
@@ -975,6 +988,7 @@ const pShowMenuCommand = toBoolean(parameters["ShowMenuCommand"], false);
 const pShowMenuCommandPosition = toNumber(parameters["ShowMenuCommandPosition"], 3);
 const pClassChangeName = parameters["ClassChangeName"];
 const pMenuCommandSwitch = toNumber(parameters["MenuCommandSwitch"]);
+const pDisableSwitch = toNumber(parameters["DisableSwitch"]);
 const pClassChangeSymbol = parameters["ClassChangeSymbol"];
 const pReadOnlyMenu = toBoolean(parameters["ReadOnlyMenu"], false);
 const pReadOnlyMenuOther = toBoolean(parameters["ReadOnlyMenuOther"], true);
@@ -3180,10 +3194,16 @@ if (pShowMenuCommand) {
             return;
         }
         
+        let isEnabled = true;
+        // 禁止スイッチが存在かつオンの場合は禁止
+        if (pDisableSwitch && $gameSwitches.value(pDisableSwitch)) {
+            isEnabled = false;
+        }
+
         // 指定位置に転職コマンドを挿入
         // ※標準では装備の下
         this._list.splice(pShowMenuCommandPosition, 0,
-            { name: pClassChangeName, symbol: pClassChangeSymbol, enabled: true, ext: null});
+            { name: pClassChangeName, symbol: pClassChangeSymbol, enabled: isEnabled, ext: null});
     };
 
     /**
