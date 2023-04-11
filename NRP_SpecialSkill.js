@@ -3,8 +3,9 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.022 Implementation of the special skill system.
+ * @plugindesc v1.023 Implementation of the special skill system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
+ * @orderAfter NRP_CountTimeBattle
  * @url https://newrpg.seesaa.net/article/489968387.html
  *
  * @help Implement special skills
@@ -406,8 +407,9 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.022 奥義システムの実装。
+ * @plugindesc v1.023 奥義システムの実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
+ * @orderAfter NRP_CountTimeBattle
  * @url https://newrpg.seesaa.net/article/489968387.html
  *
  * @help ゲージを溜めて発動する特別なスキルを実装します。
@@ -1231,7 +1233,7 @@ Game_Battler.prototype.addSpecialGauge = function(index, value) {
     this._specialGauges[index] = Math.max(this._specialGauges[index], 0);
 
     // 値が満タンになった場合は演出実行
-    if (this._specialGauges[index] == gaugeMax && gaugeData.ChargedAnimation) {
+    if ($gameParty.inBattle() && this._specialGauges[index] == gaugeMax && gaugeData.ChargedAnimation) {
         callAnimation(this, eval(gaugeData.ChargedAnimation));
     }
 }
@@ -1244,6 +1246,34 @@ Game_Battler.prototype.clearSpecialGaugesIfNecessary = function() {
     if (!this._specialGauges) {
         this.clearSpecialGauges();
     }
+}
+
+/**
+ * 【独自】奥義ゲージの配列を取得
+ */
+Game_Battler.prototype.specialGauges = function() {
+    return this._specialGauges;
+}
+
+/**
+ * 【独自】奥義ゲージの値を取得
+ */
+Game_Battler.prototype.specialGauge = function(index) {
+    return this._specialGauges[index];
+}
+
+/**
+ * 【独自】奥義ゲージが満タンかどうか？
+ */
+Game_Battler.prototype.isMaxSpecialGauge = function(index) {
+    const value = this._specialGauges[index];
+    const gaugeData = getSpecialGaugeData(index);
+    const gaugeMax = eval(gaugeData.GaugeMax);
+
+    if (value >= gaugeMax) {
+        return true;
+    }
+    return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -1996,7 +2026,7 @@ function isMVAnimation(animation) {
  * ●MZ用のアニメーション呼び出し
  */
 function createAnimationSprite(targets, animation, mirror, delay) {
-    var spriteSet = BattleManager._spriteset;
+    const spriteSet = BattleManager._spriteset;
 
     const mv = spriteSet.isMVAnimation(animation);
     const sprite = new (mv ? Sprite_AnimationMV : Sprite_Animation)();
