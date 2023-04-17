@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Chain skills together.
+ * @plugindesc v1.01 Chain skills together.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -184,7 +184,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 スキルを連結する。
+ * @plugindesc v1.01 スキルを連結する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -598,6 +598,12 @@ function goChainSkill(object, passiveFlg) {
 
     BattleManager.forceAction(subject);
     BattleManager.processForcedAction();
+
+    // 【ＭＶ】強制実行フラグを解除
+    // ※強制フラグが立っていると、ステートのターン経過が行われないため。
+    if (BattleManager.isForcedTurn && BattleManager.isForcedTurn()) {
+        BattleManager._turnForced = false;
+    }
     return true;
 }
 
