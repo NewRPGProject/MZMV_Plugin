@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v2.02 Gives an afterimage effect to the battler or character.
+ * @plugindesc v2.03 Gives an afterimage effect to the battler or character.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483120023.html
  *
@@ -132,7 +132,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.02 バトラー＆キャラクターに残像効果を付与します。
+ * @plugindesc v2.03 バトラー＆キャラクターに残像効果を付与します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483120023.html
  *
@@ -811,6 +811,7 @@ Sprite_Battler.prototype.createAfterimage = function() {
     afterimage.setSetFrame();
     afterimage.scale = this.scale;
     afterimage.rotation = this.rotation;
+    afterimage.anchor.x = this.anchor.x;
     afterimage.anchor.y = this.anchor.y;
     // 色調設定
     const colorTone = afterimageManage.color()
@@ -825,6 +826,12 @@ Sprite_Battler.prototype.createAfterimage = function() {
     afterimage.spriteId = this.spriteId - 0.1;
     // DynamicMotionの空中Ｙ座標
     afterimage._airY = this._airY;
+
+    // MainSpriteも対応（ただし、一部分のみ）
+    const afterimageMain = getMainSprite(afterimage);
+    const mainSprite = getMainSprite(this);
+    afterimageMain.scale = mainSprite.scale;
+    afterimageMain.rotation = mainSprite.rotation;
 
     this._afterimages.push(afterimage);
     // 戦闘画面に追加
@@ -1336,6 +1343,18 @@ function moveScreenY() {
 function getSpriteset() {
     return SceneManager._scene._spriteset;
 }
+
+/**
+ * ●本体スプライトを取得
+ */
+function getMainSprite(sprite) {
+    // MVの場合
+    if (Utils.RPGMAKER_NAME == "MV") {
+        return sprite._effectTarget;
+    }
+    // MZの場合
+    return sprite.mainSprite();
+};
 
 //----------------------------------------------------------
 // ＭＶ対応
