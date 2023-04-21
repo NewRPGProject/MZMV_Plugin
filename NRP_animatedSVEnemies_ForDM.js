@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Allows animatedSVEnemies to be used in conjunction with DynamicMotion.
+ * @plugindesc v1.03 Allows animatedSVEnemies to be used in conjunction with DynamicMotion.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base animatedSVEnemies
  * @base NRP_DynamicMotionMZ
@@ -77,7 +77,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 animatedSVEnemiesをDynamicMotionと併用できるようにします。
+ * @plugindesc v1.03 animatedSVEnemiesをDynamicMotionと併用できるようにします。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @base animatedSVEnemies
  * @base NRP_DynamicMotionMZ
@@ -304,6 +304,37 @@ if (dMotionParams) {
 
         _Sprite_Enemy_stepForward.apply(this, arguments);
     };
+
+    //-----------------------------------------------------------------------------
+    // DynamicMotionで武器が機能しない問題に対処
+    // ※weaponIdの変数名が被っているため、animatedWeaponIdに変更
+    //-----------------------------------------------------------------------------
+
+    /**
+     * 【上書】武器情報の取得
+     */
+    Game_Enemy.prototype.weapons = function() {
+        if (this._animated) return [$dataWeapons[this._animatedWeaponId]];
+        else return [1];
+    };
+
+    /**
+     * 【上書】素手の判定
+     */
+    Game_Enemy.prototype.hasNoWeapons = function() {
+        if (this._animated && this._animatedWeaponId != 0)
+            return false;
+            else return true;
+    }
+
+    /**
+     * ●敵データのセット
+     */
+    const _Rexal_processEnemyData = Rexal.ASVE.processEnemyData;
+    Rexal.ASVE.processEnemyData = function(obj, obj2) {
+        _Rexal_processEnemyData.apply(this, arguments);
+        obj._animatedWeaponId = obj2.weaponid;
+    }
 }
 
 //-----------------------------------------------------------------------------
