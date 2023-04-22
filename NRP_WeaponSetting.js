@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v2.00 Extends the weapon display.
+ * @plugindesc v2.01 Extends the weapon display.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/484348477.html
@@ -259,7 +259,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.00 武器の表示を拡張します。
+ * @plugindesc v2.01 武器の表示を拡張します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/484348477.html
@@ -656,14 +656,19 @@ const _Sprite_Weapon_setup = Sprite_Weapon.prototype.setup;
 Sprite_Weapon.prototype.setup = function(weaponImageId) {
     _Sprite_Weapon_setup.apply(this, arguments);
 
-    this.x = pWeaponX;
+    const battler = this.parent._battler;
+
+    // 通常、武器はアクター専用だが、animatedSVEnemies.jsによる敵も考慮
+    const isActor = battler.isActor();
+    const dataBattler = isActor ? battler.actor() : battler.enemy();
+
+    this.x = isActor ? pWeaponX : pWeaponX * -1;
     this.y = pWeaponY;
 
     // 武器の持ち主を取得
-    const battler = this.parent._battler;
     if (battler) {
-        const adjustX = battler.actor().meta.WeaponX;
-        const adjustY = battler.actor().meta.WeaponY;
+        const adjustX = dataBattler.meta.WeaponX;
+        const adjustY = dataBattler.meta.WeaponY;
         if (adjustX) {
             this.x += eval(adjustX);
         }
