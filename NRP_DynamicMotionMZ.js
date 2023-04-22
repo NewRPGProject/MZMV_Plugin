@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.18 When executing skills, call motion freely.
+ * @plugindesc v1.181 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -556,7 +556,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.18 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.181 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -2953,10 +2953,10 @@ Sprite.prototype.startDynamicSvMotion = function(dynamicMotion) {
         if (this._weaponSprite) {
             this._weaponSprite._weaponImageId = 0;
             this._weaponSprite.updateFrame();
-            // アクターの動きも同期
-            this.updateFrame();
         }
         this.startMotion(dm.motion);
+        // アクターの表示も即時反映
+        this.updateFrame();
     }
 };
 
@@ -2972,7 +2972,7 @@ function callPluginCommand(params) {
 /**
  * ●モーションの開始
  */
-var _Sprite_Actor_startMotion = Sprite_Actor.prototype.startMotion;
+const _Sprite_Actor_startMotion = Sprite_Actor.prototype.startMotion;
 Sprite_Actor.prototype.startMotion = function(motionType) {
     _Sprite_Actor_startMotion.call(this, motionType);
 
@@ -2985,7 +2985,7 @@ Sprite_Actor.prototype.startMotion = function(motionType) {
 /**
  * ●モーションの更新
  */
-var _Sprite_Actor_updateMotionCount = Sprite_Actor.prototype.updateMotionCount;
+const _Sprite_Actor_updateMotionCount = Sprite_Actor.prototype.updateMotionCount;
 Sprite_Actor.prototype.updateMotionCount = function() {
     // 変更がある場合は独自実装へ。
     if (this._motionDuration != undefined || this._motionPattern != undefined) {
