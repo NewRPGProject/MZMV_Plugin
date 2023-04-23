@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.03 Multiple classes allow for a highly flexible growth system.
+ * @plugindesc v1.04 Multiple classes allow for a highly flexible growth system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -154,6 +154,11 @@
  * by turning off "UseNormalExp".
  * 
  * "ExpName" is used to indicate when a battle is over.
+ * 
+ * <ClassExpRate:?>
+ * Change the class EXP earned to the specified %.
+ * For example, 200 would be 200% (double).
+ * Intended to be used in combination with the default value.
  * 
  * -------------------------------------------------------------------
  * [Script]]
@@ -462,7 +467,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.03 多重職業によって自由度の高い成長システムを実現。
+ * @plugindesc v1.04 多重職業によって自由度の高い成長システムを実現。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -603,6 +608,11 @@
  * 独自の熟練度のようなものを実装できます。
  * 
  * 戦闘終了時の表示には『EXPの表示名』が使用されます。
+ * 
+ * <ClassExpRate:?>
+ * 獲得できる追加職業の経験値を指定した%に変更します。
+ * 例えば、200ならば200%（２倍）になります。
+ * 既定値とのセットで使うことを想定しています。
  * 
  * -------------------------------------------------------------------
  * ■スクリプト
@@ -1936,18 +1946,24 @@ Game_Troop.prototype.classExpTotal = function() {
 Game_Enemy.prototype.classExp = function() {
     const a = this; // eval参照用
 
+    let classExp = 0;
+
     // 設定値が存在する場合
-    const classExp = this.enemy().meta.ClassExp;
-    if (classExp != undefined) {
-        return eval(classExp);
+    const metaClassExp = this.enemy().meta.ClassExp;
+    if (metaClassExp != undefined) {
+        classExp = eval(metaClassExp);
 
     // 既定値が存在する場合
     } else if (pDefaultClassExp != undefined) {
-        return eval(pDefaultClassExp);
+        classExp = eval(pDefaultClassExp);
     }
 
-    // それ以外は0
-    return 0;
+    // rateを乗算する。
+    const rate = this.enemy().meta.ClassExpRate;
+    if (rate != undefined) {
+        classExp = Math.round(classExp * rate / 100);
+    }
+    return classExp;
 };
 
 /**
