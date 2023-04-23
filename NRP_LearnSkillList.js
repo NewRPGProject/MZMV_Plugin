@@ -357,6 +357,7 @@
  * @parent <Condition>
  * @type string
  * @desc This script is the condition for displaying skill sets.
+ * e.g: a.isLearnedSkill(1) && a.isLearnedSkill(2)
  */
 
 /*~struct~SkillData:
@@ -405,6 +406,7 @@
  * @parent <Condition>
  * @type string
  * @desc This script is the condition for displaying skill.
+ * e.g: a.isLearnedSkill(1) && a.isLearnedSkill(2)
  */
 
 /*:ja
@@ -811,6 +813,7 @@
  * @text スクリプト
  * @type string
  * @desc スキルセットを表示する条件となるスクリプトです。
+ * 例：a.isLearnedSkill(1) && a.isLearnedSkill(2)
  */
 
 /*~struct~SkillData:ja
@@ -869,6 +872,7 @@
  * @text スクリプト
  * @type string
  * @desc スキルを表示する条件となるスクリプトです。
+ * 例：a.isLearnedSkill(1) && a.isLearnedSkill(2)
  */
 (function() {
 "use strict";
