@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.04 Multiple classes allow for a highly flexible growth system.
+ * @plugindesc v1.05 Multiple classes allow for a highly flexible growth system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -420,6 +420,12 @@
  * @desc Displays the class experience gain message.
  * %1=number, %2=ExpName.
  * 
+ * @param ClassLvUpLater
+ * @parent <ClassExp>
+ * @type boolean
+ * @default false
+ * @desc Display class level up after all actors have leveled up.
+ * 
  * @param ClassExpSwitch
  * @parent <ClassExp>
  * @type switch
@@ -467,7 +473,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.04 多重職業によって自由度の高い成長システムを実現。
+ * @plugindesc v1.05 多重職業によって自由度の高い成長システムを実現。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -919,6 +925,13 @@
  * @desc 職業経験値の獲得メッセージを表示します。
  * %1=数値, %2=EXPの表示名となります。
  * 
+ * @param ClassLvUpLater
+ * @parent <ClassExp>
+ * @text 職業Lvアップを後回し
+ * @type boolean
+ * @default false
+ * @desc 職業レベルアップの表示を、アクター全員のレベルアップより後で表示します。
+ * 
  * @param ClassExpSwitch
  * @parent <ClassExp>
  * @text 職業経験値の有効化ｽｲｯﾁ
@@ -1028,6 +1041,7 @@ const pExpName = setDefault(parameters["ExpName"], "");
 const pUseNormalExp = toBoolean(parameters["UseNormalExp"], true);
 const pDefaultClassExp = setDefault(parameters["DefaultClassExp"]);
 const pClassExpMessage = setDefault(parameters["ClassExpMessage"], "");
+const pClassLvUpLater = toBoolean(parameters["ClassLvUpLater"], false);
 const pClassExpSwitch = toNumber(parameters["ClassExpSwitch"]);
 const pBenchClassExpRate = setDefault(parameters["BenchClassExpRate"]);
 const pUnificationExp = toBoolean(parameters["UnificationExp"], false);
@@ -1990,6 +2004,28 @@ BattleManager.gainRewards = function() {
     }
 };
 
+// 職業レベルアップ表示が後回しでない場合
+if (!pClassLvUpLater) {
+    /**
+     * ●経験値の獲得
+     */
+    const _Game_Actor_gainExp = Game_Actor.prototype.gainExp;
+    Game_Actor.prototype.gainExp = function(exp) {
+        _Game_Actor_gainExp.apply(this, arguments);
+
+        // 職業経験値が有効な場合
+        if ($gameSystem.isClassExpEnabled()) {
+            // 経験値共有型かつ重複加算禁止の場合は終了
+            if (pUnificationExp && pNoDuplicateExp) {
+                return;
+            }
+            // 職業経験値を加算
+            const classExp = BattleManager._rewards.classExp;
+            this.gainClassExp(classExp);
+        }
+    };
+}
+
 /**
  * 【独自】職業経験値の獲得
  */
@@ -2007,9 +2043,12 @@ BattleManager.gainClassExp = function() {
         return;
     }
 
-    // 通常時はアクター毎に加算
-    for (const actor of $gameParty.allMembers()) {
-        actor.gainClassExp(classExp);
+    // 職業レベルアップ表示を後回しにする場合
+    if (pClassLvUpLater) {
+        // 通常時はアクター毎に加算
+        for (const actor of $gameParty.allMembers()) {
+            actor.gainClassExp(classExp);
+        }
     }
 };
 
