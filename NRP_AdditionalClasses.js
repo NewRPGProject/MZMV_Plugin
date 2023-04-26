@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.05 Multiple classes allow for a highly flexible growth system.
+ * @plugindesc v1.06 Multiple classes allow for a highly flexible growth system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -473,7 +473,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.05 多重職業によって自由度の高い成長システムを実現。
+ * @plugindesc v1.06 多重職業によって自由度の高い成長システムを実現。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -1128,13 +1128,19 @@ PluginManager.registerCommand(PLUGIN_NAME, "ChangeExp", function(args) {
             for (const additionalClass of allPartyAdditionalClasses()) {
                 changeExp(expActor, index, additionalClass.id, exp, show)
             }
-            return;
+        } else {
+            // 通常時
+            for (const actor of $gameParty.members()) {
+                changeExp(actor, index, additionalClassId, exp, show)
+            }
         }
+    }
 
-        // 通常時
-        for (const actor of $gameParty.members()) {
-            changeExp(actor, index, additionalClassId, exp, show)
-        }
+    // レベルアップを表示する場合
+    // かつ、メッセージが発生した場合
+    if (show && $gameMessage.isBusy()) {
+        // ウェイトする。
+        this.setWaitMode("message");
     }
 });
 
@@ -1204,13 +1210,19 @@ PluginManager.registerCommand(PLUGIN_NAME, "ChangeLevel", function(args) {
             for (const additionalClass of allPartyAdditionalClasses()) {
                 changeLevel(expActor, index, additionalClass.id, level, show)
             }
-            return;
+        } else {
+            // 通常時
+            for (const actor of $gameParty.members()) {
+                changeLevel(actor, index, additionalClassId, level, show)
+            }
         }
+    }
 
-        // 通常時
-        for (const actor of $gameParty.members()) {
-            changeLevel(actor, index, additionalClassId, level, show)
-        }
+    // レベルアップを表示する場合
+    // かつ、メッセージが発生した場合
+    if (show && $gameMessage.isBusy()) {
+        // ウェイトする。
+        this.setWaitMode("message");
     }
 });
 
