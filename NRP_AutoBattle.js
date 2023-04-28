@@ -39,12 +39,12 @@
  * @type number
  * @default 1
  * @desc The position when inserted into a party command.
- * Delete with the DEL key when not needed.
+ * 0 first. Delete with the DEL key when not needed.
  * 
  * @param ActorCommandPosition
  * @type number
  * @desc The position when inserted into an actor command.
- * Delete with the DEL key when not needed.
+ * 0 first. Delete with the DEL key when not needed.
  * 
  * @param NormalAttackOnly
  * @type boolean
@@ -103,13 +103,13 @@
  * @type number
  * @default 1
  * @desc パーティコマンドに挿入する際の位置です。
- * 不要な場合はDELキーで削除。
+ * 0が先頭。不要な場合はDELキーで削除。
  * 
  * @param ActorCommandPosition
  * @text アクターコマンド挿入位置
  * @type number
  * @desc アクターコマンドに挿入する際の位置です。
- * 不要な場合はDELキーで削除。
+ * 0が先頭。不要な場合はDELキーで削除。
  * 
  * @param NormalAttackOnly
  * @text 通常攻撃のみ
