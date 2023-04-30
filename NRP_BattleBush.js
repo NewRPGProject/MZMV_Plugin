@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Apply the bush effect to the battle background.
+ * @plugindesc v1.02 Apply the bush effect to the battle background.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_ShadowAndLevitate
  * @url http://newrpg.seesaa.net/article/486468229.html
@@ -183,7 +183,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 戦闘背景に茂み効果を適用します。
+ * @plugindesc v1.02 戦闘背景に茂み効果を適用します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_ShadowAndLevitate
  * @url http://newrpg.seesaa.net/article/486468229.html
@@ -526,6 +526,11 @@ Sprite_Battler.prototype.createHalfBodySprites = function() {
         this._lowerBody.anchor.y = 1;
         this._lowerBody.opacity = this.bushOpacity();
         this.addChild(this._lowerBody);
+
+// if (this._battler.isEnemy()) {
+//     alert("create");
+//     console.log(this);
+// }
     }
 };
 
@@ -911,6 +916,30 @@ if (Sprite_Enemy.prototype.updateShadow) {
 }
 
 //-----------------------------------------------------------------------------
+// Game_Enemy
+//-----------------------------------------------------------------------------
+
+/**
+ * ●変身処理
+ */
+const _Game_Enemy_transform = Game_Enemy.prototype.transform;
+Game_Enemy.prototype.transform = function(enemyId) {
+    const sprite = getBattlerSprite(this);
+
+    // 上半身、下半身を削除
+    sprite.removeChild(sprite._upperBody);
+    sprite.removeChild(sprite._lowerBody);
+    sprite._upperBody = null;
+    sprite._lowerBody = null;
+
+    // 一旦茂みフラグを解除する。
+    // ※これによって、Sprite_Enemy.prototype.updateFrameの茂み処理を再度実行させる。
+    sprite._isOnBush = false;
+
+    _Game_Enemy_transform.apply(this, arguments);
+};
+
+//-----------------------------------------------------------------------------
 // その他共通関数
 //-----------------------------------------------------------------------------
 
@@ -969,6 +998,30 @@ function isMovingNotOnBush(sprite, setting) {
         return true;
     }
     return false;
+}
+
+/**
+ * ●指定したバトラーのスプライトを取得する。
+ */
+function getBattlerSprite(battler) {
+    if (!battler) {
+        return undefined;
+    }
+
+    var sprites;
+    const spriteset = getSpriteset();
+
+    // 戦闘中はバトラースプライトを返す。
+    if ($gameParty.inBattle()) {
+        sprites = spriteset.battlerSprites();
+
+    // マップ上ではキャラクタースプライトを返す。
+    } else {
+        sprites = spriteset._characterSprites;
+    }
+
+    // 一致があれば返す
+    return sprites.find(s => s._battler == battler || s._character == battler);
 }
 
 /**
