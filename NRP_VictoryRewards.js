@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Customize the display after a battle victory.
+ * @plugindesc v1.01 Customize the display after a battle victory.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499138292.html
  *
@@ -207,7 +207,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 戦闘勝利時の表示をカスタマイズします。
+ * @plugindesc v1.01 戦闘勝利時の表示をカスタマイズします。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499138292.html
  *
@@ -882,6 +882,8 @@ if (pMessageFitWidth) {
     let mLineText = "";
     // 文字表示調整用
     let mTextScale = null;
+    // 制御を行わない
+    let mNoControl = false;
 
     /**
      * メソッドが未定義の場合は事前に定義
@@ -934,7 +936,17 @@ if (pMessageFitWidth) {
             }
             
             // 行の文字列の横幅を求める。
-            const textWidth = this.contents.measureTextWidth(mLineText)
+            // ※mIsRewardsMessageをオフにしないと循環参照になる。
+            // ※mNoControlをオンにして制御文字処理を除外
+            mIsRewardsMessage = false;
+            mNoControl = true;
+            const textWidth = this.textSizeEx(mLineText).width;
+            mIsRewardsMessage = true;
+            mNoControl = false;
+            
+            // 旧処理（こちらのほうが競合し辛いかも？）
+            // const textWidth = this.contents.measureTextWidth(mLineText);
+
             // 文字列がウィンドウの横幅に収まらない場合
             // ウィンドウの横幅と比較し、縮小率を求める。
             if (textWidth > this.innerWidth) {
@@ -967,6 +979,18 @@ if (pMessageFitWidth) {
         }
 
         return width;
+    };
+
+    /**
+     * ●制御文字の処理
+     */
+    const _Window_Message_processControlCharacter = Window_Message.prototype.processControlCharacter;
+    Window_Message.prototype.processControlCharacter = function(textState, c) {
+        // 文字幅計測中は処理を行わない。
+        if (mNoControl) {
+            return;
+        }
+        _Window_Message_processControlCharacter.apply(this, arguments);
     };
 }
 
