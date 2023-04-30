@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.012 Extend the weather function.
+ * @plugindesc v1.02 Extend the weather function.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481701865.html
  *
@@ -470,7 +470,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.012 天候機能を拡張します。
+ * @plugindesc v1.02 天候機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481701865.html
  *
@@ -2023,6 +2023,11 @@ if (pWeatherOnBattle) {
     const _Game_Interpreter_command236 = Game_Interpreter.prototype.command236;
     Game_Interpreter.prototype.command236 = function(params) {
         if ($gameParty.inBattle()) {
+            // MVの場合
+            if (Utils.RPGMAKER_NAME == "MV") {
+                params = this._params;
+            }
+            
             $gameScreen.changeWeather(params[0], params[1], params[2]);
             if (params[3]) {
                 this.wait(params[2]);
