@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 A list-style skill learning system.
+ * @plugindesc v1.001 A list-style skill learning system.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -411,7 +411,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 リスト形式のスキル習得システム。
+ * @plugindesc v1.001 リスト形式のスキル習得システム。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -1762,7 +1762,7 @@ Window_LearnSkillActor.prototype.drawSkillPoint = function() {
     const y = this.paramY(0);
 
     this.changeTextColor(ColorManager.systemColor());
-    this.drawText("SP", x, y);
+    this.drawText(pSkillPointName, x, y);
     this.resetTextColor();
 
     const skillPoint = this._actor.currentSkillPoint();
