@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.04 Display the cursor when selecting a target in battle.
+ * @plugindesc v1.041 Display the cursor when selecting a target in battle.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482370647.html
  *
@@ -211,6 +211,7 @@
  * @param ActorNameWindowAdjustX
  * @parent <ActorSide>
  * @type number
+ * @min -999 @max 999
  * @desc Adjusts the X coordinate of the enemy name window.
  * If blank, use the enemy's value flipped left or right.
  * 
@@ -268,7 +269,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 戦闘時、選択中の対象にカーソルを表示
+ * @plugindesc v1.041 戦闘時、選択中の対象にカーソルを表示
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482370647.html
  *
@@ -495,6 +496,7 @@
  * @parent <ActorSide>
  * @text アクター名ｳｨﾝﾄﾞｳの調整Ｘ
  * @type number
+ * @min -999 @max 999
  * @desc アクター名ウィンドウのＸ座標を調整します。
  * 空欄なら敵の値を左右反転して使用します。
  * 
