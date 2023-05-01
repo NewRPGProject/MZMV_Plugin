@@ -63,11 +63,10 @@
  * @ [Plugin Parameters]
  * @-----------------------------------------------------
  * 
- * @param DisplayParameters
- * @type string
- * @default 0,1,2,3,4,5,6,7
- * @desc Parameters to be displayed.
- * Default: 0,1,2,3,4,5,6,7 0:MHP-7:Luck
+ * @param ParameterList
+ * @type struct<Parameter>[]
+ * @default ["{\"ParameterId\":\"0\",\"Memo\":\"Max HP\",\"DisplayName\":\"\"}","{\"ParameterId\":\"1\",\"Memo\":\"Max MP\",\"DisplayName\":\"\"}","{\"ParameterId\":\"2\",\"Memo\":\"Attack\",\"DisplayName\":\"\"}","{\"ParameterId\":\"3\",\"Memo\":\"Defence\",\"DisplayName\":\"\"}","{\"ParameterId\":\"4\",\"Memo\":\"M.Attack\",\"DisplayName\":\"\"}","{\"ParameterId\":\"5\",\"Memo\":\"M.Defense\",\"DisplayName\":\"\"}","{\"ParameterId\":\"6\",\"Memo\":\"Agility\",\"DisplayName\":\"\"}","{\"ParameterId\":\"7\",\"Memo\":\"Luck\",\"DisplayName\":\"\"}"]
+ * @desc List of parameters to be displayed at level-up.
  * 
  * @param NumberOfColumns
  * @type number
@@ -112,6 +111,23 @@
  * @parent <AdditionalClasses>
  * @type skill
  * @desc DynamicAnimation&Motion skills to be performed at the level up of additional classes.
+ */
+
+/*~struct~Parameter:
+ * @param ParameterId
+ * @type number
+ * @desc ID of the parameter.
+ * Default: 0,1,2,3,4,5,6,7 0:MHP-7:Luck
+ * 
+ * @param Memo
+ * @type string
+ * @desc Discrimination notes.
+ * Not used in the game.
+ * 
+ * @param DisplayName
+ * @type string
+ * @desc The name that will appear on the screen.
+ * If left blank, it will be used directly from the term.
  */
 
 /*:ja
@@ -172,12 +188,11 @@
  * @ プラグインパラメータ
  * @-----------------------------------------------------
  * 
- * @param DisplayParameters
- * @text 表示するパラメータ
- * @type string
- * @default 0,1,2,3,4,5,6,7
- * @desc 表示するパラメータです。初期値：0,1,2,3,4,5,6,7
- * 0:最大ＨＰ～7:運となります。
+ * @param ParameterList
+ * @text パラメータ一覧
+ * @type struct<Parameter>[]
+ * @default ["{\"ParameterId\":\"0\",\"Memo\":\"最大ＨＰ\",\"DisplayName\":\"\"}","{\"ParameterId\":\"1\",\"Memo\":\"最大ＭＰ\",\"DisplayName\":\"\"}","{\"ParameterId\":\"2\",\"Memo\":\"攻撃力\",\"DisplayName\":\"\"}","{\"ParameterId\":\"3\",\"Memo\":\"防御力\",\"DisplayName\":\"\"}","{\"ParameterId\":\"4\",\"Memo\":\"魔法力\",\"DisplayName\":\"\"}","{\"ParameterId\":\"5\",\"Memo\":\"魔法防御\",\"DisplayName\":\"\"}","{\"ParameterId\":\"6\",\"Memo\":\"敏捷性\",\"DisplayName\":\"\"}","{\"ParameterId\":\"7\",\"Memo\":\"運\",\"DisplayName\":\"\"}"]
+ * @desc レベルアップ時に表示するパラメータの一覧です。
  * 
  * @param NumberOfColumns
  * @text 列数
@@ -233,9 +248,42 @@
  * @type skill
  * @desc 追加職業のレベルアップ時に実行するDynamicAnimation&Motionのスキルです。
  */
+
+/*~struct~Parameter:ja
+ * @param ParameterId
+ * @text パラメータＩＤ
+ * @type number
+ * @desc パラメータのＩＤです。初期値：0,1,2,3,4,5,6,7
+ * 0:最大ＨＰ～7:運となります。
+ * 
+ * @param Memo
+ * @text メモ
+ * @type string
+ * @desc 判別用のメモです。
+ * ゲーム内では使用されません。
+ * 
+ * @param DisplayName
+ * @text 表示名
+ * @type string
+ * @desc 画面上に表示される名称です。
+ * 空欄なら用語からそのまま使用されます。
+ */
+
 (function() {
 "use strict";
 
+/**
+ * ●構造体（二重配列）をJSで扱えるように変換
+ */
+function parseStruct2(arg) {
+    const ret = [];
+    if (arg) {
+        for (const str of JSON.parse(arg)) {
+            ret.push(JSON.parse(str));
+        }
+    }
+    return ret;
+}
 function toNumber(str, def) {
     if (str == undefined || str == "") {
         return def;
@@ -259,7 +307,7 @@ function setDefault(str, def) {
 
 const PLUGIN_NAME = "NRP_LevelUpDirection";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
-const pDisplayParameters = setDefault(parameters["DisplayParameters"], "");
+const pParameterList = parseStruct2(parameters["ParameterList"]);
 const pNumberOfColumns = toNumber(parameters["NumberOfColumns"]);
 const pDisplayFormat = setDefault(parameters["DisplayFormat"]);
 const pLevelUpSe = parameters["LevelUpSe"];
@@ -300,35 +348,39 @@ Game_Actor.prototype.displayLevelUp = function(newSkills) {
 
     // メッセージを生成
     const lvupMessages = [];
-    // カンマ区切りで配列変換
-    const displayParameters = pDisplayParameters.split(",");
 
     let count = 1;
     let tempMessage = "";
 
-    for (const paramId of displayParameters) {
-        // パラメータ上昇量を取得
-        const value = this.param(paramId) - mOldActor.param(paramId);
-        // メッセージを追加
-        tempMessage += pDisplayFormat.format(TextManager.param(paramId), value);
+    if (pParameterList) {
+        // 表示パラメータ毎にループ
+        for (const paramData of pParameterList) {
+            const paramId = toNumber(paramData.ParameterId);
+            // パラメータ上昇量を取得
+            const value = this.param(paramId) - mOldActor.param(paramId);
+            // パラメータ名
+            const paramName = setDefault(paramData.DisplayName) ?? TextManager.param(paramId);
+            // メッセージを追加
+            tempMessage += pDisplayFormat.format(paramName, value);
 
-        // 出力した項目数が列数で割り切れる場合
-        if (count % pNumberOfColumns == 0) {
-            // 改行を追加
-            lvupMessages.push(tempMessage);
-            tempMessage = "";
-        // 最終要素の場合
-        } else if (paramId == displayParameters[displayParameters.length - 1]) {
-            // 改行を追加
-            lvupMessages.push(tempMessage);
+            // 出力した項目数が列数で割り切れる場合
+            if (count % pNumberOfColumns == 0) {
+                // 改行を追加
+                lvupMessages.push(tempMessage);
+                tempMessage = "";
+            // 最終要素の場合
+            } else if (paramId == pParameterList[pParameterList.length - 1]) {
+                // 改行を追加
+                lvupMessages.push(tempMessage);
 
-        // それ以外
-        } else {
-            // 半角スペースを追加
-            tempMessage += " ";
+            // それ以外
+            } else {
+                // 半角スペースを追加
+                tempMessage += " ";
+            }
+
+            count++;
         }
-
-        count++;
     }
 
     // 本来のレベルアップメッセージを取得
