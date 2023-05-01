@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Customize the display after a battle victory.
+ * @plugindesc v1.02 Customize the display after a battle victory.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499138292.html
  *
@@ -43,9 +43,9 @@
  * The author is not responsible,
  * but will deal with defects to the extent possible.
  * 
- * @------------------------------------------------------------------
+ * @-----------------------------------------------------
  * @ Plugin Parameters
- * @------------------------------------------------------------------
+ * @-----------------------------------------------------
  * 
  * @param NotDisplayVictoryMessage
  * @type boolean
@@ -203,11 +203,23 @@
  * @type boolean
  * @default true
  * @desc If the items are the same, the number of dropped items is aggregated and displayed.
+ * 
+ * @param <AdditionalClasses>
+ * @desc This item is for integration with NRP_AdditionalClasses.js.
+ * 
+ * @param AC_DisplayStyle
+ * @parent <AdditionalClasses>
+ * @type select
+ * @option Page Break @value page
+ * @option Batch @value batch
+ * @option Batch & Input @value input
+ * @default input
+ * @desc This is how it is displayed when additional classes are leveled up.
  */
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 戦闘勝利時の表示をカスタマイズします。
+ * @plugindesc v1.02 戦闘勝利時の表示をカスタマイズします。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499138292.html
  *
@@ -242,9 +254,9 @@
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
  * 
- * @------------------------------------------------------------------
+ * @-----------------------------------------------------
  * @ プラグインパラメータ
- * @------------------------------------------------------------------
+ * @-----------------------------------------------------
  * 
  * @param NotDisplayVictoryMessage
  * @text 勝利メッセージを省略
@@ -430,6 +442,21 @@
  * @type boolean
  * @default true
  * @desc 同じアイテムならば、ドロップアイテムの個数を集約して表示します。
+ * 
+ * @param <AdditionalClasses>
+ * @text ＜多重職業連携用＞
+ * @desc 多重職業プラグインとの連携用の項目です。
+ * 
+ * @param AC_DisplayStyle
+ * @text 【多重】表示方式
+ * @parent <AdditionalClasses>
+ * @type select
+ * @option 改ページ @value page
+ * @option 一括表示 @value batch
+ * @option 一括＋入力待ち @value input
+ * @default input
+ * @desc 追加職業のレベルアップ時の動作です。
+ * 一括表示なら通常レベルアップと同ページに表示します。
  */
 
 (function() {
@@ -485,6 +512,8 @@ const pDropItemHeadline = setDefault(parameters["DropItemHeadline"]);
 const pDropItemDisplay = setDefault(parameters["DropItemDisplay"]);
 const pDropItemNewline = toBoolean(parameters["DropItemNewline"]);
 const pDropItemConsolidate = toBoolean(parameters["DropItemConsolidate"]);
+// 多重職業関連
+const pAC_DisplayStyle = setDefault(parameters["AC_DisplayStyle"], "input");
 
 // リザルトウィンドウ表示用フラグ
 let mIsRewardsMessage = false;
@@ -949,8 +978,9 @@ if (pMessageFitWidth) {
 
             // 文字列がウィンドウの横幅に収まらない場合
             // ウィンドウの横幅と比較し、縮小率を求める。
-            if (textWidth > this.innerWidth) {
-                mTextScale = this.innerWidth / textWidth;
+            const maxWidth = this.innerWidth - this.padding;
+            if (textWidth > maxWidth) {
+                mTextScale = maxWidth / textWidth;
             }
         }
         
@@ -1184,7 +1214,12 @@ if (typeof AdditionalClass !== "undefined") {
                 // ※通常レベルアップまたは別の職業レベルアップ
                 if (mTempLevelUp) {
                     // 改ページ除去して改行を付加
-                    $gameMessage._texts[i] = $gameMessage._texts[i].replace("\f", "\n");
+                    if (pAC_DisplayStyle == "batch") {
+                        $gameMessage._texts[i] = $gameMessage._texts[i].replace("\f", "\n");
+                    // 改ページ除去して改行＋入力待ちを付加
+                    } else if (pAC_DisplayStyle == "input") {
+                        $gameMessage._texts[i] = $gameMessage._texts[i].replace("\f", "\n\\!");
+                    }
 
                 // 職業レベルアップのみの場合は改ページの直後に名前表示を行う。
                 } else {
