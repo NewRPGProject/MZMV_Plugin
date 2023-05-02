@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.001 A list-style skill learning system.
+ * @plugindesc v1.01 A list-style skill learning system.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -142,6 +142,13 @@
  * @type string
  * @default SP
  * @desc The display name for the skill points.
+ * 
+ * @param MaxSkillPoint
+ * @parent <SkillPoint>
+ * @type number
+ * @default 999999
+ * @desc The maximum value of skill points.
+ * It cannot be greater than this value.
  * 
  * @param SkillPointType
  * @parent <SkillPoint>
@@ -411,7 +418,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.001 リスト形式のスキル習得システム。
+ * @plugindesc v1.01 リスト形式のスキル習得システム。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -558,6 +565,14 @@
  * @type string
  * @default SP
  * @desc スキルポイントを表す表示名です。
+ * 
+ * @param MaxSkillPoint
+ * @text スキルポイントの最大値
+ * @parent <SkillPoint>
+ * @type number
+ * @default 999999
+ * @desc スキルポイントの最大値です。
+ * これ以上の値にはなりません。
  * 
  * @param SkillPointType
  * @text スキルポイントの保有方法
@@ -927,6 +942,7 @@ const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pSkillSetList = parseStruct2(parameters["SkillSetList"]);
 // スキルポイント
 const pSkillPointName = setDefault(parameters["SkillPointName"], "");
+const pMaxSkillPoint = toNumber(parameters["MaxSkillPoint"], 999999);
 const pSkillPointType = setDefault(parameters["SkillPointType"]);
 const pSkillPointVariable = setDefault(parameters["SkillPointVariable"]);
 const pSkillPointMessage = setDefault(parameters["SkillPointMessage"], "");
@@ -1006,8 +1022,12 @@ PluginManager.registerCommand(PLUGIN_NAME, "ChangeSkillPoint", function(args) {
     if (pSkillPointType == "party") {
         const variableNo = eval(pSkillPointVariable);
         const currentSp = $gameVariables.value(variableNo);
+
+        let newValue = currentSp + skillPoint;
+        if (newValue > pMaxSkillPoint) {
+            newValue = pMaxSkillPoint;
+        }
         // 変数の値を加算
-        const newValue = currentSp + changePoint;
         $gameVariables.setValue(variableNo, newValue);
         return;
     }
@@ -1945,16 +1965,19 @@ Game_Actor.prototype.changeSkillPoint = function(changePoint) {
 
     // 現在のスキルポイント
     const currentSp = this.currentSkillPoint();
+    let newValue = currentSp + changePoint;
+    if (newValue > pMaxSkillPoint) {
+        newValue = pMaxSkillPoint;
+    }
 
     // パーティ共有の場合
     if (pSkillPointType == "party") {
         const variableNo = eval(pSkillPointVariable);
         // 変数の値を加算
-        const newValue = currentSp + changePoint;
         $gameVariables.setValue(variableNo, newValue);
     // アクター毎の場合
     } else {
-        this[SKILL_POINT_KEY] += changePoint;
+        this[SKILL_POINT_KEY] = newValue;
     }
 };
 
