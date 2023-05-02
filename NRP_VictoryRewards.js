@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.02 Customize the display after a battle victory.
+ * @plugindesc v1.03 Customize the display after a battle victory.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499138292.html
  *
@@ -56,6 +56,15 @@
  * @type boolean
  * @default false
  * @desc The plugin's process is also reflected in the level-up display during battle.
+ * 
+ * @param StartCommmonEvent
+ * @type common_event
+ * @desc This is a common event that is executed at the start of the victory screen.
+ * 
+ * @param EndCommmonEvent
+ * @text 終了時のコモンイベント
+ * @type common_event
+ * @desc This is a common event that is executed at the end of the victory screen.
  * 
  * @param <Window>
  * 
@@ -219,7 +228,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.02 戦闘勝利時の表示をカスタマイズします。
+ * @plugindesc v1.03 戦闘勝利時の表示をカスタマイズします。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499138292.html
  *
@@ -269,6 +278,16 @@
  * @type boolean
  * @default false
  * @desc 非戦闘時のレベルアップ表示にも当プラグインの処理を反映します。
+ * 
+ * @param StartCommmonEvent
+ * @text 開始時のコモンイベント
+ * @type common_event
+ * @desc 勝利画面開始時に実行するコモンイベントです。
+ * 
+ * @param EndCommmonEvent
+ * @text 終了時のコモンイベント
+ * @type common_event
+ * @desc 勝利画面終了時に実行するコモンイベントです。
  * 
  * @param <Window>
  * @text ＜ウィンドウ関連＞
@@ -487,6 +506,8 @@ const PLUGIN_NAME = "NRP_VictoryRewards";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pNotDisplayVictoryMessage = toBoolean(parameters["NotDisplayVictoryMessage"]);
 const pApplyNotBattle = toBoolean(parameters["ApplyNotBattle"]);
+const pStartCommmonEvent = setDefault(parameters["StartCommmonEvent"]);
+const pEndCommmonEvent = setDefault(parameters["EndCommmonEvent"]);
 // ウィンドウ関連
 const pVictoryWindowBackground = toNumber(parameters["VictoryWindowBackground"]);
 const pWindowX = setDefault(parameters["WindowX"]);
@@ -523,6 +544,18 @@ let mIsRewardsMessageInit = false;
 // ----------------------------------------------------------------------------
 // BattleManager
 // ----------------------------------------------------------------------------
+
+const _BattleManager_processVictory = BattleManager.processVictory;
+BattleManager.processVictory = function() {
+    // 開始コモンイベントを実行
+    if (pStartCommmonEvent) {
+        $gameTemp.reserveCommonEvent(pStartCommmonEvent);
+        $gameTroop._interpreter.setupReservedCommonEvent();
+        $gameTroop._interpreter.update();
+    }
+
+    _BattleManager_processVictory.apply(this, arguments);
+};
 
 /**
  * ●勝利メッセージの表示
@@ -565,6 +598,13 @@ BattleManager.updateBattleEnd = function() {
     _BattleManager_updateBattleEnd.apply(this, arguments);
     // ウィンドウの変更終了
     mIsRewardsMessage = false;
+
+    // 終了コモンイベントを実行
+    if (pEndCommmonEvent) {
+        $gameTemp.reserveCommonEvent(pEndCommmonEvent);
+        $gameTroop._interpreter.setupReservedCommonEvent();
+        $gameTroop._interpreter.update();
+    }
 }
 
 /**
