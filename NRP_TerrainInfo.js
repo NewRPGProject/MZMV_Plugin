@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Set detailed settings for battleback and encounter rates.
+ * @plugindesc v1.02 Set detailed settings for battleback and encounter rates.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481820874.html
  *
@@ -151,7 +151,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 戦闘背景やエンカウント率を詳細設定。
+ * @plugindesc v1.02 戦闘背景やエンカウント率を詳細設定。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481820874.html
  *
@@ -454,60 +454,125 @@ Game_Player.prototype.encounterProgressValue = function() {
 //----------------------------------------
 
 /**
- * ●戦闘背景１
+ * ●ＭＺの場合
  */
-const _Sprite_Battleback_normalBattleback1Name = Sprite_Battleback.prototype.normalBattleback1Name;
-Sprite_Battleback.prototype.normalBattleback1Name = function() {
-    const setting = getMatchSetting($gamePlayer.x, $gamePlayer.y);
-    // 条件設定が取得できた場合
-    if (setting && setting.battleback1 != undefined) {
-        return setting.battleback1;
-    }
-    
-    return _Sprite_Battleback_normalBattleback1Name.apply(this, arguments);
-};
+if (Utils.RPGMAKER_NAME == "MZ") {
+    /**
+     * ●戦闘背景１
+     */
+    const _Sprite_Battleback_normalBattleback1Name = Sprite_Battleback.prototype.normalBattleback1Name;
+    Sprite_Battleback.prototype.normalBattleback1Name = function() {
+        const setting = getMatchSetting($gamePlayer.x, $gamePlayer.y);
+        // 条件設定が取得できた場合
+        if (setting && setting.battleback1 != undefined) {
+            return setting.battleback1;
+        }
+        
+        return _Sprite_Battleback_normalBattleback1Name.apply(this, arguments);
+    };
+
+    /**
+     * ●戦闘背景２
+     */
+    const _Sprite_Battleback_normalBattleback2Name = Sprite_Battleback.prototype.normalBattleback2Name;
+    Sprite_Battleback.prototype.normalBattleback2Name = function() {
+        const setting = getMatchSetting($gamePlayer.x, $gamePlayer.y);
+        // 条件設定が取得できた場合
+        if (setting && setting.battleback2 != undefined) {
+            return setting.battleback2;
+        }
+        
+        return _Sprite_Battleback_normalBattleback2Name.apply(this, arguments);
+    };
+
+    /**
+     * ●戦闘背景１（乗物）
+     */
+    const _Sprite_Battleback_shipBattleback1Name = Sprite_Battleback.prototype.shipBattleback1Name;
+    Sprite_Battleback.prototype.shipBattleback1Name = function() {
+        const setting = getMatchSetting($gamePlayer.x, $gamePlayer.y);
+        // 条件設定が取得できた場合
+        if (setting && setting.battleback1 != undefined) {
+            return setting.battleback1;
+        }
+
+        return _Sprite_Battleback_shipBattleback1Name.apply(this, arguments);
+    };
+
+    /**
+     * ●戦闘背景２（乗物）
+     */
+    const _Sprite_Battleback_shipBattleback2Name = Sprite_Battleback.prototype.shipBattleback2Name;
+    Sprite_Battleback.prototype.shipBattleback2Name = function() {
+        const setting = getMatchSetting($gamePlayer.x, $gamePlayer.y);
+        // 条件設定が取得できた場合
+        if (setting && setting.battleback2 != undefined) {
+            return setting.battleback2;
+        }
+
+        return _Sprite_Battleback_shipBattleback2Name.apply(this, arguments);
+    };
 
 /**
- * ●戦闘背景２
+ * ●ＭＶの場合
  */
-const _Sprite_Battleback_normalBattleback2Name = Sprite_Battleback.prototype.normalBattleback2Name;
-Sprite_Battleback.prototype.normalBattleback2Name = function() {
-    const setting = getMatchSetting($gamePlayer.x, $gamePlayer.y);
-    // 条件設定が取得できた場合
-    if (setting && setting.battleback2 != undefined) {
-        return setting.battleback2;
-    }
-    
-    return _Sprite_Battleback_normalBattleback2Name.apply(this, arguments);
-};
+} else {
+    /**
+     * ●戦闘背景１
+     */
+    const _Spriteset_Battle_normalBattleback1Name = Spriteset_Battle.prototype.normalBattleback1Name;
+    Spriteset_Battle.prototype.normalBattleback1Name = function() {
+        const setting = getMatchSetting($gamePlayer.x, $gamePlayer.y);
+        // 条件設定が取得できた場合
+        if (setting && setting.battleback1 != undefined) {
+            return setting.battleback1;
+        }
+        
+        return _Spriteset_Battle_normalBattleback1Name.apply(this, arguments);
+    };
 
-/**
- * ●戦闘背景１（乗物）
- */
-const _Sprite_Battleback_shipBattleback1Name = Sprite_Battleback.prototype.shipBattleback1Name;
-Sprite_Battleback.prototype.shipBattleback1Name = function() {
-    const setting = getMatchSetting($gamePlayer.x, $gamePlayer.y);
-    // 条件設定が取得できた場合
-    if (setting && setting.battleback1 != undefined) {
-        return setting.battleback1;
-    }
+    /**
+     * ●戦闘背景２
+     */
+    const _Spriteset_Battle_normalBattleback2Name = Spriteset_Battle.prototype.normalBattleback2Name;
+    Spriteset_Battle.prototype.normalBattleback2Name = function() {
+        const setting = getMatchSetting($gamePlayer.x, $gamePlayer.y);
+        // 条件設定が取得できた場合
+        if (setting && setting.battleback2 != undefined) {
+            return setting.battleback2;
+        }
+        
+        return _Spriteset_Battle_normalBattleback2Name.apply(this, arguments);
+    };
 
-    return _Sprite_Battleback_shipBattleback1Name.apply(this, arguments);
-};
+    /**
+     * ●戦闘背景１（乗物）
+     */
+    const _Spriteset_Battle_shipBattleback1Name = Spriteset_Battle.prototype.shipBattleback1Name;
+    Spriteset_Battle.prototype.shipBattleback1Name = function() {
+        const setting = getMatchSetting($gamePlayer.x, $gamePlayer.y);
+        // 条件設定が取得できた場合
+        if (setting && setting.battleback1 != undefined) {
+            return setting.battleback1;
+        }
 
-/**
- * ●戦闘背景２（乗物）
- */
-const _Sprite_Battleback_shipBattleback2Name = Sprite_Battleback.prototype.shipBattleback2Name;
-Sprite_Battleback.prototype.shipBattleback2Name = function() {
-    const setting = getMatchSetting($gamePlayer.x, $gamePlayer.y);
-    // 条件設定が取得できた場合
-    if (setting && setting.battleback2 != undefined) {
-        return setting.battleback2;
-    }
+        return _Spriteset_Battle_shipBattleback1Name.apply(this, arguments);
+    };
 
-    return _Sprite_Battleback_shipBattleback2Name.apply(this, arguments);
-};
+    /**
+     * ●戦闘背景２（乗物）
+     */
+    const _Spriteset_Battle_shipBattleback2Name = Spriteset_Battle.prototype.shipBattleback2Name;
+    Spriteset_Battle.prototype.shipBattleback2Name = function() {
+        const setting = getMatchSetting($gamePlayer.x, $gamePlayer.y);
+        // 条件設定が取得できた場合
+        if (setting && setting.battleback2 != undefined) {
+            return setting.battleback2;
+        }
+
+        return _Spriteset_Battle_shipBattleback2Name.apply(this, arguments);
+    };
+}
 
 //----------------------------------------
 // マップ切替時
