@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 A list-style skill learning system.
+ * @plugindesc v1.011 A list-style skill learning system.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -418,7 +418,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 リスト形式のスキル習得システム。
+ * @plugindesc v1.011 リスト形式のスキル習得システム。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -1925,6 +1925,15 @@ Window_LearnSkillConfirm.prototype.drawTextEx = function(text, x, y, width) {
 //-----------------------------------------------------------------------------
 // Game_Actor
 //-----------------------------------------------------------------------------
+
+/**
+ * ●変数初期化
+ */
+const _Game_Battler_initMembers = Game_Battler.prototype.initMembers;
+Game_Battler.prototype.initMembers = function() {
+    _Game_Battler_initMembers.apply(this, arguments);
+    this.initSkillPoint();
+};
 
 /**
  * 【独自】スキルポイントの初期化
