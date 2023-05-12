@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.162 The order of actions is displayed on the battle screen.
+ * @plugindesc v1.163 The order of actions is displayed on the battle screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -289,7 +289,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.162 行動順序を戦闘画面へ表示します。
+ * @plugindesc v1.163 行動順序を戦闘画面へ表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -2120,5 +2120,33 @@ function setBitmapPixels(bitmap, newPixels) {
 function getBitmapContext(bitmap) {
     return bitmap.context || bitmap._context;
 };
+
+//-----------------------------------------------------------------------------
+// ＭＶ対応
+//-----------------------------------------------------------------------------
+if (Utils.RPGMAKER_NAME == "MV") {
+    /**
+     * ●仲間の追加
+     */
+    const _Game_Party_addActor = Game_Party.prototype.addActor;
+    Game_Party.prototype.addActor = function(actorId) {
+        // 仲間が追加可能な場合
+        if (!this._actors.contains(actorId)) {
+            _Game_Party_addActor.apply(this, arguments);
+            // 戦闘中の場合
+            if (this.inBattle()) {
+                const actor = $gameActors.actor(actorId);
+                if (this.battleMembers().includes(actor)) {
+                    // 画像読込
+                    SceneManager._scene._ctbWindow.loadBitmap(actor);
+                }
+            }
+            return;
+        }
+
+        // 追加できない場合はそのまま
+        _Game_Party_addActor.apply(this, arguments);
+    };
+}
 
 })();

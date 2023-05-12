@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.151 Change the battle system to CTB.
+ * @plugindesc v1.152 Change the battle system to CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -237,7 +237,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.151 戦闘システムをＣＴＢへ変更します。
+ * @plugindesc v1.152 戦闘システムをＣＴＢへ変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -1437,6 +1437,32 @@ if (Utils.RPGMAKER_NAME == "MZ") {
         //     this.endBattlerActions(this._subject);
         //     this._subject = null;
         // }
+    };
+//-----------------------------------------------------------------------------
+// ＭＶ対応
+//-----------------------------------------------------------------------------
+} else {
+    /**
+     * ●仲間の追加
+     */
+    const _Game_Party_addActor = Game_Party.prototype.addActor;
+    Game_Party.prototype.addActor = function(actorId) {
+        // 仲間が追加可能な場合
+        if (!this._actors.contains(actorId)) {
+            _Game_Party_addActor.apply(this, arguments);
+            // 戦闘中の場合
+            if (this.inBattle()) {
+                const actor = $gameActors.actor(actorId);
+                if (this.battleMembers().includes(actor)) {
+                    // 戦闘開始処理を実行
+                    actor.onBattleStart();
+                }
+            }
+            return;
+        }
+
+        // 追加できない場合はそのまま
+        _Game_Party_addActor.apply(this, arguments);
     };
 }
 
