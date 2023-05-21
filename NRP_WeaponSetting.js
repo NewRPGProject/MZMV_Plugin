@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v2.02 Extends the weapon display.
+ * @plugindesc v2.03 Extends the weapon display.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/484348477.html
@@ -19,6 +19,7 @@
  * - Support for weapon images after the 31th.
  * 　※By default, only the 6th of Weapons3.png (=30th) can be selected.
  * - Changed the color tone of the weapon.
+ * - Changed color tones of weapon animations.
  * - Unique images can be set for each weapon type.
  * - Combined with DynamicMotion,
  *   the same weapon can be swung and thrust.
@@ -79,12 +80,6 @@
  * -------------------------------------------------------------------
  * [Note of Weapons]
  * -------------------------------------------------------------------
- * <AnimationColor:[255,255,255,255]>
- * Changes the color tone of the animation.
- * 0~255 are valid values.
- * Set in the order of Red, Green, Blue, Strength.
- * ※Only the animation for MV is valid.
- * 
  * <WeaponImage:Weapons5>
  * Set Weapons5.png as the weapon image.
  * ※As with normal weapon images, the system folder is the target.
@@ -133,6 +128,17 @@
  * <Opacity:255>
  * Changes the opacity of the weapon.
  * 0~255 are valid values.
+ * 
+ * -------------------------------------------------------------------
+ * [Note of Weapons, Actors, and Enemies]
+ * -------------------------------------------------------------------
+ * <AnimationColor:[255,255,255,255]>
+ * Changes the color tone of the normal attack animation.
+ * 0~255 are valid values.
+ * Set in the order of Red, Green, Blue, Strength.
+ * ※Only the animation for MV is valid.
+ * ※Plugins such as NRP_EnemyAttackAnimation.js
+ *   are required for the enemy's normal attack animation.
  * 
  * -------------------------------------------------------------------
  * [Terms]
@@ -273,7 +279,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.02 武器の表示を拡張します。
+ * @plugindesc v2.03 武器の表示を拡張します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/484348477.html
@@ -288,6 +294,7 @@
  * ・３１番目以降の武器画像に対応。
  * 　※デフォルトではWeapons3.pngの６番目（＝３０番目）までしか選択不可。
  * ・武器の色調を変更。
+ * ・武器のアニメーションの色調を変更
  * ・武器タイプ毎に独自の画像を設定可能。
  * ・DynamicMotionとの組み合わせにより、
  * 　同じ武器で振ったり突いたりといった動作も可能に。
@@ -343,11 +350,6 @@
  * -------------------------------------------------------------------
  * ■武器のメモ欄
  * -------------------------------------------------------------------
- * <AnimationColor:[255,255,255,255]>
- * アニメーションの色調を変更します。0~255までの数値が有効です。
- * 赤、緑、青、強さの順で設定してください。
- * ※ＭＶアニメーションのみ有効です。
- * 
  * <WeaponImage:Weapons5>
  * Weapons5.pngを武器画像として設定します。
  * ※通常の武器画像と同じく、systemフォルダが対象です。
@@ -392,6 +394,17 @@
  * 
  * <Opacity:255>
  * 武器の不透明度を変更します。0~255までの数値が有効です。
+ * 
+ * -------------------------------------------------------------------
+ * ■武器、アクター、敵キャラのメモ欄
+ * -------------------------------------------------------------------
+ * <AnimationColor:[255,255,255,255]>
+ * 通常攻撃アニメーションの色調を変更します。
+ * 0~255までの数値が有効です。
+ * 赤、緑、青、強さの順で設定してください。
+ * ※ＭＶアニメーションのみ有効です。
+ * ※敵キャラの通常攻撃アニメーションには、
+ * 　NRP_EnemyAttackAnimation.jsなどのプラグインが必要です。
  * 
  * -------------------------------------------------------------------
  * ■利用規約
@@ -910,25 +923,46 @@ function changeAnimationColor(sprite, cell, spriteAnimation) {
     // 現在の行動主体を取得
     const subject = BattleManager._subject;
     const pattern = cell[0];
-    if (pattern >= 0 && subject && subject.weapons) {
+    if (pattern >= 0 && subject) {
+        // 敵キャラはアニメーションを保有していないので考慮
+        const animation1 = subject.attackAnimationId1 ? subject.attackAnimationId1() : 0;
+        const animation2 = subject.attackAnimationId2 ? subject.attackAnimationId2() : 0;
+
         // 武器のアニメーションではない場合
-        if (spriteAnimation._animation.id != subject.attackAnimationId1()
-            && spriteAnimation._animation.id != subject.attackAnimationId2()) {
+        if (spriteAnimation._animation.id != animation1
+            && spriteAnimation._animation.id != animation2) {
             // 変更しない。
             return;
         }
 
-        // 武器を取得
-        const weapon = getWeapon(subject);
-        if (weapon) {
-            const color = weapon.meta.AnimationColor;
-            if (color) {
-                // 色調変更すると合成方法がクリアされるので保持＆再設定
-                const blendMode = sprite.blendMode;
-                sprite.setBlendColor(eval(color));
-                sprite.blendMode = blendMode;
+        // 武器が有効な場合
+        if (subject.weapons) {
+            // 武器を取得
+            const weapon = getWeapon(subject);
+            if (weapon && weapon.meta.AnimationColor) {
+                setAnimationColor(sprite, weapon.meta.AnimationColor);
+                return;
             }
         }
+
+        // アクターおよび敵キャラによる色変更
+        if (subject.isActor()) {
+            setAnimationColor(sprite, subject.actor().meta.AnimationColor);
+        } else if (subject.isEnemy()) {
+            setAnimationColor(sprite, subject.enemy().meta.AnimationColor);
+        }
+    }
+}
+
+/**
+ * ●アニメーションを反映
+ */
+function setAnimationColor(sprite, color) {
+    if (color) {
+        // 色調変更すると合成方法がクリアされるので保持＆再設定
+        const blendMode = sprite.blendMode;
+        sprite.setBlendColor(eval(color));
+        sprite.blendMode = blendMode;
     }
 }
 
