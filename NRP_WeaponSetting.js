@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v2.01 Extends the weapon display.
+ * @plugindesc v2.02 Extends the weapon display.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/484348477.html
@@ -79,10 +79,11 @@
  * -------------------------------------------------------------------
  * [Note of Weapons]
  * -------------------------------------------------------------------
- * <BlendColor:[255,255,255,255]>
- * Changes the color tone of the weapon.
+ * <AnimationColor:[255,255,255,255]>
+ * Changes the color tone of the animation.
  * 0~255 are valid values.
  * Set in the order of Red, Green, Blue, Strength.
+ * ※Only the animation for MV is valid.
  * 
  * <WeaponImage:Weapons5>
  * Set Weapons5.png as the weapon image.
@@ -119,6 +120,19 @@
  * ※For more information, please refer to
  *   "Documentation > Side-View Character Standards"
  *   in the help section of Maker.
+ * 
+ * <BlendColor:[255,255,255,255]>
+ * Changes the color tone of the weapon.
+ * 0~255 are valid values.
+ * Set in the order of Red, Green, Blue, Strength.
+ * 
+ * <BlendMode:1>
+ * Change the blending method of the weapon.
+ * ※0:Normal, 1:Add, 2:Multiply, 3:Screen
+ * 
+ * <Opacity:255>
+ * Changes the opacity of the weapon.
+ * 0~255 are valid values.
  * 
  * -------------------------------------------------------------------
  * [Terms]
@@ -259,7 +273,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.01 武器の表示を拡張します。
+ * @plugindesc v2.02 武器の表示を拡張します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/484348477.html
@@ -329,9 +343,10 @@
  * -------------------------------------------------------------------
  * ■武器のメモ欄
  * -------------------------------------------------------------------
- * <BlendColor:[255,255,255,255]>
- * 武器の色調を変更します。0~255までの数値が有効です。
+ * <AnimationColor:[255,255,255,255]>
+ * アニメーションの色調を変更します。0~255までの数値が有効です。
  * 赤、緑、青、強さの順で設定してください。
+ * ※ＭＶアニメーションのみ有効です。
  * 
  * <WeaponImage:Weapons5>
  * Weapons5.pngを武器画像として設定します。
@@ -366,6 +381,17 @@
  * 
  * ※詳細はツクールのヘルプにある「資料集＞サイドビューキャラ規格」を
  * 　ご覧ください。
+ * 
+ * <BlendColor:[255,255,255,255]>
+ * 武器の色調を変更します。0~255までの数値が有効です。
+ * 赤、緑、青、強さの順で設定してください。
+ * 
+ * <BlendMode:1>
+ * 武器の合成方法を変更します。
+ * 0:通常、1:加算、2:乗算、3:スクリーン
+ * 
+ * <Opacity:255>
+ * 武器の不透明度を変更します。0~255までの数値が有効です。
  * 
  * -------------------------------------------------------------------
  * ■利用規約
@@ -699,6 +725,18 @@ Sprite_Weapon.prototype.setup = function(weaponImageId) {
     if (blendColor) {
         this.setBlendColor(eval(blendColor));
     }
+    
+    // 合成方法があれば設定
+    const blendMode = dataWeapon.meta.BlendMode;
+    if (blendMode) {
+        this.blendMode = eval(blendMode);
+    }
+
+    // 不透明度があれば設定
+    const opacity = dataWeapon.meta.Opacity;
+    if (opacity) {
+        this.opacity = eval(opacity);
+    }
 };
 
 /**
@@ -778,13 +816,7 @@ if (pSupportOver30Image) {
 const _Game_Actor_performAttack = Game_Actor.prototype.performAttack;
 Game_Actor.prototype.performAttack = function() {
     // 武器を取得
-    let weapon = this.weapons()[0];
-    // DynamicMotionで設定されている場合はそちらを参照
-    // ※通常は存在しない項目
-    if (this._weaponId) {
-        // 武器データを取得
-        weapon = $dataWeapons[this._weaponId];
-    }
+    const weapon = getWeapon(this);
 
     if (weapon) {
         const attackMotionName = getAttackMotionName(this, weapon)
@@ -830,6 +862,74 @@ function getAttackMotionName(battler, weapon) {
 
     // 指定がない場合、武器情報リストを参照
     return weaponInfo.Motion;
+}
+
+/**
+ * ●アクターの対象とする武器を取得
+ */
+function getWeapon(actor) {
+    // 武器を取得
+    let weapon = actor.weapons()[0];
+    // DynamicMotionで設定されている場合はそちらを参照
+    // ※通常は存在しない項目
+    if (actor._weaponId) {
+        // 武器データを取得
+        weapon = $dataWeapons[actor._weaponId];
+    }
+    return weapon;
+}
+
+//-----------------------------------------------------------------------------
+// Sprite_Animation / Sprite_AnimationMV
+//-----------------------------------------------------------------------------
+
+/**
+ * ●セルの更新（ＭＶ）
+ */
+const _Sprite_Animation_updateCellSprite = Sprite_Animation.prototype.updateCellSprite;
+Sprite_Animation.prototype.updateCellSprite = function(sprite, cell) {
+    _Sprite_Animation_updateCellSprite.apply(this, arguments);
+    // セルの色調変更
+    changeAnimationColor(sprite, cell, this);
+}
+
+/**
+ * ●セルの更新（ＭＺ）
+ */
+const _Sprite_AnimationMV_updateCellSprite = Sprite_AnimationMV.prototype.updateCellSprite;
+Sprite_AnimationMV.prototype.updateCellSprite = function(sprite, cell) {
+    _Sprite_AnimationMV_updateCellSprite.apply(this, arguments);
+    // セルの色調変更
+    changeAnimationColor(sprite, cell, this);
+}
+
+/**
+ * ●セルの色調変更
+ */
+function changeAnimationColor(sprite, cell, spriteAnimation) {
+    // 現在の行動主体を取得
+    const subject = BattleManager._subject;
+    const pattern = cell[0];
+    if (pattern >= 0 && subject && subject.weapons) {
+        // 武器のアニメーションではない場合
+        if (spriteAnimation._animation.id != subject.attackAnimationId1()
+            && spriteAnimation._animation.id != subject.attackAnimationId2()) {
+            // 変更しない。
+            return;
+        }
+
+        // 武器を取得
+        const weapon = getWeapon(subject);
+        if (weapon) {
+            const color = weapon.meta.AnimationColor;
+            if (color) {
+                // 色調変更すると合成方法がクリアされるので保持＆再設定
+                const blendMode = sprite.blendMode;
+                sprite.setBlendColor(eval(color));
+                sprite.blendMode = blendMode;
+            }
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
