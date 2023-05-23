@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.023 Implementation of the special skill system.
+ * @plugindesc v1.03 Implementation of the special skill system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_CountTimeBattle
  * @url https://newrpg.seesaa.net/article/489968387.html
@@ -77,10 +77,13 @@
  * ◆<SpecialSkillChargeValue1:10>
  * 
  * -------------------------------------------------------------------
- * [Note of States]
+ * [Note of Actors, Classes, Equipments & States]
  * -------------------------------------------------------------------
- * ◆<SpecialSkillChargeValue:10>
- * Adds 10 to all gauges of the target that received the state.
+ * By specifying in note, you can set the traits
+ * that will change the amount of the gauge increase.
+ * 
+ * ◆<SpecialSkillRate:150>
+ * When in state, increase all gauges by 150%.
  * 
  * ◆<SpecialSkillRegenerateValue:10>
  * When in state, add 10 to all gauges per turn.
@@ -88,8 +91,19 @@
  * -------------------------------------------------------------------
  * You can target only specific special types in the same way as skills.
  * 
- * ◆<SpecialSkillChargeValue1:10>
+ * ◆<SpecialSkillRate1:150>
  * ◆<SpecialSkillRegenerateValue1:10>
+ * 
+ * -------------------------------------------------------------------
+ * [Note of States]
+ * -------------------------------------------------------------------
+ * ◆<SpecialSkillChargeValue:10>
+ * Adds 10 to all gauges of the target that received the state.
+ * 
+ * -------------------------------------------------------------------
+ * You can target only specific special types in the same way as skills.
+ * 
+ * ◆<SpecialSkillChargeValue1:10>
  * 
  * -------------------------------------------------------------------
  * [Plugin Command]
@@ -407,7 +421,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.023 奥義システムの実装。
+ * @plugindesc v1.03 奥義システムの実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_CountTimeBattle
  * @url https://newrpg.seesaa.net/article/489968387.html
@@ -472,19 +486,32 @@
  * ◆<SpecialSkillChargeValue1:10>
  * 
  * -------------------------------------------------------------------
+ * ■アクター、職業、装備、ステートのメモ欄
+ * -------------------------------------------------------------------
+ * メモ欄に記載することで、ゲージの上昇量が変化する特性を設定できます。
+ * 
+ * ◆<SpecialSkillRate:150>
+ * 全ゲージの上昇量を150%にします。
+ * 
+ * ◆<SpecialSkillRegenerateValue:10>
+ * ターン毎に全ゲージを10加算します。
+ * 
+ * -------------------------------------------------------------------
+ * スキルと同じ要領で特定の奥義タイプだけを対象にできます。
+ * 
+ * ◆<SpecialSkillRate1:150>
+ * ◆<SpecialSkillRegenerateValue1:10>
+ * 
+ * -------------------------------------------------------------------
  * ■ステートのメモ欄
  * -------------------------------------------------------------------
  * ◆<SpecialSkillChargeValue:10>
  * ステートを受けた相手の全ゲージを10加算します。
  * 
- * ◆<SpecialSkillRegenerateValue:10>
- * ステート時、ターン毎に全ゲージを10加算します。
- * 
  * -------------------------------------------------------------------
  * スキルと同じ要領で特定の奥義タイプだけを対象にできます。
  * 
  * ◆<SpecialSkillChargeValue1:10>
- * ◆<SpecialSkillRegenerateValue1:10>
  * 
  * -------------------------------------------------------------------
  * ■プラグインコマンド
@@ -1159,12 +1186,22 @@ Game_Battler.prototype.regenerateAll = function() {
 Game_Battler.prototype.regenerateSpecialGauge = function() {
     const a = this;
 
-    // ステート毎に計算
-    for (const state of this.states()) {
+    const metaName = "SpecialSkillRegenerateValue";
+
+    // メモ欄を参照するオブジェクトを全取得
+    const traitObjects = this.traitObjects();
+    for (const object of traitObjects) {
         for (let i = 0; i < pSpecialTypeList.length; i++) {
-            const regenerateValue = getRegenerateValue(a, state, i);
             // 奥義ゲージ再生値があれば加算
-            this.addSpecialGauge(i, regenerateValue);
+            const metaValue = object.meta[metaName];
+            if (metaValue) {
+                this.addSpecialGauge(i, eval(metaValue));
+            }
+            // 数値指定があれば加算
+            const indexMetaValue = object.meta[metaName + (i + 1)];
+            if (indexMetaValue) {
+                this.addSpecialGauge(i, eval(indexMetaValue));
+            }
         }
     }
 
@@ -1175,23 +1212,6 @@ Game_Battler.prototype.regenerateSpecialGauge = function() {
         this.addSpecialGauge(i, eval(gaugeData.RegenerateValue));
     }
 };
-
-/**
- * ●ゲージ再生の加算値を取得
- */
-function getRegenerateValue(a, stateData, index) {
-    // <SpecialSkillRegenerateValue>の指定がある場合は優先
-    const metaValue = stateData.meta.SpecialSkillRegenerateValue;
-    if (metaValue != null) {
-        return eval(metaValue);
-    }
-    // <SpecialSkillRegenerateValue?>の指定がある場合は優先
-    const indexMetaValue = stateData.meta["SpecialSkillRegenerateValue" + (index + 1)];
-    if (indexMetaValue != null) {
-        return eval(indexMetaValue);
-    }
-    return 0;
-}
 
 /**
  * 【独自】奥義ゲージの値を加算
@@ -1225,6 +1245,30 @@ Game_Battler.prototype.addSpecialGauge = function(index, value) {
     if (this._specialGauges[index] >= gaugeMax && value > 0) {
         return;
     }
+
+    //--------------------------------------
+    // 倍率計算
+    //--------------------------------------
+    const metaName = "SpecialSkillRate";
+    let rate = 100;
+
+    // メモ欄を参照するオブジェクトを全取得
+    const traitObjects = this.traitObjects();
+    for (const object of traitObjects) {
+        // 指定があれば倍率加算
+        const metaValue = object.meta[metaName];
+        if (metaValue) {
+            rate += eval(metaValue) - 100;
+        }
+        // 数値指定があれば倍率加算
+        const indexMetaValue = object.meta[metaName + (index + 1)];
+        if (indexMetaValue) {
+            rate += eval(indexMetaValue) - 100;
+        }
+    }
+
+    // 倍率を反映
+    value *= rate / 100
 
     this._specialGauges[index] += value;
 
