@@ -83,10 +83,10 @@
  * that will change the amount of the gauge increase.
  * 
  * ◆<SpecialSkillRate:150>
- * When in state, increase all gauges by 150%.
+ * Increase all gauges by 150%.
  * 
  * ◆<SpecialSkillRegenerateValue:10>
- * When in state, add 10 to all gauges per turn.
+ * Add 10 to all gauges per turn.
  * 
  * -------------------------------------------------------------------
  * You can target only specific special types in the same way as skills.
