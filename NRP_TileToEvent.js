@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.041 Automatically generate events on tiles.
+ * @plugindesc v1.042 Automatically generate events on tiles.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481496398.html
  *
@@ -186,7 +186,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.041 タイル上に自動でイベントを生成します。
+ * @plugindesc v1.042 タイル上に自動でイベントを生成します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481496398.html
  *
@@ -766,11 +766,6 @@ function tileToEvent(x, y, z, settingList, createFlg) {
 function getMatchSetting(index, x, y, settingList) {
     const tileId = $dataMap.data[index];
 
-    // タイルが存在しなければ処理終了
-    if (!tileId) {
-        return;
-    }
-
     // なるべく負荷をかけないよう値を一度だけ取得する。
     let terrainTag;
     let regionId;
@@ -781,7 +776,7 @@ function getMatchSetting(index, x, y, settingList) {
         let match = false;
 
         // タイルＩＤの一致を確認
-        if  (setting.tileIds && setting.tileIds.length > 0) {
+        if  (tileId && setting.tileIds && setting.tileIds.length > 0) {
             match = setting.tileIds.find(function(id) {
                 return tileId == id;
             });
@@ -792,7 +787,7 @@ function getMatchSetting(index, x, y, settingList) {
         }
 
         // オートタイルタイプの一致を確認
-        if  (setting.autotileTypes && setting.autotileTypes.length > 0) {
+        if  (tileId && setting.autotileTypes && setting.autotileTypes.length > 0) {
             // 未取得ならオートタイルタイプを取得
             if (autotileType === undefined) {
                 autotileType = getAutotileType(tileId);
