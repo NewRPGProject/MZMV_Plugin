@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Change the performance of the skill.
+ * @plugindesc v1.02 Change the performance of the skill.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/498025725.html
  *
@@ -102,6 +102,9 @@
  * 
  * This is not supported
  * when the element of the skill is "Normal Attack".
+ * 
+ * If the element of the skill is "Normal Attack",
+ * it cannot be enhanced by the element.
  * According to RPG Maker specifications, the "Attack Element"
  * of the equipment is reflected in the skill, but specifying
  * the element to be enhanced with <EnhanceTargetElement> is not valid.
@@ -176,7 +179,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 スキルの性能を変化させる。
+ * @plugindesc v1.02 スキルの性能を変化させる。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/498025725.html
  *
@@ -261,7 +264,7 @@
  * そのような場合も、パッシブスキルやステートを活用して
  * 効果を分割すればＯＫです。
  * 
- * スキルの属性が『通常攻撃』の場合には対応していません。
+ * スキルの属性が『通常攻撃』の場合、属性による強化はできません。
  * ツクールの仕様では装備の『攻撃時属性』がスキルに反映されるのですが、
  * <EnhanceTargetElement>で強化する属性を指定しても有効にはなりません。
  * 
@@ -386,11 +389,6 @@ const _Game_Action_makeDamageValue = Game_Action.prototype.makeDamageValue;
 Game_Action.prototype.makeDamageValue = function(target, critical) {
     // 元の計算結果を取得
     let ret = _Game_Action_makeDamageValue.apply(this, arguments);
-
-    // 属性が通常攻撃の場合は対象外
-    if (this.item().damage.elementId < 0) {
-        return ret;
-    }
 
     // 強化有の場合
     const rate = this.enhanceDamageRate();
@@ -532,7 +530,7 @@ function getEnhanceRate(action, metaName, defaultRate) {
         for (const object of objects) {
             // 優先レートを取得
             const rate = getRate(object, object.meta[metaName], defaultRate);
-            // 消費ＭＰを補正
+            // レートを補正
             if (rate != null) {
                 // 加算方式
                 if (pUsePlusStyle) {
@@ -667,6 +665,7 @@ Game_BattlerBase.prototype.enhanceObjects = function(item) {
             if (object.meta.EnhanceTargetSkillType) {
                 enhanceSkillType = textToArray(object.meta.EnhanceTargetSkillType);
             }
+
             // スキルタイプが不一致の場合は対象外なので次へ
             if (enhanceSkillType.length > 0 && !enhanceSkillType.includes(skilltype)) {
                 continue;
