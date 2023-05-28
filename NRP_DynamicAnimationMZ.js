@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.193 Automate & super-enhance battle animations.
+ * @plugindesc v1.194 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -524,7 +524,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.193 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.1943 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -2038,8 +2038,13 @@ BaseAnimation.prototype.makeAnimation = function (dataA, mirror, dynamicAnimatio
     // animationBaseDelay分は除く
     this.frame = (this.delaySum - this.animationBaseDelay) / basicRate;
 
+    // オブジェクトを複製
+    const cloneData = Object.assign({}, this);
+    // 残像データは除去
+    // ※keep型による参照が狂うため
+    cloneData.list = cloneData.list.filter(da => !da.isAfterimage);
     // データ一覧に追加
-    dataA.push(this);
+    dataA.push(cloneData);
 
     // 基本項目の事後計算
     this.calcBasicAfter();
