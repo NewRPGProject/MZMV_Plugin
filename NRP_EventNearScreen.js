@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Allow self-movement of off-screen events.
+ * @plugindesc v1.01 Allow self-movement of off-screen events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483887712.html
  *
@@ -83,7 +83,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 画面外イベントの自律移動を許可
+ * @plugindesc v1.01 画面外イベントの自律移動を許可
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483887712.html
  *
