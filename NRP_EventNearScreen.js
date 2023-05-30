@@ -3,93 +3,89 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Extends event acceleration feature.
+ * @plugindesc v1.00 Allow self-movement of off-screen events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
- * @url http://newrpg.seesaa.net/article/483801702.html
+ * @url http://newrpg.seesaa.net/article/483887712.html
  *
- * @help Extends event acceleration feature.
+ * @help Normally, the behavior set for event self-movement is designed
+ * to stop when the event's position is some distance off the screen.
  * 
- * RPG Maker MV~MZ has a feature
- * that allows you to double the speed of an event
- * by holding down the decision key while the event is running.
- * I will make some extensions to that feature.
+ * While this specification is useful for reducing processing,
+ * it can be troublesome in some cases.
+ * For example, if you want to match the timing of multiple events,
+ * or if you want to create an event that works off-screen.
  * 
- * ◆Main features.
- * - Change of keys to be used
- * - Change of execution speed
- * - Change the time to hold down the key before execution
- * - Touch UI side setting can be specified separately.
+ * This plugin allows the self-moving of events
+ * to be performed even when they are off-screen.
  * 
- * For example, it is possible to speed up the entire event
- * by combining the key with a message skipping plugin.
+ * There are three ways to set it up.
+ * Please use the method you prefer.
  * 
- * ■Acknowledgements
- * This plugin is inspired
- * by FastForwardCustomize.js created by Triacontane.
+ * - Set in the note field in each events.
+ * - Temporarily enabled by plugin command.
+ * - Always enabled by plugin parameter.
  * 
+ * ------------------------------------------
+ * [Note of Events]
+ * ------------------------------------------
+ * <ExceptNearScreen>
+ * Always enable self-moving of event.
+ * 
+ * ------------------------------------------
+ * [Plugin Command MZ]
+ * ------------------------------------------
+ * ◆ExceptNearScreen
+ * Enable off-screen self-movement for events.
+ * Can also be turned off.
+ * This applies to all events.
+ * 
+ * Settings will remain valid even if you switch screens.
+ * However, they will not be transferred to the saved data.
+ * 
+ * ------------------------------------------
+ * [Plugin Command MV]
+ * ------------------------------------------
+ * ◆NRP.ExceptNearScreen [true/false]
+ * The functions are the same as the MZ version.
+ * 
+ * ------------------------------------------
  * [Terms]
+ * ------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
  * The author is not responsible,
  * but will deal with defects to the extent possible.
  * 
- * @param FastKey
- * @default ok
- * @type select
- * @option ok
- * @option cancel
- * @option shift
- * @option menu
- * @option pageup
- * @option pagedown
- * @option control
- * @option tab
- * @desc The key to perform event acceleration.
+ * @------------------------------------------------------------------
+ * @ Plugin Command
+ * @------------------------------------------------------------------
  * 
- * @param SpeedMultiply
- * @type number
- * @default 2
- * @desc This is the event speed multiplier for speedup.
- * If 1 or less, the acceleration will be disabled.
+ * @command ExceptNearScreen
+ * @desc Enable off-screen self-movement for events.
+ * Can also be turned off.
  * 
- * @param SpeedVariableId
- * @type variable
- * @desc Variable to set the event acceleration multiplier. If 1 or less, acceleration is disabled. Precedence over SpeedMultiply.
+ * @arg ExceptNearScreen
+ * @desc Enable off-screen self-movement for events.
+ * Can also be turned off.
+ * @type boolean
+ * @default true
  * 
- * @param PressWait
- * @type number
- * @default 24
- * @desc This is the wait time before starting the acceleration.
- * Specify in units of 1/60th of a second.
+ * @------------------------------------------------------------------
+ * @ Plugin Parameters
+ * @------------------------------------------------------------------
  * 
- * @param <Touch>
- * @desc This is the event acceleration setting for touch operations.
- * If not specified, the same settings as above will be used.
- * 
- * @param TouchSpeedMultiply
- * @parent <Touch>
- * @type number
- * @desc This is the event speed multiplier for speedup.
- * If 1 or less, the acceleration will be disabled.
- * 
- * @param TouchSpeedVariableId
- * @parent <Touch>
- * @type variable
- * @desc Variable to set the event acceleration multiplier. If 1 or less, acceleration is disabled. Precedence over SpeedMultiply.
- * 
- * @param TouchPressWait
- * @parent <Touch>
- * @type number
- * @desc This is the wait time before starting the acceleration.
- * Specify in units of 1/60th of a second.
+ * @param AlwaysSelfMovement
+ * @default false
+ * @type boolean
+ * @desc Always enable self-movement, even for off-screen events.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 画面外イベントの自律移動を有効化。
+ * @plugindesc v1.00 画面外イベントの自律移動を許可
  * @author 砂川赳（http://newrpg.seesaa.net/）
- * @url http://newrpg.seesaa.net/article/483801702.html
+ * @url http://newrpg.seesaa.net/article/483887712.html
  *
  * @help 通常、イベントの自律移動に設定された動作は、
  * イベントの位置が画面からある程度外れると停止する仕様になっています。
@@ -118,8 +114,8 @@
  * ------------------------------------------
  * ■プラグインコマンド（ＭＺ）
  * ------------------------------------------
- * ◆画面外の自立移動
- * イベントに対して画面外の自立移動を有効にします。
+ * ◆画面外の自律移動
+ * イベントに対して画面外の自律移動を有効にします。
  * オフにすることも可能です。
  * 全てのイベントが対象となります。
  * 
@@ -129,7 +125,7 @@
  * ------------------------------------------
  * ■プラグインコマンド（ＭＶ）
  * ------------------------------------------
- * ◆NRP.ExceptNearScreen [TRUE/FALSE]
+ * ◆NRP.ExceptNearScreen [true/false]
  * 機能はＭＺ版と同じです。
  * 
  * ■利用規約
@@ -137,21 +133,28 @@
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
  * 
+ * @------------------------------------------------------------------
+ * @ プラグインコマンド
+ * @------------------------------------------------------------------
+ * 
  * @command ExceptNearScreen
- * @text 画面外の自立移動
- * @desc イベントに対して画面外の自立移動を有効にします。
+ * @text 画面外の自律移動
+ * @desc イベントに対して画面外の自律移動を有効にします。
  * オフにすることも可能です。
  * 
  * @arg ExceptNearScreen
- * @text 画面外の自立移動
- * @desc イベントに対して画面外の自立移動を有効にします。
+ * @text 画面外の自律移動
+ * @desc イベントに対して画面外の自律移動を有効にします。
+ * オフにすることも可能です。
  * @type boolean
  * @default true
  * 
- * 
+ * @------------------------------------------------------------------
+ * @ プラグインパラメータ
+ * @------------------------------------------------------------------
  * 
  * @param AlwaysSelfMovement
- * @text 常に自立移動を有効
+ * @text 常に自律移動を有効
  * @default false
  * @type boolean
  * @desc 画面外のイベントに対しても常に自律移動を有効にします。
