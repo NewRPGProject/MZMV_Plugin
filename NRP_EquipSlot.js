@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.05 Change the equipment slots at will.
+ * @plugindesc v1.06 Change the equipment slots at will.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489626316.html
  *
@@ -132,7 +132,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.05 装備スロットを自由に変更。
+ * @plugindesc v1.06 装備スロットを自由に変更。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489626316.html
  * 
@@ -891,7 +891,7 @@ if (pPagingEquipmentType) {
                 continue;
 
             // 該当のスロットＩＤに対してページ切替を行うかどうか？
-            } else if (existPagingEquipmentType(this._pageNo, slotId)) {
+            } else if (existPagingEquipmentType(slots, this._pageNo, slotId)) {
                 // 切り替えるタイミングでのインデックス（i）を保持
                 break;
             }
@@ -913,15 +913,43 @@ if (pPagingEquipmentType) {
     /**
      * ●該当のスロットＩＤに対してページ切替を行うかどうか？
      */
-    function existPagingEquipmentType(pageNo, slotId) {
+    function existPagingEquipmentType(slots, pageNo, slotId) {
+        const pagingEquipmentTypes = realPagingEquipmentTypes(slots);
+
         // 現在ページから最終ページまでをチェック
         for (let i = pageNo; i < mPagingEquipmentTypes.length; i++) {
             // ページ切替する装備タイプがあれば、そこでインデックスを返す
-            if (mPagingEquipmentTypes[i] && mPagingEquipmentTypes[i] == slotId) {
+            if (pagingEquipmentTypes[i] && pagingEquipmentTypes[i] == slotId) {
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * ●ページ切替する装備タイプを取得
+     * ※歯抜けになっていた場合を考慮
+     */
+    function realPagingEquipmentTypes(slots) {
+        // 『ページ切替する装備タイプ』のスロットが歯抜けになっていた場合
+        // その次のスロットを参照する。
+        const pagingEquipmentTypes = [];
+        for (const pagingEquipmentType of mPagingEquipmentTypes) {
+            // スロットが正常に存在する場合
+            if (slots.includes(toNumber(pagingEquipmentType))) {
+                // 普通に登録
+                pagingEquipmentTypes.push(pagingEquipmentType);
+            // 歯抜けの場合
+            } else {
+                // 次の存在するスロットを取得して登録
+                const nextSlot = slots.find(slot => slot > pagingEquipmentType);
+                if (nextSlot) {
+                    pagingEquipmentTypes.push(nextSlot);
+                }
+            }
+        }
+        // 重複除去して返す
+        return [...new Set(pagingEquipmentTypes)];
     }
 
     /**
