@@ -8,6 +8,7 @@
  * @url https://newrpg.seesaa.net/article/499543048.html
  *
  * @help The following actions will lighten the processing of events
+ * It is effective on maps where a large number of events are placed.
  * 
  * 1. Stop Draw Out of Screen
  * Reduces the load by stopping unnecessary
@@ -65,6 +66,7 @@
  * @url https://newrpg.seesaa.net/article/499543048.html
  *
  * @help 以下の対応によってイベントの処理を軽量化します。
+ * 大量のイベントが配置されたマップ上で効果的です。
  * 
  * １．画面外のイベント描画停止
  * 画面外のイベントに対する不要な描画処理を
