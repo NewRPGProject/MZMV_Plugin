@@ -2,18 +2,31 @@
 // NRP_EventLightLoad.js
 //=============================================================================
 /*:
- * @target MZ
- * @plugindesc v0.9 
+ * @target MV MZ
+ * @plugindesc v1.00 Lightweight event processing.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
- * @url http://newrpg.seesaa.net/article/485838070.html
+ * @url https://newrpg.seesaa.net/article/499543048.html
  *
- * @help 
+ * @help The following actions will lighten the processing of events
+ * 
+ * 1. Stop Draw Out of Screen
+ * Reduces the load by stopping unnecessary
+ * drawing processing for off-screen events.
+ * 
+ * 2. Cache Event Running
+ * Cache the process of checking the running status of events,
+ * so that it is executed only once every 1/60th of a second.
+ * This can be especially effective when used in conjunction
+ * with StopSelfMovementWithPlayer.js, etc.
  * 
  * -------------------------------------------------------------------
  * [Usage]
  * -------------------------------------------------------------------
+ * Just apply and it will take effect.
  * 
- * 
+ * Each feature has been verified to not cause problems
+ * in the author's environment,
+ * but can be turned on or off in case problems arise.
  * 
  * -------------------------------------------------------------------
  * [Terms]
@@ -28,25 +41,48 @@
  * @ [Plugin Parameters]
  * @------------------------------------------------------------------
  * 
+ * @param StopDrawOutOfScreen
+ * @type boolean
+ * @default true
+ * @desc Stops the drawing process for off-screen events.
+ * 
+ * @param OutOfScreenMargin
+ * @parent StopDrawOutOfScreen
+ * @type number
+ * @default 100
+ * @desc The margin width (in pixels) that is considered off-screen.
+ * 
+ * @param CacheEventRunning
+ * @type boolean
+ * @default true
+ * @desc Caches the running status of events and suppresses unnecessary reacquisition processing.
  */
 
 /*:ja
- * @target MZ
- * @plugindesc v0.9 イベントの処理を軽量化します。
+ * @target MV MZ
+ * @plugindesc v1.00 イベントの処理を軽量化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
- * @url http://newrpg.seesaa.net/article/485838070.html
+ * @url https://newrpg.seesaa.net/article/499543048.html
  *
- * @help 
+ * @help 以下の対応によってイベントの処理を軽量化します。
+ * 
+ * １．画面外のイベント描画停止
+ * 画面外のイベントに対する不要な描画処理を
+ * 停止することで負荷を軽減します。
+ * 
+ * ２．起動状況をキャッシュ
+ * イベントの起動状況の確認処理をキャッシュし、
+ * 1/60秒に一度のみに限定して実行するようにします。
+ * 特にStopSelfMovementWithPlayer.jsなどとの
+ * 併用時は大きな効果が見込めます。
  * 
  * -------------------------------------------------------------------
  * ■使用方法
  * -------------------------------------------------------------------
+ * 適用するだけで有効になります。
  * 
- * -------------------------------------------------------------------
- * ■注意点
- * -------------------------------------------------------------------
- * 画面外のイベントの描画処理を停止しているため、
- * 処理の内容によっては想定通りに動作しなくなることもあります。
+ * 各機能は作者環境で問題が起きないことを確認していますが、
+ * 問題が起きた時のためにオンオフできるようにしています。
  * 
  * -------------------------------------------------------------------
  * ■利用規約
@@ -60,7 +96,7 @@
  * @------------------------------------------------------------------
  * 
  * @param StopDrawOutOfScreen
- * @text 画面外の描画停止
+ * @text 画面外のイベント描画停止
  * @type boolean
  * @default true
  * @desc 画面外のイベントの描画処理を停止します。
@@ -74,10 +110,10 @@
  * 数値分だけ画面外にはみ出していても停止しません。
  * 
  * @param CacheEventRunning
- * @text イベントの起動情報を保持
+ * @text 起動状況をキャッシュ
  * @type boolean
  * @default true
- * @desc イベントの起動情報を保持し、不要な再取得処理を抑制します。
+ * @desc イベントの起動状況をキャッシュし、不要な再取得処理を抑制します。
  */
 
 (function() {
@@ -154,7 +190,8 @@ if (pStopDrawOutOfScreen) {
 }
 
 // ----------------------------------------------------------------------------
-// $gameMap.isEventRunningのキャッシュ化
+// 起動状況をキャッシュ
+// ※$gameMap.isEventRunningのキャッシュ化
 // ----------------------------------------------------------------------------
 if (pCacheEventRunning) {
     // イベントの実行判定
