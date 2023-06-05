@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.06 Multiple classes allow for a highly flexible growth system.
+ * @plugindesc v1.07 Multiple classes allow for a highly flexible growth system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -255,6 +255,10 @@
  * @type number @min -9999999 @max 9999999
  * @desc The amount of experience to change. Can be negative.
  * 
+ * @arg VariableExp
+ * @type variable
+ * @desc The variable specifies the amount of experiences to increase or decrease. This takes precedence.
+ * 
  * @arg ShowLvUpMessage
  * @type boolean
  * @default false
@@ -295,6 +299,10 @@
  * @arg Level
  * @type number @min -99 @max 99
  * @desc The amount of level to change. Minus value can be specified.
+ * 
+ * @arg VariableLevel
+ * @type variable
+ * @desc The variable specifies the amount of levels to increase or decrease. This takes precedence.
  * 
  * @arg ShowLvUpMessage
  * @type boolean
@@ -473,7 +481,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.06 多重職業によって自由度の高い成長システムを実現。
+ * @plugindesc v1.07 多重職業によって自由度の高い成長システムを実現。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -727,6 +735,12 @@
  * @type number @min -9999999 @max 9999999
  * @desc 増減する経験値の量です。マイナス指定可。
  * 
+ * @arg VariableExp
+ * @text 経験値（変数）
+ * @type variable
+ * @desc 増減する経験値の量を変数で指定します。
+ * こちらのほうが優先されます。
+ * 
  * @arg ShowLvUpMessage
  * @text レベルアップを表示
  * @type boolean
@@ -775,6 +789,12 @@
  * @text レベル
  * @type number @min -99 @max 99
  * @desc 増減するレベルの量です。マイナス指定可。
+ * 
+ * @arg VariableLevel
+ * @text レベル（変数）
+ * @type variable
+ * @desc 増減するレベルの量を変数で指定します。
+ * こちらのほうが優先されます。
  * 
  * @arg ShowLvUpMessage
  * @text レベルアップを表示
@@ -1109,9 +1129,16 @@ PluginManager.registerCommand(PLUGIN_NAME, "ChangeExp", function(args) {
     // 追加職業
     const additionalClassId = setDefault(args.AdditionalClass);
     // 経験値
-    const exp = toNumber(args.Exp);
+    let exp = toNumber(args.Exp);
+    // 経験値（変数）
+    const variableExp = toNumber(args.VariableExp);
     // レベルアップを表示
     const show = toBoolean(args.ShowLvUpMessage);
+
+    // 変数の指定がある場合は優先
+    if (variableExp) {
+        exp = $gameVariables.value(variableExp);
+    }
 
     // アクターを取得
     const actor = getActor(args);
@@ -1191,9 +1218,16 @@ PluginManager.registerCommand(PLUGIN_NAME, "ChangeLevel", function(args) {
     // 追加職業
     const additionalClassId = setDefault(args.AdditionalClass);
     // レベル
-    const level = toNumber(args.Level);
+    let level = toNumber(args.Level);
+    // レベル（変数）
+    const variableLevel = toNumber(args.VariableLevel);
     // レベルアップを表示
     const show = toBoolean(args.ShowLvUpMessage);
+
+    // 変数の指定がある場合は優先
+    if (variableLevel) {
+        level = $gameVariables.value(variableLevel);
+    }
 
     // アクターを取得
     const actor = getActor(args);
