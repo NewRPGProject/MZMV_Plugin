@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.03 Customize the display after a battle victory.
+ * @plugindesc v1.031 Customize the display after a battle victory.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499138292.html
  *
@@ -228,7 +228,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.03 戦闘勝利時の表示をカスタマイズします。
+ * @plugindesc v1.031 戦闘勝利時の表示をカスタマイズします。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499138292.html
  *
@@ -953,6 +953,15 @@ if (pMessageFitWidth) {
     let mTextScale = null;
     // 制御を行わない
     let mNoControl = false;
+
+    /**
+     * ●変数初期化
+     */
+    const _Window_Message_initMembers = Window_Message.prototype.initMembers;
+    Window_Message.prototype.initMembers = function() {
+        _Window_Message_initMembers.apply(this, arguments);
+        mTextScale = null;
+    };
 
     /**
      * メソッドが未定義の場合は事前に定義
