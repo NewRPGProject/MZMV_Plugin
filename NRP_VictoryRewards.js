@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.031 Customize the display after a battle victory.
+ * @plugindesc v1.032 Customize the display after a battle victory.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499138292.html
  *
@@ -228,7 +228,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.031 戦闘勝利時の表示をカスタマイズします。
+ * @plugindesc v1.032 戦闘勝利時の表示をカスタマイズします。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499138292.html
  *
@@ -1003,15 +1003,21 @@ if (pMessageFitWidth) {
             // 先頭から行の終端までを結合する。
             while (true) {
                 const c = textState.text[index];
-                mLineText += c;
-
                 // 終端または改行＆改ページに到達した。
                 if (index >= textState.text.length || c == "\n" || c == "\f") {
                     break;
                 }
 
+                if (c != null) {
+                    mLineText += c;
+                }
+
                 index++;
             }
+
+            // 制御文字を除去
+            const regExp = /\x1b[a-zA-Z]+\[.+\]/i;
+            mLineText = mLineText.replace(regExp, "");
             
             // 行の文字列の横幅を求める。
             // ※mIsRewardsMessageをオフにしないと循環参照になる。
@@ -1029,6 +1035,7 @@ if (pMessageFitWidth) {
             // ウィンドウの横幅と比較し、縮小率を求める。
             const maxWidth = this.innerWidth - this.padding;
             if (textWidth > maxWidth) {
+console.log(textWidth + " > " + maxWidth + " : " + mLineText);
                 mTextScale = maxWidth / textWidth;
             }
         }
