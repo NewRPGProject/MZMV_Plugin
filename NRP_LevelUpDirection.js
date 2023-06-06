@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Added parameter display and direction at level-up.
+ * @plugindesc v1.001 Added parameter display and direction at level-up.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @orderAfter NRP_VictoryRewards
  * @url https://newrpg.seesaa.net/article/499197962.html
@@ -132,7 +132,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 レベルアップ時にパラメータ表示や演出を追加
+ * @plugindesc v1.001 レベルアップ時にパラメータ表示や演出を追加
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @orderAfter NRP_VictoryRewards
  * @url https://newrpg.seesaa.net/article/499197962.html
@@ -533,6 +533,11 @@ if (typeof AdditionalClass !== "undefined") {
  * ●DynamicAnimation&Motionを呼び出し
  */
 function callDynamic(battler, dynamicId) {
+    // 戦闘時以外は処理しない。
+    if (!$gameParty.inBattle()) {
+        return;
+    }
+
     // 実行するDynamicAnimation情報を持ったアクション
     const dynamicAction = makeAction(dynamicId, battler);
     // バトラーを対象にする。
