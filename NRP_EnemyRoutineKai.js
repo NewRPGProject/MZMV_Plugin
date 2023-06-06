@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.08 Improve the enemy's action routine.
+ * @plugindesc v1.081 Improve the enemy's action routine.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/473218336.html
  *
@@ -136,7 +136,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.08 敵行動ルーチンを改善します。
+ * @plugindesc v1.081 敵行動ルーチンを改善します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/473218336.html
  *
@@ -478,29 +478,29 @@ function clearFirstActionDone() {
 }
 
 // 行動再設定を判定するフラグ
-var resetActionFlg = false;
+let mResetActionFlg = false;
 
 /**
  * ●戦闘行動の処理
  */
-var _BattleManager_processTurn = BattleManager.processTurn;
+const _BattleManager_processTurn = BattleManager.processTurn;
 BattleManager.processTurn = function() {
-    var subject = this._subject;
+    const subject = this._subject;
 
     // 敵の場合、行動直前の再設定を実行
     if (subject.isEnemy() && isResetAction(subject)) {
-        var action = subject.currentAction();
+        const action = subject.currentAction();
         // 行動前のタイミングでアクション再設定
         if (action) {
             // ただし、速度補正技は除く
             if (!action.item() || !isSpeedException(action)) {
-                resetActionFlg = true;
+                mResetActionFlg = true;
                 subject.makeActions();
-                resetActionFlg = false;
-
-                // 既に行動再設定を一度実行した。
-                subject._firstActionDone = true;
+                mResetActionFlg = false;
             }
+
+            // 既に一度行動した。
+            subject._firstActionDone = true;
         }
     }
 
@@ -538,13 +538,13 @@ Game_Enemy.prototype.makeActionTimes = function() {
 /**
  * ●敵のターン参照
  */
-var _Game_Troop_turnCount = Game_Troop.prototype.turnCount;
+const _Game_Troop_turnCount = Game_Troop.prototype.turnCount;
 Game_Troop.prototype.turnCount = function() {
-    var turnCount = _Game_Troop_turnCount.apply(this);
+    let turnCount = _Game_Troop_turnCount.apply(this);
 
     // 行動再設定時はターン-1
     // そうしないとターン最初の行動決定と条件が一致しない
-    if (resetActionFlg) {
+    if (mResetActionFlg) {
         turnCount -= 1;
     }
     return turnCount;
