@@ -2190,7 +2190,9 @@ Game_Actor.prototype.benchMembersClassExpRate = function() {
  */
 Game_Actor.prototype.subClassExpRate = function(index) {
     if (pSubClassExpRate != undefined) {
-        const a = this; // eval計算用
+        // eval計算用
+        const a = this;
+        const no = index + 1;
         return eval(pSubClassExpRate);
     }
     return 1;
