@@ -459,7 +459,7 @@
  * @type string
  * @default 1.00
  * @desc The rate of experience gain for the subclass. Formula OK.
- * If blank, the same rate as normal experience is used.
+ * If blank, the same rate as normal class is used.
  * 
  * @param UnificationExp
  * @parent <ClassExp>
@@ -996,7 +996,7 @@
  * @type string
  * @default 1.00
  * @desc サブ職業（２以降）の経験値獲得率です。数式可
- * 空白の場合は通常経験値と同率を使用。
+ * 空白の場合は先頭の職業と同率を使用。
  * 
  * @param UnificationExp
  * @parent <ClassExp>
