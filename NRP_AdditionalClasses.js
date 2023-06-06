@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.07 Multiple classes allow for a highly flexible growth system.
+ * @plugindesc v1.08 Multiple classes allow for a highly flexible growth system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -159,6 +159,14 @@
  * Change the class EXP earned to the specified %.
  * For example, 200 would be 200% (double).
  * Intended to be used in combination with the default value.
+ * 
+ * -------------------------------------------------------------------
+ * [Note of Items]
+ * -------------------------------------------------------------------
+ * <AddClassExp:?>
+ * Increases class EXP.
+ * When level up, the item menu is closed
+ * and then a message is displayed.
  * 
  * -------------------------------------------------------------------
  * [Script]]
@@ -446,6 +454,13 @@
  * @desc The rate at which reserve members gain class exp. Formula OK.
  * If blank, the same rate as normal experience is used.
  * 
+ * @param SubClassExpRate
+ * @parent <ClassExp>
+ * @type string
+ * @default 1.00
+ * @desc The rate of experience gain for the subclass. Formula OK.
+ * If blank, the same rate as normal experience is used.
+ * 
  * @param UnificationExp
  * @parent <ClassExp>
  * @type boolean
@@ -481,7 +496,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.07 多重職業によって自由度の高い成長システムを実現。
+ * @plugindesc v1.08 多重職業によって自由度の高い成長システムを実現。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -629,6 +644,13 @@
  * 既定値とのセットで使うことを想定しています。
  * 
  * -------------------------------------------------------------------
+ * ■アイテムのメモ欄
+ * -------------------------------------------------------------------
+ * <AddClassExp:?>
+ * 職業経験値を増加させます。
+ * レベルアップ時はアイテムメニューを閉じてから、メッセージを表示します。
+ * 
+ * -------------------------------------------------------------------
  * ■スクリプト
  * -------------------------------------------------------------------
  * ◆actor.currentAdditionalClass(0);
@@ -643,7 +665,9 @@
  * ※actorはGame_Actorクラスのオブジェクトです。
  * ※追加職業に就いてない場合はエラーになります。
  * 
+ * -------------------------------------------------------------------
  * ■利用規約
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
@@ -966,6 +990,14 @@
  * @desc 控えメンバーの職業経験値の獲得率です。数式可
  * 空白の場合は通常経験値と同率を使用。
  * 
+ * @param SubClassExpRate
+ * @parent <ClassExp>
+ * @text サブ職業の獲得率
+ * @type string
+ * @default 1.00
+ * @desc サブ職業（２以降）の経験値獲得率です。数式可
+ * 空白の場合は通常経験値と同率を使用。
+ * 
  * @param UnificationExp
  * @parent <ClassExp>
  * @text 経験値の共有化
@@ -1064,6 +1096,7 @@ const pClassExpMessage = setDefault(parameters["ClassExpMessage"], "");
 const pClassLvUpLater = toBoolean(parameters["ClassLvUpLater"], false);
 const pClassExpSwitch = toNumber(parameters["ClassExpSwitch"]);
 const pBenchClassExpRate = setDefault(parameters["BenchClassExpRate"]);
+const pSubClassExpRate = setDefault(parameters["SubClassExpRate"]);
 const pUnificationExp = toBoolean(parameters["UnificationExp"], false);
 const pNoDuplicateExp = toBoolean(parameters["NoDuplicateExp"], false);
 const pOverwriteClassField = toBoolean(parameters["OverwriteClassField"], true);
@@ -1197,14 +1230,17 @@ function changeExp(actor, index, additionalClassId, exp, show) {
 
         if (additionalClass) {
             // 経験値の増減
+            // ※あえて、indexは指定しない。
             additionalClass.changeExp(additionalClass.exp() + exp, show);
         }
 
     // 未指定ならば、就いている全ての追加職業を対象
     } else {
-        for (const additionalClass of actor.additionalClasses()) {
+        const additionalClasses = actor.additionalClasses();
+        for (let i = 0; i < additionalClasses.length; i++) {
+            const additionalClass = additionalClasses[i];
             // 経験値の増減
-            additionalClass.changeExp(additionalClass.exp() + exp, show);
+            additionalClass.changeExp(additionalClass.exp() + exp, show, i);
         }
     }
 }
@@ -1576,9 +1612,14 @@ AdditionalClass.prototype.maxLevel = function() {
 /**
  * ●経験値を変更
  */
-AdditionalClass.prototype.changeExp = function(exp, show) {
+AdditionalClass.prototype.changeExp = function(exp, show, index) {
     const actor = this.expActor();
     const classId = this.id;
+
+    // サブ職業倍率
+    if (index >= 1) {
+        exp *= actor.subClassExpRate(index);
+    }
 
     actor._exp[classId] = Math.max(exp, 0);
     // 変更前のレベル＆スキルを保持
@@ -1629,6 +1670,9 @@ AdditionalClass.prototype.levelDown = function() {
     this._level--;
 };
 
+// レベルアップ表示の判定用
+let mDisplayLevelUp = false;
+
 /**
  * ●レベルアップメッセージの表示
  */
@@ -1648,6 +1692,8 @@ AdditionalClass.prototype.displayLevelUp = function(newSkills) {
     for (const skill of newSkills) {
         $gameMessage.add(TextManager.obtainSkill.format(skill.name));
     }
+
+    mDisplayLevelUp = true;
 };
 
 //----------------------------------------
@@ -1967,7 +2013,9 @@ if (pUseNormalExp) {
         }
 
         // 追加職業にも経験値を加算
-        for (const additionalClass of this.additionalClasses()) {
+        const additionalClasses = this.additionalClasses();
+        for (let i = 0; i < additionalClasses.length; i++) {
+            const additionalClass = additionalClasses[i];
             // 重複加算禁止の場合
             if (mNoDuplicateExp) {
                 // かつ、既に加算済なら処理しない
@@ -1979,7 +2027,7 @@ if (pUseNormalExp) {
             }
 
             const newExp = additionalClass.exp() + value;
-            additionalClass.changeExp(newExp, show);
+            additionalClass.changeExp(newExp, show, i);
         }
     };
 }
@@ -2101,10 +2149,21 @@ BattleManager.gainClassExp = function() {
 /**
  * 【独自】職業経験値の獲得（アクター）
  */
-Game_Actor.prototype.gainClassExp = function(classExp) {
-    for (const additionalClass of this.additionalClasses()) {
-        const newExp = additionalClass.currentExp() + Math.round(classExp * this.finalClassExpRate());
-        additionalClass.changeExp(newExp, this.shouldDisplayLevelUp());
+Game_Actor.prototype.gainClassExp = function(classExp, ignoreBench) {
+    const additionalClasses = this.additionalClasses();
+    for (let i = 0; i < additionalClasses.length; i++) {
+        const additionalClass = additionalClasses[i];
+
+        let addExp = classExp;
+        // 控えメンバー倍率
+        // ※ただし、フラグがオンの場合は無視する。
+        //   アイテム使用の場合は控えを無視する必要があるため。
+        if (!ignoreBench) {
+            addExp *= this.finalClassExpRate()
+        }
+
+        const newExp = additionalClass.currentExp() + Math.round(addExp);
+        additionalClass.changeExp(newExp, this.shouldDisplayLevelUp(), i);
     }
 };
 
@@ -2124,6 +2183,17 @@ Game_Actor.prototype.benchMembersClassExpRate = function() {
         return eval(pBenchClassExpRate);
     }
     return $dataSystem.optExtraExp ? 1 : 0;
+};
+
+/**
+ * 【独自】サブ職業の職業経験値比率
+ */
+Game_Actor.prototype.subClassExpRate = function(index) {
+    if (pSubClassExpRate != undefined) {
+        const a = this; // eval計算用
+        return eval(pSubClassExpRate);
+    }
+    return 1;
 };
 
 /**
@@ -2338,6 +2408,46 @@ Window_StatusBase.prototype.drawAdditionalClassLevel = function(additionalClass,
     this.drawText(pLvName, x, y, 48);
     this.resetTextColor();
     this.drawText(additionalClass.level, x + 44, y, 36, "right");
+};
+
+//-----------------------------------------------------------------------------
+// 職業経験値の取得（アイテム）
+// （Game_Action）
+//-----------------------------------------------------------------------------
+
+/**
+ * ●効果適用
+ */
+const _Game_Action_apply = Game_Action.prototype.apply;
+Game_Action.prototype.apply = function(target) {
+    _Game_Action_apply.apply(this, arguments);
+
+    mDisplayLevelUp = false;
+
+    // 職業経験値を加算
+    const addClassExp = this.item().meta.AddClassExp;
+    if (addClassExp) {
+        const result = target.result();
+        if (result.isHit()) {
+            target.gainClassExp(eval(addClassExp), true);
+            this.makeSuccess(target);
+        }
+    }
+
+    // レベルアップ表示が必要な場合、アイテムメニューを閉じる
+    if (mDisplayLevelUp && SceneManager._scene instanceof Scene_Item) {
+        SceneManager.goto(Scene_Map);
+    }
+};
+
+/**
+ * ●効果適用判定
+ */
+const _Game_Action_hasItemAnyValidEffects = Game_Action.prototype.hasItemAnyValidEffects;
+Game_Action.prototype.hasItemAnyValidEffects = function(target) {
+    const ret = _Game_Action_hasItemAnyValidEffects.apply(this, arguments);
+    // 効果が存在する場合は判定を有効にする。
+    return ret || this.item().meta.AddClassExp;
 };
 
 //----------------------------------------
