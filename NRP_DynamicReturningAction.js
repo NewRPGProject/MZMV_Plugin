@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Action during the return of DynamicMotion
+ * @plugindesc v1.001 Action during the return of DynamicMotion
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicMotionMZ
  * @url https://newrpg.seesaa.net/article/499269749.html
@@ -70,7 +70,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 DynamicMotionの帰還中に行動
+ * @plugindesc v1.001 DynamicMotionの帰還中に行動
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicMotionMZ
  * @url https://newrpg.seesaa.net/article/499269749.html
@@ -168,6 +168,8 @@ const pWaitTurnEnd = toBoolean(parameters["WaitTurnEnd"]);
 
 // 帰還中のバトラー
 let mReturningBattlers = [];
+// 前進中のアクター
+let mStepForwardActor = null;
 
 // ----------------------------------------------------------------------------
 // BattleManager
@@ -182,6 +184,8 @@ BattleManager.initMembers = function() {
 
     // 帰還中のバトラーを初期化
     mReturningBattlers = [];
+    // 前進中のアクターを初期化
+    mStepForwardActor = null;
 }
 
 /**
@@ -329,6 +333,28 @@ Sprite_Battler.prototype.canReturningAction = function() {
 // ----------------------------------------------------------------------------
 
 /**
+ * ●前進
+ */
+const _Sprite_Actor_stepForward = Sprite_Actor.prototype.stepForward;
+Sprite_Actor.prototype.stepForward = function() {
+    // 前進中のアクターを保持
+    mStepForwardActor = this;
+    _Sprite_Actor_stepForward.apply(this, arguments);
+};
+
+/**
+ * ●移動終了
+ */
+const _Sprite_Actor_onMoveEnd = Sprite_Actor.prototype.onMoveEnd;
+Sprite_Actor.prototype.onMoveEnd = function() {
+    // 移動終了ならクリア
+    if (mStepForwardActor == this) {
+        mStepForwardActor = null;
+    }
+    _Sprite_Actor_onMoveEnd.apply(this, arguments);
+};
+
+/**
  * ●帰還中のモーションを維持する場合
  */
 if (pKeepReturningMotion) {
@@ -358,8 +384,8 @@ if (pKeepReturningMotion) {
  */
 const _Spriteset_Battle_isAnyoneMoving = Spriteset_Battle.prototype.isAnyoneMoving;
 Spriteset_Battle.prototype.isAnyoneMoving = function() {
-    // 戦闘開始時は移動を待つ。
-    if (BattleManager._phase == "start") {
+    // 戦闘開始時および前進時は移動を待つ。
+    if (BattleManager._phase == "start" || mStepForwardActor) {
         return _Spriteset_Battle_isAnyoneMoving.apply(this, arguments);
     }
     // 帰還中は除外する。
