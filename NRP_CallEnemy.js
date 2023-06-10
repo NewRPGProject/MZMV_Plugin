@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Implement the "Call Enemy" function.
+ * @plugindesc v1.021 Implement the "Call Enemy" function.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_TroopRandomFormation
  * @url http://newrpg.seesaa.net/article/485838070.html
@@ -72,6 +72,7 @@
  * The ID of the target to be called
  * when an enemy character calls an enemy.
  * The ID must not be specified in the skill that calls the enemy.
+ * Multiple designations are also supported.
  * 
  * -------------------------------------------------------------------
  * [Sample of DynamicMotion]
@@ -168,7 +169,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 敵キャラの『仲間を呼ぶ』を実装します。
+ * @plugindesc v1.021 敵キャラの『仲間を呼ぶ』を実装します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_TroopRandomFormation
  * @url http://newrpg.seesaa.net/article/485838070.html
@@ -232,6 +233,7 @@
  * <CallEnemy: x>
  * 該当の敵キャラが仲間を呼んだ場合に呼び出される敵のＩＤです。
  * 仲間を呼ぶスキルにＩＤの指定がないことが条件です。
+ * 複数指定も可能です。
  * 
  * -------------------------------------------------------------------
  * ■DynamicMotionによる演出の例
@@ -531,9 +533,12 @@ function getCallEnemyId(action) {
     if (metaCallEnemy === true) {
         const a = action.subject();
         const dataEnemy = a.enemy();
-        // 指定がある場合は優先
+        // 敵キャラ側に指定がある場合は優先
         if (dataEnemy.meta.CallEnemy) {
-            enemyId = eval(dataEnemy.meta.CallEnemy);
+            // 複数指定に対応するため配列変換
+            const enemyIds = makeTargets(dataEnemy.meta.CallEnemy);
+            // 候補の中からランダムに一つを取得
+            enemyId = enemyIds[Math.randomInt(enemyIds.length)];
 
         // それ以外は使用者と同じ
         } else {
