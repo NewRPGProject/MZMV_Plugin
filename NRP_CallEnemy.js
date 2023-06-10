@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.011 Implement the "Call Enemy" function.
+ * @plugindesc v1.02 Implement the "Call Enemy" function.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_TroopRandomFormation
  * @url http://newrpg.seesaa.net/article/485838070.html
@@ -67,6 +67,11 @@
  * 
  * Note that this setting is shared
  * with the appearance direction by NRP_DynamicAppear.js.
+ * 
+ * <CallEnemy: x>
+ * The ID of the target to be called
+ * when an enemy character calls an enemy.
+ * The ID must not be specified in the skill that calls the enemy.
  * 
  * -------------------------------------------------------------------
  * [Sample of DynamicMotion]
@@ -141,7 +146,7 @@
  * 
  * @param MaxEnemyNo
  * @type number
- * @default 8
+ * @default 5
  * @desc The maximum number of enemy that can appear.
  * Attempting to call more than that will result in failure.
  * 
@@ -163,7 +168,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.011 敵キャラの『仲間を呼ぶ』を実装します。
+ * @plugindesc v1.02 敵キャラの『仲間を呼ぶ』を実装します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_TroopRandomFormation
  * @url http://newrpg.seesaa.net/article/485838070.html
@@ -223,6 +228,10 @@
  * 
  * なお、この設定はNRP_DynamicAppear.js（登場演出プラグイン）による
  * 登場演出と共有されます。
+ * 
+ * <CallEnemy: x>
+ * 該当の敵キャラが仲間を呼んだ場合に呼び出される敵のＩＤです。
+ * 仲間を呼ぶスキルにＩＤの指定がないことが条件です。
  * 
  * -------------------------------------------------------------------
  * ■DynamicMotionによる演出の例
@@ -301,7 +310,7 @@
  * @param MaxEnemyNo
  * @text 敵キャラの最大数
  * @type number
- * @default 8
+ * @default 5
  * @desc 同時に出現できる敵キャラの最大数です。
  * それ以上呼び出そうとすると失敗します。
  * 
@@ -518,9 +527,18 @@ function getCallEnemyId(action) {
     const metaCallEnemy = action.item().meta.CallEnemy;
     let enemyId;
 
-    // 数値指定がない場合は使用者と同じ
+    // 数値指定がない場合
     if (metaCallEnemy === true) {
-        enemyId = action.subject().enemyId();
+        const a = action.subject();
+        const dataEnemy = a.enemy();
+        // 指定がある場合は優先
+        if (dataEnemy.meta.CallEnemy) {
+            enemyId = eval(dataEnemy.meta.CallEnemy);
+
+        // それ以外は使用者と同じ
+        } else {
+            enemyId = a.enemyId();
+        }
 
     // ＩＤが措定されている場合
     } else {
