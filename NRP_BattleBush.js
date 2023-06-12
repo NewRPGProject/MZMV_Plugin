@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Apply the bush effect to the battle background.
+ * @plugindesc v1.03 Apply the bush effect to the battle background.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_ShadowAndLevitate
  * @url http://newrpg.seesaa.net/article/486468229.html
@@ -41,6 +41,14 @@
  * 
  * ◆<BattleBushOpacity:?>
  * Change the opacity on the bushes to ?. Formula is also possible.
+ * 
+ * -------------------------------------------------------------------
+ * [Note of Enemies]
+ * -------------------------------------------------------------------
+ * ◆<ForceBush>
+ * Apply a forced bush effect regardless of the background.
+ * For example, when you want to represent
+ * an enemy half-buried in the ground.。
  * 
  * -------------------------------------------------------------------
  * [Notice]
@@ -183,7 +191,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 戦闘背景に茂み効果を適用します。
+ * @plugindesc v1.03 戦闘背景に茂み効果を適用します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_ShadowAndLevitate
  * @url http://newrpg.seesaa.net/article/486468229.html
@@ -220,6 +228,13 @@
  * 
  * ◆<BattleBushOpacity:?>
  * 茂み時の不透明度を?に変更します。数式も可能です。
+ * 
+ * -------------------------------------------------------------------
+ * ■敵キャラのメモ欄
+ * -------------------------------------------------------------------
+ * ◆<ForceBush>
+ * 背景に関係なく強制的に茂み効果を適用します。
+ * 地面に半身が埋もれた敵を表現したい時など。
  * 
  * -------------------------------------------------------------------
  * ■注意
@@ -526,11 +541,6 @@ Sprite_Battler.prototype.createHalfBodySprites = function() {
         this._lowerBody.anchor.y = 1;
         this._lowerBody.opacity = this.bushOpacity();
         this.addChild(this._lowerBody);
-
-// if (this._battler.isEnemy()) {
-//     alert("create");
-//     console.log(this);
-// }
     }
 };
 
@@ -811,7 +821,10 @@ Sprite_Enemy.prototype.calcBushDepth = function() {
     }
 
     const setting = getSpriteset()._bushSetting;
-    if (setting && setting.enemyBushDepth) {
+    // 強制茂みフラグ
+    const forceBush = this._battler.enemy().meta.ForceBush;
+
+    if (forceBush || (setting && setting.enemyBushDepth)) {
         const a = this; // eval用
         // メモ欄の指定がある場合は優先
         const metaValue = this._battler.enemy().meta.BattleBushDepth;
@@ -819,7 +832,11 @@ Sprite_Enemy.prototype.calcBushDepth = function() {
             return eval(metaValue);
         }
         // 通常時
-        return eval(setting.enemyBushDepth);
+        if (setting) {
+            return eval(setting.enemyBushDepth);
+        }
+        // 既定値
+        return eval(pEnemyBushDepth);
     }
     return null;
 }
@@ -837,8 +854,13 @@ Sprite_Enemy.prototype.isOutOfBush = function() {
     }
 
     const setting = getSpriteset()._bushSetting;
-    if (setting && isOutOfBush(this, setting)) {
-        return true;
+    // 強制茂みフラグ
+    const forceBush = this._battler.enemy().meta.ForceBush;
+
+    if (setting || forceBush) {
+        if (isOutOfBush(this, setting)) {
+            return true;
+        }
     }
     return false;
 }
@@ -852,7 +874,10 @@ Sprite_Enemy.prototype.bushOpacity = function() {
     }
 
     const setting = getSpriteset()._bushSetting;
-    if (setting) {
+    // 強制茂みフラグ
+    const forceBush = this._battler.enemy().meta.ForceBush;
+
+    if (forceBush || setting) {
         const a = this; // eval用
         // メモ欄の指定がある場合は優先
         const metaValue = this._battler.enemy().meta.BattleBushOpacity;
@@ -860,7 +885,11 @@ Sprite_Enemy.prototype.bushOpacity = function() {
             return eval(metaValue);
         }
         // 通常時
-        return eval(setting.enemyBushOpacity);
+        if (setting) {
+            return eval(setting.enemyBushOpacity);
+        }
+        // 既定値
+        return eval(pEnemyBushOpacity);
     }
     return null;
 }
@@ -959,7 +988,8 @@ function isOutOfBush(sprite, setting) {
  */
 function isInAirNotOnBush(sprite, setting) {
     // 空中にいる際も茂み処理を行うなら不要
-    if (setting.bushInAir) {
+    if ((setting && setting.bushInAir)
+            || (!setting && pBushInAir)) {
         return false;
 
     // マップキャラクターに合わせた高さ
@@ -982,7 +1012,7 @@ function isInAirNotOnBush(sprite, setting) {
  */
 function isMovingNotOnBush(sprite, setting) {
     // 移動中も茂み処理を行うなら不要
-    if (setting.bushOnMove) {
+    if (setting && setting.bushOnMove) {
         return false;
 
     // 戦闘開始時は除外
