@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.012 A list-style skill learning system.
+ * @plugindesc v1.02 A list-style skill learning system.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -418,7 +418,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.012 リスト形式のスキル習得システム。
+ * @plugindesc v1.02 リスト形式のスキル習得システム。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -2083,8 +2083,8 @@ BattleManager.gainSkillPoint = function() {
     // パーティ共有の場合
     if (pSkillPointType == "party") {
         // 現在のスキルポイントを取得
-        const currentSkillPoint = $gameVariables.value(variableNo);
         const variableNo = eval(pSkillPointVariable);
+        const currentSkillPoint = $gameVariables.value(variableNo);
         // 変数の値を加算
         const newValue = currentSkillPoint + skillPoint;
         $gameVariables.setValue(variableNo, newValue);
