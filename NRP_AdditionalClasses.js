@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.08 Multiple classes allow for a highly flexible growth system.
+ * @plugindesc v1.081 Multiple classes allow for a highly flexible growth system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -496,7 +496,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.08 多重職業によって自由度の高い成長システムを実現。
+ * @plugindesc v1.081 多重職業によって自由度の高い成長システムを実現。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -2045,7 +2045,9 @@ Game_Troop.prototype.classExpTotal = function() {
         return 0;
     }
 
-    return this.deadMembers().reduce((r, enemy) => r + enemy.classExp(), 0);
+    const total = this.deadMembers().reduce((r, enemy) => r + enemy.classExp(), 0);
+    // 四捨五入
+    return Math.round(total);
 };
 
 /**
@@ -2069,7 +2071,7 @@ Game_Enemy.prototype.classExp = function() {
     // rateを乗算する。
     const rate = this.enemy().meta.ClassExpRate;
     if (rate != undefined) {
-        classExp = Math.round(classExp * rate / 100);
+        classExp = classExp * rate / 100;
     }
     return classExp;
 };
