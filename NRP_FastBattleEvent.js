@@ -12,7 +12,7 @@
  * If combined with Tint Screen, etc,
  * The performance can be executed from the moment the battle begins.
  * 
- * Further enemies can be added.
+ * In addition, additional enemies can be added by plugin commands.
  * If combined with NRP_TroopRandomFormation.js,
  * it is also possible to randomly generate & place Troops.
  * 
@@ -98,6 +98,10 @@
  * @type boolean
  * @default true
  * @desc Execute the fastest battle event that meets the conditions.
+ * 
+ * @param CommonCommonEvent
+ * @type common_event
+ * @desc The common event always executed fastest at the start of battle. Runs later than the Troop event.
  */
 
 /*:ja
@@ -111,7 +115,7 @@
  * 画面の色調変更などと組み合わせれば、
  * 戦闘が始まった瞬間から演出を実行することができます。
  * 
- * さらに敵キャラの追加が可能です。
+ * さらにプラグインコマンドによって敵キャラの追加が可能です。
  * NRP_TroopRandomFormation.jsと組み合わせれば、
  * 敵グループをランダム生成＆配置することも可能です。
  * 
@@ -202,6 +206,12 @@
  * @type boolean
  * @default true
  * @desc 『１ページ目』かつ『実行しない』かつ『バトル』のイベントを最速実行します。
+ * 
+ * @param CommonCommonEvent
+ * @text 共通コモンイベント
+ * @type common_event
+ * @desc 戦闘開始時に常に最速実行されるコモンイベントです。
+ * 敵グループのイベントより後で実行されます。
  */
 
 (function() {
@@ -243,6 +253,7 @@ function setDefault(str, def) {
 const PLUGIN_NAME = "NRP_FastBattleEvent";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pAutoFastEvent = toBoolean(parameters["AutoFastEvent"]);
+const pCommonCommonEvent = toNumber(parameters["CommonCommonEvent"]);
 
 /**
  * ●引数を元に対象の配列を取得する。
@@ -401,6 +412,13 @@ Game_Troop.prototype.fastBattleEvent = function() {
         this._eventFlags[0] = true;
         // イベント実行
         this.updateInterpreter();
+    }
+
+    // 共通コモンイベント
+    if (pCommonCommonEvent) {
+        $gameTemp.reserveCommonEvent(pCommonCommonEvent);
+        this._interpreter.setupReservedCommonEvent();
+        this._interpreter.update();
     }
 };
 
