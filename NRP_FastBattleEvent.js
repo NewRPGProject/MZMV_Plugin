@@ -42,7 +42,7 @@
  * ◆AddEnemy
  * Add the specified enemies.
  * 
- * If you specify more than one in text mode, you can select randomly.
+ * If you specify more than one, you can select randomly.
  * - e.g.1: If 1~3, add randomly from enemies with IDs 1~3.
  * - e.g.2: If 1,3,5, add randomly from enemies with IDs 1, 3, and 5.
  * 
@@ -144,7 +144,7 @@
  * ◆敵キャラを追加
  * 指定した敵キャラを追加します。
  * 
- * テキストモードで複数指定すれば、ランダム選択もできます。
+ * 複数指定すれば、ランダム選択もできます。
  * ・例１：1~3ならば、ＩＤ１～３の敵からランダムに追加。
  * ・例２：1,3,5ならば、ＩＤ１、３、５の敵からランダムに追加。
  * 
