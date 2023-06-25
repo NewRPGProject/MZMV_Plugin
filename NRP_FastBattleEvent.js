@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Fastest execution of battle events before fade-in.
+ * @plugindesc v1.001 Fastest execution of battle events before fade-in.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499824342.html
  *
@@ -45,6 +45,11 @@
  * If you specify more than one, you can select randomly.
  * - e.g.1: If 1~3, add randomly from enemies with IDs 1~3.
  * - e.g.2: If 1,3,5, add randomly from enemies with IDs 1, 3, and 5.
+ * 
+ * Also, with formulas, specification by variables is also valid.
+ * - e.g.: $gameVariables.value(1)
+ * ※Scripted string specifications (e.g.:"1~3")
+ *   are also valid for variables.
  * 
  * ◆AddEnemyDetail
  * The main point is the same as "AddEnemy" above,
@@ -106,7 +111,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 バトルイベントをフェードイン前に最速実行。
+ * @plugindesc v1.001 バトルイベントをフェードイン前に最速実行。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499824342.html
  *
@@ -147,6 +152,10 @@
  * 複数指定すれば、ランダム選択もできます。
  * ・例１：1~3ならば、ＩＤ１～３の敵からランダムに追加。
  * ・例２：1,3,5ならば、ＩＤ１、３、５の敵からランダムに追加。
+ * 
+ * また、数式を使えば変数による指定も有効です。
+ * ・例：$gameVariables.value(1)
+ * ※変数にはスクリプトによる文字列指定（"1~3"など）も有効です。
  * 
  * ◆敵キャラを追加（詳細）
  * 要領は上の『敵キャラを追加』と同じですが、座標の指定が可能です。
@@ -320,7 +329,11 @@ if (!PluginManager.registerCommand) {
  * ●敵キャラを追加
  */
 PluginManager.registerCommand(PLUGIN_NAME, "AddEnemy", function(args) {
-    const argsEnemyId = args.EnemyId;
+    let argsEnemyId = args.EnemyId;
+    // ~と,がない場合はevalする。
+    if (argsEnemyId.indexOf("~") == -1 && argsEnemyId.indexOf(",") == -1) {
+        argsEnemyId = String(eval(argsEnemyId));
+    }
 
     // 複数指定に対応するため配列変換
     const enemyIds = makeTargets(argsEnemyId);
@@ -334,7 +347,12 @@ PluginManager.registerCommand(PLUGIN_NAME, "AddEnemy", function(args) {
  * ●敵キャラを追加（詳細）
  */
 PluginManager.registerCommand(PLUGIN_NAME, "AddEnemyDetail", function(args) {
-    const argsEnemyId = args.EnemyId;
+    let argsEnemyId = args.EnemyId;
+    // ~と,がない場合はevalする。
+    if (argsEnemyId.indexOf("~") == -1 && argsEnemyId.indexOf(",") == -1) {
+        argsEnemyId = String(eval(argsEnemyId));
+    }
+
     const x = eval(args.X);
     const y = eval(args.Y);
 
