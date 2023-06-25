@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.02 A list-style skill learning system.
+ * @plugindesc v1.021 A list-style skill learning system.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -72,6 +72,7 @@
  * 
  * ◆ChangeSkillPoint
  * Increases or decreases the actor's skill points.
+ * It cannot be less than 0.
  * 
  * -------------------------------------------------------------------
  * [Terms]
@@ -418,7 +419,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.02 リスト形式のスキル習得システム。
+ * @plugindesc v1.021 リスト形式のスキル習得システム。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -482,6 +483,7 @@
  * 
  * ◆スキルポイントの増減
  * アクターのスキルポイントを増減させます。
+ * なお、0未満にはなりません。
  * 
  * -------------------------------------------------------------------
  * ■利用規約
@@ -1026,6 +1028,9 @@ PluginManager.registerCommand(PLUGIN_NAME, "ChangeSkillPoint", function(args) {
         let newValue = currentSp + skillPoint;
         if (newValue > pMaxSkillPoint) {
             newValue = pMaxSkillPoint;
+        // マイナスの場合は0をセット
+        } else if (newValue < 0) {
+            newValue = 0;
         }
         // 変数の値を加算
         $gameVariables.setValue(variableNo, newValue);
@@ -1977,6 +1982,9 @@ Game_Actor.prototype.changeSkillPoint = function(changePoint) {
     let newValue = currentSp + changePoint;
     if (newValue > pMaxSkillPoint) {
         newValue = pMaxSkillPoint;
+    // マイナスの場合は0をセット
+    } else if (newValue < 0) {
+        newValue = 0;
     }
 
     // パーティ共有の場合
