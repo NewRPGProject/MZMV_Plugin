@@ -350,14 +350,42 @@ PluginManager.registerCommand(PLUGIN_NAME, "AddEnemyDetail", function(args) {
 // Scene_Battle
 //-----------------------------------------------------------------------------
 
+// 実行フラグ
+let mFastBattleEventFlg = false;
+
 /**
- * ●スプライトセットの作成
+ * ●初期化
  */
-const _Scene_Battle_createSpriteset = Scene_Battle.prototype.createSpriteset;
-Scene_Battle.prototype.createSpriteset = function() {
+const _Scene_Battle_initialize = Scene_Battle.prototype.initialize;
+Scene_Battle.prototype.initialize = function() {
+    _Scene_Battle_initialize.apply(this, arguments);
+
+    // フラグ初期化
+    mFastBattleEventFlg = false;
+};
+
+//-----------------------------------------------------------------------------
+// Spriteset_Battle
+//-----------------------------------------------------------------------------
+
+/**
+ * ●戦闘フィールドの作成
+ * ※敵データの設定がされるcreateEnemiesの直前にやりたいため、ここで処理する。
+ */
+const _Spriteset_Battle_createBattleField = Spriteset_Battle.prototype.createBattleField;
+Spriteset_Battle.prototype.createBattleField = function() {
+    _Spriteset_Battle_createBattleField.apply(this, arguments)
+
+    // この段階だと通常はセットされてないが仮設定をする。
+    // ※NRP_ChangeBackColor.jsなどと併用できるようにするため。
+    SceneManager._scene._spriteset = this;
+
     // バトルイベントを最速実行
-    $gameTroop.fastBattleEvent();
-    _Scene_Battle_createSpriteset.apply(this, arguments);
+    // ※まず実害はないと思うけど、念のために戦闘開始してから初回のみ実行
+    if (!mFastBattleEventFlg) {
+        $gameTroop.fastBattleEvent();
+        mFastBattleEventFlg = true;
+    }
 };
 
 //-----------------------------------------------------------------------------
