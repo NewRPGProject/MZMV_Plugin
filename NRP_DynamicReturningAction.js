@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.001 Action during the return of DynamicMotion
+ * @plugindesc v1.002 Action during the return of DynamicMotion
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicMotionMZ
  * @url https://newrpg.seesaa.net/article/499269749.html
@@ -70,7 +70,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.001 DynamicMotionの帰還中に行動
+ * @plugindesc v1.002 DynamicMotionの帰還中に行動
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicMotionMZ
  * @url https://newrpg.seesaa.net/article/499269749.html
@@ -210,6 +210,29 @@ BattleManager.invokeAction = function(subject, target) {
 
     // 帰還中のバトラーを追加
     mReturningBattlers.push(this._subject);
+};
+
+// ----------------------------------------------------------------------------
+// Sprite
+// ----------------------------------------------------------------------------
+
+/**
+ * ●DynamicMotion用の移動終了
+ */
+const _Sprite_onDynamicMoveEnd = Sprite.prototype.onDynamicMoveEnd;
+Sprite.prototype.onDynamicMoveEnd = function() {
+    _Sprite_onDynamicMoveEnd.apply(this, arguments);
+
+    // バトラーでない場合は終了
+    if (!this._battler) {
+        return;
+    }
+
+    // 移動が終了かつ帰還中のバトラーが存在する場合
+    if (this._offsetX == 0 && this._offsetY == 0 && mReturningBattlers) {
+        // 配列から除去する。
+        mReturningBattlers = mReturningBattlers.filter(battler => battler != this._battler);
+    }
 };
 
 // ----------------------------------------------------------------------------
