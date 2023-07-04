@@ -27,10 +27,10 @@
  * 
  * Set a number for this item.
  * 
- * - If the value is 0, contact is made only when the player is
+ * - If the value is 0, touch is made only when the player is
  *   at the target coordinates, at the moment player reaches
  *   them completely or when player is stationary.
- * - If the value is 0.5, contact is made only
+ * - If the value is 0.5, touch is made only
  *   when the player is within 0.5 tiles of the target coordinates.
  * 
  * If not needed, use the DEL key to leave blank.
