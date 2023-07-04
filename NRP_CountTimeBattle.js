@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.152 Change the battle system to CTB.
+ * @plugindesc v1.16 Change the battle system to CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -237,7 +237,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.152 戦闘システムをＣＴＢへ変更します。
+ * @plugindesc v1.16 戦闘システムをＣＴＢへ変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -969,6 +969,10 @@ BattleManager.processEscape = function() {
         // 即ターン終了
         this.endTurn();
 //        this.startTurn();
+
+        // モーション停止
+        const subject = this._subject;
+        subject.setActionState('undecided');
     }
     return success;
 };
@@ -1405,6 +1409,10 @@ if (pCalcGuardCommand) {
         BattleManager.reMakeActionOrders();
         // 行動情報を元に戻す。
         actor._actions = keepActions;
+
+        // 速度は0に初期化しておく。
+        // ※逃げる選択時に使用されるので、これがないと無限行動になる。
+        actor._speed = 0;
     };
 }
 
