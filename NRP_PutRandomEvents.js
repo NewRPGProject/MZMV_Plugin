@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Placement automation for symbol encounters.
+ * @plugindesc v1.01 Placement automation for symbol encounters.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base TemplateEvent
  * @base EventReSpawn
@@ -95,6 +95,11 @@
  * @default ALL
  * @desc This is a passage type of event placement.
  * 
+ * @arg Range
+ * @type struct<Range>
+ * @desc The range where the event will be placed.
+ * If omitted, the entire map is covered.
+ * 
  * @------------------------------------------------------------------
  * 
  * @command PutEventsByRegion
@@ -114,6 +119,11 @@
  * @type string
  * @desc The ID of the region where the event will be placed.
  * 
+ * @arg Range
+ * @type struct<Range>
+ * @desc The range where the event will be placed.
+ * If omitted, the entire map is covered.
+ * 
  * @------------------------------------------------------------------
  * 
  * @command PutEventsByTerrain
@@ -132,6 +142,11 @@
  * @arg TerrainTag
  * @type string
  * @desc This is the terrain tag where the event will be placed.
+ * 
+ * @arg Range
+ * @type struct<Range>
+ * @desc The range where the event will be placed.
+ * If omitted, the entire map is covered.
  * 
  * @------------------------------------------------------------------
  * 
@@ -156,6 +171,11 @@
  * @arg AutotileType
  * @type string
  * @desc Autotile ID where the event will be placed.
+ * 
+ * @arg Range
+ * @type struct<Range>
+ * @desc The range where the event will be placed.
+ * If omitted, the entire map is covered.
  * 
  * @------------------------------------------------------------------
  * @ Plugin Parameters
@@ -187,10 +207,31 @@
  * @desc When specifying tiles, ignore ☆ tiles (upper layer).
  * That is, it will place them on the hidden lower tiles.
  */
+/*~struct~Range:
+ * @param StartX
+ * @type number
+ * @desc The starting X coordinate of the range.
+ * If omitted, it will be 0.
+ * 
+ * @param StartY
+ * @type number
+ * @desc The starting Y coordinate of the range.
+ * If omitted, it will be 0.
+ * 
+ * @param EndX
+ * @type number
+ * @desc End point X coordinate of the range.
+ * If omitted, it will be the right edge of the map.
+ * 
+ * @param EndY
+ * @type number
+ * @desc End point Y coordinate of the range.
+ * If omitted, it will be the bottom edge of the map.
+ */
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 シンボルエンカウントの配置自動化。
+ * @plugindesc v1.01 シンボルエンカウントの配置自動化。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base TemplateEvent
  * @base EventReSpawn
@@ -283,6 +324,12 @@
  * @default ALL
  * @desc イベントの配置を行う通行タイプです。
  * 
+ * @arg Range
+ * @text 配置範囲
+ * @type struct<Range>
+ * @desc イベントの配置を行う範囲です。
+ * 省略するとマップ全体が対象になります。
+ * 
  * @------------------------------------------------------------------
  * 
  * @command PutEventsByRegion
@@ -306,6 +353,12 @@
  * @type string
  * @desc イベントを配置するリージョンのＩＤです。
  * 
+ * @arg Range
+ * @text 配置範囲
+ * @type struct<Range>
+ * @desc イベントの配置を行う範囲です。
+ * 省略するとマップ全体が対象になります。
+ * 
  * @------------------------------------------------------------------
  * 
  * @command PutEventsByTerrain
@@ -328,6 +381,12 @@
  * @text 地形タグ
  * @type string
  * @desc イベントを配置する地形タグです。
+ * 
+ * @arg Range
+ * @text 配置範囲
+ * @type struct<Range>
+ * @desc イベントの配置を行う範囲です。
+ * 省略するとマップ全体が対象になります。
  * 
  * @------------------------------------------------------------------
  * 
@@ -356,6 +415,12 @@
  * @text オートタイルタイプ
  * @type string
  * @desc イベントを配置するオートタイルタイプです。
+ * 
+ * @arg Range
+ * @text 配置範囲
+ * @type struct<Range>
+ * @desc イベントの配置を行う範囲です。
+ * 省略するとマップ全体が対象になります。
  * 
  * @------------------------------------------------------------------
  * @ プラグインパラメータ
@@ -393,10 +458,47 @@
  * @desc タイル指定時、☆タイル（上層）を無視します。
  * つまり、上層に隠れた下層タイルにも配置を行います。
  */
+/*~struct~Range:ja
+ * @param StartX
+ * @text 始点Ｘ
+ * @type number
+ * @desc 範囲の始点Ｘ座標です。
+ * 省略すると0になります。
+ * 
+ * @param StartY
+ * @text 始点Ｙ
+ * @type number
+ * @desc 範囲の始点Ｙ座標です。
+ * 省略すると0になります。
+ * 
+ * @param EndX
+ * @text 終点Ｘ
+ * @type number
+ * @desc 範囲の終点Ｘ座標です。
+ * 省略するとマップ右端になります。
+ * 
+ * @param EndY
+ * @text 終点Ｙ
+ * @type number
+ * @desc 範囲の終点Ｙ座標です。
+ * 省略するとマップ下端になります。
+ */
 
 (function() {
 "use strict";
 
+/**
+ * ●構造体をJSで扱えるように変換
+ */
+function parseStruct1(arg) {
+    const ret = [];
+    if (arg) {
+        for (const str of JSON.parse(arg)) {
+            ret.push(str);
+        }
+    }
+    return ret;
+}
 function toBoolean(str, def) {
     if (str === true || str === "true") {
         return true;
@@ -489,6 +591,22 @@ function makeTargets(targetId) {
     return targets;
 }
 
+/**
+ * ●範囲の既定値を設定
+ */
+function setRange(argRange) {
+    let range = [];
+    if (argRange) {
+        range = JSON.parse(argRange);
+    }
+
+    range.startX = range.StartX || 0;
+    range.startY = range.StartY || 0;
+    range.endX = range.EndX || $gameMap.width();
+    range.endY = range.EndY || $gameMap.height();
+    return range;
+}
+
 //-----------------------------------------------------------------------------
 // ＭＺ用プラグインコマンド（通行情報）
 //-----------------------------------------------------------------------------
@@ -505,9 +623,10 @@ PluginManager.registerCommand(PLUGIN_NAME, "PutEventsByPassage", function(args) 
     const passageTypes = makePassageTypes(args.PassageType);
     const templateId = args.TemplateId;
     const numberOfEvents = eval(args.NumberOfEvents) || 1;
+    const range = setRange(args.Range);
 
     // 対象となる座標配列を取得
-    const coordinates = makeTargetCoordinates($dataPassageTable, passageTypes);
+    const coordinates = makeTargetCoordinates($dataPassageTable, passageTypes, range);
 
     // イベントの配置を行う
     // ※bindによってthisをメソッドに渡す。
@@ -567,9 +686,10 @@ PluginManager.registerCommand(PLUGIN_NAME, "PutEventsByRegion", function(args) {
     const regionIds = makeTargets(args.RegionId);
     const templateId = args.TemplateId;
     const numberOfEvents = eval(args.NumberOfEvents) || 1;
+    const range = setRange(args.Range);
 
     // 対象となる座標配列を取得
-    const coordinates = makeTargetCoordinates($dataRegionTable, regionIds);
+    const coordinates = makeTargetCoordinates($dataRegionTable, regionIds, range);
 
     // イベントの配置を行う
     // ※bindによってthisをメソッドに渡す。
@@ -614,9 +734,10 @@ PluginManager.registerCommand(PLUGIN_NAME, "PutEventsByTerrain", function(args) 
     const terrainTags = makeTargets(args.TerrainTag);
     const templateId = args.TemplateId;
     const numberOfEvents = eval(args.NumberOfEvents) || 1;
+    const range = setRange(args.Range);
 
     // 対象となる座標配列を取得
-    const coordinates = makeTargetCoordinates($dataTerrainTagTable, terrainTags);
+    const coordinates = makeTargetCoordinates($dataTerrainTagTable, terrainTags, range);
 
     // イベントの配置を行う
     // ※bindによってthisをメソッドに渡す。
@@ -665,11 +786,12 @@ PluginManager.registerCommand(PLUGIN_NAME, "PutEventsByTile", function(args) {
     const autotileTypes = makeTargets(args.AutotileType);
     const templateId = args.TemplateId;
     const numberOfEvents = eval(args.NumberOfEvents) || 1;
+    const range = setRange(args.Range);
 
     // 対象となる座標配列を取得（タイルＩＤ）
-    let coordinates = makeTargetCoordinates($dataTileTable, tileIds);
+    let coordinates = makeTargetCoordinates($dataTileTable, tileIds, range);
     // オートタイル分を追加
-    coordinates = coordinates.concat(makeTargetCoordinates($dataAutotileTable, autotileTypes));
+    coordinates = coordinates.concat(makeTargetCoordinates($dataAutotileTable, autotileTypes, range));
 
     // イベントの配置を行う
     // ※bindによってthisをメソッドに渡す。
@@ -846,13 +968,23 @@ function putData(x, y, value, table) {
 /**
  * ●対象となる座標データを生成する。
  */
-function makeTargetCoordinates(table, ids) {
+function makeTargetCoordinates(table, ids, range) {
     let coordinates = [];
     // 対象ＩＤの座標データを結合する。
     for (const id of ids) {
         coordinates = coordinates.concat(table[id]);
     }
-    return coordinates;
+
+    // 範囲で限定
+    let rangeCoordinates = [];
+    for (const coordinate of coordinates) {
+        if (coordinate.x >= range.startX && coordinate.x <= range.endX
+                && coordinate.y >= range.startY && coordinate.y <= range.endY) {
+            rangeCoordinates.push(coordinate);
+        }
+    }
+
+    return rangeCoordinates;
 }
 
 /**
