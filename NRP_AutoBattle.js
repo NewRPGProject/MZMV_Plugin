@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.001 Add an auto-battle command.
+ * @plugindesc v1.01 Add an auto-battle command.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/498941158.html
  *
@@ -69,7 +69,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.001 自動戦闘コマンドを追加します。
+ * @plugindesc v1.01 自動戦闘コマンドを追加します。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/498941158.html
  *
@@ -258,6 +258,16 @@ Scene_Battle.prototype.update = function() {
 // ----------------------------------------------------------------------------
 // BattleManager
 // ----------------------------------------------------------------------------
+
+/**
+ * ●戦闘開始
+ */
+const _BattleManager_startBattle = BattleManager.startBattle;
+BattleManager.startBattle = function() {
+    // 自動戦闘解除
+    this.setAutoBattleMode(false);
+    _BattleManager_startBattle.apply(this, arguments);
+};
 
 /**
  * ●ターン終了
