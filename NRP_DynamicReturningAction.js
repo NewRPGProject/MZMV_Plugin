@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.002 Action during the return of DynamicMotion
+ * @plugindesc v1.003 Action during the return of DynamicMotion
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicMotionMZ
  * @url https://newrpg.seesaa.net/article/499269749.html
@@ -70,7 +70,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.002 DynamicMotionの帰還中に行動
+ * @plugindesc v1.003 DynamicMotionの帰還中に行動
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicMotionMZ
  * @url https://newrpg.seesaa.net/article/499269749.html
@@ -395,6 +395,22 @@ if (pKeepReturningMotion) {
         }
 
         _Sprite_Actor_refreshMotion.apply(this, arguments);
+    };
+
+    /**
+     * ●移動終了
+     */
+    const _Sprite_Actor_onMoveEnd2 = Sprite_Actor.prototype.onMoveEnd;
+    Sprite_Actor.prototype.onMoveEnd = function() {
+        _Sprite_Actor_onMoveEnd2.apply(this, arguments);
+
+        // 戦闘終了かつ死亡時はモーション更新
+        if (BattleManager.isBattleEnd()) {
+            const actor = this._actor;
+            if (actor.isDead()) {
+                this.refreshMotion();
+            }
+        }
     };
 }
 
