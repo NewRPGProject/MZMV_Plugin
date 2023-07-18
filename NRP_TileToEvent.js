@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.042 Automatically generate events on tiles.
+ * @plugindesc v1.05 Automatically generate events on tiles.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481496398.html
  *
@@ -97,7 +97,7 @@
  * @desc Initializes the events when the game loads.
  * The position of the events will no longer be saved.
  * @type boolean
- * @default false
+ * @default true
  * 
  * @param ApplyChangeTileset
  * @desc The process is also executed when the tileset is changed.
@@ -186,7 +186,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.042 タイル上に自動でイベントを生成します。
+ * @plugindesc v1.05 タイル上に自動でイベントを生成します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481496398.html
  *
@@ -281,7 +281,7 @@
  * @desc ゲームロード時にイベントを初期化します。
  * イベントの位置が保存されなくなります。
  * @type boolean
- * @default false
+ * @default true
  * 
  * @param ApplyChangeTileset
  * @text タイルセット変更時も処理
@@ -936,6 +936,12 @@ Scene_Boot.prototype.tileEventTemplateMapLoadGenerator = function* () {
 Game_Map.prototype.spawnTileEvent = function(originalEventId, x, y) {
     if ($dataTileEventTemplateEvents[originalEventId] && $gameMap.isValid(x, y)) {
         const eventId = this._events.length || 1;
+
+        // EventReSpawn.js併用時は連番を加算
+        if (this.getEventIdSequence) {
+            this.getEventIdSequence();
+        }
+
         const event = new Game_TileEvent(this._mapId, eventId, originalEventId, x, y);
         // event.setPriorityType(-0.5);
         event._tileEventFlg = true;
@@ -1048,8 +1054,6 @@ DataManager.onLoad = function(object) {
     _DataManager_onLoad.apply(this, arguments);
 
     if (object === $dataMap && $gameMap) {
-        $gameMap.restoreLinkTileEvents();
-
         // ゲームロード時
         if (mTileToEventLoad) {
             // フラグ初期化
@@ -1073,12 +1077,16 @@ DataManager.onLoad = function(object) {
 
             // ロード時にイベント初期化しない場合
             } else {
+                $gameMap.restoreLinkTileEvents();
+
                 // 置換対象のタイルを非表示にするだけ
                 makeTileEvents(false);
             }
 
         // メニューを閉じた際や、戦闘終了時など
         } else {
+            $gameMap.restoreLinkTileEvents();
+
             // 非表示タイルがあれば再度非表示
             for (const index of mHiddenTiles) {
                 $dataMap.data[index] = 0;
@@ -1093,25 +1101,9 @@ DataManager.onLoad = function(object) {
 Game_Map.prototype.restoreLinkTileEvents = function() {
     if (!this.isSameMapReload()) return;
 
-    //------------------------------------------------------------
-    // マップデータの変化を想定し、イベントＩＤを振り直す。
-    //------------------------------------------------------------
-    // $dataMap.events上の最大ＩＤ+1を取得
-    let maxEventId = 0;
-    for (const event of $dataMap.events) {
-        if (event) {
-            maxEventId = Math.max(maxEventId, event.id);
-        }
-    }
-    let newEventId = maxEventId + 1;
-
     for (const event of this.getTileEvents()) {
-        // イベントＩＤを設定
-        event.setEventId(newEventId);
         // $dataMap.eventsにイベント情報を登録する。
         event.linkEventData();
-
-        newEventId++;
     }
 };
 
