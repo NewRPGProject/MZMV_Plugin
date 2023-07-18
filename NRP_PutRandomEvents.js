@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Placement automation for symbol encounters.
+ * @plugindesc v1.011 Placement automation for symbol encounters.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base TemplateEvent
  * @base EventReSpawn
@@ -231,7 +231,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 シンボルエンカウントの配置自動化。
+ * @plugindesc v1.011 シンボルエンカウントの配置自動化。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base TemplateEvent
  * @base EventReSpawn
@@ -978,6 +978,9 @@ function makeTargetCoordinates(table, ids, range) {
     // 範囲で限定
     let rangeCoordinates = [];
     for (const coordinate of coordinates) {
+        if (!coordinate) {
+            continue;
+        }
         if (coordinate.x >= range.startX && coordinate.x <= range.endX
                 && coordinate.y >= range.startY && coordinate.y <= range.endY) {
             rangeCoordinates.push(coordinate);
