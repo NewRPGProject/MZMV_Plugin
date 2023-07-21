@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.081 Multiple classes allow for a highly flexible growth system.
+ * @plugindesc v1.09 Multiple classes allow for a highly flexible growth system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -492,11 +492,29 @@
  * @type boolean
  * @default true
  * @desc The level of the additional class will be displayed on the status. The nickname will be removed for adjustment purposes.
+ * 
+ * @param NormalExpWidth
+ * @parent ShowLevelOnStatus
+ * @type number
+ * @default 110
+ * @desc The width of the normal experience value to be displayed on the status screen.
+ * 
+ * @param ClassExpWidth
+ * @parent ShowLevelOnStatus
+ * @type number
+ * @default 110
+ * @desc The width of the class experience value to be displayed on the status screen.
+ * 
+ * @param ClassLvMaxExp
+ * @parent ShowLevelOnStatus
+ * @type string
+ * @default -------
+ * @desc The notation of experience when the occupation level is reached to the maximum.
  */
 
 /*:ja
  * @target MZ
- * @plugindesc v1.081 多重職業によって自由度の高い成長システムを実現。
+ * @plugindesc v1.09 多重職業によって自由度の高い成長システムを実現。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -1036,6 +1054,27 @@
  * @default true
  * @desc 追加職業のレベルをステータス画面に表示します。
  * なお、調整のために二つ名を削除します。
+ * 
+ * @param NormalExpWidth
+ * @parent ShowLevelOnStatus
+ * @text 通常経験値の横幅
+ * @type number
+ * @default 110
+ * @desc 通常経験値をステータス画面に表示する横幅です。
+ * 
+ * @param ClassExpWidth
+ * @parent ShowLevelOnStatus
+ * @text 職業経験値の横幅
+ * @type number
+ * @default 110
+ * @desc 職業経験値をステータス画面に表示する横幅です。
+ * 
+ * @param ClassLvMaxExp
+ * @parent ShowLevelOnStatus
+ * @text 職業レベル最大経験値表記
+ * @type string
+ * @default -------
+ * @desc 職業レベルが最大になった際の経験値欄の表記です。
  */
 
 //-----------------------------------------------------------------------------
@@ -1102,6 +1141,9 @@ const pNoDuplicateExp = toBoolean(parameters["NoDuplicateExp"], false);
 const pOverwriteClassField = toBoolean(parameters["OverwriteClassField"], true);
 const pShowLevelOnMenu = setDefault(parameters["ShowLevelOnMenu"]);
 const pShowLevelOnStatus = toBoolean(parameters["ShowLevelOnStatus"], true);
+const pNormalExpWidth = toNumber(parameters["NormalExpWidth"], 110);
+const pClassExpWidth = toNumber(parameters["ClassExpWidth"], 110);
+const pClassLvMaxExp = setDefault(parameters["ClassLvMaxExp"], "-------");
 
 //----------------------------------------
 // ＭＺ用プラグインコマンド
@@ -1535,7 +1577,7 @@ AdditionalClass.prototype.setLevel = function() {
 AdditionalClass.prototype.currentExp = function(showFlg) {
     // 最大レベル時の表示用
     if (showFlg && this.isMaxLevel()) {
-        return "-------";
+        return pClassLvMaxExp;
     }
     return this.exp();
 };
@@ -1553,7 +1595,7 @@ AdditionalClass.prototype.currentLevelExp = function() {
 AdditionalClass.prototype.nextLevelExp = function(showFlg) {
     // 最大レベル時の表示用
     if (showFlg && this.isMaxLevel()) {
-        return "-------";
+        return pClassLvMaxExp;
     }
     return this.expForLevel(this._level + 1);
 };
@@ -2334,14 +2376,19 @@ if (pShowLevelOnStatus) {
      */
     Window_Status.prototype.drawExpInfo = function(x, y) {
         this.changeTextColor(ColorManager.systemColor());
-        this.drawText(TextManager.exp, x - 250, y, this.innerWidth - this.itemPadding(), "right");
+        this.drawText(TextManager.exp, x - pNormalExpWidth * 2 - 30, y, this.innerWidth - this.itemPadding(), "right");
         this.resetTextColor();
         // 現在の経験値
-        this.drawText(this.expTotalValue(), x - 125, y, this.innerWidth - this.itemPadding(), "right");
+        this.drawText(this.expTotalValue(), x - pNormalExpWidth - 15, y, this.innerWidth - this.itemPadding(), "right");
         // "/"
-        this.drawText("/", x - 110, y, this.innerWidth - this.itemPadding(), "right");
+        this.drawText("/", x - pNormalExpWidth, y, this.innerWidth - this.itemPadding(), "right");
         // 次にレベルアップする経験値
-        this.drawText(this.expTotalValue() + this.expNextValue(), x, y, this.innerWidth - this.itemPadding(), "right");
+        let nextExp = this.expTotalValue() + this.expNextValue();
+        // 最大レベルの時は-------表記になるので修正
+        if (this._actor.isMaxLevel()) {
+            nextExp = this.expTotalValue();
+        }
+        this.drawText(nextExp, x, y, this.innerWidth - this.itemPadding(), "right");
     };
 
     /**
@@ -2372,14 +2419,14 @@ if (pShowLevelOnStatus) {
         // 下の段に
         y += this.lineHeight();
         this.changeTextColor(ColorManager.systemColor());
-        this.drawText(pLvName, x - 290, y, this.innerWidth - this.itemPadding(), "right");
+        this.drawText(pLvName, x - pClassExpWidth * 2 - 70, y, this.innerWidth - this.itemPadding(), "right");
         this.resetTextColor();
         // 追加職業のレベル描画を追加
-        this.drawText(additionalClass.level, x - 250, y, this.innerWidth - this.itemPadding(), "right");
+        this.drawText(additionalClass.level, x - pClassExpWidth * 2 - 30, y, this.innerWidth - this.itemPadding(), "right");
         // 現在の経験値
-        this.drawText(additionalClass.currentExp(true), x - 125, y, this.innerWidth - this.itemPadding(), "right");
+        this.drawText(additionalClass.currentExp(true), x - pClassExpWidth - 15, y, this.innerWidth - this.itemPadding(), "right");
         // "/"
-        this.drawText("/", x - 110, y, this.innerWidth - this.itemPadding(), "right");
+        this.drawText("/", x - pClassExpWidth, y, this.innerWidth - this.itemPadding(), "right");
         // 次にレベルアップする経験値
         this.drawText(additionalClass.nextLevelExp(true), x, y, this.innerWidth - this.itemPadding(), "right");
     };
