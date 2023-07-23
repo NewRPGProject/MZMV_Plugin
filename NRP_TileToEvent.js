@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.05 Automatically generate events on tiles.
+ * @plugindesc v1.051 Automatically generate events on tiles.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481496398.html
  *
@@ -186,7 +186,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.05 タイル上に自動でイベントを生成します。
+ * @plugindesc v1.051 タイル上に自動でイベントを生成します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481496398.html
  *
@@ -1131,6 +1131,17 @@ Scene_Map.prototype.create = function() {
         mHiddenTiles = [];
     }
     _Scene_Map_create.apply(this, arguments);
+};
+
+/**
+ * ●マップリロードを指示
+ */
+const _Game_Player_requestMapReload = Game_Player.prototype.requestMapReload;
+Game_Player.prototype.requestMapReload = function() {
+    _Game_Player_requestMapReload.apply(this, arguments);
+
+    // 非表示タイルを初期化
+    mHiddenTiles = [];
 };
 
 //---------------------------------------------------
