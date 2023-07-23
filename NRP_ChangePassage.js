@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Change the event's passage determination.
+ * @plugindesc v1.01 Change the event's passage determination.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_EventCollisionEX
  * @url http://newrpg.seesaa.net/article/486134190.html
@@ -14,8 +14,6 @@
  * 
  * Can be fine-tuned for terrain tag, region ID,
  * tile ID and autotile type.
- * ※For checking tile ID and autotile type,
- *   NRP_DebugTile.js is useful.
  * 
  * It also allows "Below characters" and "Above characters" events
  * to collide with the player.
@@ -27,6 +25,8 @@
  * [Usage]
  * -------------------------------------------------------------------
  * Set the passage information in the "PassageTypeList" plugin parameter.
+ * ※For checking tile ID and autotile type,
+ *   NRP_DebugTile.js is useful.
  * 
  * The registered "TypeId" is tied by entering it
  * in the event's note field as shown below.
@@ -48,6 +48,7 @@
  * 
  * <ChangePassage:FLY>
  * A flying passage type that ignores obstacles.
+ * It would be more natural to set the priority type to "Above characters".
  * Note that the game is designed to collide with
  * players (and other events) because it assumes symbolic encounters.
  * 
@@ -145,7 +146,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 イベントの通行判定を変更します。
+ * @plugindesc v1.01 イベントの通行判定を変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_EventCollisionEX
  * @url http://newrpg.seesaa.net/article/486134190.html
@@ -165,6 +166,7 @@
  * ■使用方法
  * -------------------------------------------------------------------
  * プラグインパラメータの通行タイプリストに、通行情報を設定してください。
+ * ※タイルＩＤやオートタイルタイプの確認には、NRP_DebugTile.jsが便利です。
  * 
  * 登録した『タイプＩＤ』を以下のように、
  * イベントのメモ欄に記入することで紐付けを行います。
@@ -186,6 +188,7 @@
  * 
  * <ChangePassage:FLY>
  * 障害物を無視する飛行型の通行タイプです。
+ * プライオリティタイプを『通常キャラの上』にしたほうが自然になります。
  * なお、シンボルエンカウントを想定しているため、
  * プレイヤー（および他イベント）と衝突する仕様です。
  * 
@@ -431,12 +434,25 @@ Game_CharacterBase.prototype.isMapPassable = function(x, y, d) {
             y2 = $gameMap.roundYWithDirection(y, d);
         }
 
-        // 通行判定を取得
-        const passable = isPassable(x2, y2, setting);
-        // 有効な判定があれば優先
-        if (passable !== null) {
-            return passable;
+        // 移動前座標の通行判定を取得
+        let passable1 = isPassable(x, y, setting);
+        // 移動先座標の通行判定を取得
+        let passable2 = isPassable(x2, y2, setting);
+
+        // 両方の指定がないなら通常の判定を参照
+        if (passable1 == null && passable2 == null) {
+            return _Game_CharacterBase_isMapPassable.apply(this, arguments);
         }
+
+        // RegionBase.jsとの競合対策
+        if ($gameMap.setPassableSubject) {
+            $gameMap.setPassableSubject(this);
+        }
+
+        // 未指定ならば、通常の判定を参照
+        passable1 = passable1 ?? $gameMap.isPassable(x, y, d);
+        passable2 = passable2 ?? $gameMap.isPassable(x2, y2, this.reverseDir(d));
+        return passable1 && passable2;
     }
     
     return _Game_CharacterBase_isMapPassable.apply(this, arguments);
