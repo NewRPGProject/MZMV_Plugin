@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.06 Change the equipment slots at will.
+ * @plugindesc v1.061 Change the equipment slots at will.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489626316.html
  *
@@ -125,6 +125,7 @@
  * Multiple items can be specified. (e.g.: 4,6)
  * 
  * @param StatusShowSlots
+ * @text [MZ]StatusShowSlots
  * @type number[]
  * @desc Equipment type to be displayed on the status screen.
  * If blank, it will be displayed until it fits in the window.
@@ -132,7 +133,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.06 装備スロットを自由に変更。
+ * @plugindesc v1.061 装備スロットを自由に変更。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489626316.html
  * 
@@ -246,7 +247,7 @@
  * 複数指定可能です。（例：4,6）
  * 
  * @param StatusShowSlots
- * @text ステータスの表示スロット
+ * @text [MZ]ｽﾃｰﾀｽの表示スロット
  * @type number[]
  * @desc ステータス画面に表示する装備スロット（装備タイプ）です。
  * 空白時はウィンドウに収まるまで全表示します。
@@ -1027,10 +1028,10 @@ if (pPagingEquipmentType) {
 }
 
 //-----------------------------------------------------------------------------
-// Window_StatusEquip
+// Window_StatusEquip (MZ)
 //-----------------------------------------------------------------------------
 
-if (pStatusShowSlots) {
+if (pStatusShowSlots && Utils.RPGMAKER_NAME == "MZ") {
     /**
      * 【上書】１ページ内に表示する項目数
      */
