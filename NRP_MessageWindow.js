@@ -2,8 +2,8 @@
 // NRP_MessageWindow.js
 //=============================================================================
 /*:
- * @target MV MZ
- * @plugindesc v1.011 Adjust the message window.
+ * @target MZ
+ * @plugindesc v1.02 Adjust the message window.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -149,8 +149,8 @@
  */
 
 /*:ja
- * @target MV MZ
- * @plugindesc v1.011 メッセージウィンドウを調整する。
+ * @target MZ
+ * @plugindesc v1.02 メッセージウィンドウを調整する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -515,11 +515,9 @@ Window_Message.prototype.updatePlacement = function() {
         // 描画領域を更新
         // これをやらないと文字が表示されなくなる。
         this.createContents();
-        if (Utils.RPGMAKER_NAME == "MZ") {
-            // サイズを文章の表示領域へ反映
-            // これをやらないと改ページ判定がおかしくなる。
-            this.contents.resize(this.width, this.height);
-        }
+        // サイズを文章の表示領域へ反映
+        // これをやらないと改ページ判定がおかしくなる。
+        this.contents.resize(this.width, this.height);
     }
 
     // 元の処理
