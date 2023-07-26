@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.031 Realize a high-performance overpass.
+ * @plugindesc v1.04 Realize a high-performance overpass.
  * @author Takeshi Sunagawa (original triacontane & Yoji Ojima)
  * @orderAfter NRP_EventCollisionEX
  * @orderAfter NRP_BushEX
@@ -54,6 +54,13 @@
  * it will appear above the overpass from the beginning.
  * 
  * <OverpassHigher>
+ * 
+ * Also, if you turn on the plugin parameter "AutoOverpassHigher",
+ * it will automatically place events on the OverPathRegion on top.
+ * In that case, if you want to place them at the bottom,
+ * specify the following.
+ * 
+ * <OverpassHigher:false>
  * 
  * Also, the event will always be above the overpass
  * and will not move to a lower level if the following is specified
@@ -176,11 +183,16 @@
  * @desc If the character is on the overpass, ignore the ladder attribute below.
  * @default true
  * @type boolean
+ * 
+ * @param AutoOverpassHigher
+ * @desc Events whose initial position is on the OverPathRegion are automatically placed on the upper level.
+ * @default false
+ * @type boolean
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.031 高機能な立体交差を実現します。
+ * @plugindesc v1.04 高機能な立体交差を実現します。
  * @author 砂川赳 (original トリアコンタン & Yoji Ojima)
  * @orderAfter NRP_EventCollisionEX
  * @orderAfter NRP_BushEX
@@ -228,6 +240,12 @@
  * 最初から立体交差の上にいるものとして扱われます。
  * 
  * <OverpassHigher>
+ * 
+ * また、プラグインパラメータの『自動で上層に配置』をオンにすれば、
+ * 自動的に立体交差リージョン上のイベントを上に配置します。
+ * その場合、下に配置したい場合は以下を指定してください。
+ * 
+ * <OverpassHigher:false>
  * 
  * また、以下を指定すればイベントは常に立体交差の上となり、
  * 下層に移動することがなくなります。
@@ -359,22 +377,24 @@
  * 立体交差上にいる場合、下のハシゴ属性を無視します。
  * @default true
  * @type boolean
+ * 
+ * @param AutoOverpassHigher
+ * @text 自動で上層に配置
+ * @desc 初期位置が立体交差リージョン上にあるイベントを自動で上層に配置します。
+ * @default false
+ * @type boolean
  */
 
 (function() {
 "use strict";
 
-function toBoolean(val, def) {
-    // 空白なら初期値を返す
-    if (val === "" || val === undefined) {
-        return def;
-        
-    // 既にboolean型なら、そのまま返す
-    } else if (typeof val === "boolean") {
-        return val;
+function toBoolean(str, def) {
+    if (str === true || str === "true") {
+        return true;
+    } else if (str === false || str === "false") {
+        return false;
     }
-    // 文字列ならboolean型に変換して返す
-    return val.toLowerCase() == "true";
+    return def;
 }
 function toNumber(str, def) {
     return isNaN(str) ? def : +(str || def);
@@ -390,6 +410,7 @@ const pOverPathTerrainTag = toNumber(parameters["OverPathTerrainTag"]);
 const pGatewayRegion = toNumber(parameters["GatewayRegion"]);
 const pGatewayTerrainTag = toNumber(parameters["GatewayTerrainTag"]);
 const pConsiderLadder = toBoolean(parameters["ConsiderLadder"], true);
+const pAutoOverpassHigher = toBoolean(parameters["AutoOverpassHigher"], false);
 
 /**
  * Game_CharacterBase
@@ -597,6 +618,29 @@ Game_Event.prototype.isCollidedWithPlayerCharacters = function(x, y) {
     return _Game_Event_isCollidedWithPlayerCharacters.apply(this, arguments);
 };
 
+// EventReSpawn.jsのイベント生成に対応
+if (typeof Game_PrefabEvent !== "undefined") {
+    const _Game_PrefabEvent_locateWithoutStraighten = Game_PrefabEvent.prototype.locateWithoutStraighten;
+    Game_PrefabEvent.prototype.locateWithoutStraighten = function(x, y) {
+        _Game_PrefabEvent_locateWithoutStraighten.apply(this, arguments);
+
+        // 自動で立体交差の上に配置
+        if (pAutoOverpassHigher && this.isOnOverPath()) {
+            this._higher = true;
+        }
+
+        // メモ欄から<OverpassHigher>を取得
+        const overpassHigher = toBoolean(this.event().meta.OverpassHigher);
+        if (overpassHigher === true) {
+            // 立体交差の上に配置
+            this._higher = true;
+        } else if (overpassHigher === false) {
+            // 立体交差の下に配置
+            this._higher = false;
+        }
+    };
+}
+
 /**
  * ●ページ設定開始（追加）
  */
@@ -604,11 +648,19 @@ const _Game_Event_setupPageSettings = Game_Event.prototype.setupPageSettings;
 Game_Event.prototype.setupPageSettings = function() {
     _Game_Event_setupPageSettings.apply(this, arguments);
 
+    // 自動で立体交差の上に配置
+    if (pAutoOverpassHigher && this.isOnOverPath()) {
+        this._higher = true;
+    }
+
     // メモ欄から<OverpassHigher>を取得
-    const overpassHigher = this.event().meta.OverpassHigher;
-    if (overpassHigher) {
+    const overpassHigher = toBoolean(this.event().meta.OverpassHigher);
+    if (overpassHigher === true) {
         // 立体交差の上に配置
         this._higher = true;
+    } else if (overpassHigher === false) {
+        // 立体交差の下に配置
+        this._higher = false;
     }
 
     // メモ欄から<OverpassFly>を取得
