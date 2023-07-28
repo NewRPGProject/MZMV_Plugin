@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.041 Extends the functionality of the bushes attribute.
+ * @plugindesc v1.05 Extends the functionality of the bushes attribute.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore OverpassTile
  * @url http://newrpg.seesaa.net/article/481013577.html
@@ -58,9 +58,15 @@
  * -------------------------------------------------------------------
  * [Note of Events]
  * -------------------------------------------------------------------
- * Specify the following to make the event immune to the bush effect.
+ * <SetBush:?>
+ * Force the bush effect to the target regardless of the current terrain.
+ * ? is the "SettingId" registered in the setting by condition.
+ * 
+ * Also fill in the tag in the note at the top of the event page.
+ * You can switch the status of this one for each of the current pages.
  * 
  * <NoBush>
+ * Events are no longer affected by the bush attribute.
  * 
  * -------------------------------------------------------------------
  * [Plugin Commands MZ]
@@ -285,7 +291,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.041 茂み属性の機能を拡張します。
+ * @plugindesc v1.05 茂み属性の機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore OverpassTile
  * @url http://newrpg.seesaa.net/article/481013577.html
@@ -334,8 +340,15 @@
  * -------------------------------------------------------------------
  * ■イベントのメモ欄
  * -------------------------------------------------------------------
- * 以下を指定すると、イベントが茂み属性の影響を受けなくなります。
+ * <SetBush:?>
+ * 現在の地形に関わらず、茂み効果を強制的に対象へ設定します。
+ * ?の部分が設定リストに登録した『設定ＩＤ』となります。
+ * 
+ * また、イベントページ先頭の注釈に記入しても有効です。
+ * こちらは現在のページ毎に状態を切り替えることも可能です。
+ * 
  * <NoBush>
+ * イベントが茂み属性の影響を受けなくなります。
  * 
  * -------------------------------------------------------------------
  * ■ＭＺ版プラグインコマンド
@@ -1175,6 +1188,46 @@ function clearFloat() {
 // Game_Event
 //-----------------------------------------------------------------------------
 
+/**
+ * ●ページ設定開始
+ */
+const _Game_Event_setupPageSettings = Game_Event.prototype.setupPageSettings;
+Game_Event.prototype.setupPageSettings = function() {
+    _Game_Event_setupPageSettings.apply(this, arguments);
+
+    // 注釈確認
+    const list = this.list();
+    // 処理が存在する場合
+    if (list && list.length > 0) {
+        for (const line of list) {
+            // 108:注釈開始, 408:注釈続き
+            if (line.code == 108 || line.code == 408) {
+                // 注釈から<SetBush:*>を取得
+                const settingId = findMetaValueAtPage(line.parameters[0], "SetBush");
+                // 取得できれば設定
+                if (settingId != undefined) {
+                    const setting = pSettingList.find(s => s.settingId == settingId);
+                    this._forceBushFlg = true;
+                    this.applyBushSetting(setting);
+                    return;
+                }
+
+            // それ以外はループ終了
+            } else {
+                break;
+            }
+        }
+    }
+
+    // メモ欄で<SetBush>指定時
+    const setBush = this.event().meta.SetBush;
+    if (setBush) {
+        const setting = pSettingList.find(s => s.settingId == setBush);
+        this._forceBushFlg = true;
+        this.applyBushSetting(setting);
+    }
+}
+
 /*
  * Game_Event.prototype.isOnBushが未定義の場合は事前に定義
  * ※これをしておかないと以後のGame_CharacterBase側への追記が反映されない。
@@ -1410,6 +1463,27 @@ function isExcludedTerrain(flag) {
  */
 function existSetting() {
     return pSettingList.length > 0;
+}
+
+/**
+ * ●<HOGE:>の指定があれば取得
+ */
+function findMetaValueAtPage(text, word) {
+    // メモ欄から<HOGE:*>を取得
+    // ※[^>]は>を除く文字列
+    const values = text.match("<" + word + "(:?)([^>]*)>");
+
+    // 取得できれば返す
+    if (values) {
+        // 値があれば文字列
+        if (values[2]) {
+            return values[2];
+        // なければtrue
+        } else {
+            return true;
+        }
+    }
+    return undefined;
 }
 
 })();
