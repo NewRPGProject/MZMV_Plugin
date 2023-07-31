@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.07 Display a picture when showing text.
+ * @plugindesc v1.071 Display a picture when showing text.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -378,7 +378,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.07 文章の表示時に立ち絵を表示する。
+ * @plugindesc v1.071 文章の表示時に立ち絵を表示する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -1534,6 +1534,20 @@ if (pShowAboveWindow) {
         // 自動的に差分の最大数を取得して拡張
         for (let i = 0; i < mMaxAttachedPictures; i++) {
             this._messagePictureContainer.addChild(new Sprite_Picture(pPictureId + i + 1));
+        }
+    };
+
+    /**
+     * ●画像の読み込み
+     * ※DP_MapZoom.js（MNKR_DP_MapZoomMZ.js）との競合対処
+     */
+    const _Sprite_Picture_loadBitmap = Sprite_Picture.prototype.loadBitmap;
+    Sprite_Picture.prototype.loadBitmap = function () {
+        _Sprite_Picture_loadBitmap.apply(this, arguments);
+
+        // 対象のピクチャならばズーム対応無効
+        if (this.isMessagePicture()) {
+            this._dp_fix = false;
         }
     };
 
