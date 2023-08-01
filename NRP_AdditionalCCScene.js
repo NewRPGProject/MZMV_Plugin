@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.04 Implemented a class change screen for multiple classes.
+ * @plugindesc v1.05 Implemented a class change screen for multiple classes.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -197,6 +197,13 @@
  * @default 36
  * @desc The height of a single line of the class parameters.
  * Default:36
+ * 
+ * @param HideNormalExp
+ * @parent <Layout>
+ * @type boolean
+ * @default false
+ * @desc Hide Normal Experience.
+ * (This item is displayed if class is blank.)
  * 
  * @param <Layout Image>
  * @desc This item is used to set the image for the class change screen.
@@ -423,7 +430,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.04 多重職業用の転職画面を実装。
+ * @plugindesc v1.05 多重職業用の転職画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -637,6 +644,14 @@
  * @default 36
  * @desc 職業のパラメータの一行の縦幅です。
  * 初期値は36。
+ * 
+ * @param HideNormalExp
+ * @parent <Layout>
+ * @text 通常経験値を非表示
+ * @type boolean
+ * @default false
+ * @desc 通常経験値を非表示にします。
+ * ※職業を空欄にする際に表示される項目です。
  * 
  * @param <Layout Image>
  * @text ＜レイアウト画像関連＞
@@ -971,6 +986,7 @@ const pMessageFontSize = toNumber(parameters["MessageFontSize"]);
 const pDisplayParameters = setDefault(parameters["DisplayParameters"], "");
 const pParamFontSize = toNumber(parameters["ParamFontSize"]);
 const pParamLineHeight = toNumber(parameters["ParamLineHeight"], 36);
+const pHideNormalExp = toBoolean(parameters["HideNormalExp"], false);
 // 画像レイアウト関連
 const pClassImageList = parseStruct2(parameters["ClassImageList"]);
 const pUseClassImage = toBoolean(parameters["UseClassImage"], true);
@@ -999,6 +1015,7 @@ const baseParameters = PluginManager.parameters(BASE_PLUGIN_NAME);
 const pLvName = setDefault(baseParameters["LvName"], "");
 const pExpName = setDefault(baseParameters["ExpName"], "");
 const pUnificationExp = toBoolean(baseParameters["UnificationExp"], false);
+const pClassLvMaxExp = setDefault(baseParameters["ClassLvMaxExp"], "-------");
 
 //----------------------------------------
 // ＭＺ用プラグインコマンド
@@ -2420,6 +2437,12 @@ Windows_ClassInfo.prototype.drawActorClassLevel = function(x, y) {
  * ●職業経験値を表示
  */
 Windows_ClassInfo.prototype.drawExpInfo = function(x, y) {
+    // 通常経験値を非表示にする場合、かつ選択する職業が空欄の場合
+    if (pHideNormalExp && !this.getClass()) {
+        // 表示しない
+        return;
+    }
+
     let expName;
 
     const additionalClass = this.getClass();
@@ -2432,7 +2455,7 @@ Windows_ClassInfo.prototype.drawExpInfo = function(x, y) {
     const faceWidth = ImageManager.faceWidth;
 
     this.changeTextColor(ColorManager.systemColor());
-    this.drawText(expName, faceWidth + this.itemPadding(), y, 270);
+    this.drawText(expName, faceWidth + 16 + this.itemPadding(), y, 270);
     this.resetTextColor();
     // 現在の経験値
     this.drawText(this.expTotalValue(), x - 125, y, this.innerWidth - this.itemPadding(), "right");
@@ -2449,7 +2472,7 @@ Windows_ClassInfo.prototype.expTotalValue = function() {
     const additionalClass = this.getClass();
     if (additionalClass) {
         if (additionalClass.isMaxLevel()) {
-            return "-------";
+            return pClassLvMaxExp;
         } else {
             return additionalClass.currentExp();
         }
@@ -2470,7 +2493,7 @@ Windows_ClassInfo.prototype.expNextValue = function() {
     const additionalClass = this.getClass();
     if (additionalClass) {
         if (additionalClass.isMaxLevel()) {
-            return "-------";
+            return pClassLvMaxExp;
         } else {
             // デフォルトとは異なり、現在ＥＸＰとの合計を表示
             return additionalClass.nextLevelExp();
