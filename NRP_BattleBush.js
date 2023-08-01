@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Apply the bush effect to the battle background.
+ * @plugindesc v1.031 Apply the bush effect to the battle background.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_ShadowAndLevitate
  * @url http://newrpg.seesaa.net/article/486468229.html
@@ -191,7 +191,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 戦闘背景に茂み効果を適用します。
+ * @plugindesc v1.031 戦闘背景に茂み効果を適用します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_ShadowAndLevitate
  * @url http://newrpg.seesaa.net/article/486468229.html
@@ -658,10 +658,10 @@ Sprite_Actor.prototype.calcBushDepth = function() {
         // メモ欄の指定がある場合は優先
         const metaValue = this._battler.actor().meta.BattleBushDepth;
         if (metaValue) {
-            return eval(metaValue);
+            return Math.round(eval(metaValue));
         }
         // 通常時
-        return eval(setting.actorBushDepth);
+        return Math.round(eval(setting.actorBushDepth));
     }
     return null;
 }
@@ -829,14 +829,14 @@ Sprite_Enemy.prototype.calcBushDepth = function() {
         // メモ欄の指定がある場合は優先
         const metaValue = this._battler.enemy().meta.BattleBushDepth;
         if (metaValue) {
-            return eval(metaValue);
+            return Math.round(eval(metaValue));
         }
         // 通常時
         if (setting) {
-            return eval(setting.enemyBushDepth);
+            return Math.round(eval(setting.enemyBushDepth));
         }
         // 既定値
-        return eval(pEnemyBushDepth);
+        return Math.round(eval(pEnemyBushDepth));
     }
     return null;
 }
