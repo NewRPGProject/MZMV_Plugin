@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Chain skills together.
+ * @plugindesc v1.02 Chain skills together.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -180,11 +180,16 @@
  * @type boolean
  * @default false
  * @desc If the target is completely resistant to the elements, the chained skills are not triggered.
+ * 
+ * @param DisableSameSkill
+ * @type boolean
+ * @default true
+ * @desc Duplicate linkage of the same skill is prohibited.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 スキルを連結する。
+ * @plugindesc v1.02 スキルを連結する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -356,6 +361,12 @@
  * @type boolean
  * @default false
  * @desc 対象が属性に対する完全耐性を持つ場合は連結スキルを発動しません。
+ * 
+ * @param DisableSameSkill
+ * @text 同一スキルの重複禁止
+ * @type boolean
+ * @default true
+ * @desc 同一スキルを重複して連結することを禁止します。
  */
 
 (function() {
@@ -386,6 +397,7 @@ const pNoMpTpCost = toBoolean(parameters["NoMpTpCost"], true);
 const pIgnoreSkillConditions = toBoolean(parameters["IgnoreSkillConditions"], true);
 const pAbortTargetDeath = toBoolean(parameters["AbortTargetDeath"], false);
 const pAbortTargetResist = toBoolean(parameters["AbortTargetResist"], false);
+const pDisableSameSkill = toBoolean(parameters["DisableSameSkill"], false);
 
 // ----------------------------------------------------------------------------
 // 共通変数
@@ -394,7 +406,8 @@ const pAbortTargetResist = toBoolean(parameters["AbortTargetResist"], false);
 // 元のアクション
 let mOriginalAction = null;
 // 発動済スキル
-let mChainedObjects = [];
+let mChainedObjects = []; // 連結元スキル
+let mChainedSkillIds = []; // 連結先スキル
 // スキル名非表示
 let mIsNotDisplay = false;
 // 連結実行判定
@@ -472,6 +485,7 @@ BattleManager.updateAction = function() {
     mOriginalAction = null;
     mIsNotDisplay = false;
     mChainedObjects = [];
+    mChainedSkillIds = [];
     mIsChain = false;
 
     // ここでendActionが呼び出されることで終了処理は実行される。
@@ -537,6 +551,9 @@ function goChainSkill(object, passiveFlg) {
     // 連結対象外なら終了
     if (!chainSkillId) {
         return false;
+    // 既に発動済みなら終了
+    } else if (mChainedSkillIds.includes(chainSkillId)) {
+        return false;
     }
 
     // 行動主体が死亡時は終了
@@ -571,6 +588,10 @@ function goChainSkill(object, passiveFlg) {
 
     // 発動したオブジェクトを保持
     mChainedObjects.push(object);
+    if (pDisableSameSkill) {
+        mChainedSkillIds.push(chainSkillId);
+    }
+
     // スキル名の表示制御
     const displayNameStyle = getDisplayNameStyle(object);
     // 非表示
