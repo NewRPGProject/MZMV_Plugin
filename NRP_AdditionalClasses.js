@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.09 Multiple classes allow for a highly flexible growth system.
+ * @plugindesc v1.091 Multiple classes allow for a highly flexible growth system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -514,7 +514,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.09 多重職業によって自由度の高い成長システムを実現。
+ * @plugindesc v1.091 多重職業によって自由度の高い成長システムを実現。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -1264,7 +1264,7 @@ function changeExp(actor, index, additionalClassId, exp, show) {
 
         // 職業の指定がある場合
         if (additionalClassId) {
-            additionalClass = actor.additionalClass(additionalClassId);
+            additionalClass = actor.additionalClass(additionalClassId, true);
             if (!additionalClass) {
                 return;
             }
@@ -1356,7 +1356,7 @@ function changeLevel(actor, index, additionalClassId, level, show) {
 
         // 職業の指定がある場合
         if (additionalClassId) {
-            additionalClass = actor.additionalClass(additionalClassId);
+            additionalClass = actor.additionalClass(additionalClassId, true);
             if (!additionalClass) {
                 return;
             }
