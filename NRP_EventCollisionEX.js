@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Extends the collision detection for events.
+ * @plugindesc v1.04 Extends the collision detection for events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481944599.html
  *
@@ -103,7 +103,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 イベントの当たり判定を拡張する。
+ * @plugindesc v1.04 イベントの当たり判定を拡張する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481944599.html
  *
@@ -677,6 +677,11 @@ if (pConsiderMove) {
         const tipY2 = $gameMap.roundYWithDirection(tipY, d);
         const d2 = this.reverseDir(d);
 
+        // RegionBase.jsに対応
+        if ($gameMap.setPassableSubject) {
+            $gameMap.setPassableSubject(this);
+        }
+
         return this.isPassableWide(tipX, tipY, d) && this.isPassableWide(tipX2, tipY2, d2);
     };
 
@@ -691,6 +696,15 @@ if (pConsiderMove) {
             const endX = x + this._collisionRight;
 
             for (let tmpX = startX; tmpX <= endX; tmpX++) {
+                // RegionBase.jsに対応
+                if ($gameMap.isCollidedByRegion) {
+                    if ($gameMap.isCollidedByRegion(tmpX, y, d)) {
+                        return false;
+                    } else if ($gameMap.isThroughByRegion(tmpX, y)) {
+                        continue;
+                    }
+                }
+
                 // 通行禁止に該当があれば処理終了
                 if (!$gameMap.checkPassage(tmpX, y, (1 << (d / 2 - 1)) & 0x0f)) {
                     return false;
@@ -706,6 +720,15 @@ if (pConsiderMove) {
             const endY = y + this._collisionDown;
 
             for (let tmpY = startY; tmpY <= endY; tmpY++) {
+                // RegionBase.jsに対応
+                if ($gameMap.isCollidedByRegion) {
+                    if ($gameMap.isCollidedByRegion(x, tmpY, d)) {
+                        return false;
+                    } else if ($gameMap.isThroughByRegion(x, tmpY)) {
+                        continue;
+                    }
+                }
+
                 // 通行禁止に該当があれば処理終了
                 if (!$gameMap.checkPassage(x, tmpY, (1 << (d / 2 - 1)) & 0x0f)) {
                     return false;
