@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.021 A list-style skill learning system.
+ * @plugindesc v1.03 A list-style skill learning system.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -332,6 +332,11 @@
  * @desc Displays the command only when the switch is on.
  * If blank, it is always displayed.
  * 
+ * @param MaskString
+ * @parent MenuCommandSwitch
+ * @type string
+ * @desc If MenuCommandSwitch is off, displays the specified string. If blank, hides the command itself.
+ * 
  * @param DisableSwitch
  * @parent <Menu Command>
  * @type switch
@@ -419,7 +424,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.021 リスト形式のスキル習得システム。
+ * @plugindesc v1.03 リスト形式のスキル習得システム。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -790,6 +795,12 @@
  * @desc スイッチがオンの時のみコマンドを表示します。
  * 空白なら常に表示します。
  * 
+ * @param MaskString
+ * @parent MenuCommandSwitch
+ * @text マスク文字列
+ * @type string
+ * @desc 表示許可するスイッチがオフの際、指定した文字列でコマンドを表示します。空欄ならコマンド自体を非表示。
+ * 
  * @param DisableSwitch
  * @parent <Menu Command>
  * @text 禁止するスイッチ
@@ -975,6 +986,7 @@ const pConfirmOkSe = setDefault(parameters["ConfirmOkSe"]);
 const pShowMenuCommandPosition = toNumber(parameters["ShowMenuCommandPosition"]);
 const pCommandName = parameters["CommandName"];
 const pMenuCommandSwitch = toNumber(parameters["MenuCommandSwitch"]);
+const pMaskString = setDefault(parameters["MaskString"]);
 const pDisableSwitch = toNumber(parameters["DisableSwitch"]);
 
 // 定数
@@ -2013,6 +2025,11 @@ if (pShowMenuCommandPosition != null) {
 
         // 非表示スイッチが存在かつオフの場合は無効
         if (pMenuCommandSwitch && !$gameSwitches.value(pMenuCommandSwitch)) {
+            // 文字列の指定がある場合は表示
+            if (pMaskString) {
+                this._list.splice(pShowMenuCommandPosition, 0,
+                    { name: pMaskString, symbol: SYMBOL_SKILL_SYSTEM, enabled: false, ext: null});
+            }
             return;
         }
         

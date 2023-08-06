@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.05 Implemented a class change screen for multiple classes.
+ * @plugindesc v1.06 Implemented a class change screen for multiple classes.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -303,6 +303,11 @@
  * @desc Displays the command only when the switch is on.
  * If it is blank, it will always be displayed.
  * 
+ * @param MaskString
+ * @parent MenuCommandSwitch
+ * @type string
+ * @desc If MenuCommandSwitch is off, displays the specified string. If blank, hides the command itself.
+ * 
  * @param DisableSwitch
  * @parent <Menu Command>
  * @type switch
@@ -430,7 +435,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.05 多重職業用の転職画面を実装。
+ * @plugindesc v1.06 多重職業用の転職画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -769,6 +774,12 @@
  * @desc スイッチがオンの時のみコマンドを表示します。
  * 空白なら常に表示します。
  * 
+ * @param MaskString
+ * @parent MenuCommandSwitch
+ * @text マスク文字列
+ * @type string
+ * @desc 表示許可するスイッチがオフの際、指定した文字列でコマンドを表示します。空欄ならコマンド自体を非表示。
+ * 
  * @param DisableSwitch
  * @parent <Menu Command>
  * @text 禁止するスイッチ
@@ -1004,6 +1015,7 @@ const pShowMenuCommand = toBoolean(parameters["ShowMenuCommand"], false);
 const pShowMenuCommandPosition = toNumber(parameters["ShowMenuCommandPosition"], 3);
 const pClassChangeName = parameters["ClassChangeName"];
 const pMenuCommandSwitch = toNumber(parameters["MenuCommandSwitch"]);
+const pMaskString = setDefault(parameters["MaskString"]);
 const pDisableSwitch = toNumber(parameters["DisableSwitch"]);
 const pClassChangeSymbol = parameters["ClassChangeSymbol"];
 const pReadOnlyMenu = toBoolean(parameters["ReadOnlyMenu"], false);
@@ -3214,6 +3226,11 @@ if (pShowMenuCommand) {
 
         // 非表示スイッチが存在かつオフの場合は無効
         if (pMenuCommandSwitch && !$gameSwitches.value(pMenuCommandSwitch)) {
+            // 文字列の指定がある場合は表示
+            if (pMaskString) {
+                this._list.splice(pShowMenuCommandPosition, 0,
+                    { name: pMaskString, symbol: pClassChangeSymbol, enabled: false, ext: null});
+            }
             return;
         }
         
