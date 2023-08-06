@@ -336,6 +336,11 @@
  * @desc Display the command only when the switch is on.
  * Always display if blank.
  * 
+ * @param MaskString
+ * @parent MenuCommandSwitch
+ * @type string
+ * @desc If MenuCommandSwitch is off, displays the specified string. If blank, hides the command itself.
+ * 
  * @param DisableSwitch
  * @parent <Menu Command>
  * @type switch
@@ -895,6 +900,12 @@
  * @desc スイッチがオンの時のみコマンドを表示します。
  * 空白なら常に表示します。
  * 
+ * @param MaskString
+ * @parent MenuCommandSwitch
+ * @text マスク文字列
+ * @type string
+ * @desc 表示許可するスイッチがオフの際、指定した文字列でコマンドを表示します。空欄ならコマンド自体を非表示。
+ * 
  * @param DisableSwitch
  * @parent <Menu Command>
  * @text 禁止するスイッチ
@@ -1224,6 +1235,7 @@ const pShowMenuCommand = toBoolean(parameters["ShowMenuCommand"], false);
 const pShowMenuCommandPosition = toNumber(parameters["ShowMenuCommandPosition"], 4);
 const pTravelName = parameters["TravelName"];
 const pMenuCommandSwitch = toNumber(parameters["MenuCommandSwitch"]);
+const pMaskString = setDefault(parameters["MaskString"]);
 const pDisableSwitch = toNumber(parameters["DisableSwitch"]);
 const pTravelSymbol = parameters["TravelSymbol"];
 const pReadOnlyMenu = toBoolean(parameters["ReadOnlyMenu"], false);
@@ -2696,6 +2708,11 @@ if (pShowMenuCommand) {
 
         // 非表示スイッチが存在かつオフの場合は無効
         if (pMenuCommandSwitch && !$gameSwitches.value(pMenuCommandSwitch)) {
+            // 文字列の指定がある場合は表示
+            if (pMaskString) {
+                this._list.splice(pShowMenuCommandPosition, 0,
+                    { name: pMaskString, symbol: pTravelSymbol, enabled: false, ext: null});
+            }
             return;
         }
         
