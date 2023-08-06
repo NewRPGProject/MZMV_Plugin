@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.022 Implement a map selection & transfer screen.
+ * @plugindesc v1.03 Implement a map selection & transfer screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484927929.html
  *
@@ -569,7 +569,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.022 マップ選択＆移動画面を実装します。
+ * @plugindesc v1.03 マップ選択＆移動画面を実装します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484927929.html
  *
