@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Implemented a party change screen.
+ * @plugindesc v1.001 Implemented a party change screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/500297653.html
  *
@@ -154,7 +154,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 パーティ編成画面を実装。
+ * @plugindesc v1.001 パーティ編成画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/500297653.html
  *
@@ -695,9 +695,9 @@ Window_ChangeParty.prototype.maxItems = function() {
     if ($gameParty.size() < this.numVisibleRows()) {
         return $gameParty.size();
     }
-    // 外すを許可している場合は４人分の領域を確保
+    // 外すを許可している場合は空欄を追加
     if (pAllowRelease) {
-        return this.numVisibleRows();
+        return Math.min(this.numVisibleRows(), $gameParty.battleMembers().length + 1);
     }
     return $gameParty.maxBattleMembers();
 };
