@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.001 Implemented a party change screen.
+ * @plugindesc v1.01 Implemented a party change screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/500297653.html
  *
@@ -97,6 +97,10 @@
  * @desc How to display status on the party change screen.
  * All is deprecated as it usually does not fit.
  * 
+ * @param ChangeDisabledState
+ * @type state
+ * @desc Actors on a given state are not allowed to be replaced.
+ * 
  * @param <Menu Scene>
  * @desc Related items on the menu screen.
  * 
@@ -154,7 +158,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.001 パーティ編成画面を実装。
+ * @plugindesc v1.01 パーティ編成画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/500297653.html
  *
@@ -245,6 +249,11 @@
  * @default level
  * @desc 編成画面におけるステータスの表示方法です。
  * 通常の画面サイズでは全表示は収まらないので非推奨。
+ * 
+ * @param ChangeDisabledState
+ * @text 入替禁止ステート
+ * @type state
+ * @desc 指定のステートにかかっているアクターは入替を禁止します。
  * 
  * @param <Menu Scene>
  * @text ＜メニュー関連＞
@@ -342,6 +351,7 @@ const pAllowRelease = toBoolean(parameters["AllowRelease"], false);
 const pShowOtherPage = toBoolean(parameters["ShowOtherPage"], false);
 const pReserveOpacity = toNumber(parameters["ReserveOpacity"]);
 const pStatusType = setDefault(parameters["StatusType"]);
+const pChangeDisabledState = toNumber(parameters["ChangeDisabledState"]);
 // メニュー関連
 const pDisableReserveSkill = toBoolean(parameters["DisableReserveSkill"], true);
 const pDisableReserveFormation = toBoolean(parameters["DisableReserveFormation"], true);
@@ -817,6 +827,10 @@ Window_ChangeParty.prototype.isCurrentItemEnabled = function() {
     if (!actor) {
         return true;
     }
+    // 入替禁止ステートの場合は無効
+    if (pChangeDisabledState && actor.isStateAffected(pChangeDisabledState)) {
+        return false;
+    }
     return actor && actor.isFormationChangeOk();
 };
 
@@ -966,6 +980,10 @@ Window_ChangePartyBench.prototype.isCurrentItemEnabled = function() {
     // 空欄の場合は常に許可
     if (!actor) {
         return true;
+    }
+    // 入替禁止ステートの場合は無効
+    if (pChangeDisabledState && actor.isStateAffected(pChangeDisabledState)) {
+        return false;
     }
     return actor && actor.isFormationChangeOk();
 };
