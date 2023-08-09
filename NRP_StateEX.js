@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Extend the functionality of the state in various ways.
+ * @plugindesc v1.02 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -204,6 +204,19 @@
  * the damage display is also eliminated.
  * 
  * -------------------------------------------------------------------
+ * [Other Effects]
+ * -------------------------------------------------------------------
+ * Specify the following in the notes field of the state.
+ * 
+ * <IgnoreRecoverAll>
+ * It will no longer be released by the event command Recover All.
+ * Can only be released if a state is specified.
+ * 
+ * <IgnoreRecoverDie>
+ * It will not be released in dead state.
+ * Can only be released if a state is specified.
+ * 
+ * -------------------------------------------------------------------
  * [Terms]
  * -------------------------------------------------------------------
  * There are no restrictions.
@@ -264,7 +277,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 ステートの機能を色々と拡張します。
+ * @plugindesc v1.02 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -456,6 +469,19 @@
  * <StateDamageSilent>を組み合わせると、ダメージ表示もなくなります。
  * 
  * -------------------------------------------------------------------
+ * ■その他の効果
+ * -------------------------------------------------------------------
+ * ステートのメモ欄に以下を指定してください。
+ * 
+ * <IgnoreRecoverAll>
+ * イベントコマンドの全回復で解除されなくなります。
+ * ステートを指定した場合のみ解除できます。
+ * 
+ * <IgnoreRecoverDie>
+ * 戦闘不能時に解除されなくなります。
+ * ステートを指定した場合のみ解除できます。
+ * 
+ * -------------------------------------------------------------------
  * ■利用規約
  * -------------------------------------------------------------------
  * 特に制約はありません。
@@ -599,16 +625,78 @@ function createStateExTable() {
 // Game_BattlerBase
 // ----------------------------------------------------------------------------
 
+// 全回復判定フラグ
+let mRecoverAllFlg = false;
+// 戦闘不能判定フラグ
+let mDeadFlg = false;
+
+/**
+ * ●全回復
+ */
+const _Game_BattlerBase_recoverAll = Game_BattlerBase.prototype.recoverAll;
+Game_BattlerBase.prototype.recoverAll = function() {
+    mRecoverAllFlg = true;
+    _Game_BattlerBase_recoverAll.apply(this, arguments);
+    mRecoverAllFlg = false;
+};
+
+/**
+ * ●戦闘不能
+ */
+const _Game_BattlerBase_die = Game_BattlerBase.prototype.die;
+Game_BattlerBase.prototype.die = function() {
+    mDeadFlg = true;
+    _Game_BattlerBase_die.apply(this, arguments);
+    mDeadFlg = false;
+};
+
 /**
  * ●ステートの初期化
  */
 const _Game_BattlerBase_clearStates = Game_BattlerBase.prototype.clearStates;
 Game_BattlerBase.prototype.clearStates = function() {
+    // 条件によって保持するステート
+    const keepStates = [];
+
+    // 全回復の場合
+    if (mRecoverAllFlg) {
+        for (let i = 0; i < this._states.length; i++) {
+            const stateId = this._states[i];
+            // 全回復でも保持するステートがあれば追加
+            if ($dataStates[stateId].meta.IgnoreRecoverAll) {
+                const stateTurn = this._stateTurns[stateId];
+                const stateEx = this.getStateEx(stateId);
+                keepStates.push({stateId: stateId, stateTurn: stateTurn, stateEx: stateEx});
+            }
+        }
+
+    // 戦闘不能の場合
+    } else if (mDeadFlg) {
+        for (let i = 0; i < this._states.length; i++) {
+            const stateId = this._states[i];
+            // 戦闘不能でも保持するステートがあれば追加
+            if ($dataStates[stateId].meta.IgnoreRecoverDie) {
+                const stateTurn = this._stateTurns[stateId];
+                const stateEx = this.getStateEx(stateId);
+                keepStates.push({stateId: stateId, stateTurn: stateTurn, stateEx: stateEx});
+            }
+        }
+    }
+
     _Game_BattlerBase_clearStates.apply(this, arguments);
 
     // 追加機能の管理用の構造体
     // ※this._stateTurnsと同じ要領で実装
     this._statesEx = {};
+
+    // 保持するステートを復旧
+    for (const keepState of keepStates) {
+        this._states.push(keepState.stateId);
+        this._stateTurns[keepState.stateId] = keepState.stateTurn;
+        if (keepState.stateEx) {
+            this._statesEx[keepState.stateId] = keepState.stateEx;
+        }
+    }
 };
 
 /**
@@ -727,6 +815,10 @@ Game_BattlerBase.prototype.addNewState = function(stateId) {
  * 【独自】ＥＸステートを取得
  */
 Game_BattlerBase.prototype.getStateEx = function(stateId) {
+    // 未定義なら初期化
+    if (!this._statesEx) {
+        this._statesEx = [];
+    }
     return this._statesEx[stateId];
 };
 
