@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.242 When executing skills, call motion freely.
+ * @plugindesc v1.243 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help When executing skills(items), call motion freely.
@@ -550,7 +550,7 @@
  */
 
 /*:ja
- * @plugindesc v1.242 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.243 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在にモーションを呼び出します。
@@ -3072,8 +3072,10 @@ Sprite_Weapon.prototype.setup = function(weaponImageId) {
 
     // 開始モーションの指定がある場合
     if (this.parent._motionStartPattern) {
-        this._weaponImageId = weaponImageId;
-        this._animationCount = 0;
+        // 元処理実行
+        // ※処理が二重になるけどNRP_WeaponSetting.jsとの競合対策でやむなく。
+        _Sprite_Weapon_setup.call(this, weaponImageId);
+
         this._pattern = this.parent._motionStartPattern;
         this.loadBitmap();
         this.updateFrame();

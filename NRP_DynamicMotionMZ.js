@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.183 When executing skills, call motion freely.
+ * @plugindesc v1.184 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -556,7 +556,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.183 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.184 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -3168,8 +3168,10 @@ Sprite_Weapon.prototype.setup = function(weaponImageId) {
 
     // 開始モーションの指定がある場合
     if (this.parent._motionStartPattern) {
-        this._weaponImageId = weaponImageId;
-        this._animationCount = 0;
+        // 元処理実行
+        // ※処理が二重になるけどNRP_WeaponSetting.jsとの競合対策でやむなく。
+        _Sprite_Weapon_setup.call(this, weaponImageId);
+
         this._pattern = this.parent._motionStartPattern;
         this.loadBitmap();
         this.updateFrame();
