@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v2.031 Gives an afterimage effect to the battler or character.
+ * @plugindesc v2.032 Gives an afterimage effect to the battler or character.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483120023.html
  *
@@ -132,7 +132,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.031 バトラー＆キャラクターに残像効果を付与します。
+ * @plugindesc v2.032 バトラー＆キャラクターに残像効果を付与します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483120023.html
  *
@@ -800,6 +800,8 @@ Sprite_Battler.prototype.createAfterimage = function() {
         afterimage = new Sprite_EnemyAfterimage(this);
     }
 
+    const mainSprite = getMainSprite(this);
+
     // 初期不透明度
     afterimage.setInitialOpacity(afterimageManage.opacity());
     afterimage.setOpacity(afterimageManage.opacity());
@@ -811,8 +813,8 @@ Sprite_Battler.prototype.createAfterimage = function() {
     afterimage.setSetFrame();
     afterimage.scale = this.scale;
     afterimage.rotation = this.rotation;
-    afterimage.anchor.x = this.anchor.x;
-    afterimage.anchor.y = this.anchor.y;
+    afterimage.anchor.x = mainSprite.anchor.x;
+    afterimage.anchor.y = mainSprite.anchor.y;
     // 色調設定
     const colorTone = afterimageManage.color()
     if (colorTone) {
@@ -826,6 +828,17 @@ Sprite_Battler.prototype.createAfterimage = function() {
     afterimage.spriteId = this.spriteId - 0.1;
     // DynamicMotionの空中Ｙ座標
     afterimage._airY = this._airY;
+
+    // 画像基準点が変更されている場合
+    if (afterimage.anchor.y == 0.5) {
+        // かつ回転終了の場合
+        if (afterimage.rotation == undefined || afterimage.rotation % Math.PI*2 == 0) {
+            // 基準点を戻す
+            afterimage.anchor.y = 1;
+            // Ｙ座標補正
+            afterimage.y -= -afterimage.height/2 * afterimage.scale.y;
+        }
+    }
 
     // animatedSVEnemies.jsで動作させている場合は反転
     if (this._battler._animated) {
@@ -1218,6 +1231,17 @@ Sprite_Character.prototype.createAfterimage = function() {
     afterimage.spriteId = this.spriteId - 0.1;
     // DynamicMotionの空中Ｙ座標
     afterimage._airY = this._airY;
+
+    // 画像基準点が変更されている場合
+    if (afterimage.anchor.y == 0.5) {
+        // かつ回転終了の場合
+        if (afterimage.rotation == undefined || afterimage.rotation % Math.PI*2 == 0) {
+            // 基準点を戻す
+            afterimage.anchor.y = 1;
+            // Ｙ座標補正
+            afterimage.y -= -afterimage.height/2 * afterimage.scale.y;
+        }
+    }
 
     this._afterimages.push(afterimage);
     // Tilemapに追加
