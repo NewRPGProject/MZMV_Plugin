@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v2.032 Gives an afterimage effect to the battler or character.
+ * @plugindesc v2.04 Gives an afterimage effect to the battler or character.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483120023.html
  *
@@ -132,7 +132,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.032 バトラー＆キャラクターに残像効果を付与します。
+ * @plugindesc v2.04 バトラー＆キャラクターに残像効果を付与します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483120023.html
  *
@@ -800,7 +800,8 @@ Sprite_Battler.prototype.createAfterimage = function() {
         afterimage = new Sprite_EnemyAfterimage(this);
     }
 
-    const mainSprite = getMainSprite(this);
+    const bodyMainSprite = getMainSprite(this);
+    const afterimageMainSprite = getMainSprite(afterimage);
 
     // 初期不透明度
     afterimage.setInitialOpacity(afterimageManage.opacity());
@@ -813,8 +814,12 @@ Sprite_Battler.prototype.createAfterimage = function() {
     afterimage.setSetFrame();
     afterimage.scale = this.scale;
     afterimage.rotation = this.rotation;
-    afterimage.anchor.x = mainSprite.anchor.x;
-    afterimage.anchor.y = mainSprite.anchor.y;
+    
+    afterimage.anchor.x = this.anchor.x;
+    afterimage.anchor.y = this.anchor.y;
+    afterimageMainSprite.anchor.x = bodyMainSprite.anchor.x;
+    afterimageMainSprite.anchor.y = bodyMainSprite.anchor.y;
+
     // 色調設定
     const colorTone = afterimageManage.color()
     if (colorTone) {
@@ -829,15 +834,11 @@ Sprite_Battler.prototype.createAfterimage = function() {
     // DynamicMotionの空中Ｙ座標
     afterimage._airY = this._airY;
 
-    // 画像基準点が変更されている場合
-    if (afterimage.anchor.y == 0.5) {
-        // かつ回転終了の場合
-        if (afterimage.rotation == undefined || afterimage.rotation % Math.PI*2 == 0) {
-            // 基準点を戻す
-            afterimage.anchor.y = 1;
-            // Ｙ座標補正
-            afterimage.y -= -afterimage.height/2 * afterimage.scale.y;
-        }
+    // 基準点（回転軸）が変更されている場合はズレるので調整
+    if (afterimageMainSprite.anchor.y == 0.5) {
+        // scaleの変更を考慮
+        afterimage.x -= afterimage.width/2 * afterimage.scale.x * Math.sin(afterimage.rotation);
+        afterimage.y += afterimage.height/2 * afterimage.scale.y * Math.cos(afterimage.rotation);
     }
 
     // animatedSVEnemies.jsで動作させている場合は反転
@@ -1217,6 +1218,7 @@ Sprite_Character.prototype.createAfterimage = function() {
     afterimage.setSetFrame();
     afterimage.scale = this.scale;
     afterimage.rotation = this.rotation;
+    afterimage.anchor.x = this.anchor.x;
     afterimage.anchor.y = this.anchor.y;
     // 色調設定
     const colorTone = afterimageManage.color()
@@ -1232,15 +1234,11 @@ Sprite_Character.prototype.createAfterimage = function() {
     // DynamicMotionの空中Ｙ座標
     afterimage._airY = this._airY;
 
-    // 画像基準点が変更されている場合
+    // 基準点（回転軸）が変更されている場合はズレるので調整
     if (afterimage.anchor.y == 0.5) {
-        // かつ回転終了の場合
-        if (afterimage.rotation == undefined || afterimage.rotation % Math.PI*2 == 0) {
-            // 基準点を戻す
-            afterimage.anchor.y = 1;
-            // Ｙ座標補正
-            afterimage.y -= -afterimage.height/2 * afterimage.scale.y;
-        }
+        // scaleの変更を考慮
+        afterimage.x -= afterimage.width/2 * afterimage.scale.x * Math.sin(afterimage.rotation);
+        afterimage.y += afterimage.height/2 * afterimage.scale.y * Math.cos(afterimage.rotation);
     }
 
     this._afterimages.push(afterimage);
