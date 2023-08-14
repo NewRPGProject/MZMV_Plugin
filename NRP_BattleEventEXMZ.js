@@ -3,8 +3,9 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.051 Extends the functionality of battle events.
+ * @plugindesc v1.052 Extends the functionality of battle events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
+ * @orderBefore NRP_ChargeSkill
  * @orderAfter NRP_EnemyRoutineKai
  * @url http://newrpg.seesaa.net/article/477489099.html
  *
@@ -210,8 +211,9 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.051 バトルイベントの機能を拡張します。
+ * @plugindesc v1.052 バトルイベントの機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
+ * @orderBefore NRP_ChargeSkill
  * @orderAfter NRP_EnemyRoutineKai
  * @url http://newrpg.seesaa.net/article/477489099.html
  *
@@ -849,7 +851,7 @@ Game_Battler.prototype.forceAction = function(skillId, targetIndex) {
 /**
  * ●ターゲットの決定
  */
-var _Game_Action_makeTargets = Game_Action.prototype.makeTargets;
+const _Game_Action_makeTargets = Game_Action.prototype.makeTargets;
 Game_Action.prototype.makeTargets = function() {
     // 強制状態でなければ、混乱処理を行う。
     if (!BattleManager.isForceEX() && this.subject().isConfused()) {
@@ -1057,8 +1059,8 @@ Game_Action.prototype.targetsForAlive = function(unit) {
  */
 const _Game_Action_applyGlobal = Game_Action.prototype.applyGlobal;
 Game_Action.prototype.applyGlobal = function() {
-    // ダメージタイプが『なし』の場合
-    if (this.item().damage.type == 0) {
+    // ダメージタイプが『なし』の場合、かつ使用効果が存在
+    if (this.item().damage.type == 0 && this.item().effects.length > 0) {
         // かつ、使用効果がコモンイベントのみの場合
         const isCommonEvent = this.item().effects.every(function(effect) {
             return effect.code === Game_Action.EFFECT_COMMON_EVENT;
