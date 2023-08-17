@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Chain skills together.
+ * @plugindesc v1.03 Chain skills together.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -189,7 +189,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 スキルを連結する。
+ * @plugindesc v1.03 スキルを連結する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -416,6 +416,8 @@ let mIsChain = false;
 let mLastTargetIndex = 0;
 // 命中記憶用
 let mKeepHit = null;
+// 速度記憶用
+let mOriginalSpeed = null;
 
 // ----------------------------------------------------------------------------
 // BattleManager
@@ -448,6 +450,7 @@ BattleManager.updateAction = function() {
         mOriginalAction = this._action;
         // 対象も保持（連結スキルによって対象変更される場合があるため）
         mLastTargetIndex = subject._lastTargetIndex;
+        mOriginalSpeed = subject.speed();
     }
 
     // 連結実行判定
@@ -481,7 +484,18 @@ BattleManager.updateAction = function() {
         }
     }
 
-    // 終了した場合は初期化
+    //--------------------------------------------------
+    // 連結スキルが終了した。
+    //--------------------------------------------------
+    // 連結スキルが発動している場合
+    if (this._action != mOriginalAction) {
+        // アクションを元に戻す。
+        this._action = mOriginalAction;
+        // ＣＴＢ用に速度再設定
+        this._subject._speed = mOriginalSpeed;
+    }
+
+    // 変数初期化
     mOriginalAction = null;
     mIsNotDisplay = false;
     mChainedObjects = [];
@@ -582,7 +596,7 @@ function goChainSkill(object, passiveFlg) {
 
     // 確率判定
     const percent = object.meta.ChainSkillPercent;
-    if (percent && Math.randomInt(100) > eval(percent)) {
+    if (percent && Math.randomInt(100) >= eval(percent)) {
         return false;
     }
 
@@ -737,13 +751,25 @@ Game_BattlerBase.prototype.paySkillCost = function(skill) {
     _Game_BattlerBase_paySkillCost.apply(this, arguments);
 };
 
+/**
+ * ●混乱判定
+ */
+const _Game_BattlerBase_isConfused = Game_BattlerBase.prototype.isConfused;
+Game_BattlerBase.prototype.isConfused = function() {
+    // 連結スキル時は処理しない。
+    if (mIsChain) {
+        return;
+    }
+    return _Game_BattlerBase_isConfused.apply(this, arguments);
+};
+
 // ----------------------------------------------------------------------------
 // Game_Battler
 // ----------------------------------------------------------------------------
 
 /**
  * 【独自】連結スキルを実行する。
- * ※処理はchainAction（戦闘行動の強制）に準じるが、
+ * ※処理はforceAction（戦闘行動の強制）に準じるが、
  * 　複数回行動に対応するためアクションをクリアしない。
  */
 Game_Battler.prototype.chainForceAction = function(skillId, targetIndex) {
