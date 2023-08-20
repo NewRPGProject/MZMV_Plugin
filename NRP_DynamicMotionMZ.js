@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.184 When executing skills, call motion freely.
+ * @plugindesc v1.185 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -556,7 +556,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.184 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.185 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -1816,7 +1816,7 @@ BaseMotion.prototype.makeRepeatMotion = function (dynamicMotionList) {
     const isEvery = eval(this.every);
 
     // 間隔×レート分のディレイを加算
-    if (r > 0) {
+    if (r > 0 && this.list.length > 0) {
         this.delaySum += this.list[r - 1].interval * rate;
     }
 

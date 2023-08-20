@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.243 When executing skills, call motion freely.
+ * @plugindesc v1.244 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help When executing skills(items), call motion freely.
@@ -550,7 +550,7 @@
  */
 
 /*:ja
- * @plugindesc v1.243 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.244 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在にモーションを呼び出します。
@@ -1788,7 +1788,7 @@ BaseMotion.prototype.makeRepeatMotion = function (dynamicMotionList, r) {
     var isEvery = eval(this.every);
 
     // 間隔×レート分のディレイを加算
-    if (r > 0) {
+    if (r > 0 && this.list.length > 0) {
         this.delaySum += this.list[r - 1].interval * rate;
     }
 
