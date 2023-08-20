@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.185 When executing skills, call motion freely.
+ * @plugindesc v1.19 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -184,6 +184,11 @@
  * @type string
  * @desc Target to execute motion.
  * Battler or its array can be specified.
+ * 
+ * @param target
+ * @type string
+ * @desc Changes the target to which the motion is directed.
+ * Note that this is different from performer!
  * 
  * @param noReturn
  * @type boolean
@@ -556,7 +561,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.185 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.19 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -757,6 +762,12 @@
  * @type string
  * @desc モーションの実行を指定した対象へ変更します。
  * バトラーまたはその配列を指定可能です。
+ * 
+ * @param target
+ * @text 対象変更
+ * @type string
+ * @desc モーションが向かう対象を変更します。
+ * 『モーション対象』とは異なるので注意！
  * 
  * @param noReturn
  * @text 帰還無効
@@ -1511,7 +1522,7 @@ BaseMotion.prototype.calcBasicBefore = function (targets) {
     var repeat = this.repeat;
     this.repeat = eval(repeat);
 
-    // 対象の変更処理
+    // モーション対象の変更処理
     // SpriteでもBattlerでも受け付ける。
     if (this.performer) {
         var changePerformer = eval(this.performer);
@@ -1541,8 +1552,35 @@ BaseMotion.prototype.calcBasicBefore = function (targets) {
         this.performers = [this.getSubject()];
     }
 
-    // 対象
-    this.targets = targets;
+    // 対象の変更処理
+    // SpriteでもBattlerでも受け付ける。
+    if (this.target) {
+        var changeTarget = eval(this.target);
+        // 配列でなければ配列変換
+        if (!Array.isArray(changeTarget)) {
+            changeTarget = [changeTarget];
+        }
+
+        this.targets = [];
+        changeTarget.forEach(function(t) {
+            // Spriteの場合
+            if (t.spriteId != undefined) {
+                if (inBattle()) {
+                    this.targets.push(t._battler);
+                } else {
+                    this.targets.push(t._character);
+                }
+
+            // Battlerの場合
+            } else {
+                this.targets.push(t);
+            }
+        }, this);
+
+    // 通常はそのままBaseMotionに設定する。
+    } else {
+        this.targets = targets;
+    }
 };
 
 /**
