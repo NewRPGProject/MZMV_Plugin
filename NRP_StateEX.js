@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Extend the functionality of the state in various ways.
+ * @plugindesc v1.03 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -208,6 +208,11 @@
  * -------------------------------------------------------------------
  * Specify the following in the notes field of the state.
  * 
+ * <DefeatState>
+ * Same as dead, subject to a defeat determination.
+ * Assumes a petrification-like state
+ * that is not automatically released.
+ * 
  * <IgnoreRecoverAll>
  * It will no longer be released by the event command Recover All.
  * Can only be released if a state is specified.
@@ -277,7 +282,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 ステートの機能を色々と拡張します。
+ * @plugindesc v1.03 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -472,6 +477,10 @@
  * ■その他の効果
  * -------------------------------------------------------------------
  * ステートのメモ欄に以下を指定してください。
+ * 
+ * <DefeatState>
+ * 戦闘不能と同じように、全滅判定の対象になります。
+ * 自動解除されない石化のようなステートを想定しています。
  * 
  * <IgnoreRecoverAll>
  * イベントコマンドの全回復で解除されなくなります。
@@ -1007,6 +1016,66 @@ Game_Battler.prototype.regenerateTp = function() {
 
     // ない場合は元のまま
     _Game_Battler_regenerateTp.apply(this, arguments);
+};
+
+// ----------------------------------------------------------------------------
+// 全滅判定ステート
+// ----------------------------------------------------------------------------
+
+// 全滅ステート判定フラグ
+let mCheckDefeatState = false;
+
+/**
+ * ●報酬の作成
+ */
+const _BattleManager_makeRewards = BattleManager.makeRewards;
+BattleManager.makeRewards = function() {
+    mCheckDefeatState = true;
+    const ret = _BattleManager_makeRewards.apply(this, arguments);
+    mCheckDefeatState = false;
+    return ret;
+};
+
+/**
+ * ●全滅判定ステートかどうか？
+ */
+Game_BattlerBase.prototype.isDefeatState = function() {
+    if (this.isDead()) {
+        return true;
+    }
+    if (this.isAppeared() && this._states.some(stateId => $dataStates[stateId].meta.DefeatState)) {
+        return true;
+    }
+    return false;
+};
+
+/**
+ * ●全滅判定
+ */
+const _Game_Unit_isAllDead = Game_Unit.prototype.isAllDead;
+Game_Unit.prototype.isAllDead = function() {
+    const ret = _Game_Unit_isAllDead.apply(this, arguments);
+    if (ret) {
+        return ret;
+    }
+
+    // 全員が全滅ステートの対象なら全滅として判定
+    if (this.aliveMembers().every(m => m.isDefeatState())) {
+        return true;
+    }
+    return false;
+};
+
+/**
+ * ●戦闘不能メンバー
+ */
+const _Game_Unit_deadMembers = Game_Unit.prototype.deadMembers;
+Game_Unit.prototype.deadMembers = function() {
+    // 全滅ステート判定フラグがオンの場合のみメンバーを拡張する。
+    if (mCheckDefeatState) {
+        return this.members().filter(member => member.isDefeatState());
+    }
+    return _Game_Unit_deadMembers.apply(this, arguments);
 };
 
 // ----------------------------------------------------------------------------
