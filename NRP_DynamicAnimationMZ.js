@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.194 Automate & super-enhance battle animations.
+ * @plugindesc v1.195 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -524,7 +524,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.1943 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.195 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -3119,8 +3119,9 @@ DynamicAnimation.prototype.makeDamageData = function (baseAnimation, dynamicAnim
     damageData.isLimitEffect = true;
     damageData.dispAnimation = false;
     damageData.id = 0;
+
     // trueならアニメーション終了に時間を合わせる
-    if (this.damage == true || this.damageAll == true) {
+    if (this.damage === true || this.damageAll == true) {
         damageData.targetDelay = delay + spriteAnimation._duration;
     // 数値なら指定のフレーム数で（全体）
     } else if (this.damageAll != undefined) {
@@ -4500,7 +4501,7 @@ BattleManager.dynamicDamageControl = function(dynamicAction) {
     if (dynamicAction.damageAll) {
         this._updateDamage = true;
     // ダメージ処理の実行（一回ずつ）
-    } else if (dynamicAction.damage) {
+    } else if (dynamicAction.damage != null) {
         this.isDynamicCallDamage(dynamicAction);
     }
 };
