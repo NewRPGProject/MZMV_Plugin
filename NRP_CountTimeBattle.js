@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.16 Change the battle system to CTB.
+ * @plugindesc v1.17 Change the battle system to CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -87,6 +87,11 @@
  * is set to one turn of "Action End",
  * an anomaly such as "delay that cannot be stacked
  * until the enemy acts once" can be created for the purpose.
+ * 
+ * <DeadCTBTurn>
+ * The dead state will still appear in the order of action.
+ * Assume a special state that will be revived
+ * after a certain amount of time.
  * 
  * -------------------------------------------------------------------
  * [Continuous action skill]
@@ -237,7 +242,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.16 戦闘システムをＣＴＢへ変更します。
+ * @plugindesc v1.17 戦闘システムをＣＴＢへ変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -309,6 +314,10 @@
  *
  * 逆に言えば、自動解除のタイミングを『行動終了時』の1ターンにしておけば、
  * 「敵が一度行動するまで重ねられないディレイ」のような異常を狙って作れます。
+ * 
+ * <DeadCTBTurn>
+ * 戦闘不能状態でも行動順序に表示されるようになります。
+ * 一定時間で復活などの特殊なステートを想定しています。
  * 
  * -------------------------------------------------------------------
  * ■連続行動技
@@ -709,7 +718,7 @@ BattleManager.makeActionOrders = function() {
      */
     this.allBattleMembers().forEach(function(battler) {
         // 生存者のみに絞る
-        if (battler.isAlive()) {
+        if (battler.isCtbAlive()) {
             // 現在の敏捷性で基本WTを設定する。
             battler.makeBaseWt();
             // 格納
@@ -799,7 +808,7 @@ BattleManager.timeGoesBy = function() {
         // 先頭行動者のWTが0になるように、全バトラーのWTを減算。
         for (const battler of this.allBattleMembers()) {
             // 生存者のみに絞る
-            if (battler.isAlive()) {
+            if (battler.isCtbAlive()) {
                 battler.setWt(battler.wt - topWt);
             }
         }
@@ -936,7 +945,7 @@ BattleManager.getNextSubject = function() {
         if (!battler) {
             return null;
         }
-        if (battler.isBattleMember() && battler.isAlive()) {
+        if (battler.isBattleMember() && battler.isCtbAlive()) {
             // MZ対応
             if (battler.isActor()) {
                 this._currentActor = battler;
@@ -1079,6 +1088,23 @@ Game_BattlerBase.prototype.addNewState = function(stateId) {
  */
 Game_BattlerBase.prototype.setWt = function(wt) {
     this._wt = wt;
+};
+
+/**
+ * 【独自】ＣＴＢの順序表示および時間更新を行うか？
+ */
+Game_BattlerBase.prototype.isCtbAlive = function() {
+    if (this.isAlive()) {
+        return true;
+    }
+    // 戦闘不能時でも順序表示する場合
+    for (const stateId of this._states) {
+        const state = $dataStates[stateId]
+        if (state.meta.DeadCTBTurn) {
+            return true;
+        }
+    }
+    return false;
 };
 
 //-----------------------------------------------------------------------------
