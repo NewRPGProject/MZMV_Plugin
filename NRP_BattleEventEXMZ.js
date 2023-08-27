@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.052 Extends the functionality of battle events.
+ * @plugindesc v1.06 Extends the functionality of battle events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_ChargeSkill
  * @orderAfter NRP_EnemyRoutineKai
@@ -80,6 +80,9 @@
  * The author is not responsible,
  * but will deal with defects to the extent possible.
  * 
+ * @------------------------------------------------------------------
+ * @ Plugin Commands
+ * @------------------------------------------------------------------
  * 
  * @command forceSubject
  * @desc Overrides the subject that does "Force Action".
@@ -92,6 +95,7 @@
  * @option
  * @option subject
  * 
+ * @------------------------------------------------------------------
  * 
  * @command forceTargetFilter
  * @desc The filtered targets are overwritten as "Force Action" targets.
@@ -112,6 +116,7 @@
  * @arg option
  * @type struct<Option>
  * 
+ * @------------------------------------------------------------------
  * 
  * @command forceTargetMost
  * @desc Overrides the targets that does "Force Action".
@@ -127,6 +132,7 @@
  * @arg option
  * @type struct<Option>
  * 
+ * @------------------------------------------------------------------
  * 
  * @command setConditionSwitch
  * @desc It searches for targets that match the condition and stores the results in a switch.
@@ -162,6 +168,7 @@
  * @desc Dead battlers are included in the search.
  * @type boolean
  * 
+ * @------------------------------------------------------------------
  * 
  * @command superForce
  * @desc When you do "Force Action", it ignores MP and state.
@@ -175,12 +182,21 @@
  * @option Force @value true
  * @option Don't Force @value false
  * 
+ * @------------------------------------------------------------------
+ * @ Plugin Parameters
+ * @------------------------------------------------------------------
  * 
  * @param forceValid
  * @type boolean
  * @default true
  * @desc "Force Action" will also determine if the MP is running out, etc.
  * The default value is true; the original behavior of MZ is false.
+ * 
+ * @param forceValidFlexible
+ * @parent forceValid
+ * @type boolean
+ * @default true
+ * @desc Even if forceValid is on, it should have no effect except for execution by event commands.
  * 
  * @param aIsSubject
  * @text "a" to refer to subject.
@@ -211,7 +227,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.052 バトルイベントの機能を拡張します。
+ * @plugindesc v1.06 バトルイベントの機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_ChargeSkill
  * @orderAfter NRP_EnemyRoutineKai
@@ -278,6 +294,9 @@
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
  * 
+ * @------------------------------------------------------------------
+ * @ プラグインコマンド
+ * @------------------------------------------------------------------
  * 
  * @command forceSubject
  * @text スキル使用者設定
@@ -292,6 +311,7 @@
  * @option
  * @option subject #行動主体
  * 
+ * @------------------------------------------------------------------
  * 
  * @command forceTargetFilter
  * @text スキル対象設定（絞込）
@@ -316,6 +336,7 @@
  * @text オプション
  * @type struct<Option>
  * 
+ * @------------------------------------------------------------------
  * 
  * @command forceTargetMost
  * @text スキル対象設定（最大最小）
@@ -334,6 +355,7 @@
  * @text オプション
  * @type struct<Option>
  * 
+ * @------------------------------------------------------------------
  * 
  * @command setConditionSwitch
  * @text 対象検索→スイッチに格納
@@ -374,6 +396,7 @@
  * @desc 戦闘不能者を検索対象に含みます。
  * @type boolean
  * 
+ * @------------------------------------------------------------------
  * 
  * @command superForce
  * @text 行動判定の無効化
@@ -389,6 +412,9 @@
  * @option 強制する @value true
  * @option 強制しない @value false
  * 
+ * @------------------------------------------------------------------
+ * @ プラグインパラメータ
+ * @------------------------------------------------------------------
  * 
  * @param forceValid
  * @text 強制行動時のスキル使用判定
@@ -396,6 +422,13 @@
  * @default true
  * @desc 戦闘行動の強制時もMP切れや行動異常による使用判定を行います。
  * 初期値はtrue。MZの元の挙動はfalseです。
+ * 
+ * @param forceValidFlexible
+ * @parent forceValid
+ * @text スキル使用判定の影響軽減
+ * @type boolean
+ * @default true
+ * @desc 強制行動時のスキル使用判定がオンの場合でも、イベントコマンドによる実行以外には影響を与えないようにします。
  * 
  * @param aIsSubject
  * @text aで行動主体を参照
@@ -451,8 +484,21 @@ const PLUGIN_NAME = "NRP_BattleEventEXMZ";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 
 const pForceValid = toBoolean(parameters["forceValid"], true);
+const pForceValidFlexible = toBoolean(parameters["forceValidFlexible"], true);
 const pAIsSubject = toBoolean(parameters["aIsSubject"], true);
 const pAdjustCommonEventActionEnd = toBoolean(parameters["adjustCommonEventActionEnd"], true);
+
+let mForceValid = pForceValid;
+
+// 強制行動時のスキル使用判定がオン
+if (pForceValid) {
+    // スキル使用判定の影響軽減がオンの場合
+    if (pForceValidFlexible) {
+        mForceValid = false;
+    } else {
+        mForceValid = true;
+    }
+}
 
 var plSuperForce = undefined;
 var plForceSubject = undefined;
@@ -700,11 +746,21 @@ BattleManager.processForcedAction = function() {
     _BattleManager_processForcedAction.apply(this, arguments);
     // フラグ解除
     this._turnForced = undefined;
+
+    // スキル使用判定の影響軽減がオンの場合
+    if (isForceValidFlexible()) {
+        // 行動制約の無視しない設定を解除
+        // ※ツクールの標準の挙動に戻す。
+        mForceValid = false;
+    }
 };
 
 /**
  * 超強制フラグを考慮した強制状態の判定
  * this._turnForcedなどの値を極力変えず、この関数で判定する。
+ * 
+ * true:  行動制約を無視して行動（本来の戦闘行動の強制の挙動）
+ * false: 行動制約を受ける。
  */
 BattleManager.isForceEX = function() {
     // 戦闘行動の強制の場合
@@ -720,10 +776,12 @@ BattleManager.isForceEX = function() {
         // 超強制フラグがundefinedのままなら、
         } else if (plSuperForce == undefined) {
             // パラメータの設定に従って判定を行う
-            if (pForceValid) {
+            if (mForceValid) {
                 return false;
             }
         }
+        // それ以外はtrue
+        return true;
     }
 };
 
@@ -807,6 +865,12 @@ Game_Interpreter.prototype.command339 = function(params) {
             }
         }.bind(this));
         return true;
+    }
+
+    // スキル使用判定の影響軽減がオンの場合
+    if (isForceValidFlexible()) {
+        // 行動制約を無視しない
+        mForceValid = true;
     }
     
     // 元処理実行
@@ -1129,5 +1193,12 @@ Game_Interpreter.prototype.terminate = function() {
         }
     }
 };
+
+/**
+ * ●スキル使用判定の影響軽減がオンの場合
+ */
+function isForceValidFlexible() {
+    return pForceValid && pForceValidFlexible;
+}
 
 })();
