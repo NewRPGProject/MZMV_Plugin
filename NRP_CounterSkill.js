@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Create counter skill.
+ * @plugindesc v1.001 Create counter skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_ChainSkill
  * @url https://newrpg.seesaa.net/article/500432213.html
@@ -30,7 +30,7 @@
  * <CounterDamageType:1,5>
  * Damage type 1,5 skills are subject to counter.
  * 1:HP Damage, 2:MP Damage, 3:HP Recover, 4:MP Recover,
- * 5:HP Darain, 6:MP Drain
+ * 5:HP Drain, 6:MP Drain
  * If omitted, the plugin parameter settings are used.
  * If left blank, all are valid.
  * 
@@ -139,7 +139,7 @@
  * @param TargetDamageType
  * @type string
  * @default 1,5
- * @desc Damage type to be counterattacked. 1:HP Damage, 2:MP Damage, 3:HP Recover, 4:MP Recover, 5:HP Darain, 6:MP Drain
+ * @desc Damage type to be counterattacked. 1:HP Damage, 2:MP Damage, 3:HP Recover, 4:MP Recover, 5:HP Drain, 6:MP Drain
  * 
  * @param TargetHitType
  * @type string
@@ -212,7 +212,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 反撃スキルを作成する。
+ * @plugindesc v1.001 反撃スキルを作成する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_ChainSkill
  * @url https://newrpg.seesaa.net/article/500432213.html
@@ -339,7 +339,7 @@
  * @text 対象のダメージタイプ
  * @type string
  * @default 1,5
- * @desc 反撃対象とするダメージタイプ。複数可。1:HPﾀﾞﾒｰｼﾞ, 2:MPﾀﾞﾒｰｼﾞ, 3:HP回復, 4:MP回復, 5:HP吸収, 6:MP回復
+ * @desc 反撃対象とするダメージタイプ。複数可。1:HPﾀﾞﾒｰｼﾞ, 2:MPﾀﾞﾒｰｼﾞ, 3:HP回復, 4:MP回復, 5:HP吸収, 6:MP吸収
  * 
  * @param TargetHitType
  * @text 対象の命中タイプ
@@ -576,6 +576,12 @@ BattleManager.updateAction = function() {
         return;
     }
 
+    // 行動主体がスキルの使用条件に合致しない場合は終了
+    // ※やや冗長になっているが、競合なども考慮してこのまま。
+    if (!counterSubject.meetsSkillConditions($dataSkills[skillId])) {
+        return;
+    }
+
     // 戦闘行動の強制を実行
     goCounterkill(counterSubject, counterTarget, skillId);
 };
@@ -727,6 +733,22 @@ Game_BattlerBase.prototype.attackTimesAdd = function() {
 // ----------------------------------------------------------------------------
 
 /**
+ * ●有効判定
+ */
+const _Game_Action_isValid = Game_Action.prototype.isValid;
+Game_Action.prototype.isValid = function() {
+    // 反撃スキルかつ有効判定を無視しない場合
+    if (mInCounter && !pIgnoreSkillConditions) {
+        // 一時的に強制フラグを解除してから戻す。
+        this._forcing = false;
+        const ret = _Game_Action_isValid.apply(this, arguments);
+        this._forcing = true;
+        return ret;
+    }
+    return _Game_Action_isValid.apply(this, arguments);
+};
+
+/**
  * ●効果適用
  */
 const _Game_Action_apply = Game_Action.prototype.apply;
@@ -815,7 +837,7 @@ Game_Action.prototype.apply = function(target) {
 };
 
 /**
- * ●オブジェクト毎の反撃判定
+ * 【独自】オブジェクト毎の反撃判定
  */
 Game_Action.prototype.applyCounter = function(object, target, addCount) {
     const metaCounterSkill = object ? object.meta.CounterSkill : null;
