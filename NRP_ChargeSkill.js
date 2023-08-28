@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.022 Create a charge skill.
+ * @plugindesc v1.023 Create a charge skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/474413155.html
  *
@@ -92,7 +92,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.022 ため技作成用の機能を提供します。
+ * @plugindesc v1.023 ため技作成用の機能を提供します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/474413155.html
  *
@@ -208,7 +208,12 @@ BattleManager.startAction = function() {
 function startCharge(subject) {
     var a = subject; // eval参照用
     var action = subject.currentAction();
-    var item = action.item();
+
+    // スキルが取得できなければ終了
+    if (!action.item()) {
+        return;
+    }
+    const item = action.item();
 
     // ため用ステート
     var chargeStateId = item.meta.ChargeState;
@@ -518,10 +523,10 @@ Game_BattlerBase.prototype.canPaySkillCost = function(skill) {
 /**
  * ●対象設定
  */
-var _Game_Action_makeTargets = Game_Action.prototype.makeTargets;
+const _Game_Action_makeTargets = Game_Action.prototype.makeTargets;
 Game_Action.prototype.makeTargets = function() {
     // ため技情報があれば、対象を再設定
-    var chargeSkill = getChargeSkill(this.subject());
+    const chargeSkill = getChargeSkill(this.subject());
     if (chargeSkill) {
         this.setTarget(chargeSkill.targetIndex);
         let targets = [];
