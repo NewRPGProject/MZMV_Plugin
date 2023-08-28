@@ -32,6 +32,7 @@
  * - Control the effect for actors? : <RoutineActorEffect:[true or false]>
  * - Control the effect for enemys  : <RoutineEnemyEffect:[true or false]>
  * - Watch for state resistance?    : <RoutineWatchResist:[true or false]>
+ * ※The [] is not required. If incorrectly included, it will not work.
  * 
  * [Notes]
  * - Only recovery type skills can be targeted for recovery control.
@@ -163,6 +164,7 @@
  * ・対アクター使用効果を制御するか？：<RoutineActorEffect:[true or false]>
  * ・対エネミー使用効果を制御するか？：<RoutineEnemyEffect:[true or false]>
  * ・ステート耐性を見るか？         ：<RoutineWatchResist:[true or false]>
+ * ※[]は不要です。誤って含めると動きません。
  * 
  * ■注意点
  * ・回復時の対象制御はタイプが回復系のスキルのみ行います。
