@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.06 Adjusts the timing of damage display and enemy defeats.
+ * @plugindesc v1.051 Adjusts the timing of damage display and enemy defeats.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475196493.html
  *
@@ -84,7 +84,7 @@
  */
 /*:ja
  * @target MV MZ
- * @plugindesc v1.06 ダメージ表示や敵の撃破処理のタイミングを調整します。
+ * @plugindesc v1.051 ダメージ表示や敵の撃破処理のタイミングを調整します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475196493.html
  * 
@@ -341,33 +341,32 @@ if (pDamageSameTime) {
         _Window_BattleLog_push.apply(this, arguments);
     };
 
-// 2023/08/28 余計な不具合を起こしているだけの気がするので一旦削除
-    // /**
-    //  * ●結果クリア
-    //  */
-    // var _Game_Battler_clearResult = Game_Battler.prototype.clearResult;
-    // Game_Battler.prototype.clearResult = function() {
-    //     // 行動中はクリアしない。
-    //     // ※行動主体の回復表示が消えてしまうため。
-    //     if (this.isActing()) {
-    //         return;
-    //     }
+    /**
+     * ●結果クリア
+     */
+    var _Game_Battler_clearResult = Game_Battler.prototype.clearResult;
+    Game_Battler.prototype.clearResult = function() {
+        // 行動中はクリアしない。
+        // ※行動主体の回復表示が消えてしまうため。
+        if (this.isActing()) {
+            return;
+        }
         
-    //     _Game_Battler_clearResult.apply(this, arguments);
-    // };
+        _Game_Battler_clearResult.apply(this, arguments);
+    };
 
-    // /**
-    //  * ●行動開始時
-    //  */
-    // const _BattleManager_startAction = BattleManager.startAction;
-    // BattleManager.startAction = function() {
-    //     // 行動主体の結果をクリアする。
-    //     // ※clearResultの修正の影響で、結果が残る不具合に対処するため。
-    //     const subject = this._subject;
-    //     subject._result.clear();
+    /**
+     * ●行動開始時
+     */
+    const _BattleManager_startAction = BattleManager.startAction;
+    BattleManager.startAction = function() {
+        // 行動主体の結果をクリアする。
+        // ※clearResultの修正の影響で、結果が残る不具合に対処するため。
+        const subject = this._subject;
+        subject._result.clear();
 
-    //     _BattleManager_startAction.apply(this, arguments);
-    // };
+        _BattleManager_startAction.apply(this, arguments);
+    };
 }
 
 /**
