@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.051 Adjusts the timing of damage display and enemy defeats.
+ * @plugindesc v1.07 Adjusts the timing of damage display and enemy defeats.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475196493.html
  *
@@ -84,7 +84,7 @@
  */
 /*:ja
  * @target MV MZ
- * @plugindesc v1.051 ダメージ表示や敵の撃破処理のタイミングを調整します。
+ * @plugindesc v1.07 ダメージ表示や敵の撃破処理のタイミングを調整します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475196493.html
  * 
@@ -213,6 +213,9 @@ var damageWaitFlg = false;
  * ●ダメージ一括表示の場合
  */
 if (pDamageSameTime) {
+    // 結果クリア制御用
+    let mNoClearResult = false;
+
     /**
      * ●初期化処理
      */
@@ -267,6 +270,12 @@ if (pDamageSameTime) {
             return targets.indexOf(target) == i;
         });
 
+        // 行動主体の結果クリア
+        subject.clearResult();
+        // 以降、行動主体の結果クリアは禁止する。
+        // ※行動主体の数値表示が消えてしまうため。
+        mNoClearResult = true;
+
         // 対象の人数分ダメージ処理を実行
         for (let target of distinctTargets) {
             // 処理した要素を削除
@@ -281,6 +290,9 @@ if (pDamageSameTime) {
             // ダメージ処理実行
             this.invokeAction(subject, target);
         }
+
+        // 結果クリアの禁止解除
+        mNoClearResult = false;
     };
 
     /**
@@ -344,28 +356,13 @@ if (pDamageSameTime) {
     /**
      * ●結果クリア
      */
-    var _Game_Battler_clearResult = Game_Battler.prototype.clearResult;
+    const _Game_Battler_clearResult = Game_Battler.prototype.clearResult;
     Game_Battler.prototype.clearResult = function() {
-        // 行動中はクリアしない。
-        // ※行動主体の回復表示が消えてしまうため。
-        if (this.isActing()) {
+        // 一括処理中はクリアしない。
+        if (mNoClearResult) {
             return;
         }
-        
         _Game_Battler_clearResult.apply(this, arguments);
-    };
-
-    /**
-     * ●行動開始時
-     */
-    const _BattleManager_startAction = BattleManager.startAction;
-    BattleManager.startAction = function() {
-        // 行動主体の結果をクリアする。
-        // ※clearResultの修正の影響で、結果が残る不具合に対処するため。
-        const subject = this._subject;
-        subject._result.clear();
-
-        _BattleManager_startAction.apply(this, arguments);
     };
 }
 
