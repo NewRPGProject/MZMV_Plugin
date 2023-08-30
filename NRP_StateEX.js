@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Extend the functionality of the state in various ways.
+ * @plugindesc v1.04 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -18,6 +18,8 @@
  * - States that inflict damage when hit.
  * 　※In other words, it is a damaging technique
  *     whose hit is determined by state resistance.
+ * - State that activates a skill when it is released after a turn.
+ *   For example, Mortal Ray is possible.
  * 
  * -------------------------------------------------------------------
  * [Regeneration Value Settings]
@@ -208,6 +210,11 @@
  * -------------------------------------------------------------------
  * Specify the following in the notes field of the state.
  * 
+ * <StateEndSkill:100>
+ * When the state is released after a turn,
+ * the number 100 skill is activated.
+ * Note that the target will be random.
+ * 
  * <DefeatState>
  * Same as dead, subject to a defeat determination.
  * Assumes a petrification-like state
@@ -282,7 +289,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 ステートの機能を色々と拡張します。
+ * @plugindesc v1.04 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -296,6 +303,8 @@
  * ・命中時にダメージを与えるステート
  * 　※つまり、ステート耐性で命中の決まるダメージ技です。
  * 　　ＦＦシリーズのグラビデや即死効果など。
+ * ・ターン経過で解除された際にスキルを発動するステート
+ * 　例えば、死の宣告などが可能です。
  * 
  * -------------------------------------------------------------------
  * ■再生値の設定
@@ -477,6 +486,10 @@
  * ■その他の効果
  * -------------------------------------------------------------------
  * ステートのメモ欄に以下を指定してください。
+ * 
+ * <StateEndSkill:100>
+ * ステートがターン経過で解除される際に１００番のスキルを発動します。
+ * なお、対象はランダムになります。
  * 
  * <DefeatState>
  * 戦闘不能と同じように、全滅判定の対象になります。
@@ -1016,6 +1029,184 @@ Game_Battler.prototype.regenerateTp = function() {
 
     // ない場合は元のまま
     _Game_Battler_regenerateTp.apply(this, arguments);
+};
+
+// ----------------------------------------------------------------------------
+// ステート解除時にスキル発動
+// ----------------------------------------------------------------------------
+
+// ターン経過による解除を判定するフラグ
+let mIsRemoveStatesAuto = false;
+// ステート終了スキルのモーション調整
+let mStateEndSkillAdjustMotion = false;
+// ターン経過によるステート状況表示のクリアを抑制
+let mdisplayAutoAffectedStatusNotClear = false;
+
+/**
+ * ●ステートのターン経過による解除
+ */
+const _Game_Battler_removeStatesAuto = Game_Battler.prototype.removeStatesAuto;
+Game_Battler.prototype.removeStatesAuto = function(timing) {
+    mIsRemoveStatesAuto = true;
+    _Game_Battler_removeStatesAuto.apply(this, arguments);
+    mIsRemoveStatesAuto = false;
+};
+
+/**
+ * ●ステートの解除
+ */
+const _Game_Battler_removeState = Game_Battler.prototype.removeState;
+Game_Battler.prototype.removeState = function(stateId) {
+    _Game_Battler_removeState.apply(this, arguments);
+
+    // ターン経過でステートが解除された場合
+    if (mIsRemoveStatesAuto) {
+        const stateEndSkill = $dataStates[stateId].meta.StateEndSkill;
+        if (stateEndSkill) {
+            const a = this;
+            const skillId = eval(stateEndSkill);
+            const action = new Game_Action(this, true);
+            action.setSkill(skillId);
+
+            // 戦闘行動の強制を実行
+            goStateSkill(this, skillId);
+        }
+    }
+};
+
+/**
+ * ●ステート終了時のスキルを実行
+ */
+function goStateSkill(subject, skillId) {
+    // 戦闘不能時のモーション調整
+    if (subject.isDead()) {
+        mStateEndSkillAdjustMotion = true;
+    }
+
+    // 戦闘行動の強制を実行
+    // ※対象は-1:ランダム
+    subject.stateEndForceAction(skillId, -1);
+    BattleManager.forceAction(subject);
+    // BattleManager.processForcedAction();
+
+    // 【ＭＶ】強制実行フラグを解除
+    // ※強制フラグが立っていると、ステートのターン経過が行われないため。
+    if (BattleManager.isForcedTurn && BattleManager.isForcedTurn()) {
+        BattleManager._turnForced = false;
+    }
+    
+    return true;
+}
+
+/**
+ * 【独自】ステート終了スキルを実行する。
+ */
+Game_Battler.prototype.stateEndForceAction = function(skillId, targetIndex) {
+    const action = new Game_Action(this, true);
+    action.setSkill(skillId);
+
+    if (targetIndex === -2) {
+        action.setTarget(this._lastTargetIndex);
+    } else if (targetIndex === -1) {
+        action.decideRandomTarget();
+    } else {
+        action.setTarget(targetIndex);
+    }
+
+    // スキルを次のアクションとして実行するため、
+    // push（末尾）ではなくunshift（先頭）で追加
+    this._actions.unshift(action);
+
+    // ログウィンドウをクリア
+    BattleManager._logWindow.clear();
+
+    // 次のログウィンドウのクリアを抑制するためのフラグ
+    // ※これをしないと、タイミングの関係でスキル名の表示が消えてしまう。
+    mdisplayAutoAffectedStatusNotClear = true;
+
+    // アクター位置の自動設定を禁止解除（DynamicMotion）
+    BattleManager._noUpdateTargetPosition = false;
+};
+
+/**
+ * ●モーション更新
+ */
+const _Sprite_Actor_refreshMotion = Sprite_Actor.prototype.refreshMotion;
+Sprite_Actor.prototype.refreshMotion = function() {
+    if (mStateEndSkillAdjustMotion) {
+        const actor = this._actor;
+        if (actor) {
+            const stateMotion = actor.stateMotionIndex();
+            // 3:戦闘不能時はモーションを更新しない。
+            // ※戦闘不能状態で発動するリレイズ的なステートを想定
+            // 　瞬時にdeadモーションを取らせても一瞬だけ立ち上がる問題に対処
+            if (stateMotion === 3) {
+                mStateEndSkillAdjustMotion = false;
+                return;
+            }
+        }
+    }
+
+    _Sprite_Actor_refreshMotion.apply(this, arguments);
+}
+
+/**
+ * ●アクション終了時
+ */
+const _BattleManager_endAction = BattleManager.endAction;
+BattleManager.endAction = function() {
+    // フラグを解除
+    mStateEndSkillAdjustMotion = false;
+    mdisplayAutoAffectedStatusNotClear = false;
+    _BattleManager_endAction.apply(this, arguments);
+};
+
+/**
+ * ●ターン経過によるステート状況表示
+ */
+const _Window_BattleLog_displayAutoAffectedStatus = Window_BattleLog.prototype.displayAutoAffectedStatus;
+Window_BattleLog.prototype.displayAutoAffectedStatus = function(target) {
+    _Window_BattleLog_displayAutoAffectedStatus.apply(this, arguments);
+
+    // メッセージをクリアしない。
+    if (mdisplayAutoAffectedStatusNotClear) {
+        // 末尾のclear処理を取得
+        const clearMethod = this._methods.reverse().find(method => method.name == "clear");
+        // 取得したclear処理をフィルターで除去
+        this._methods = this._methods.filter(method => method != clearMethod);
+    }
+};
+
+// ----------------------------------------------------------------------------
+// 死亡時にもかかるステート
+// ----------------------------------------------------------------------------
+
+// 生存判定偽装用
+let mDummyAlive = false;
+
+/**
+ * ●ステートを付加できるか？
+ */
+const _Game_Battler_isStateAddable = Game_Battler.prototype.isStateAddable;
+Game_Battler.prototype.isStateAddable = function(stateId) {
+    // 戦闘不能時も有効なステートなら、生存判定を偽装してステートを有効にする。
+    if ($dataStates[stateId].meta.IgnoreRecoverDie) {
+        mDummyAlive = true;
+    }
+    const ret = _Game_Battler_isStateAddable.apply(this, arguments);
+    mDummyAlive = false;
+    return ret;
+};
+
+/**
+ * ●生存判定
+ */
+const _Game_BattlerBase_isAlive = Game_BattlerBase.prototype.isAlive;
+Game_BattlerBase.prototype.isAlive = function() {
+    if (mDummyAlive) {
+        return true;
+    }
+    return _Game_BattlerBase_isAlive.apply(this, arguments);
 };
 
 // ----------------------------------------------------------------------------
