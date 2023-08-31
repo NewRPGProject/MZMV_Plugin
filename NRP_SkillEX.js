@@ -8,6 +8,11 @@
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
  * @help Extend the effect of the skill.
+ * For example, the following skills can be created
+ * 
+ * - Skills that have a success rate greater than 100.
+ * - Skills that add states at random
+ * - Skills that change elements or scope depending on conditions
  * 
  * -------------------------------------------------------------------
  * [Note (skill, item)]
@@ -32,7 +37,6 @@
  * <AddState:4>
  * <AddStateRate:50>
  * Add state number 4 50% of the time.
- * Unlike those in effects, states can be changed by formulas.
  * ※If <AddStateRate> is omitted, the rate is 100%.
  * 
  * For example, the formula below adds 4, 5, and 6 states at random.
@@ -76,7 +80,12 @@
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
- * @help スキルの効果を拡張します。
+ * @help スキルの効果に対して様々な拡張を行います。
+ * 例えば、以下のようなスキルが作成できます。
+ * 
+ * ・成功率が１００を超えるスキル
+ * ・ランダムでステートを付加するスキル
+ * ・条件によって属性や範囲が変化するスキル
  * 
  * -------------------------------------------------------------------
  * ■スキル、アイテムのメモ欄
@@ -100,7 +109,6 @@
  * <AddState:4>
  * <AddStateRate:50>
  * ４番のステートを５０％の確率で付加します。
- * 使用効果のものとは異なり、ステートを数式で操作できます。
  * ※<AddStateRate>を省略すると１００％になります。
  * 
  * 例えば、以下は4,5,6のステートをランダムで付加します。
