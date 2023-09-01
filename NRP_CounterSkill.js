@@ -29,8 +29,8 @@
  * 
  * <CounterDamageType:1,5>
  * Damage type 1,5 skills are subject to counter.
- * 1:HP Damage, 2:MP Damage, 3:HP Recover, 4:MP Recover,
- * 5:HP Drain, 6:MP Drain
+ * 0:None, 1:HP Damage, 2:MP Damage, 3:HP Recover,
+ * 4:MP Recover, 5:HP Drain, 6:MP Drain
  * If omitted, the plugin parameter settings are used.
  * If left blank, all are valid.
  * 
@@ -139,7 +139,7 @@
  * @param TargetDamageType
  * @type string
  * @default 1,5
- * @desc Damage type to be counterattacked. 1:HP Damage, 2:MP Damage, 3:HP Recover, 4:MP Recover, 5:HP Drain, 6:MP Drain
+ * @desc Damage type to be counterattacked. 0:None, 1:HP Damage, 2:MP Damage, 3:HP Recover, 4:MP Recover, 5:HP Drain, 6:MP Drain
  * 
  * @param TargetHitType
  * @type string
@@ -236,7 +236,8 @@
  * 
  * <CounterDamageType:1,5>
  * ダメージタイプ1,5のスキルを反撃の対象にします。
- * 1:HPダメージ, 2:MPダメージ, 3:HP回復, 4:MP回復, 5:HP吸収, 6:MP回復です。
+ * 0:なし, 1:HPダメージ, 2:MPダメージ, 3:HP回復,
+ * 4:MP回復, 5:HP吸収, 6:MP吸収です。
  * 省略時はプラグインパラメータの設定を使用します。
  * 空欄にした場合は全て有効となります。
  * 
@@ -339,7 +340,7 @@
  * @text 対象のダメージタイプ
  * @type string
  * @default 1,5
- * @desc 反撃対象とするダメージタイプ。複数可。1:HPﾀﾞﾒｰｼﾞ, 2:MPﾀﾞﾒｰｼﾞ, 3:HP回復, 4:MP回復, 5:HP吸収, 6:MP吸収
+ * @desc 反撃対象とするダメージタイプ。複数可。0:なし, 1:HPﾀﾞﾒｰｼﾞ, 2:MPﾀﾞﾒｰｼﾞ, 3:HP回復, 4:MP回復, 5:HP吸収, 6:MP吸収
  * 
  * @param TargetHitType
  * @text 対象の命中タイプ
@@ -583,13 +584,13 @@ BattleManager.updateAction = function() {
     }
 
     // 戦闘行動の強制を実行
-    goCounterkill(counterSubject, counterTarget, skillId);
+    goCounterSkill(counterSubject, counterTarget, skillId);
 };
 
 /**
  * ●反撃スキルを実行
  */
-function goCounterkill(subject, target, skillId) {
+function goCounterSkill(subject, target, skillId) {
     // カウンター実行フラグオン
     mInCounter = true;
 
