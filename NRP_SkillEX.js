@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Extend the effect of the skill.
+ * @plugindesc v1.01 Extend the effect of the skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -18,6 +18,10 @@
  * [Note (skill, item)]
  * -------------------------------------------------------------------
  * All of the following can use formulas.
+ * 
+ * ◆Add Critical Rate
+ * <AddCriticalRate:50>
+ * Add 50% to the critical rate.
  * 
  * ◆Change Success Rate
  * <SuccessRate:150>
@@ -76,7 +80,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 スキルの効果を拡張します。
+ * @plugindesc v1.01 スキルの効果を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -91,6 +95,10 @@
  * ■スキル、アイテムのメモ欄
  * -------------------------------------------------------------------
  * 以下はいずれも数式が使用できます。
+ * 
+ * ◆会心率を加算
+ * <AddCriticalRate:50>
+ * 会心率を５０％加算します。
  * 
  * ◆成功率を変更
  * <SuccessRate:150>
@@ -283,6 +291,22 @@ Game_Action.prototype.checkItemScope = function(list) {
         return list.includes(eval(changeScope));
     }
     return _Game_Action_checkItemScope.apply(this, arguments);
+};
+
+/**
+ * ●会心率を取得
+ */
+const _Game_Action_itemCri = Game_Action.prototype.itemCri;
+Game_Action.prototype.itemCri = function(target) {
+    const ret = _Game_Action_itemCri.apply(this, arguments);
+    // eval参照用
+    const a = this.subject();
+    // 会心率を加算する場合
+    const addCriticalRate = this.item().meta.AddCriticalRate;
+    if (addCriticalRate) {
+        return ret + eval(addCriticalRate) / 100;
+    }
+    return ret;
 };
 
 })();
