@@ -3,8 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Activate the skill at dead time.
- * @orderAfter NRP_TraitsPlus
+ * @plugindesc v1.01 Activate the skill at dead time.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/500606923.html
  *
@@ -57,7 +56,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 戦闘不能時にスキルを発動します。
+ * @plugindesc v1.01 戦闘不能時にスキルを発動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/500606923.html
  *
@@ -217,7 +216,11 @@ BattleManager.endAction = function() {
     // 戦闘不能スキル使用者が存在する場合
     if (pSkillBeforeCollapse) {
         for (const battler of mDeadSkillUserList) {
-            // スキルの効果で復活した場合は処理終了。
+            // アクション状態になっているので解除
+            // ※不要な前進処理を無効化するため。
+            battler.setActionState("undecided");
+
+            // スキルの効果で復活した場合は処理終了
             if (battler.isAlive()) {
                 continue;
             }
