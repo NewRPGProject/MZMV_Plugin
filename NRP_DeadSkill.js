@@ -6,7 +6,7 @@
  * @plugindesc v1.00 Activate the skill at dead time.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
- * @url http://newrpg.seesaa.net/article/488957733.html
+ * @url http://newrpg.seesaa.net/article/500606923.html
  *
  * @help Activate the skill at dead time.
  * It can be used for final attack on dead or automatic resuscitation.
@@ -58,7 +58,7 @@
  * @target MV MZ
  * @plugindesc v1.00 戦闘不能時にスキルを発動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
- * @url http://newrpg.seesaa.net/article/488957733.html
+ * @url http://newrpg.seesaa.net/article/500606923.html
  *
  * @help 戦闘不能時にスキルを発動します。
  * 死に際のファイナルアタックや自動蘇生（リレイズ）などに使えます。
