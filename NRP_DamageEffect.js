@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Change the effect of damage handling.
+ * @plugindesc v1.031 Change the effect of damage handling.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475586753.html
  *
@@ -173,7 +173,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 ダメージ処理の演出を変更します。
+ * @plugindesc v1.031 ダメージ処理の演出を変更します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475586753.html
  *
@@ -589,7 +589,7 @@ Sprite_Actor.prototype.updateBlink = function() {
 };
 
 /***********************************************************
- * ■点滅共通部分
+ * ■ダメージ共通部分
  ***********************************************************/
 /**
  * ●エフェクト設定
@@ -621,6 +621,18 @@ Game_Battler.prototype.requestEffect = function(effectType) {
     }
 
     _Game_Battler_requestEffect.apply(this, arguments);
+};
+
+/**
+ * ●属性計算
+ */
+const _Game_Action_calcElementRate = Game_Action.prototype.calcElementRate;
+Game_Action.prototype.calcElementRate = function(target) {
+    // ダメージタイプが『なし』ならば計算しない。
+    if (this.item().damage.type == 0) {
+        return 1;
+    }
+    return _Game_Action_calcElementRate.apply(this, arguments);
 };
 
 /***********************************************************
