@@ -36,7 +36,9 @@
  * f:Number of frames (standard is 15)
  * 
  * ◆Battler's motion speed
- * <BattlerMotionRate:n> n:倍率(100%)
+ * <BattlerMotionRate:n>
+ * n:Rate(100%)
+ * 
  * - Example: <BattlerMotionRate:150>
  * ※This setting is valid only for actors.
  * 
@@ -95,7 +97,9 @@
  * f:フレーム数（標準は15）
  * 
  * ◆バトラーのモーション速度
- * <BattlerMotionRate:n> n:倍率(100%)
+ * <BattlerMotionRate:n>
+ * n:倍率(100%)
+ * 
  * ・例：<BattlerMotionRate:150>
  * ※この設定はアクターのみ有効です。
  * 
