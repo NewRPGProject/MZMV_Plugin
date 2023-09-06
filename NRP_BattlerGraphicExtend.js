@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Extend the graphics of the battler.
+ * @plugindesc v1.01 Extend the graphics of the battler.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/500642681.html
  *
@@ -17,7 +17,8 @@
  * -------------------------------------------------------------------
  * [Usage]
  * -------------------------------------------------------------------
- * Include the following in the note of the object that holds the trait.
+ * Include the following in the note of the object
+ * that holds the trait. (actor, enemy, class, equipment, state)
  * 
  * ◆Battler's Tone Change
  * <BattlerTone:r,g,b,g>
@@ -48,11 +49,19 @@
  * @------------------------------------------------------------------
  * @ Plugin Parameters
  * @------------------------------------------------------------------
+ * 
+ * @param FlashType
+ * @type select
+ * @option 0:Half @value 0
+ * @option 1:All @value 1
+ * @default 0
+ * @desc Flash display method.
+ * If half, at least half of the color is left.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 バトラーのグラフィックを拡張します。
+ * @plugindesc v1.01 バトラーのグラフィックを拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/500642681.html
  *
@@ -67,7 +76,8 @@
  * -------------------------------------------------------------------
  * ■使用方法
  * -------------------------------------------------------------------
- * 特徴を保有するオブジェクトのメモ欄に以下を記載してください。
+ * 特徴を保有するオブジェクト（アクター、エネミー、職業、装備、ステート）
+ * のメモ欄に以下を記載してください。
  * 
  * ◆バトラーの色調変更
  * <BattlerTone:r,g,b,g>
@@ -98,6 +108,15 @@
  * @------------------------------------------------------------------
  * @ プラグインパラメータ
  * @------------------------------------------------------------------
+ * 
+ * @param FlashType
+ * @text フラッシュ方式
+ * @type select
+ * @option 0:半分 @value 0
+ * @option 1:全部 @value 1
+ * @default 0
+ * @desc フラッシュの表示方式です。
+ * 半分ならば、最低でも色を半分残します。
  */
 
 (function() {
@@ -134,6 +153,7 @@ function parseStruct2(arg) {
 
 const PLUGIN_NAME = "NRP_BattlerGraphicExtend";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
+const pFlashType = toNumber(parameters["FlashType"]);
 
 // ----------------------------------------------------------------------------
 // Game_BattlerBase
@@ -328,7 +348,15 @@ Sprite_Battler.prototype.updateBlendColor = function() {
     }
     const realBlendColor = color.clone();
     const interval = this._battler.getBlendColorInterval();
-    realBlendColor[3]  = color[3] / 2 + Math.floor(color[3] * (Math.sin(this._frameCount / interval) + 1) / 4);
+
+    // 全部
+    if (pFlashType == 1) {
+        realBlendColor[3]  = Math.floor(color[3] * (Math.sin(this._frameCount / interval) + 1) / 2);
+    // 半分（本来のBattlerGraphicExtend.jsの挙動）
+    } else {
+        realBlendColor[3]  = color[3] / 2 + Math.floor(color[3] * (Math.sin(this._frameCount / interval) + 1) / 4);
+    }
+
     if (!Utils.isMobileDevice() || this._frameCount % 8 === 0) {
         sprite.setBlendColor(realBlendColor);
     }
