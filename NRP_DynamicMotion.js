@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.25 When executing skills, call motion freely.
+ * @plugindesc v1.26 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help When executing skills(items), call motion freely.
@@ -555,7 +555,7 @@
  */
 
 /*:ja
- * @plugindesc v1.25 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.26 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在にモーションを呼び出します。
@@ -3158,26 +3158,32 @@ Sprite_Weapon.prototype.updatePattern = function() {
  * 【独自】絶対座標での移動を行う。
  */
 Sprite_Battler.prototype.startMoveDynamic = function(x, y, duration) {
-    // 全体時間の保持
-    this._allDuration = duration;
+    const dm = this.dynamicMotion;
+    const bm = dm.baseMotion;
 
-    // 絶対座標を相対座標へ変換し、移動実行。
-    var offsetX = x - this._homeX;
-    var offsetY = y - this._homeY;
+    // 移動先の指定がある場合
+    if (bm.isUseDuration()) {
+        // 全体時間の保持
+        this._allDuration = duration;
 
-    // 開始時の空中Ｙ座標
-    this._startAirY = this._airY;
-    if (this._startAirY == undefined) {
-        this._startAirY = 0;
-    }
+        // 絶対座標を相対座標へ変換し、移動実行。
+        var offsetX = x - this._homeX;
+        var offsetY = y - this._homeY;
 
-    this._targetOffsetX = offsetX;
-    this._targetOffsetY = offsetY;
-    this._movementDuration = duration;
-    if (duration === 0) {
-        this._offsetX = offsetY;
-        this._offsetY = offsetY;
-        this._airY = this._targetAirY;
+        // 開始時の空中Ｙ座標
+        this._startAirY = this._airY;
+        if (this._startAirY == undefined) {
+            this._startAirY = 0;
+        }
+
+        this._targetOffsetX = offsetX;
+        this._targetOffsetY = offsetY;
+        this._movementDuration = duration;
+        if (duration === 0) {
+            this._offsetX = offsetY;
+            this._offsetY = offsetY;
+            this._airY = this._targetAirY;
+        }
     }
 
     // 描画更新
