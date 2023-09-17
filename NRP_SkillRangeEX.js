@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.081 Extends the effective range of skills and items.
+ * @plugindesc v1.09 Extends the effective range of skills and items.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_VisualTurn
  * @orderBefore NRP_DynamicAnimationMZ
@@ -92,7 +92,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.081 スキル及びアイテムの効果範囲を拡張します。
+ * @plugindesc v1.09 スキル及びアイテムの効果範囲を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_VisualTurn
  * @orderBefore NRP_DynamicAnimationMZ
@@ -738,7 +738,12 @@ Window_BattleActor.prototype.select = function(index) {
         if (!subject) {
             return;
         }
-        const action = subject.currentAction();
+
+        // 有効なアクションを末尾から取得
+        // ※行動回数が２以上の場合は無効なアクションも入っているため除外
+        const actions = subject._actions.filter(action => action.item());
+        const action = actions[actions.length - 1];
+
         const selectActor = $gameParty.members()[this.index()];
         // アクションと現在の選択対象を元に拡張された対象を取得
         const targets = rangeEx(action, [selectActor]);
@@ -786,7 +791,11 @@ Window_BattleEnemy.prototype.select = function(index) {
         if (!subject) {
             return;
         }
-        const action = subject.currentAction();
+
+        // 有効なアクションを末尾から取得
+        // ※行動回数が２以上の場合は無効なアクションも入っているため除外
+        const actions = subject._actions.filter(action => action.item());
+        const action = actions[actions.length - 1];
 
         // アクションと現在の選択対象を元に拡張された対象を取得
         const targets = rangeEx(action, [this.enemy()]);
