@@ -14,7 +14,6 @@
  * - Skills that have a success rate greater than 100.
  * - Skills that add states at random
  * - Skills that change elements or scope depending on conditions
- * - Skill to recover TP
  * 
  * -------------------------------------------------------------------
  * [Note (skill, item)]
@@ -101,7 +100,6 @@
  * ・成功率が１００を超えるスキル
  * ・ランダムでステートを付加するスキル
  * ・条件によって属性や範囲が変化するスキル
- * ・ＴＰを回復するスキル
  * 
  * -------------------------------------------------------------------
  * ■スキル、アイテムのメモ欄
