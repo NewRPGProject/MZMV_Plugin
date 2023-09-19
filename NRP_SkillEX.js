@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Extend the effect of the skill.
+ * @plugindesc v1.02 Extend the effect of the skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -14,6 +14,7 @@
  * - Skills that have a success rate greater than 100.
  * - Skills that add states at random
  * - Skills that change elements or scope depending on conditions
+ * - Skill to recover TP
  * 
  * -------------------------------------------------------------------
  * [Note (skill, item)]
@@ -65,6 +66,14 @@
  * the all enemies. Otherwise, one enemy.
  * <ChangeScope:a.isLearnedSkill(100) ? 2 : 1>
  * 
+ * ◆Recover TP
+ * <RecoverTp:100>
+ * Recovers 100 TP.
+ * If it is negative, it will be damage.
+ * 
+ * Example: It heals TP by a value equal to the user's mat.
+ * <RecoverTp:a.mat>
+ * 
  * -------------------------------------------------------------------
  * [Terms]
  * -------------------------------------------------------------------
@@ -81,7 +90,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 スキルの効果を拡張します。
+ * @plugindesc v1.02 スキルの効果を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -92,6 +101,7 @@
  * ・成功率が１００を超えるスキル
  * ・ランダムでステートを付加するスキル
  * ・条件によって属性や範囲が変化するスキル
+ * ・ＴＰを回復するスキル
  * 
  * -------------------------------------------------------------------
  * ■スキル、アイテムのメモ欄
@@ -139,6 +149,14 @@
  * 
  * 例：スキル100を覚えている場合は敵全体。それ以外は敵単体
  * <ChangeScope:a.isLearnedSkill(100) ? 2 : 1>
+ * 
+ * ◆ＴＰ回復
+ * <RecoverTp:100>
+ * ＴＰを１００回復します。
+ * マイナスならダメージになります。
+ * 
+ * 例：使用者の魔力分だけＴＰを回復。
+ * <RecoverTp:a.mat>
  * 
  * -------------------------------------------------------------------
  * ■利用規約
@@ -213,6 +231,13 @@ Game_Action.prototype.apply = function(target) {
     // eval計算用
     const a = this.subject();
     const b = target;
+
+    // ＴＰ回復
+    const recoverTp = this.item().meta.RecoverTp;
+    if (recoverTp) {
+        target.gainTp(eval(recoverTp));
+        this.makeSuccess(target);
+    }
 
     // 追加ステートの指定がなければ終了
     const addState = this.item().meta.AddState;
