@@ -1718,11 +1718,6 @@ Window_BattleEnemy.prototype.hide = function() {
     this._index = null;
 };
 
-const _BattleManager_selectNextCommand = BattleManager.selectNextCommand;
-BattleManager.selectNextCommand = function() {
-    _BattleManager_selectNextCommand.apply(this, arguments);
-};
-
 /**-------------------------------------------------------------
  * ●以下、状況によってCTBウィンドウの表示・非表示を切り替える。
  *--------------------------------------------------------------/
