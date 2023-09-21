@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.163 The order of actions is displayed on the battle screen.
+ * @plugindesc v1.164 The order of actions is displayed on the battle screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -289,7 +289,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.163 行動順序を戦闘画面へ表示します。
+ * @plugindesc v1.164 行動順序を戦闘画面へ表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -830,6 +830,9 @@ Scene_Battle.prototype.createCtbWindow = function(){
  */
 NrpVisualTurn.visualTurnList = function(actionBattlers) {
     const win = this._ctbWindow;
+    if (!win) {
+        return;
+    }
     var dispNumber = getDispNumber();
     
     /*
@@ -1670,12 +1673,12 @@ NrpVisualTurn.drawCttbBorder = function(battler, x, y) {
 /**
  * ●味方の選択時
  */
-var _Window_BattleActor_prototype_select = Window_BattleActor.prototype.select;
+const _Window_BattleActor_prototype_select = Window_BattleActor.prototype.select;
 Window_BattleActor.prototype.select = function(index) {
     _Window_BattleActor_prototype_select.apply(this, arguments);
     
     // 対象の選択が有効なら再描画して選択対象を色替え
-    if (index >= 0) {
+    if (this.active && index >= 0) {
         NrpVisualTurn.visualTurnList(BattleManager._actionBattlers);
     }
 };
@@ -1699,7 +1702,7 @@ Window_BattleEnemy.prototype.select = function(index) {
     _Window_BattleEnemy_prototype_select.apply(this, arguments);
     
     // 対象の選択が有効なら再描画して選択対象を色替え
-    if (index >= 0) {
+    if (this.active && index >= 0) {
         NrpVisualTurn.visualTurnList(BattleManager._actionBattlers);
     }
 };
@@ -1713,6 +1716,11 @@ Window_BattleEnemy.prototype.hide = function() {
 
     // 【MZ対応】選択状態が残らないようにインデックスをクリア
     this._index = null;
+};
+
+const _BattleManager_selectNextCommand = BattleManager.selectNextCommand;
+BattleManager.selectNextCommand = function() {
+    _BattleManager_selectNextCommand.apply(this, arguments);
 };
 
 /**-------------------------------------------------------------
@@ -1915,7 +1923,7 @@ BattleManager.startTurn = function() {
 const _BattleManager_startAction = BattleManager.startAction;
 BattleManager.startAction = function() {
     // 元の処理
-    _BattleManager_startAction.apply(this);
+    _BattleManager_startAction.apply(this, arguments);
     
     const item = this._subject.currentAction().item();
 
