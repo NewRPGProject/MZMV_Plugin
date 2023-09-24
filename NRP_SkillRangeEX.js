@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.09 Extends the effective range of skills and items.
+ * @plugindesc v1.10 Extends the effective range of skills and items.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_VisualTurn
  * @orderBefore NRP_DynamicAnimationMZ
@@ -92,7 +92,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.09 スキル及びアイテムの効果範囲を拡張します。
+ * @plugindesc v1.10 スキル及びアイテムの効果範囲を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_VisualTurn
  * @orderBefore NRP_DynamicAnimationMZ
@@ -214,6 +214,13 @@ const pBaseCoordinate = setDefault(parameters["baseCoordinate"]);
 
 // 主対象保持用
 var mainTarget;
+
+/**
+ * 【独自】他プラグインとの連携用に定義
+ */
+BattleManager.rangeEx = function(action, targets) {
+    return rangeEx(action, targets);
+}
 
 /**
  * ●効果範囲の拡張

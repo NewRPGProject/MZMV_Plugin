@@ -3,8 +3,9 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Extends the substitute effect.
+ * @plugindesc v1.01 Extends the substitute effect.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
+ * @orderAfter NRP_DynamicAnimationMZ
  * @url https://newrpg.seesaa.net/article/500482565.html
  *
  * @help Extends the substitute effect.
@@ -227,8 +228,9 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 身代わりの効果を拡張する。
+ * @plugindesc v1.01 身代わりの効果を拡張する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
+ * @orderAfter NRP_DynamicAnimationMZ
  * @url https://newrpg.seesaa.net/article/500482565.html
  *
  * @help 身代わりの効果を拡張します。
@@ -700,7 +702,7 @@ function isValidSubstitute(action, actionItem, targets, object) {
  */
 const _Game_Action_makeTargets = Game_Action.prototype.makeTargets;
 Game_Action.prototype.makeTargets = function() {
-    const targets = _Game_Action_makeTargets.apply(this, arguments);
+    let targets = _Game_Action_makeTargets.apply(this, arguments);
 
     const actionItem = this.item();
 
@@ -733,6 +735,17 @@ Game_Action.prototype.makeTargets = function() {
                 targets.splice(i, 1, substituteBattler);
                 substituteCount++;
             }
+        }
+
+        // NRP_SkillRangeEX.jsとの連携用
+        const rangeEx = actionItem.meta.RangeEx;
+        if (rangeEx) {
+            // アクションの本来の対象が単体の場合は、対象を再設定
+            if (BattleManager.rangeEx && this.isForOne()) {
+                targets = BattleManager.rangeEx(this, [substituteBattler]);
+            }
+            // 主対象を更新する。
+            BattleManager._mainTarget = substituteBattler;
         }
 
         // まずないと思うが、一応カウントして身代わりが一人でも有効だった場合に処理を実行
@@ -1014,6 +1027,24 @@ function getAnimation(animationId) {
 }
 
 // ----------------------------------------------------------------------------
+// DynamicAnimation & Motion用
+// ----------------------------------------------------------------------------
+
+/**
+ * 【独自】アニメーションの再生
+ */
+const _Window_BattleLog_showDynamicAnimation = Window_BattleLog.prototype.showDynamicAnimation;
+Window_BattleLog.prototype.showDynamicAnimation = function (targets, action, mirror, mapAnimation) {
+    _Window_BattleLog_showDynamicAnimation.apply(this, arguments);
+
+    // かばう演出用なら、一歩前進禁止フラグを解除
+    // ※こうしないと攻撃スキルの前進がなくなってしまうため。
+    if (action._isDynamicSubstitute) {
+        BattleManager._noUpdateTargetPosition = false;
+    }
+}
+
+// ----------------------------------------------------------------------------
 // 共通関数
 // ----------------------------------------------------------------------------
 
@@ -1028,6 +1059,8 @@ function callDynamic(battler, dynamicId) {
 
     // 実行するDynamicAnimation情報を持ったアクション
     const dynamicAction = makeAction(dynamicId, battler);
+    // かばう演出フラグを立てる。
+    dynamicAction._isDynamicSubstitute = true;
     // バトラーを対象にする。
     const targets = [battler];
     // 引き継ぎたい情報をセット
