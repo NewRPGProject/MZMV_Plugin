@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Extends the substitute effect.
+ * @plugindesc v1.011 Extends the substitute effect.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_DynamicAnimationMZ
  * @url https://newrpg.seesaa.net/article/500482565.html
@@ -228,7 +228,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 身代わりの効果を拡張する。
+ * @plugindesc v1.011 身代わりの効果を拡張する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_DynamicAnimationMZ
  * @url https://newrpg.seesaa.net/article/500482565.html
@@ -1042,6 +1042,21 @@ Window_BattleLog.prototype.showDynamicAnimation = function (targets, action, mir
     if (action._isDynamicSubstitute) {
         BattleManager._noUpdateTargetPosition = false;
     }
+}
+
+// ----------------------------------------------------------------------------
+// ＭＶ対応
+// ※ＭＺにしか存在しない関数を定義
+// ----------------------------------------------------------------------------
+
+if (!Spriteset_Battle.prototype.findTargetSprite) {
+    Spriteset_Battle.prototype.findTargetSprite = function(target) {
+        return this.battlerSprites().find(sprite => sprite.checkBattler(target));
+    };
+
+    Sprite_Battler.prototype.checkBattler = function(battler) {
+        return this._battler === battler;
+    };
 }
 
 // ----------------------------------------------------------------------------
