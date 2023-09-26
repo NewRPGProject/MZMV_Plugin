@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.07 Change the equipment slots at will.
+ * @plugindesc v1.071 Change the equipment slots at will.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489626316.html
  *
@@ -133,7 +133,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.07 装備スロットを自由に変更。
+ * @plugindesc v1.071 装備スロットを自由に変更。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489626316.html
  * 
@@ -453,6 +453,32 @@ Game_Actor.prototype.equipSlots = function() {
     }
 
     return slots;
+};
+
+/**
+ * ●装備の変更
+ */
+const _Game_Actor_changeEquip = Game_Actor.prototype.changeEquip;
+Game_Actor.prototype.changeEquip = function(slotId, item) {
+    // 無効なスロットを参照してしまうパターンがあるので対処
+    if (!this._equips[slotId]) {
+        this.refresh();
+        return;
+    }
+    _Game_Actor_changeEquip.apply(this, arguments);
+};
+
+/**
+ * ●装備の強制変更（内部処理用）
+ */
+const _Game_Actor_forceChangeEquip = Game_Actor.prototype.forceChangeEquip;
+Game_Actor.prototype.forceChangeEquip = function(slotId, item) {
+    // 無効なスロットを参照してしまうパターンがあるので対処
+    if (!this._equips[slotId]) {
+        this.refresh();
+        return;
+    }
+    _Game_Actor_forceChangeEquip.apply(this, arguments);
 };
 
 /**
