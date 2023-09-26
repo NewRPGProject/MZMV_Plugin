@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.20 Automate & super-enhance battle animations.
+ * @plugindesc v1.195 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -524,7 +524,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.20 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.195 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -4090,10 +4090,10 @@ Sprite_Animation.prototype.targetPosition = function(renderer) {
 
     // 放物線補正があれば加算
     if (arcX) {
-        this.x += (-arcX / Math.pow(arrival/2, 2)) * Math.pow(Math.min(t + 1, arrival) - arrival/2, 2) + arcX;
+        this.x += (-arcX / Math.pow(arrival/2, 2)) * Math.pow(Math.min(t, arrival) - arrival/2, 2) + arcX;
     }
     if (arcY) {
-        this.y += (-arcY / Math.pow(arrival/2, 2)) * Math.pow(Math.min(t + 1, arrival) - arrival/2, 2) + arcY;
+        this.y += (-arcY / Math.pow(arrival/2, 2)) * Math.pow(Math.min(t, arrival) - arrival/2, 2) + arcY;
     }
 
     // 円運動

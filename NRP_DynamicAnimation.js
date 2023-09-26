@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.27 Automate & super-enhance battle animations.
+ * @plugindesc v1.264 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help Call battle animations freely from skills (items).
@@ -488,7 +488,7 @@
  */
 
 /*:ja
- * @plugindesc v1.27 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.264 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在に戦闘アニメーションを呼び出します。
@@ -3585,10 +3585,10 @@ Sprite_Animation.prototype.updateDynamicAnimation = function() {
 
     // 放物線補正があれば加算
     if (arcX) {
-        this.x += (-arcX / Math.pow(arrival/2, 2)) * Math.pow(Math.min(t + 1, arrival) - arrival/2, 2) + arcX;
+        this.x += (-arcX / Math.pow(arrival/2, 2)) * Math.pow(Math.min(t, arrival) - arrival/2, 2) + arcX;
     }
     if (arcY) {
-        this.y += (-arcY / Math.pow(arrival/2, 2)) * Math.pow(Math.min(t + 1, arrival) - arrival/2, 2) + arcY;
+        this.y += (-arcY / Math.pow(arrival/2, 2)) * Math.pow(Math.min(t, arrival) - arrival/2, 2) + arcY;
     }
 
     // 円運動
