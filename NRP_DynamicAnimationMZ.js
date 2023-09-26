@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.195 Automate & super-enhance battle animations.
+ * @plugindesc v1.20 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -524,7 +524,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.195 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.20 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -2150,7 +2150,10 @@ BaseAnimation.prototype.makeRepeatAnimation = function(dynamicAnimationList, ani
     var position = animation.position;
     // ポジション指定があれば使用
     if (this.position != undefined) {
-        position = eval(this.position);
+        // keep型とconditionを組み合わせた場合の問題に対処
+        try {
+            position = eval(this.position);
+        } catch {}
     // 表示タイプが『1:全対象の中央』『2:画面の中央』なら3:画面
     } else if (animation.displayType == 1 || animation.displayType == 2) {
         position = 3;
@@ -2169,7 +2172,12 @@ BaseAnimation.prototype.makeRepeatAnimation = function(dynamicAnimationList, ani
     const targets = this.targets;
 
     // 間隔
-    const interval = eval(this.interval);
+    let interval = 1;
+    // keep型とconditionを組み合わせた場合の問題に対処
+    try {
+        interval = eval(this.interval);
+    } catch {}
+
     this.interval = interval;
     // 間隔×レート分のディレイを加算
     if (r > 0) {
@@ -4082,10 +4090,10 @@ Sprite_Animation.prototype.targetPosition = function(renderer) {
 
     // 放物線補正があれば加算
     if (arcX) {
-        this.x += (-arcX / Math.pow(arrival/2, 2)) * Math.pow(Math.min(t, arrival) - arrival/2, 2) + arcX;
+        this.x += (-arcX / Math.pow(arrival/2, 2)) * Math.pow(Math.min(t + 1, arrival) - arrival/2, 2) + arcX;
     }
     if (arcY) {
-        this.y += (-arcY / Math.pow(arrival/2, 2)) * Math.pow(Math.min(t, arrival) - arrival/2, 2) + arcY;
+        this.y += (-arcY / Math.pow(arrival/2, 2)) * Math.pow(Math.min(t + 1, arrival) - arrival/2, 2) + arcY;
     }
 
     // 円運動

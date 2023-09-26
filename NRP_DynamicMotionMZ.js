@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.20 When executing skills, call motion freely.
+ * @plugindesc v1.21 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -561,7 +561,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.20 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.21 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -3375,10 +3375,10 @@ Sprite.prototype.updateDynamicMove = function() {
         var arcY = motion._arcY;
         // arcX, arcYを頂点とする二次曲線の方程式
         if (arcX) {
-            motion._offsetArcX = (-arcX / Math.pow(et/2, 2)) * Math.pow(Math.min(t, et) - et/2, 2) + arcX;
+            motion._offsetArcX = (-arcX / Math.pow(et/2, 2)) * Math.pow(Math.min(t + 1, et) - et/2, 2) + arcX;
         }
         if (arcY) {
-            this._airY += (-arcY / Math.pow(et/2, 2)) * Math.pow(Math.min(t, et) - et/2, 2) + arcY;
+            this._airY += (-arcY / Math.pow(et/2, 2)) * Math.pow(Math.min(t + 1, et) - et/2, 2) + arcY;
         }
 
         // 大きさ変更
