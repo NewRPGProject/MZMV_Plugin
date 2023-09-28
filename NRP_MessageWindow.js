@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.02 Adjust the message window.
+ * @plugindesc v1.03 Adjust the message window.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -146,11 +146,20 @@
  * @parent <NameBoxWindow>
  * @desc Opacity of the name field.
  * 255 makes it completely opaque.
+ * 
+ * @param <ChoiceWindow>
+ * @desc This section is about choices.
+ * 
+ * @param FixChoiceX
+ * @parent <ChoiceWindow>
+ * @type boolean
+ * @default true
+ * @desc Align the X coordinate of the Choice window with the Message window.
  */
 
 /*:ja
  * @target MZ
- * @plugindesc v1.02 メッセージウィンドウを調整する。
+ * @plugindesc v1.03 メッセージウィンドウを調整する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -307,6 +316,17 @@
  * @text 名前欄の不透明度
  * @desc 名前欄の不透明度です。
  * 255で完全な不透明になります。
+ * 
+ * @param <ChoiceWindow>
+ * @text ＜選択肢＞
+ * @desc 選択肢に関する項目です。
+ * 
+ * @param FixChoiceX
+ * @parent <ChoiceWindow>
+ * @text 選択肢のＸ座標修正
+ * @type boolean
+ * @default true
+ * @desc 選択肢ウィンドウのＸ座標をメッセージウィンドウに合わせます。
  */
 
 (function() {
@@ -365,6 +385,7 @@ const pNameBoxAdjustX = setDefault(parameters["NameBoxAdjustX"]);
 const pNameBoxAdjustY = setDefault(parameters["NameBoxAdjustY"]);
 const pNameBoxFontSize = setDefault(parameters["NameBoxFontSize"]);
 const pNameBoxOpacity = setDefault(parameters["NameBoxOpacity"]);
+const pFixChoiceX = toBoolean(parameters["FixChoiceX"], true);
 
 // ----------------------------------------------------------------------------
 // Scene_Message
@@ -679,6 +700,37 @@ Window_Message.prototype.backSprite = function() {
     } else if (this._windowBackSprite) {
         return this._windowBackSprite;
     }
+}
+
+// ----------------------------------------------------------------------------
+// Window_ChoiceList
+// ----------------------------------------------------------------------------
+
+// 選択肢ウィンドウのＸ座標をメッセージウィンドウに合わせる。
+if (pFixChoiceX) {
+    /**
+     * ●選択肢ウィンドウのＸ座標
+     */
+    const _Window_ChoiceList_windowX = Window_ChoiceList.prototype.windowX;
+    Window_ChoiceList.prototype.windowX = function() {
+        const positionType = $gameMessage.choicePositionType();
+
+        // メッセージウィンドウを取得
+        const messageWindow = SceneManager._scene._messageWindow;
+
+        // 中
+        if (positionType === 1) {
+            // 元のまま
+            return _Window_ChoiceList_windowX.apply(this, arguments);
+        // 右
+        } else if (positionType === 2) {
+            return Math.min(Graphics.boxWidth - this.windowWidth(),
+                messageWindow.x + messageWindow.width - this.windowWidth());
+        // 左
+        } else {
+            return Math.max(0, messageWindow.x);
+        }
+    };
 }
 
 // ----------------------------------------------------------------------------
