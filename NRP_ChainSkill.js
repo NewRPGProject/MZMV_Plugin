@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Chain skills together.
+ * @plugindesc v1.04 Chain skills together.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -48,10 +48,29 @@
  * 50% chance of activating the skill.
  * 100% if omitted. Formula use is allowed.
  * 
+ * <ChainDamageType:1,5>
+ * Damage type 1,5 skills are targeted for chain.
+ * 1:HP Damage, 2:MP Damage, 3:HP Recover, 4:MP Recover,
+ * 5:HP Drain, 6:MP Drain
+ * If omitted, the plugin parameter settings are used.
+ * If left blank, all are valid.
+ * 
+ * <ChainHitType:1>
+ * Targets skills of hit type 1 for chain.
+ * 0:Certain Hit, 1:Physical Attack, 2:Magic Attack
+ * If omitted, the plugin parameter settings are used.
+ * If left blank, all are valid.
+ * 
  * <ChainSkillType:0,2>
  * Skill type 0,2 skills are targeted for the chaining.
  * With standard, 0: Normal Attack, 2: Special.
  * If omitted, the plugin parameter setting is used.
+ * 
+ * <ChainForOne>
+ * Only skills with a single (& random) range
+ * are targeted for chain.
+ * <ChainForOne:false> for all.
+ * If omitted, the plugin parameter settings are used.
  * 
  * <ChainSkillDisplayName:[0~2]>
  * Change the display method of chained skill names.
@@ -136,11 +155,34 @@
  * @ [Plugin Parameters]
  * @-----------------------------------------------------
  * 
+ * @param <PassiveCondition>
+ * @desc This is the condition under which the passive effect chain skill is activated.
+ * 
+ * @param TargetDamageType
+ * @parent <PassiveCondition>
+ * @type string
+ * @default 1,5
+ * @desc Damage type targeted for chain. 0:None, 1:HP Damage, 2:MP Damage, 3:HP Recover, 4:MP Recover, 5:HP Drain, 6:MP Drain
+ * 
+ * @param TargetHitType
+ * @parent <PassiveCondition>
+ * @type string
+ * @default 0,1,2
+ * @desc The hit type of the skill targeted for chain.
+ * 0:Certain Hit, 1:Physical Attack, 2:Magic Attack
+ * 
  * @param TargetSkillType
+ * @parent <PassiveCondition>
  * @type string
  * @default 0,2
- * @desc Skill type to be activated. Multiple are allowed.
- * With standard, 0: Normal Attack, 2: Special.
+ * @desc Skill type to be targeted for chain.
+ * With standard, 0: Normal Attack, 1: Magic, 2: Special.
+ * 
+ * @param TargetForOneSkill
+ * @parent <PassiveCondition>
+ * @type boolean
+ * @default false
+ * @desc Only skills with a single range are targeted for chain.
  * 
  * @param DisplayNameStyle
  * @type select
@@ -185,11 +227,19 @@
  * @type boolean
  * @default true
  * @desc Duplicate linkage of the same skill is prohibited.
+ * 
+ * @param AdjustAllRangeTarget
+ * @type select
+ * @option top
+ * @option tail
+ * @option random
+ * @default top
+ * @desc Change the target when a chain skill is activated for a skill that is whole in range.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 スキルを連結する。
+ * @plugindesc v1.04 スキルを連結する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -226,9 +276,26 @@
  * スキルを５０％の確率で発動します。
  * 省略すると１００％になります。数式使用可です。
  * 
+ * <ChainDamageType:1,5>
+ * ダメージタイプ1,5のスキルを連結の対象にします。
+ * 1:HPダメージ, 2:MPダメージ, 3:HP回復, 4:MP回復, 5:HP吸収, 6:MP回復です。
+ * 省略時はプラグインパラメータの設定を使用します。
+ * 空欄にした場合は全て有効となります。
+ * 
+ * <ChainHitType:1>
+ * 命中タイプ1のスキルを連結の対象にします。
+ * 0:必中, 1:物理攻撃, 2:魔法攻撃です。
+ * 省略時はプラグインパラメータの設定を使用します。
+ * 空欄にした場合は全て有効となります。
+ * 
  * <ChainSkillType:0,2>
  * スキルタイプ0,2のスキルを連結の対象にします。
  * 通常だと0は通常攻撃、2:必殺技です。
+ * 省略時はプラグインパラメータの設定を使用します。
+ * 
+ * <ChainForOne>
+ * 範囲が単体（＋ランダム）のスキルだけを連結の対象にします。
+ * <ChainForOne:false>で全てを対象にします。
  * 省略時はプラグインパラメータの設定を使用します。
  * 
  * <ChainSkillDisplayName:[0~2]>
@@ -309,12 +376,39 @@
  * @ プラグインパラメータ
  * @-----------------------------------------------------
  * 
+ * @param <PassiveCondition>
+ * @text ＜パッシブ時の条件＞
+ * @desc パッシブ効果の連結スキルが発動する条件です。
+ * 
+ * @param TargetDamageType
+ * @parent <PassiveCondition>
+ * @text 対象のダメージタイプ
+ * @type string
+ * @default 1,5
+ * @desc 発動対象とするダメージタイプ。複数可。0:なし, 1:HPﾀﾞﾒｰｼﾞ, 2:MPﾀﾞﾒｰｼﾞ, 3:HP回復, 4:MP回復, 5:HP吸収, 6:MP吸収
+ * 
+ * @param TargetHitType
+ * @parent <PassiveCondition>
+ * @text 対象の命中タイプ
+ * @type string
+ * @default 0,1,2
+ * @desc 発動対象とするスキルの命中タイプ。複数可。
+ * 0:必中, 1:物理攻撃, 2:魔法攻撃
+ * 
  * @param TargetSkillType
+ * @parent <PassiveCondition>
  * @text 対象のスキルタイプ
  * @type string
  * @default 0,2
- * @desc 発動対象とするスキルタイプ（パッシブ用）です。複数可。
+ * @desc 発動対象とするスキルタイプです。複数可。
  * 標準だと0で通常攻撃、2で必殺技が対象になります。
+ * 
+ * @param TargetForOneSkill
+ * @parent <PassiveCondition>
+ * @text 単体スキルのみ対象
+ * @type boolean
+ * @default false
+ * @desc 範囲が単体のスキルのみ発動対象とします。
  * 
  * @param DisplayNameStyle
  * @text スキル名の表示法
@@ -367,6 +461,15 @@
  * @type boolean
  * @default true
  * @desc 同一スキルを重複して連結することを禁止します。
+ * 
+ * @param AdjustAllRangeTarget
+ * @text 全体スキルに連結時の対象
+ * @type select
+ * @option 先頭 @value top
+ * @option 末尾 @value tail
+ * @option ランダム @value random
+ * @default top
+ * @desc 対象が全体のスキルに対して、連結スキルを発動した場合の対象です。
  */
 
 (function() {
@@ -386,10 +489,19 @@ function toBoolean(str, def) {
     }
     return def;
 }
+function setDefault(str, def) {
+    if (str == undefined || str == "") {
+        return def;
+    }
+    return str;
+}
 
 const PLUGIN_NAME = "NRP_ChainSkill";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
+const pTargetDamageType = textToArray(parameters["TargetDamageType"]);
+const pTargetHitType = textToArray(parameters["TargetHitType"]);
 const pTargetSkillType = textToArray(parameters["TargetSkillType"]);
+const pTargetForOneSkill = toBoolean(parameters["TargetForOneSkill"]);
 const pDisplayNameStyle = toNumber(parameters["DisplayNameStyle"], 0);
 const pNoStartMotion = toBoolean(parameters["NoStartMotion"], true);
 const pNostepBack = toBoolean(parameters["NoStepBack"], true);
@@ -398,6 +510,7 @@ const pIgnoreSkillConditions = toBoolean(parameters["IgnoreSkillConditions"], tr
 const pAbortTargetDeath = toBoolean(parameters["AbortTargetDeath"], false);
 const pAbortTargetResist = toBoolean(parameters["AbortTargetResist"], false);
 const pDisableSameSkill = toBoolean(parameters["DisableSameSkill"], false);
+const pAdjustAllRangeTarget = setDefault(parameters["AdjustAllRangeTarget"]);
 
 // ----------------------------------------------------------------------------
 // 共通変数
@@ -510,11 +623,6 @@ BattleManager.updateAction = function() {
  * ●スキル連携を実行
  */
 function goChainSkill(object, passiveFlg) {
-    // 対象が自分の場合は無効
-    if (mOriginalAction.isForUser()) {
-        return false;
-    }
-
     const actionItem = mOriginalAction.item();
 
     // パッシブスキルによる連結効果の場合
@@ -525,30 +633,11 @@ function goChainSkill(object, passiveFlg) {
             if (!toBoolean(actionItem.meta.ChainSkillPassive)) {
                 return false;
             }
+        }
 
         // 連結有効の指定がない場合はデフォルト
-        } else {
-            // アクションがスキルでない場合は無効
-            if (!DataManager.isSkill(actionItem)) {
-                return false;
-            }
-            
-            // チェック対象のスキルタイプ
-            let targetSkillType = pTargetSkillType;
-            // 個別の指定がある場合は取得
-            if (object.meta.ChainSkillType) {
-                // 空欄の場合は空配列
-                if (object.meta.ChainSkillType === true) {
-                    targetSkillType = [];
-                // それ以外は
-                } else {
-                    targetSkillType = textToArray(object.meta.ChainSkillType);
-                }
-            }
-            // スキルタイプのチェック
-            if (targetSkillType.length && !targetSkillType.includes(actionItem.stypeId)) {
-                return false;
-            }
+        if (!isValidChain(mOriginalAction, actionItem, object)) {
+            return false;
         }
     }
 
@@ -622,7 +711,7 @@ function goChainSkill(object, passiveFlg) {
     }
 
     // 戦闘行動の強制を実行
-    subject.chainForceAction(chainSkillId, mLastTargetIndex);
+    subject.chainForceAction(chainSkillId, target.index());
     // 生成したアクションを再取得
     const newAction = subject.currentAction();
     // NRP_PartyAttack.jsとの連携
@@ -699,16 +788,150 @@ function getChainSkillId(object, target) {
  * ●本来の対象を取得
  */
 function getOriginalTarget() {
+    const actionItem = mOriginalAction.item();
+
+    // NRP_SkillRangeEX.jsとの連携用
+    const rangeEx = actionItem.meta.RangeEx;
+    if (rangeEx && BattleManager._mainTarget) {
+        // 主対象を再取得する。
+        return BattleManager._mainTarget;
+    }
+
     // 対象を取得
+    let targetUnitMembers;
     let target;
+
     // 対象が敵側
     if (mOriginalAction.isForOpponent()) {
-        target = mOriginalAction.opponentsUnit().members().find(t => t.index() == mLastTargetIndex);
+        targetUnitMembers = mOriginalAction.opponentsUnit().members();
     // 対象が味方側
     } else {
-        target = mOriginalAction.friendsUnit().members().find(t => t.index() == mLastTargetIndex);
+        targetUnitMembers = mOriginalAction.friendsUnit().members();
     }
+
+    target = targetUnitMembers.find(t => t.index() == mLastTargetIndex);
+
+    // 範囲が全体の場合は対象補正
+    if (mOriginalAction.isForAll()) {
+        // 先頭を取得
+        if (pAdjustAllRangeTarget == "top") {
+            target = targetUnitMembers[0];
+
+        // ランダムで取得
+        } else if (pAdjustAllRangeTarget == "random") {
+            target = targetUnitMembers[Math.randomInt(targetUnitMembers.length)];
+        }
+    }
+
     return target
+}
+
+/**
+ * ●スキル連結が有効かどうかの判定
+ */
+function isValidChain(action, actionItem, object) {
+    // アクションがスキルでない場合は無効
+    if (!DataManager.isSkill(actionItem)) {
+        return false;
+    // 有効なダメージタイプでなければ終了
+    } else if (!isTargetDamageType(actionItem, object)) {
+        return false;
+    // 有効な命中タイプでなければ終了
+    } else if (!isTargetHitType(actionItem, object)) {
+        return false;
+    // 有効なスキルタイプでなければ終了
+    } else if (!isTargetSkillType(actionItem, object)) {
+        return false;
+    }
+
+    // eval参照用
+    const a = action.subject();
+
+    // 単体対象かつ、アクションが単体＆ランダム以外なら終了
+    const forOneSkill = eval(checkMeta(pTargetForOneSkill, object, "ChainForOne"));
+    if (forOneSkill && !action.isForOne() && !action.isForRandom()) {
+        return false;
+    }
+
+    // ここまで到達すれば有効
+    return true;
+}
+
+/**
+ * ●有効なダメージタイプかどうか？
+ */
+function isTargetDamageType(actionItem, object) {
+    // チェック対象のダメージタイプ
+    let targetDamageType = pTargetDamageType;
+    // 個別の指定がある場合は取得
+    const metaDamageType = object ? object.meta.ChainDamageType : null;
+    if (metaDamageType) {
+        // 空欄の場合は空配列
+        if (metaDamageType === true) {
+            targetDamageType = [];
+        // それ以外は配列化して取得
+        } else {
+            targetDamageType = textToArray(metaDamageType);
+        }
+    }
+    // ダメージタイプのチェック
+    if (targetDamageType.length && !targetDamageType.includes(actionItem.damage.type)) {
+        return false;
+    }
+    return true;
+}
+
+/**
+ * ●有効な命中タイプかどうか？
+ */
+function isTargetHitType(actionItem, object) {
+    // チェック対象のスキルタイプ
+    let targetHitType = pTargetHitType;
+    // 個別の指定がある場合は取得
+    const metaHitType = object ? object.meta.ChainHitType : null;
+    if (metaHitType) {
+        // 空欄の場合は空配列
+        if (metaHitType === true) {
+            targetHitType = [];
+        // それ以外は
+        } else {
+            targetHitType = textToArray(metaHitType);
+        }
+    }
+    // スキルタイプのチェック
+    if (targetHitType.length && !targetHitType.includes(actionItem.hitType)) {
+        return false;
+    }
+    return true;
+}
+
+/**
+ * ●有効なスキルタイプかどうか？
+ */
+function isTargetSkillType(actionItem, object) {
+    // アイテムの場合は有効
+    if (DataManager.isItem(actionItem)) {
+        return true;
+    }
+
+    // チェック対象のスキルタイプ
+    let targetSkillType = pTargetSkillType;
+    // 個別の指定がある場合は取得
+    const metaSkillType = object ? object.meta.ChainSkillType : null;
+    if (metaSkillType) {
+        // 空欄の場合は空配列
+        if (metaSkillType === true) {
+            targetSkillType = [];
+        // それ以外は
+        } else {
+            targetSkillType = textToArray(metaSkillType);
+        }
+    }
+    // スキルタイプのチェック
+    if (targetSkillType.length && !targetSkillType.includes(actionItem.stypeId)) {
+        return false;
+    }
+    return true;
 }
 
 // ----------------------------------------------------------------------------
