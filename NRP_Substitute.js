@@ -171,7 +171,7 @@
  * @param TargetDamageType
  * @type string
  * @default 1,5
- * @desc Damage type targeted for substitution. 0:なし, 1:HP Damage, 2:MP Damage, 3:HP Recover, 4:MP Recover, 5:HP Drain, 6:MP Drain
+ * @desc Damage type targeted for substitution. 0:None, 1:HP Damage, 2:MP Damage, 3:HP Recover, 4:MP Recover, 5:HP Drain, 6:MP Drain
  * 
  * @param TargetHitType
  * @type string
