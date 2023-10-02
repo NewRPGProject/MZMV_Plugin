@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Create special traits.
+ * @plugindesc v1.011 Create special traits.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -115,11 +115,31 @@
  * @------------------------------------------------------------------
  * @ Plugin Parameters
  * @------------------------------------------------------------------
+ * 
+ * @param <DamageRate>
+ * 
+ * @param DR_DamageType
+ * @parent <DamageRate>
+ * @type string
+ * @default 1,5
+ * @desc Damage type targeted for damage rate. 0:None, 1:HP Damage, 2:MP Damage, 3:HP Recover, 4:MP Recover, 5:HP Drain, 6:MP Drain
+ * 
+ * @param DR_HitType
+ * @parent <DamageRate>
+ * @type string
+ * @desc The hit type of the skill targeted for damage rate.
+ * 0:Certain Hit, 1:Physical Attack, 2:Magic Attack
+ * 
+ * @param DR_SkillType
+ * @parent <DamageRate>
+ * @type string
+ * @desc Skill type to be targeted for damage rate.
+ * With standard, 0: Normal Attack, 1: Magic, 2: Special.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 特殊な特徴を実現します。
+ * @plugindesc v1.011 特殊な特徴を実現します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
