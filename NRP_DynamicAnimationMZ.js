@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.195 Automate & super-enhance battle animations.
+ * @plugindesc v1.20 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -524,7 +524,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.195 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.20 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -2231,9 +2231,7 @@ BaseAnimation.prototype.makeRepeatAnimation = function(dynamicAnimationList, ani
         let index = 0;
         for (const target of targets) {
             // Sprite_Animationへと引き渡すパラメータを作成
-            const dynamicAnimation = this.createDynamicAnimation(target, targetDelay, dynamicAnimationList);
-            // 対象番号を保持しておく
-            dynamicAnimation.targetNo = index;
+            const dynamicAnimation = this.createDynamicAnimation(target, targetDelay, dynamicAnimationList, index);
 
             // 時間差なしなら、２回目以降の効果音消去
             if (nextDelay == 0 && index >= 1) {
@@ -2342,8 +2340,8 @@ BaseAnimation.prototype.isAnimationDisp = function(target, targets) {
 /**
  * ●動的アニメーションデータを生成する。
  */
-BaseAnimation.prototype.createDynamicAnimation = function (target, delay, dynamicAnimationList) {
-    const dynamicAnimation = new DynamicAnimation(this, target);
+BaseAnimation.prototype.createDynamicAnimation = function (target, delay, dynamicAnimationList, index) {
+    const dynamicAnimation = new DynamicAnimation(this, target, index);
     dynamicAnimation.mirror = this.mirror;
     dynamicAnimation.targetDelay = delay;
 
@@ -2542,7 +2540,7 @@ BaseAnimation.prototype.getReferenceSubject = function () {
 /**
  * ●初期化処理
  */
-DynamicAnimation.prototype.initialize = function(baseAnimation, target) {
+DynamicAnimation.prototype.initialize = function(baseAnimation, target, index) {
     const r = baseAnimation.r;
     const interval = baseAnimation.interval;
     const spriteAnimation = baseAnimation.spriteAnimation;
@@ -2555,6 +2553,9 @@ DynamicAnimation.prototype.initialize = function(baseAnimation, target) {
 
     var no = baseAnimation.no;
     this.no = no;
+
+    // 対象番号を保持しておく
+    this.targetNo = index;
 
     // 親情報への参照設定
     this.baseAnimation = baseAnimation;
@@ -2573,6 +2574,9 @@ DynamicAnimation.prototype.initialize = function(baseAnimation, target) {
     this.mv = baseAnimation.mv;
 
     this.r = r;
+
+    // eval参照用
+    const da = this;
 
     /*
      * 以下はリピートごとに変化する項目
@@ -4088,12 +4092,17 @@ Sprite_Animation.prototype.targetPosition = function(renderer) {
         this.y = sy + (ey - sy) * Math.min(t, arrival) / arrival;
     }
 
+    // 計算用に時間を１進める。
+    // ※t=0の時点で浮上させるための調整。
+    const t2 = t + 1;
+    const arrival2 = arrival + 1;
+
     // 放物線補正があれば加算
     if (arcX) {
-        this.x += (-arcX / Math.pow(arrival/2, 2)) * Math.pow(Math.min(t, arrival) - arrival/2, 2) + arcX;
+        this.x += (-arcX / Math.pow(arrival2/2, 2)) * Math.pow(t2 - arrival2/2, 2) + arcX;
     }
     if (arcY) {
-        this.y += (-arcY / Math.pow(arrival/2, 2)) * Math.pow(Math.min(t, arrival) - arrival/2, 2) + arcY;
+        this.y += (-arcY / Math.pow(arrival2/2, 2)) * Math.pow(t2 - arrival2/2, 2) + arcY;
     }
 
     // 円運動

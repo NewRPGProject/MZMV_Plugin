@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.20 When executing skills, call motion freely.
+ * @plugindesc v1.21 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -561,7 +561,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.20 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.21 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -3373,12 +3373,18 @@ Sprite.prototype.updateDynamicMove = function() {
         // 放物線補正があれば加算
         var arcX = motion._arcX;
         var arcY = motion._arcY;
+
+        // 計算用に時間を１進める。
+        // ※t=0の時点で浮上させるための調整。
+        const t2 = t + 1;
+        const et2 = et + 1;
+
         // arcX, arcYを頂点とする二次曲線の方程式
         if (arcX) {
-            motion._offsetArcX = (-arcX / Math.pow(et/2, 2)) * Math.pow(Math.min(t, et) - et/2, 2) + arcX;
+            motion._offsetArcX = (-arcX / Math.pow(et2/2, 2)) * Math.pow(t2 - et2/2, 2) + arcX;
         }
         if (arcY) {
-            this._airY += (-arcY / Math.pow(et/2, 2)) * Math.pow(Math.min(t, et) - et/2, 2) + arcY;
+            this._airY += (-arcY / Math.pow(et2/2, 2)) * Math.pow(t2 - et2/2, 2) + arcY;
         }
 
         // 大きさ変更
