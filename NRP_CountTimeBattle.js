@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.17 Change the battle system to CTB.
+ * @plugindesc v1.18 Change the battle system to CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -58,7 +58,7 @@
  * ◆<AddWt:[Number]>
  * Add up the waiting time for the target.
  * 
- * ◆例
+ * [Sample]
  * <AddWt:50>
  * Delays the target's action for 1/2 turn.
  * This is the so-called delay attack.
@@ -88,10 +88,17 @@
  * an anomaly such as "delay that cannot be stacked
  * until the enemy acts once" can be created for the purpose.
  * 
- * <DeadCTBTurn>
+ * ◆<DeadCTBTurn>
  * The dead state will still appear in the order of action.
  * Assume a special state that will be revived
  * after a certain amount of time.
+ * 
+ * ◆<ExpiredTurnStart>
+ * For a state whose Auto-removal Timing is Action End,
+ * this causes the state's Auto-removal to occur
+ * at the start of the turn (at the start of input).
+ * This is useful for guard and other situations
+ * where you want the effect to expire at the start of input.
  * 
  * -------------------------------------------------------------------
  * [Continuous action skill]
@@ -242,7 +249,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.17 戦闘システムをＣＴＢへ変更します。
+ * @plugindesc v1.18 戦闘システムをＣＴＢへ変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -292,7 +299,7 @@
  * ◆<AddWt:[数値]>
  * 対象の待ち時間を加算します。
  * 
- * ◆例
+ * [例]
  * <AddWt:50>
  * 1/2ターン分、相手の行動を遅らせます。
  * いわゆるディレイアタックですね。
@@ -315,9 +322,14 @@
  * 逆に言えば、自動解除のタイミングを『行動終了時』の1ターンにしておけば、
  * 「敵が一度行動するまで重ねられないディレイ」のような異常を狙って作れます。
  * 
- * <DeadCTBTurn>
+ * ◆<DeadCTBTurn>
  * 戦闘不能状態でも行動順序に表示されるようになります。
  * 一定時間で復活などの特殊なステートを想定しています。
+ * 
+ * ◆<ExpiredTurnStart>
+ * 自動解除のタイミングが行動終了時のステートに対して、
+ * ターン開始時（入力開始時）にステートの自動解除を発生させます。
+ * 防御など入力開始時に効果を切れさせたい場合に有効です。
  * 
  * -------------------------------------------------------------------
  * ■連続行動技
@@ -617,6 +629,17 @@ BattleManager.startInput = function() {
     // 行動者の個別ターン加算
     this._subject._turnCount++;
     
+    // ステートの自動解除
+    for (const state of this._subject.states()) {
+        // ステートの自動解除をターン開始時に実行する場合
+        if (state.meta.ExpiredTurnStart) {
+            // 残りターンが１以下ならば
+            if (this._subject._stateTurns[state.id] <= 1 && state.autoRemovalTiming === 1) {
+                this._subject.removeState(state.id);
+            }
+        }
+    }
+
     // 行動設定
     // ※敵なら行動設定、味方なら行動回数などの領域設定
     this._subject.makeActions();
