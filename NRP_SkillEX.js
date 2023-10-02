@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Extend the effect of the skill.
+ * @plugindesc v1.03 Extend the effect of the skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -48,6 +48,10 @@
  * <AddState:4 + Math.randomInt(3)>
  * ※Math.randomInt(3) means 0 to 2.
  * 
+ * ◆Add State To The User
+ * <AddSelfState:4>
+ * Adds state number 4 to the user of the skill.
+ * 
  * ◆Change Element
  * <ChangeElement:2>
  * Change the element to 2:Flame.
@@ -65,6 +69,15 @@
  * the all enemies. Otherwise, one enemy.
  * <ChangeScope:a.isLearnedSkill(100) ? 2 : 1>
  * 
+ * ◆Change Damage Type
+ * <ChangeDamageType:3>
+ * Changes the damage type to the specified value.
+ * 1:HP Damage, 2:MP Damage, 3:HP Recover, 4:MP Recover,
+ * 5:HP Drain, 6:MP Drain
+ * 
+ * Example: Restores the HP of all allies, but the user takes damage.
+ * <ChangeDamageType:a == b ? 1 : 3>
+ * 
  * ◆Recover TP
  * <RecoverTp:100>
  * Recovers 100 TP.
@@ -72,6 +85,23 @@
  * 
  * Example: It heals TP by a value equal to the user's mat.
  * <RecoverTp:a.mat>
+ * 
+ * ◆Damage To User
+ * <SelfDamage:a.mmp / 10>
+ * It damages the user for 1/10 of the maximum HP.
+ * 
+ * -------------------------------------------------------------------
+ * ■Formula Variables
+ * -------------------------------------------------------------------
+ * The plugin's formulas can use the following variables
+ * 
+ * ◆targetNo
+ * For example, if the range was "Random 4 Enemies",
+ * it can be distinguished by the numbers 0,1,2,3.
+ * The following will be fire element only for the 4th shot,
+ * and physical element for the rest.
+ * 
+ * <ChangeElement:targetNo == 3 ? 2 : 1>
  * 
  * -------------------------------------------------------------------
  * [Terms]
@@ -89,7 +119,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 スキルの効果を拡張します。
+ * @plugindesc v1.03 スキルの効果を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -133,6 +163,10 @@
  * <AddState:4 + Math.randomInt(3)>
  * ※Math.randomInt(3)は0~2の意味です。
  * 
+ * ◆自身にステートを付与
+ * <AddSelfState:4>
+ * スキルの使用者に４番のステートを付加します。
+ * 
  * ◆属性を変更
  * <ChangeElement:2>
  * 属性を2:炎に変更します。
@@ -148,6 +182,14 @@
  * 例：スキル100を覚えている場合は敵全体。それ以外は敵単体
  * <ChangeScope:a.isLearnedSkill(100) ? 2 : 1>
  * 
+ * ◆ダメージタイプを変更
+ * <ChangeDamageType:3>
+ * ダメージタイプを指定した値へ変更します。
+ * 1:HPダメージ, 2:MPダメージ, 3:HP回復, 4:MP回復, 5:HP吸収, 6:MP回復
+ * 
+ * 例：味方全体のＨＰを回復するが、自分はダメージを受ける。
+ * <ChangeDamageType:a == b ? 1 : 3>
+ * 
  * ◆ＴＰ回復
  * <RecoverTp:100>
  * ＴＰを１００回復します。
@@ -155,6 +197,21 @@
  * 
  * 例：使用者の魔力分だけＴＰを回復。
  * <RecoverTp:a.mat>
+ * 
+ * ◆自身にダメージ
+ * <SelfDamage:a.mhp / 10>
+ * 自身に最大ＨＰの1/10のダメージを与えます。
+ * 
+ * -------------------------------------------------------------------
+ * ■数式用の変数
+ * -------------------------------------------------------------------
+ * 当プラグインの数式では以下の変数を使用できます。
+ * 
+ * ◆targetNo（対象番号）
+ * 例えば、範囲が『敵4体 ランダム』だった場合、0,1,2,3の数値で区別できます。
+ * 以下は４撃目のみ炎属性、それ以外は物理属性となります。
+ * 
+ * <ChangeElement:targetNo == 3 ? 2 : 1>
  * 
  * -------------------------------------------------------------------
  * ■利用規約
@@ -196,6 +253,66 @@ const PLUGIN_NAME = "NRP_SkillEX";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 
 // ----------------------------------------------------------------------------
+// BattleManager
+// ----------------------------------------------------------------------------
+
+// 対象が何番目か？（eval用の項目）
+let targetNo = 0;
+// 対象
+let mTarget = null;
+
+/**
+ * ●アクション開始
+ */
+const _BattleManager_startAction = BattleManager.startAction;
+BattleManager.startAction = function() {
+    targetNo = 0;
+
+    _BattleManager_startAction.apply(this, arguments);
+};
+
+/**
+ * ●アクション結果呼び出し
+ */
+const _BattleManager_invokeAction = BattleManager.invokeAction;
+BattleManager.invokeAction = function(subject, target) {
+    _BattleManager_invokeAction.apply(this, arguments);
+
+    // 対象番号加算
+    targetNo++;
+}
+
+/**
+ * ●アクション終了
+ */
+const _BattleManager_endAction = BattleManager.endAction;
+BattleManager.endAction = function() {
+    const a = this._subject;
+    const b = a;
+
+    // 自身への反動ダメージ
+    const selfDamage = this._action.item().meta.SelfDamage;
+    if (selfDamage) {
+        const damage = Math.round(eval(selfDamage));
+        this._action.executeDamage(this._subject, damage);
+        this._subject.result().used = true;
+        // メッセージ表示
+        this._logWindow.displayActionResults(this._subject, this._subject);
+    }
+
+    // 自身への追加ステート
+    const addSelfState = this._action.item().meta.AddSelfState;
+    if (addSelfState) {
+        const stateId = eval(addSelfState);
+        this._subject.addState(stateId);
+        this._action.makeSuccess(this._subject);
+        // メッセージ表示
+        this._logWindow.displayAddedStates(this._subject);
+    }
+    _BattleManager_endAction.apply(this, arguments);
+};
+
+// ----------------------------------------------------------------------------
 // Game_Action
 // ----------------------------------------------------------------------------
 
@@ -203,12 +320,13 @@ const parameters = PluginManager.parameters(PLUGIN_NAME);
  * ●成功率計算
  */
 const _Game_Action_itemHit = Game_Action.prototype.itemHit;
-Game_Action.prototype.itemHit = function(/*target*/) {
+Game_Action.prototype.itemHit = function(target) {
     // 成功率の指定がある場合は優先
     const metaSuccessRate = this.item().meta.SuccessRate;
     if (metaSuccessRate != null) {
         // eval計算
         const a = this.subject();
+        const b = target;
         const successRate = eval(metaSuccessRate);
         if (this.isPhysical()) {
             return successRate * 0.01 * this.subject().hit;
@@ -224,6 +342,9 @@ Game_Action.prototype.itemHit = function(/*target*/) {
  */
 const _Game_Action_apply = Game_Action.prototype.apply;
 Game_Action.prototype.apply = function(target) {
+    // 対象を保持
+    mTarget = target;
+
     _Game_Action_apply.apply(this, arguments);
 
     // eval計算用
@@ -269,6 +390,8 @@ Game_Action.prototype.itemEffectAddNormalState = function(target, effect) {
         const keepEffectValue1 = effect.value1;
         // eval計算用
         const a = this.subject();
+        const b = mTarget;
+
         // 一時的にステート付加率を書き換え
         effect.value1 = eval(stateRate);
         // 実行
@@ -292,6 +415,8 @@ Game_Action.prototype.calcElementRate = function(target) {
         const keepElementId = this.item().damage.elementId;
         // eval計算用
         const a = this.subject();
+        const b = mTarget;
+
         // 一時的に属性ＩＤを書き換え
         this.item().damage.elementId = Number(eval(changeElement));
         // 実行
@@ -326,12 +451,85 @@ Game_Action.prototype.itemCri = function(target) {
     const ret = _Game_Action_itemCri.apply(this, arguments);
     // eval参照用
     const a = this.subject();
+    const b = mTarget;
+
     // 会心率を加算する場合
     const addCriticalRate = this.item().meta.AddCriticalRate;
     if (addCriticalRate) {
         return ret + eval(addCriticalRate) / 100;
     }
     return ret;
+};
+
+/**
+ * ●対象毎の評価
+ */
+const _Game_Action_evaluateWithTarget = Game_Action.prototype.evaluateWithTarget;
+Game_Action.prototype.evaluateWithTarget = function(target) {
+    mTarget = target;
+    return _Game_Action_evaluateWithTarget.apply(this, arguments);
+};
+
+/**
+ * ●ダメージ実行
+ */
+const _Game_Action_executeDamage = Game_Action.prototype.executeDamage;
+Game_Action.prototype.executeDamage = function(target, value) {
+    mTarget = target;
+    _Game_Action_executeDamage.apply(this, arguments);
+};
+
+/**
+ * ●ダメージタイプの確認
+ */
+const _Game_Action_checkDamageType = Game_Action.prototype.checkDamageType;
+Game_Action.prototype.checkDamageType = function(list) {
+    // eval参照用
+    const a = this.subject();
+    const b = mTarget;
+
+    // ダメージタイプを記憶
+    const keepDamageType = this.item().damage.type;
+
+    try {
+        // ダメージタイプの変更
+        // ※エラーになった場合はスルー
+        const damageType = this.item().meta.ChangeDamageType;
+        if (damageType != null) {
+            // 一時的にダメージタイプを書き換えて実行
+            this.item().damage.type = eval(damageType);
+            const ret = _Game_Action_checkDamageType.apply(this, arguments);
+            this.item().damage.type = keepDamageType;
+            return ret;
+        }
+    } catch (e) {}
+
+    return _Game_Action_checkDamageType.apply(this, arguments);
+};
+
+/**
+ * ●ダメージ計算式
+ */
+const _Game_Action_evalDamageFormula = Game_Action.prototype.evalDamageFormula;
+Game_Action.prototype.evalDamageFormula = function(target) {
+    const damageType = this.item().meta.ChangeDamageType;
+    if (damageType != null) {
+        // ダメージタイプを記憶
+        const keepDamageType = this.item().damage.type;
+
+        // eval参照用
+        const a = this.subject();
+        const b = target;
+
+        // 一時的にダメージタイプを書き換え
+        this.item().damage.type = eval(damageType);
+        const ret = _Game_Action_evalDamageFormula.apply(this, arguments);
+        this.item().damage.type = keepDamageType;
+
+        return ret;
+    }
+
+    return _Game_Action_evalDamageFormula.apply(this, arguments);
 };
 
 })();
