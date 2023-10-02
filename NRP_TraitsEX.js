@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Create special traits.
+ * @plugindesc v1.01 Create special traits.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -30,14 +30,35 @@
  * 1.5 times the damage it inflicts.
  * 1.0 corresponds to 100%.
  * 
- * <ReceivedDamageRate:1.5>
- * 1.5 times the damage received.
- * 1.0 corresponds to 100%.
- * 
  * Formulas are also valid.
  * 
  * ◆e.g.: Damage inflicted increases as HP decreases (up to 200%)
  * <InflictedDamageRate:1 + 1*(1 - a.hp/a.mhp)>
+ * 
+ * <ReceivedDamageRate:1.5>
+ * 1.5 times the damage received.
+ * 1.0 corresponds to 100%.
+ * 
+ * <DamageRateDamageType:1,5>
+ * Change the damage rate for damage type 1,5 skills.
+ * 1:HP Damage, 2:MP Damage, 3:HP Recover, 4:MP Recover,
+ * 5:HP Drain, 6:MP Drain
+ * If omitted, the plugin parameter settings are used.
+ * If left blank, all are valid.
+ * 
+ * <DamageRateHitType:1>
+ * Change the damage rate for hit type 1 skills.
+ * 0:Certain Hit, 1:Physical Attack, 2:Magic Attack
+ * If omitted, the plugin parameter settings are used.
+ * If left blank, all are valid.
+ * 
+ * <DamageRateSkillType:0,2>
+ * Change the damage rate for skill type 0,2 skills.
+ * Skill types can be set in the database.
+ * Normally, 1 is Magic, 2:Special.
+ * Also, 0 is treated as a normal attack.
+ * If omitted, the plugin parameter settings are used.
+ * If left blank, all are valid.
  * 
  * -------------------------------------------------------------------
  * [Change of state's duration in turns]
@@ -98,7 +119,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 特殊な特徴を実現します。
+ * @plugindesc v1.01 特殊な特徴を実現します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -124,14 +145,34 @@
  * 与えるダメージを１．５倍にします。
  * 1.0が100%に相当します。
  * 
- * <ReceivedDamageRate:1.5>
- * 受けるダメージを１．５倍にします。
- * 1.0が100%に相当します。
- * 
  * また、数式も有効です。
  * 
  * ◆例：ＨＰが減るほど与ダメージ増加（最大２００％）
  * <InflictedDamageRate:1 + 1*(1 - a.hp/a.mhp)>
+ * 
+ * <ReceivedDamageRate:1.5>
+ * 受けるダメージを１．５倍にします。
+ * 1.0が100%に相当します。
+ * 
+ * <DamageRateDamageType:1,5>
+ * ダメージタイプ1,5のスキルのダメージ倍率を変更します。
+ * 1:HPダメージ, 2:MPダメージ, 3:HP回復, 4:MP回復, 5:HP吸収, 6:MP回復です。
+ * 省略時はプラグインパラメータの設定を使用します。
+ * 空欄にした場合は全て有効となります。
+ * 
+ * <DamageRateHitType:1>
+ * 命中タイプ1のスキルのダメージ倍率を変更します。
+ * 0:必中, 1:物理攻撃, 2:魔法攻撃です。
+ * 省略時はプラグインパラメータの設定を使用します。
+ * 空欄にした場合は全て有効となります。
+ * 
+ * <DamageRateSkillType:0,2>
+ * スキルタイプ0,2のスキルのダメージ倍率を変更します。
+ * スキルタイプはデータベースで設定できます。
+ * 通常だと1は魔法、2:必殺技です。
+ * また、0は通常攻撃として扱われます。
+ * 省略時はプラグインパラメータの設定を使用します。
+ * 空欄にした場合は全て有効となります。
  * 
  * -------------------------------------------------------------------
  * ■ステート継続ターンの変更
@@ -182,6 +223,30 @@
  * @------------------------------------------------------------------
  * @ プラグインパラメータ
  * @------------------------------------------------------------------
+ * 
+ * @param <DamageRate>
+ * @text ＜ダメージ倍率関連＞
+ * 
+ * @param DR_DamageType
+ * @parent <DamageRate>
+ * @text 対象のダメージタイプ
+ * @type string
+ * @default 1,5
+ * @desc ダメージ倍率を変更するダメージタイプ。複数可。0:なし, 1:HPﾀﾞﾒｰｼﾞ, 2:MPﾀﾞﾒｰｼﾞ, 3:HP回復, 4:MP回復, 5:HP吸収, 6:MP吸収
+ * 
+ * @param DR_HitType
+ * @parent <DamageRate>
+ * @text 対象の命中タイプ
+ * @type string
+ * @desc ダメージ倍率を変更するスキルの命中タイプ。複数可。
+ * 0:必中, 1:物理攻撃, 2:魔法攻撃
+ * 
+ * @param DR_SkillType
+ * @parent <DamageRate>
+ * @text 対象のスキルタイプ
+ * @type string
+ * @desc ダメージ倍率を変更するスキルタイプ。複数可。
+ * 標準だと0:通常攻撃. 1:魔法, 2:必殺技となります。
  */
 
 (function() {
@@ -218,6 +283,9 @@ function parseStruct2(arg) {
 
 const PLUGIN_NAME = "NRP_TraitsEX";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
+const pDR_DamageType = textToArray(parameters["DR_DamageType"]);
+const pDR_HitType = textToArray(parameters["DR_HitType"]);
+const pDR_SkillType = textToArray(parameters["DR_SkillType"]);
 
 // ----------------------------------------------------------------------------
 // Game_Action
@@ -301,7 +369,7 @@ Game_Action.prototype.applyVariance = function(damage, variance) {
     // 行動主体の与ダメージ倍率の計算
     for (const object of getTraitObjects(subject)) {
         const inflictedDamageRate = object.meta.InflictedDamageRate;
-        if (inflictedDamageRate != null) {
+        if (inflictedDamageRate != null && isValidDamageRate(this.item(), object)) {
             value *= eval(inflictedDamageRate);
         }
     }
@@ -310,7 +378,7 @@ Game_Action.prototype.applyVariance = function(damage, variance) {
     if (target) {
         for (const object of getTraitObjects(target)) {
             const receivedDamageRate = object.meta.ReceivedDamageRate;
-            if (receivedDamageRate != null) {
+            if (receivedDamageRate != null && isValidDamageRate(this.item(), object)) {
                 value *= eval(receivedDamageRate);
             }
         }
@@ -318,6 +386,101 @@ Game_Action.prototype.applyVariance = function(damage, variance) {
 
     return value;
 };
+
+/**
+ * ●ダメージ倍率の変更が有効かどうかの判定
+ */
+function isValidDamageRate(actionItem, object) {
+    // 有効なダメージタイプでなければ終了
+    if (!isTargetDamageType(actionItem, object)) {
+        return false;
+    // 有効な命中タイプでなければ終了
+    } else if (!isTargetHitType(actionItem, object)) {
+        return false;
+    // 有効なスキルタイプでなければ終了
+    } else if (!isTargetSkillType(actionItem, object)) {
+        return false;
+    }
+    // ここまで到達すれば有効
+    return true;
+}
+
+/**
+ * ●有効なダメージタイプかどうか？
+ */
+function isTargetDamageType(actionItem, object) {
+    // チェック対象のダメージタイプ
+    let targetDamageType = pDR_DamageType;
+    // 個別の指定がある場合は取得
+    const metaDamageType = object ? object.meta.DamageRateDamageType : null;
+    if (metaDamageType) {
+        // 空欄の場合は空配列
+        if (metaDamageType === true) {
+            targetDamageType = [];
+        // それ以外は配列化して取得
+        } else {
+            targetDamageType = textToArray(metaDamageType);
+        }
+    }
+    // ダメージタイプのチェック
+    if (targetDamageType.length && !targetDamageType.includes(actionItem.damage.type)) {
+        return false;
+    }
+    return true;
+}
+
+/**
+ * ●有効な命中タイプかどうか？
+ */
+function isTargetHitType(actionItem, object) {
+    // チェック対象のスキルタイプ
+    let targetHitType = pDR_HitType;
+    // 個別の指定がある場合は取得
+    const metaHitType = object ? object.meta.DamageRateHitType : null;
+    if (metaHitType) {
+        // 空欄の場合は空配列
+        if (metaHitType === true) {
+            targetHitType = [];
+        // それ以外は
+        } else {
+            targetHitType = textToArray(metaHitType);
+        }
+    }
+    // スキルタイプのチェック
+    if (targetHitType.length && !targetHitType.includes(actionItem.hitType)) {
+        return false;
+    }
+    return true;
+}
+
+/**
+ * ●有効なスキルタイプかどうか？
+ */
+function isTargetSkillType(actionItem, object) {
+    // アイテムの場合は有効
+    if (DataManager.isItem(actionItem)) {
+        return true;
+    }
+
+    // チェック対象のスキルタイプ
+    let targetSkillType = pDR_SkillType;
+    // 個別の指定がある場合は取得
+    const metaSkillType = object ? object.meta.DamageRateSkillType : null;
+    if (metaSkillType) {
+        // 空欄の場合は空配列
+        if (metaSkillType === true) {
+            targetSkillType = [];
+        // それ以外は
+        } else {
+            targetSkillType = textToArray(metaSkillType);
+        }
+    }
+    // スキルタイプのチェック
+    if (targetSkillType.length && !targetSkillType.includes(actionItem.stypeId)) {
+        return false;
+    }
+    return true;
+}
 
 // ----------------------------------------------------------------------------
 // ステート関連
@@ -416,6 +579,55 @@ function getTraitObjects(battler) {
         traitObjects = traitObjects.concat(battler.skills());
     }
     return traitObjects;
+}
+
+/**
+ * ●文字列を分解して配列に変換する。
+ * ※例１："1,2,3" -> [1,2,3]
+ * ※例２："1~3" -> [1,2,3]
+ */
+function textToArray(textArr) {
+    const array = [];
+    
+    // 無効なら処理しない。
+    if (textArr === undefined || textArr === null || textArr === "") {
+        return array;
+    }
+
+    // カンマ区切りでループ
+    for (let text of textArr.split(",")) {
+        // 空白除去
+        text = text.trim();
+        // 1~5というように範囲指定の場合
+        // ※~が存在する。
+        if (text.indexOf("~") >= 0) {
+            const rangeVal = text.split("~");
+            const rangeStart = eval(rangeVal[0]);
+            const rangeEnd = eval(rangeVal[1]);
+
+            // IDの指定範囲で実行
+            // 開始のほうが終了より大きい場合は反対に実行
+            if (rangeEnd < rangeStart) {
+                for (let i = rangeStart; i >= rangeEnd; i--) {
+                    array.push(eval(i));
+                }
+            } else {
+                for (let i = rangeStart; i <= rangeEnd; i++) {
+                    array.push(eval(i));
+                }
+            }
+            
+        // 通常時
+        } else {
+            try {
+                array.push(eval(text));
+            // 数式評価できない場合はそのままpush
+            } catch (e) {
+                array.push(text);
+            }
+        }
+    }
+    return array;
 }
 
 })();
