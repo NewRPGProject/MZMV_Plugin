@@ -39,6 +39,10 @@
  * 1.5 times the damage received.
  * 1.0 corresponds to 100%.
  * 
+ * The following are conditions for determining
+ * the skill that changes the damage rate.
+ * Use in combination.
+ * 
  * <DamageRateDamageType:1,5>
  * Change the damage rate for damage type 1,5 skills.
  * 1:HP Damage, 2:MP Damage, 3:HP Recover, 4:MP Recover,
@@ -174,6 +178,9 @@
  * 受けるダメージを１．５倍にします。
  * 1.0が100%に相当します。
  * 
+ * 以降はダメージ倍率の変更を行うスキルを判定するための条件です。
+ * 組み合わせて使用してください。
+ *
  * <DamageRateDamageType:1,5>
  * ダメージタイプ1,5のスキルのダメージ倍率を変更します。
  * 1:HPダメージ, 2:MPダメージ, 3:HP回復, 4:MP回復, 5:HP吸収, 6:MP回復です。
