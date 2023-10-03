@@ -8,6 +8,7 @@
  * @url https://newrpg.seesaa.net/article/500973022.html
  *
  * @help Adjust the flash when the enemy acts.
+ * Flash strength, duration, delay (wait), etc. can be set.
  * 
  * -------------------------------------------------------------------
  * [Terms]
@@ -53,6 +54,7 @@
  * @url https://newrpg.seesaa.net/article/500973022.html
  *
  * @help 敵の行動時のフラッシュを調整します。
+ * フラッシュの強さ、時間、ディレイ（ウェイト）などを設定できます。
  * 
  * -------------------------------------------------------------------
  * ■利用規約
