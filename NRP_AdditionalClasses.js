@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.091 Multiple classes allow for a highly flexible growth system.
+ * @plugindesc v1.10 Multiple classes allow for a highly flexible growth system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -514,7 +514,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.091 多重職業によって自由度の高い成長システムを実現。
+ * @plugindesc v1.10 多重職業によって自由度の高い成長システムを実現。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -1655,18 +1655,19 @@ AdditionalClass.prototype.maxLevel = function() {
  * ●経験値を変更
  */
 AdditionalClass.prototype.changeExp = function(exp, show, index) {
-    const actor = this.expActor();
+    const expActor = this.expActor();
+    const skillActor = this.actor();
     const classId = this.id;
 
     // サブ職業倍率
     if (index >= 1) {
-        exp *= actor.subClassExpRate(index);
+        exp *= expActor.subClassExpRate(index);
     }
 
-    actor._exp[classId] = Math.max(exp, 0);
+    expActor._exp[classId] = Math.max(exp, 0);
     // 変更前のレベル＆スキルを保持
     const lastLevel = this._level;
-    const lastSkills = actor.skills();
+    const lastSkills = skillActor.skills();
 
     while (!this.isMaxLevel() && this.exp() >= this.nextLevelExp()) {
         this.levelUp();
@@ -1678,9 +1679,9 @@ AdditionalClass.prototype.changeExp = function(exp, show, index) {
     // レベルアップした場合
     if (show && this._level > lastLevel) {
         // メッセージを表示
-        this.displayLevelUp(actor.findNewSkills(lastSkills));
+        this.displayLevelUp(skillActor.findNewSkills(lastSkills));
     }
-    actor.refresh();
+    expActor.refresh();
 };
 
 /**
@@ -1695,7 +1696,7 @@ AdditionalClass.prototype.changeLevel = function(level, show) {
  * ●レベルアップ
  */
 AdditionalClass.prototype.levelUp = function() {
-    const actor = this.expActor();
+    const actor = this.actor();
 
     this._level++;
     for (const learning of this._data.learnings) {
