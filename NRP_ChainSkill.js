@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.04 Chain skills together.
+ * @plugindesc v1.041 Chain skills together.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -239,7 +239,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 スキルを連結する。
+ * @plugindesc v1.041 スキルを連結する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -547,6 +547,12 @@ BattleManager.updateAction = function() {
     const target = this._targets[0];
     // 対象が存在する場合はアクションが続いているのでそのまま
     if (target) {
+        _BattleManager_updateAction.apply(this, arguments);
+        return;
+    }
+
+    // 万が一、アクションが取得できない場合は終了
+    if (!this._action) {
         _BattleManager_updateAction.apply(this, arguments);
         return;
     }
