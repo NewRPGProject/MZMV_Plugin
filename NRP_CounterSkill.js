@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.001 Create counter skill.
+ * @plugindesc v1.01 Create counter skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_ChainSkill
  * @url https://newrpg.seesaa.net/article/500432213.html
@@ -16,7 +16,7 @@
  * that counterattack just by remembering them.
  * 
  * -------------------------------------------------------------------
- * [Note (actor, enemy, class, equipment, state, skill, item)]
+ * [Note (actor, enemy, class, equipment, state, skill)]
  * -------------------------------------------------------------------
  * <CounterSkill:100>
  * Skill ID 100 will be executed as a counter.
@@ -212,7 +212,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.001 反撃スキルを作成する。
+ * @plugindesc v1.01 反撃スキルを作成する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_ChainSkill
  * @url https://newrpg.seesaa.net/article/500432213.html
@@ -807,7 +807,6 @@ Game_Action.prototype.apply = function(target) {
                 const addCount = count - 1;
                 // 反撃リストへ通常攻撃を登録
                 this.applyCounter(null, target, addCount);
-                // resistCounter(target, this.subject(), null, null, addCount);
             }
 
         // 通常時
@@ -815,7 +814,6 @@ Game_Action.prototype.apply = function(target) {
             if (Math.random() < this.itemCnt(target)) {
                 // 反撃リストへ通常攻撃を登録
                 this.applyCounter(null, target, 0);
-                // resistCounter(target, this.subject(), null, null, 0);
             }
         }
     }
@@ -1092,7 +1090,12 @@ function textToArray(textArr) {
  */
 function checkMeta(commonParam, item, metaName) {
     if (item && item.meta[metaName]) {
-        return eval(item.meta[metaName]);
+        try {
+            return eval(item.meta[metaName]);
+        } catch (e) {}
+
+        // エラーになった場合は文字列で返す。
+        return item.meta[metaName];
     }
     return commonParam;
 }
