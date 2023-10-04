@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.03 A list-style skill learning system.
+ * @plugindesc v1.04 A list-style skill learning system.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -74,6 +74,9 @@
  * Increases or decreases the actor's skill points.
  * It cannot be less than 0.
  * 
+ * ◆ResetSkill
+ * Forget the skills learned and restore the skill points.
+ * 
  * -------------------------------------------------------------------
  * [Terms]
  * -------------------------------------------------------------------
@@ -123,6 +126,21 @@
  * 
  * @arg VariableActor
  * @parent <Condition>
+ * @type variable
+ * @desc Specify the target actor by variable.
+ * This one takes precedence over the other.
+ * 
+ * @-----------------------------------------------------
+ * 
+ * @command ResetSkill
+ * @desc Forget the skills learned and restore the skill points.
+ * 
+ * @arg Actor
+ * @type actor
+ * @desc Actor to target.
+ * If unspecified, the entire party is targeted.
+ * 
+ * @arg VariableActor
  * @type variable
  * @desc Specify the target actor by variable.
  * This one takes precedence over the other.
@@ -424,7 +442,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.03 リスト形式のスキル習得システム。
+ * @plugindesc v1.04 リスト形式のスキル習得システム。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -490,6 +508,9 @@
  * アクターのスキルポイントを増減させます。
  * なお、0未満にはなりません。
  * 
+ * ◆スキルリセット
+ * 習得したスキルを忘れて、スキルポイントを元に戻します。
+ * 
  * -------------------------------------------------------------------
  * ■利用規約
  * -------------------------------------------------------------------
@@ -548,6 +569,24 @@
  * 
  * @arg VariableActor
  * @parent <Condition>
+ * @text アクター（変数）
+ * @type variable
+ * @desc 対象とするアクターを変数で指定します。
+ * こちらのほうが優先されます。
+ * 
+ * @-----------------------------------------------------
+ * 
+ * @command ResetSkill
+ * @text スキルリセット
+ * @desc 習得したスキルを忘れて、スキルポイントを元に戻します。
+ * 
+ * @arg Actor
+ * @text アクター
+ * @type actor
+ * @desc 対象とするアクターです。
+ * 未指定ならパーティ全体を対象とします。
+ * 
+ * @arg VariableActor
  * @text アクター（変数）
  * @type variable
  * @desc 対象とするアクターを変数で指定します。
@@ -1059,6 +1098,25 @@ PluginManager.registerCommand(PLUGIN_NAME, "ChangeSkillPoint", function(args) {
         // 通常時
         for (const actor of $gameParty.members()) {
             actor.changeSkillPoint(skillPoint)
+        }
+    }
+});
+
+/**
+ * ●スキルリセット
+ */
+PluginManager.registerCommand(PLUGIN_NAME, "ResetSkill", function(args) {
+    // アクターを取得
+    const actor = getActor(args);
+    if (actor) {
+        // リセット実行
+        actor.resetLearnSkill();
+
+    // アクターの指定がない場合は全体を対象化
+    } else if (isForParty(args)) {
+        for (const actor of $gameParty.members()) {
+            // リセット実行
+            actor.resetLearnSkill();
         }
     }
 });
@@ -2009,6 +2067,51 @@ Game_Actor.prototype.changeSkillPoint = function(changePoint) {
         this[SKILL_POINT_KEY] = newValue;
     }
 };
+
+/**
+ * 【独自】スキルリセット
+ */
+Game_Actor.prototype.resetLearnSkill = function() {
+    const skillList = this.resetLearnSkillList();
+
+    // スキル毎にループ
+    for (const skillData of skillList) {
+        const skillId = Number(skillData.Skill);
+        // スキルを習得済だった場合
+        if (this.isLearnedSkill(skillId)) {
+            // スキルを忘れる
+            this.forgetSkill(skillId);
+            //----------------------------------
+            // ポイント返却
+            //----------------------------------
+            let skillPoint = 0;
+            if (skillData.SkillPoint) {
+                skillPoint = eval(skillData.SkillPoint);
+            }
+            this.changeSkillPoint(skillPoint);
+        }
+    }
+}
+
+/**
+ * 【独自】スキルリセット用のスキルリストを取得
+ */
+Game_Actor.prototype.resetLearnSkillList = function() {
+    const restSkillList = [];
+
+    // 対象アクターのスキルセットのみを取得
+    const skillSetList = pSkillSetList.filter(skillSet => !skillSet.Actor || skillSet.Actor == this.actorId());
+    // さらにスキルセットの中で条件を満たすスキルのみを追加
+    for (const skillSet of skillSetList) {
+        const skillList = parseStruct1(skillSet.SkillList);
+        for (const skillData of skillList) {
+            const parseSkillData = JSON.parse(skillData);
+            restSkillList.push(parseSkillData);
+        }
+    }
+
+    return restSkillList;
+}
 
 //-----------------------------------------------------------------------------
 // メニューコマンド（Window_MenuCommand, Scene_Menu）
