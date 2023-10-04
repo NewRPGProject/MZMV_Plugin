@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Adjust the flash when the enemy acts.
+ * @plugindesc v1.001 Adjust the flash when the enemy acts.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/500973022.html
  *
@@ -49,7 +49,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 敵の行動時のフラッシュを調整します。
+ * @plugindesc v1.001 敵の行動時のフラッシュを調整します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/500973022.html
  *
@@ -131,10 +131,10 @@ Spriteset_Battle.prototype.animationBaseDelay = function() {
     const subject = BattleManager._subject;
     if (subject) {
         // 敵キャラの基本ディレイ
-        if (subject.isEnemy() && pEnemyAnimationBaseDelay) {
+        if (subject.isEnemy() && pEnemyAnimationBaseDelay != null) {
             return pEnemyAnimationBaseDelay;
         // アクターの基本ディレイ
-        } else if (subject.isActor() && pActorAnimationBaseDelay) {
+        } else if (subject.isActor() && pActorAnimationBaseDelay != null) {
             return pActorAnimationBaseDelay;
         }
     }
