@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.023 Create a charge skill.
+ * @plugindesc v1.03 Create a charge skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/474413155.html
  *
@@ -92,7 +92,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.023 ため技作成用の機能を提供します。
+ * @plugindesc v1.03 ため技作成用の機能を提供します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/474413155.html
  *
@@ -300,13 +300,20 @@ function chargeSkill(subject, action, chargeStateId, chargeSpeedRate) {
     }
 
     // ため技情報を作成
-    var chargeSkill = new ChargeSkill();
+    const chargeSkill = new ChargeSkill();
     // スキルＩＤの指定があるなら設定
     if (item.meta.ChargeActionSkill) {
         chargeSkill.skillId = item.meta.ChargeActionSkill;
     } else {
         chargeSkill.skillId = item.id;
     }
+
+    // 敵キャラの場合は対象が決まってないので、ここでtargetIndexを更新
+    if (subject.isEnemy()) {
+        action.decideRandomTarget();
+    }
+
+    // 対象を保持
     chargeSkill.targetIndex = action._targetIndex;
 
     // ため用ステートIDに、ため技情報を紐付け
@@ -336,7 +343,7 @@ function chargeSkill(subject, action, chargeStateId, chargeSpeedRate) {
     }
 
     // ため開始ターンを状態異常などの処理の対象外とする設定
-    var chargeTurnException = item.meta.ChargeTurnException;
+    const chargeTurnException = item.meta.ChargeTurnException;
     // <ChargeTurnException>の指定がある場合は優先
     if (chargeTurnException != undefined) {
         if (chargeTurnException) {
@@ -454,7 +461,7 @@ var _Game_Action_setConfusion = Game_Action.prototype.setConfusion;
 Game_Action.prototype.setConfusion = function() {
     if (this.item()) {
         // ため技情報があれば、実行スキルを設定
-        var chargeSkill = getChargeSkill(this.subject());
+        const chargeSkill = getChargeSkill(this.subject());
         if (chargeSkill) {
             var skillId = eval(chargeSkill.skillId);
             this.setSkill(skillId);
