@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.10 Multiple classes allow for a highly flexible growth system.
+ * @plugindesc v1.101 Multiple classes allow for a highly flexible growth system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -184,7 +184,13 @@
  * ※"actor" is an object of the Game_Actor class.
  * ※If the actor is not in the additional class, an error will occur.
  * 
+ * ◆actor.isAdditionalClassId(1);
+ * Determines if the actor is in an additional class.
+ * The number is the class ID.
+ * 
+ * -------------------------------------------------------------------
  * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
@@ -514,7 +520,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.10 多重職業によって自由度の高い成長システムを実現。
+ * @plugindesc v1.101 多重職業によって自由度の高い成長システムを実現。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -682,6 +688,10 @@
  * 
  * ※actorはGame_Actorクラスのオブジェクトです。
  * ※追加職業に就いてない場合はエラーになります。
+ * 
+ * ◆actor.isAdditionalClassId(1);
+ * アクターが追加職業に就いているかを判定します。
+ * 数値は職業ＩＤです。
  * 
  * -------------------------------------------------------------------
  * ■利用規約
@@ -1979,6 +1989,26 @@ Game_Actor.prototype.traitObjects = function() {
     }
 
     return objects;
+};
+
+/**
+ * ●アクターが追加職業についているか？
+ */
+Game_Actor.prototype.isAdditionalClass = function(gameClass) {
+    if (!gameClass) {
+        return false;
+    }
+    if (this.additionalClasses().some(ac => ac.id == gameClass.id)) {
+        return true;
+    }
+    return false;
+};
+
+/**
+ * ●アクターが追加職業についているか？（ＩＤ）
+ */
+Game_Actor.prototype.isAdditionalClassId = function(classId) {
+    return this.isAdditionalClass($dataClasses[classId]);
 };
 
 if (pParamPlus) {
