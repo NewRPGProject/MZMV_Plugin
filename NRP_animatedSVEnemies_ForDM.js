@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Allows animatedSVEnemies to be used in conjunction with DynamicMotion.
+ * @plugindesc v1.031 Allows animatedSVEnemies to be used in conjunction with DynamicMotion.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base animatedSVEnemies
  * @base NRP_DynamicMotionMZ
@@ -77,7 +77,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 animatedSVEnemiesをDynamicMotionと併用できるようにします。
+ * @plugindesc v1.031 animatedSVEnemiesをDynamicMotionと併用できるようにします。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @base animatedSVEnemies
  * @base NRP_DynamicMotionMZ
@@ -228,7 +228,7 @@ Spriteset_Battle.prototype.createEnemies = function() {
 };
 
 /**
- * ●敵の画像更新
+ * 【上書】敵の画像更新
  * ※画像変更時のみ処理するように変更
  */
 Sprite_EnemyRex.prototype.updateBitmap = function() {
@@ -246,6 +246,14 @@ Sprite_EnemyRex.prototype.updateBitmap = function() {
         this._mainSprite.anchor.x = this._actor._anchor[0];
         this._mainSprite.anchor.y = this._actor._anchor[1];
     }
+};
+
+/**
+ * 【上書】退却時の位置設定
+ * ※プレイヤーの退却時の処理なので移動してはいけない。
+ */
+Sprite_EnemyRex.prototype.retreat = function() {
+    // this.startMove(300, 0, 30);
 };
 
 //-----------------------------------------------------------------------------
