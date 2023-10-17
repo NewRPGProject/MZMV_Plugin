@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.27 When executing skills, call motion freely.
+ * @plugindesc v1.271 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help When executing skills(items), call motion freely.
@@ -555,7 +555,7 @@
  */
 
 /*:ja
- * @plugindesc v1.27 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.271 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在にモーションを呼び出します。
@@ -1227,6 +1227,12 @@ function toBoolean(val, def) {
 }
 function toNumber(str, def) {
     return isNaN(str) ? def : +(str || def);
+}
+function setDefault(str, def) {
+    if (str == undefined || str == "") {
+        return def;
+    }
+    return str;
 }
 /**
  * ●構造体（二重配列）をJSで扱えるように変換
@@ -2216,6 +2222,9 @@ DynamicMotion.prototype.initialize = function (baseMotion, performer, target, r)
         this.interval = this.maxDuration / baseMotion.rate;
     }
 
+    // モーション開始パターンを設定（値がない場合は0を設定）
+    this.motionStartPattern = setDefault(baseMotion.motionStartPattern, 0);
+
     // 以下の項目はそのまま数式として渡す
     this.sx = baseMotion.sx;
     this.sy = baseMotion.sy;
@@ -2229,7 +2238,6 @@ DynamicMotion.prototype.initialize = function (baseMotion, performer, target, r)
     this.plugin = baseMotion.plugin;
     this.scriptRT = baseMotion.scriptRT;
     this.motionPattern = baseMotion.motionPattern;
-    this.motionStartPattern = baseMotion.motionStartPattern;
     this.weaponId = baseMotion.weaponId;
     this.weaponType = baseMotion.weaponType;
     this.weaponImage = baseMotion.weaponImage;
