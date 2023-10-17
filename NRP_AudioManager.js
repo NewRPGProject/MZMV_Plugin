@@ -3,15 +3,27 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Manage audio files.
+ * @plugindesc v1.02 Manage audio files.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483999181.html
  *
  * @help Manage audio files.
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * [Functions]
- * ------------------------------------------
+ * -------------------------------------------------------------------
+ * ◆Change Current BGM Setting (Plugin command for MZ)
+ * The volume, pitch, and pan of the currently playing BGM
+ * can be changed by plugin command.
+ * 
+ * Unlike RPG Maker command, there is no need to specify a file name,
+ * which allows for a greater degree of freedom.
+ * For example, it is possible to lower the volume of the BGM
+ * when a special skill is activated.
+ * 
+ * Also, the current playing position
+ * is maintained when the pitch is changed.
+ * 
  * ◆Audio Alias Function
  * For example, if you want to set the boss battle music in Maker,
  * you may use the "Change Battle BGM" command
@@ -48,14 +60,45 @@
  * ※If you use this function together with the Audio Alias Function,
  *   please set it for the file after the replacement.
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * [Terms]
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
  * The author is not responsible,
  * but will deal with defects to the extent possible.
+ * 
+ * @-----------------------------------------------------
+ * @ [Plugin Commands]
+ * @-----------------------------------------------------
+ * 
+ * @command ChangeCurrentBgmSetting
+ * @desc Changes the volume, pitch, and pan of the currently playing BGM.
+ * 
+ * @arg Volume
+ * @type number
+ * @max 400
+ * @default 90
+ * @desc The volume of the BGM.
+ * 90 is the default value.
+ * 
+ * @arg Pitch
+ * @type number
+ * @default 100
+ * @desc The pitch of the BGM.
+ * 100 is the default value.
+ * 
+ * @arg Pan
+ * @type number
+ * @max 100 @min -100
+ * @default 0
+ * @desc The pan of the BGM.
+ * 0 is the default value.
+ * 
+ * @-----------------------------------------------------
+ * @ [Plugin Parameters]
+ * @-----------------------------------------------------
  * 
  * @param <BGM>
  * 
@@ -286,15 +329,25 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 音声ファイルの管理を行う。
+ * @plugindesc v1.02 音声ファイルの管理を行う。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483999181.html
  *
  * @help 音声ファイルの管理を行います。
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * ■機能
- * ------------------------------------------
+ * -------------------------------------------------------------------
+ * ◆現在のＢＧＭ設定を変更（ＭＺ用プラグインコマンド）
+ * 現在演奏中のＢＧＭの音量やピッチ、位相を
+ * プラグインコマンドによって変更できます。
+ * 
+ * ツクールのコマンドと異なりファイル名を指定する必要がないため、
+ * 自由度のある操作が可能になります。
+ * 例えば、大技の発動時にＢＧＭの音量を下げるなどの演出が可能です。
+ * 
+ * また、ピッチ変更時も現在の演奏位置が維持されます。
+ * 
  * ◆音声置換機能
  * 例えば、ツクールでボス戦曲を設定する場合、
  * 『戦闘ＢＧＭの変更』コマンドによって、
@@ -328,12 +381,47 @@
  * ※音声置換機能と併用する場合は、
  * 　置換後のファイルに対して設定してください。
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * ■利用規約
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
+ * 
+ * @-----------------------------------------------------
+ * @ プラグインコマンド
+ * @-----------------------------------------------------
+ * 
+ * @command ChangeCurrentBgmSetting
+ * @text 現在のＢＧＭ設定を変更
+ * @desc 現在演奏中のＢＧＭの音量やピッチ、位相を変更します。
+ * 
+ * @arg Volume
+ * @text 音量
+ * @type number
+ * @max 400
+ * @default 90
+ * @desc ＢＧＭの音量です。
+ * 90が初期値です。
+ * 
+ * @arg Pitch
+ * @text ピッチ
+ * @type number
+ * @default 100
+ * @desc ＢＧＭのピッチです。
+ * 100が初期値です。
+ * 
+ * @arg Pan
+ * @text 位相
+ * @type number
+ * @max 100 @min -100
+ * @default 0
+ * @desc ＢＧＭの位相です。
+ * 0が初期値です。
+ * 
+ * @-----------------------------------------------------
+ * @ プラグインパラメータ
+ * @-----------------------------------------------------
  * 
  * @param <BGM>
  * @text ＜ＢＧＭ＞
@@ -645,6 +733,43 @@ const pMeSettings = parseStruct2(parameters["MeSettings"]);
 const pMeAliases = parseStruct2(parameters["MeAliases"]);
 const pSeSettings = parseStruct2(parameters["SeSettings"]);
 const pSeAliases = parseStruct2(parameters["SeAliases"]);
+
+//-----------------------------------------------------------------------------
+// ＭＺ用プラグインコマンド
+//-----------------------------------------------------------------------------
+
+// MVには存在しないため、空で定義しておかないとエラーになる。
+if (!PluginManager.registerCommand) {
+    PluginManager.registerCommand = function() {}
+}
+
+/**
+ * ●現在のＢＧＭ設定を変更
+ */
+PluginManager.registerCommand(PLUGIN_NAME, "ChangeCurrentBgmSetting", function(args) {
+    // 現在演奏中のＢＧＭ情報を引き継ぎ
+    const bgmData = AudioManager.saveBgm();
+
+    const volume = toNumber(args.Volume);
+    if (volume != null) {
+        bgmData.volume = volume;
+    }
+
+    const pitch = toNumber(args.Pitch);
+    if (pitch != null) {
+        bgmData.pitch = pitch;
+    }
+
+    const pan = toNumber(args.Pan);
+    if (pan != null) {
+        bgmData.pan = pan;
+    }
+
+    // 変更した情報を反映
+    AudioManager.updateBgmParameters(bgmData);
+    AudioManager._bgmBuffer.play(true, bgmData.pos);
+    AudioManager.updateCurrentBgm(bgmData, bgmData.pos);
+});
 
 //----------------------------------------
 // ＢＧＭ
