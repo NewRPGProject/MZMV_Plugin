@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.041 It makes MV animations correspond to DynamicAnimationMZ.
+ * @plugindesc v1.05 It makes MV animations correspond to DynamicAnimationMZ.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -104,7 +104,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.041 ＭＶ用アニメーションをDynamicAnimationMZに対応させます。
+ * @plugindesc v1.05 ＭＶ用アニメーションをDynamicAnimationMZに対応させます。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -463,12 +463,17 @@ Sprite_AnimationMV.prototype.updateDynamicAnimation = function() {
         this.y = sy + (ey - sy) * Math.min(t, arrival) / arrival;
     }
 
+    // 計算用に時間を１進める。
+    // ※t=0の時点で浮上させるための調整。
+    const t2 = t + 1;
+    const arrival2 = arrival + 1;
+
     // 放物線補正があれば加算
     if (arcX) {
-        this.x += (-arcX / Math.pow(arrival/2, 2)) * Math.pow(Math.min(t, arrival) - arrival/2, 2) + arcX;
+        this.x += (-arcX / Math.pow(arrival2/2, 2)) * Math.pow(Math.min(t2, arrival2) - arrival2/2, 2) + arcX;
     }
     if (arcY) {
-        this.y += (-arcY / Math.pow(arrival/2, 2)) * Math.pow(Math.min(t, arrival) - arrival/2, 2) + arcY;
+        this.y += (-arcY / Math.pow(arrival2/2, 2)) * Math.pow(Math.min(t2, arrival2) - arrival2/2, 2) + arcY;
     }
 
     // 円運動
