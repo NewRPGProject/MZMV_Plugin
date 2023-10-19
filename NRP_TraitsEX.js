@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.011 Create special traits.
+ * @plugindesc v1.012 Create special traits.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -143,7 +143,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.011 特殊な特徴を実現します。
+ * @plugindesc v1.012 特殊な特徴を実現します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -360,7 +360,11 @@ Game_Action.prototype.apply = function(target) {
                 result.drain = this.isDrain();
             }
 
-            this.updateLastTarget(target);
+            // ラストターゲット更新
+            // ※ＭＶには存在しない関数
+            if (this.updateLastTarget) {
+                this.updateLastTarget(target);
+            }
             return;
         }
     }
