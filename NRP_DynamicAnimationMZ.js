@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.202 Automate & super-enhance battle animations.
+ * @plugindesc v1.203 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -531,7 +531,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.202 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.203 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -3947,18 +3947,21 @@ Sprite_Animation.prototype.updateEffectGeometry = function() {
         rz += eval(rotationZ);
     }
 
-    // 不透明度（ＭＺでは無効）
-    if (opacity != undefined) {
+    // ※不透明度関連はＭＺアニメでは無効ですが、一応残しておきます。
+    // 初期フレームは透明の場合
+    if (t == 0 && firstInvisible) {
+        this.opacity = 0;
+    // 不透明度
+    } else if (opacity != undefined) {
         opacity = eval(opacity);
         if (opacity != undefined) {
             this.opacity = opacity;
         }
+    // それ以外は255
+    } else {
+        this.opacity = 255;
     }
-    // 初期フレームは透明の場合
-    if (t == 0 && firstInvisible) {
-        opacity = 0
-        this.opacity = opacity;
-    }
+
     // 残像の不透明度計算
     if (da.isAfterimage) {
         if (opacity == undefined) {
