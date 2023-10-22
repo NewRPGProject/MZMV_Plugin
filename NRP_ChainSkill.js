@@ -3,11 +3,12 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.041 Chain skills together.
+ * @plugindesc v1.05 Chain skills together.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
  * @orderAfter NRP_MotionSetting
+ * @orderAfter NRP_EnemyActionFlash
  * @url https://newrpg.seesaa.net/article/498285406.html
  *
  * @help After the execution of a skill,
@@ -235,15 +236,21 @@
  * @option random
  * @default top
  * @desc Change the target when a chain skill is activated for a skill that is whole in range.
+ * 
+ * @param NoEnemyFlash
+ * @type boolean
+ * @default true
+ * @desc When a chain skill is activated, it does not show the flash of the enemy.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.041 スキルを連結する。
+ * @plugindesc v1.05 スキルを連結する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
  * @orderAfter NRP_MotionSetting
+ * @orderAfter NRP_EnemyActionFlash
  * @url https://newrpg.seesaa.net/article/498285406.html
  *
  * @help スキルの実行後に別のスキルを連結して発動します。
@@ -470,6 +477,12 @@
  * @option ランダム @value random
  * @default top
  * @desc 対象が全体のスキルに対して、連結スキルを発動した場合の対象です。
+ * 
+ * @param NoEnemyFlash
+ * @text 敵のフラッシュをしない
+ * @type boolean
+ * @default true
+ * @desc 連結スキル発動時は敵のフラッシュを表示しません。
  */
 
 (function() {
@@ -511,6 +524,7 @@ const pAbortTargetDeath = toBoolean(parameters["AbortTargetDeath"], false);
 const pAbortTargetResist = toBoolean(parameters["AbortTargetResist"], false);
 const pDisableSameSkill = toBoolean(parameters["DisableSameSkill"], false);
 const pAdjustAllRangeTarget = setDefault(parameters["AdjustAllRangeTarget"]);
+const pNoEnemyFlash = toBoolean(parameters["NoEnemyFlash"], true);
 
 // ----------------------------------------------------------------------------
 // 共通変数
@@ -1127,6 +1141,36 @@ Sprite_Actor.prototype.stepBack = function() {
     }
     _Sprite_Actor_stepBack.apply(this, arguments);
 };
+
+// ----------------------------------------------------------------------------
+// 敵のフラッシュ禁止
+// ----------------------------------------------------------------------------
+
+if (pNoEnemyFlash) {
+    /**
+     * ●アニメーション開始時の基本ディレイ
+     */
+    const _Spriteset_Battle_animationBaseDelay = Spriteset_Battle.prototype.animationBaseDelay;
+    Spriteset_Battle.prototype.animationBaseDelay = function() {
+        // 連結スキル中はディレイ不要
+        if (mIsChain) {
+            return 0;
+        }
+        return _Spriteset_Battle_animationBaseDelay.apply(this, arguments);
+    };
+
+    /**
+     * ●フラッシュ開始
+     */
+    const _Sprite_Enemy_startWhiten = Sprite_Enemy.prototype.startWhiten;
+    Sprite_Enemy.prototype.startWhiten = function() {
+        // 連結スキル中はフラッシュ不要
+        if (mIsChain) {
+            return;
+        }
+        _Sprite_Enemy_startWhiten.apply(this, arguments);
+    };
+}
 
 // ----------------------------------------------------------------------------
 // 共通関数
