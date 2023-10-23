@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Create counter skill.
+ * @plugindesc v1.02 Create counter skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_ChainSkill
  * @url https://newrpg.seesaa.net/article/500432213.html
@@ -188,6 +188,11 @@
  * @default true
  * @desc When the target dies, subsequent counter skills are not activated.
  * 
+ * @param CounterFriendSkill
+ * @type boolean
+ * @default false
+ * @desc It is whether or not to counter to the skills of a fellow worker. NRP_PartyAttack.js is required for counter.
+ * 
  * @param CoverDefaultCounter
  * @type boolean
  * @default false
@@ -212,7 +217,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 反撃スキルを作成する。
+ * @plugindesc v1.02 反撃スキルを作成する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_ChainSkill
  * @url https://newrpg.seesaa.net/article/500432213.html
@@ -398,6 +403,13 @@
  * @default true
  * @desc 対象死亡時は以降の反撃スキルを発動しません。
  * 
+ * @param CounterFriendSkill
+ * @text 仲間のスキルにも反撃
+ * @type boolean
+ * @default false
+ * @desc 仲間のスキルへ反撃するかどうかです。
+ * 反撃にはNRP_PartyAttack.jsが必要です。
+ * 
  * @param CoverDefaultCounter
  * @text デフォルトの反撃処理を上書
  * @type boolean
@@ -459,6 +471,7 @@ const pComboJudgeType = toNumber(parameters["ComboJudgeType"], 0);
 const pNoMpTpCost = toBoolean(parameters["NoMpTpCost"], true);
 const pIgnoreSkillConditions = toBoolean(parameters["IgnoreSkillConditions"], true);
 const pAbortTargetDeath = toBoolean(parameters["AbortTargetDeath"], false);
+const pCounterFriendSkill = toBoolean(parameters["CounterFriendSkill"], false);
 const pCoverDefaultCounter = toBoolean(parameters["CoverDefaultCounter"], false);
 const pDefaultCounterGroup = setDefault(parameters["DefaultCounterGroup"]);
 const pDefaultCounterGroupNG = setDefault(parameters["DefaultCounterGroupNG"]);
@@ -591,11 +604,16 @@ BattleManager.updateAction = function() {
  * ●反撃スキルを実行
  */
 function goCounterSkill(subject, target, skillId) {
+    // 戦闘行動の強制を実行
+    const counterOk = subject.counterForceAction(skillId, target);
+
+    // 不発の場合は終了
+    if (!counterOk) {
+        return;
+    }
+
     // カウンター実行フラグオン
     mInCounter = true;
-
-    // 戦闘行動の強制を実行
-    subject.counterForceAction(skillId, target.index());
 
     BattleManager.forceAction(subject);
     BattleManager.processForcedAction();
@@ -605,8 +623,6 @@ function goCounterSkill(subject, target, skillId) {
     if (BattleManager.isForcedTurn && BattleManager.isForcedTurn()) {
         BattleManager._turnForced = false;
     }
-    
-    return true;
 }
 
 if (pCoverDefaultCounter) {
@@ -626,9 +642,23 @@ if (pCoverDefaultCounter) {
 /**
  * 【独自】カウンタースキルを実行する。
  */
-Game_Battler.prototype.counterForceAction = function(skillId, targetIndex) {
+Game_Battler.prototype.counterForceAction = function(skillId, target) {
     const action = new Game_Action(this, true);
     action.setSkill(skillId);
+
+    // 対象が本来の対象サイドと異なる場合
+    if (isAnotherSide(action, this, target)) {
+        // 対象サイドを反転
+        // ※NRP_PartyAttack.jsのメソッド
+        if (action.setReverseTargetSide) {
+            action.setReverseTargetSide();
+        // それ以外は不発にする。
+        } else {
+            return false;
+        }
+    }
+
+    const targetIndex = target.index();
     if (targetIndex === -2) {
         action.setTarget(this._lastTargetIndex);
     } else if (targetIndex === -1) {
@@ -646,7 +676,24 @@ Game_Battler.prototype.counterForceAction = function(skillId, targetIndex) {
 
     // アクター位置の自動設定を禁止解除（DynamicMotion）
     BattleManager._noUpdateTargetPosition = false;
+
+    // 反撃有効と判定
+    return true;
 };
+
+/**
+ * ●対象が本来の対象サイドと異なるかどうか？
+ */
+function isAnotherSide(action, subject, target) {
+    // 範囲が敵なのに味方が対象
+    if (action.isForOpponent() && subject.isActor() === target.isActor()) {
+        return true;
+    // 範囲が味方なのに敵が対象
+    } else if (action.isForFriend() && subject.isActor() !== target.isActor()) {
+        return true;
+    }
+    return false;
+}
 
 // ----------------------------------------------------------------------------
 // Game_BattlerBase
@@ -880,20 +927,31 @@ Game_Action.prototype.applyCounter = function(object, target, addCount) {
         return;
     }
 
+    // 仲間のスキルかどうか？
+    if ((target.isActor() && this.subject().isActor()) || (target.isEnemy() && this.subject().isEnemy())) {
+        // 仲間のスキルに反撃しない場合は次へ
+        if (!pCounterFriendSkill) {
+            return;
+        }
+    }
+
+    // 反撃グループを取得
+    const counterGroup = checkMeta(null, actionItem, "CounterGroup");
+
     // 反撃有効グループが存在する場合
-    const counterGroupInclude = checkMeta(pDefaultCounterGroup, object, "CounterGroupInclude")
+    const counterGroupInclude = checkMeta(pDefaultCounterGroup, object, "CounterGroupInclude");
     if (counterGroupInclude) {
         // グループ名が一致しなかった場合は次へ
-        if (counterGroupInclude != actionItem.meta.CounterGroup) {
+        if (counterGroupInclude != counterGroup) {
             return;
         }
     }
 
     // 反撃無効グループが存在する場合
-    const counterGroupExcept = checkMeta(pDefaultCounterGroupNG, object, "CounterGroupExcept")
+    const counterGroupExcept = checkMeta(pDefaultCounterGroupNG, object, "CounterGroupExcept");
     if (counterGroupExcept) {
         // グループ名が一致した場合は次へ
-        if (counterGroupExcept == actionItem.meta.CounterGroup) {
+        if (counterGroupExcept == counterGroup) {
             return;
         }
     }
@@ -1089,6 +1147,9 @@ function textToArray(textArr) {
  * @param {string} metaName 参照するメタ名
  */
 function checkMeta(commonParam, item, metaName) {
+    // eval判定用
+    const a = BattleManager._subject;
+
     if (item && item.meta[metaName]) {
         try {
             return eval(item.meta[metaName]);
