@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Create a charge skill.
+ * @plugindesc v1.04 Create a charge skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/474413155.html
  *
@@ -12,7 +12,9 @@
  * in conjunction with the CTB plugin.
  * You can also use the normal turn system.
  * 
+ * -------------------------------------------------------------------
  * [How to use]
+ * -------------------------------------------------------------------
  * 1. Create the state for charging. (Example settings below)
  *  - Action constraints: any of the 'attacks'
  *  - Release condition: Cancel after the battle is over
@@ -76,23 +78,34 @@
  * <StateMotion:[Motion]>
  * Set the waiting motion during state.
  *
+ * -------------------------------------------------------------------
  * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
  * The author is not responsible,
  * but we will respond to defects as far as possible.
  * 
+ * @-----------------------------------------------------
+ * @ [Plugin Parameters]
+ * @-----------------------------------------------------
+ * 
  * @param chargeTurnException
  * @type boolean
  * @default false
  * @desc At the start of a charge skill, ignore some turn-over processes.
  * Subject to state & ability change turnover, poison damage, etc.
+ * 
+ * @param adjustStateTiming
+ * @type boolean
+ * @default true
+ * @desc Adjust the timing of the charge state so that it is added after the animation.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 ため技作成用の機能を提供します。
+ * @plugindesc v1.04 ため技作成用の機能を提供します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/474413155.html
  *
@@ -100,7 +113,9 @@
  * CTBプラグインとの連携によって、チャージタイムなどの設定も可能です。
  * ※通常のターン制でも使用できます。
  * 
+ * -------------------------------------------------------------------
  * ■使用方法
+ * -------------------------------------------------------------------
  * １．ため状態用ステートを作成します。（以下、設定例）
  *   ・行動制約：『～を攻撃』のいずれか
  *   ・解除条件：戦闘終了後に解除
@@ -138,10 +153,16 @@
  * <RemoveState:[ID]> ：ステートが追加された際、指定番号のステートを解除する。
  * <StateMotion:[モーション名]> ：ステート中の待機モーションを設定する。
  *
- * 【利用規約】
+ * -------------------------------------------------------------------
+ * ■利用規約
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
+ * 
+ * @-----------------------------------------------------
+ * @ プラグインパラメータ
+ * @-----------------------------------------------------
  * 
  * @param chargeTurnException
  * @text チャージターンの経過無効
@@ -149,6 +170,12 @@
  * @default false
  * @desc ため技の開始時、一部ターン経過処理を無視します。
  * ステート＆能力変化のターン経過、毒のダメージ効果などが対象。
+ * 
+ * @param adjustStateTiming
+ * @text ステート付加のタイミング調整
+ * @type boolean
+ * @default true
+ * @desc ため状態用ステートを付加するタイミングが、アニメーションの後になるように調整します。
  */
 
 (function() {
@@ -161,8 +188,9 @@ function toBoolean(str) {
     return (str == "true") ? true : false;
 }
 
-var parameters = PluginManager.parameters("NRP_ChargeSkill");
-var pChargeTurnException = toBoolean(parameters["chargeTurnException"]);
+const parameters = PluginManager.parameters("NRP_ChargeSkill");
+const pChargeTurnException = toBoolean(parameters["chargeTurnException"]);
+const pAdjustStateTiming = toBoolean(parameters["adjustStateTiming"], false);
 
 /**
  * ●ため技情報を保有する構造体
@@ -186,7 +214,7 @@ Game_BattlerBase.prototype.clearStates = function() {
 /**
  * ●アクション開始
  */
-var _BattleManager_startAction = BattleManager.startAction;
+const _BattleManager_startAction = BattleManager.startAction;
 BattleManager.startAction = function() {
     // ため技開始
     startCharge(this._subject);
@@ -275,6 +303,9 @@ function isSkillCast(item, subject) {
     return false;
 }
 
+// 値保持用
+let mChargeStateId = null;
+
 /**
  * ●ため開始技の実行
  * ※本来、選択したスキルとは別にため開始スキルを実行する。
@@ -287,8 +318,6 @@ function chargeSkill(subject, action, chargeStateId, chargeSpeedRate) {
     // ため時の速度補正
     action._chargeSpeedRate = chargeSpeedRate;
 
-    // 行動主体にステートを付加
-    subject.addState(chargeStateId);
     // 行動制約によってアクションが解除されるので再設定
     subject._actions = keepActions;
     action = subject.currentAction();
@@ -337,9 +366,19 @@ function chargeSkill(subject, action, chargeStateId, chargeSpeedRate) {
         chargeSkillId = eval(chargeSkillId);
         action.setSkill(chargeSkillId);
 
+        // ステート番号を保持（アクション終了時に設定）
+        if (pAdjustStateTiming) {
+            mChargeStateId = chargeStateId;
+        } else {
+            // 行動主体にステートを付加
+            subject.addState(chargeStateId);
+        }
+
     // 取得できない場合は0を設定
     } else {
         action.setSkill(0);
+        // 行動主体にステートを付加
+        subject.addState(chargeStateId);
     }
 
     // ため開始ターンを状態異常などの処理の対象外とする設定
@@ -357,6 +396,19 @@ function chargeSkill(subject, action, chargeStateId, chargeSpeedRate) {
     // 表示名変更
     setChargeName(chargeName, action, item, subject);
 }
+
+/**
+ * ●アクション終了
+ */
+const _BattleManager_endAction = BattleManager.endAction;
+BattleManager.endAction = function() {
+    // 行動主体にステートを付加
+    if (mChargeStateId) {
+        this._subject.addState(mChargeStateId);
+        mChargeStateId = null;
+    }
+    _BattleManager_endAction.apply(this, arguments);
+};
 
 /**
  * ●ターン終了時
