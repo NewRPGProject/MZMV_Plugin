@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.05 Extend the functionality of the state in various ways.
+ * @plugindesc v1.041 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -289,7 +289,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.05 ステートの機能を色々と拡張します。
+ * @plugindesc v1.041 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -1175,16 +1175,6 @@ Sprite_Actor.prototype.refreshMotion = function() {
 }
 
 /**
- * ●アクション開始時
- */
-const _BattleManager_startAction = BattleManager.startAction;
-BattleManager.startAction = function() {
-    // フラグを解除
-    mEndStateSkillId = null;
-    _BattleManager_startAction.apply(this, arguments);
-};
-
-/**
  * ●アクション終了時
  */
 const _BattleManager_endAction = BattleManager.endAction;
@@ -1193,6 +1183,16 @@ BattleManager.endAction = function() {
     mStateEndSkillAdjustMotion = false;
     mdisplayAutoAffectedStatusNotClear = false;
     _BattleManager_endAction.apply(this, arguments);
+};
+
+/**
+ * ●ターン開始時
+ */
+const _BattleManager_startTurn = BattleManager.startTurn;
+BattleManager.startTurn = function() {
+    // フラグを解除
+    mEndStateSkillId = null;
+    _BattleManager_startTurn.apply(this, arguments);
 };
 
 /**
