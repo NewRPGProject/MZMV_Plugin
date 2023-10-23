@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.04 Extend the functionality of the state in various ways.
+ * @plugindesc v1.05 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -289,7 +289,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 ステートの機能を色々と拡張します。
+ * @plugindesc v1.05 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -1074,6 +1074,9 @@ Game_Battler.prototype.removeState = function(stateId) {
     }
 };
 
+// ステート終了スキルの実行判定用のＩＤ
+let mEndStateSkillId = null;
+
 /**
  * ●ステート終了時のスキルを実行
  */
@@ -1089,6 +1092,9 @@ function goStateSkill(subject, skillId) {
     BattleManager.forceAction(subject);
     // BattleManager.processForcedAction();
 
+    // ステート終了スキルの実行判定用ＩＤ
+    mEndStateSkillId = skillId;
+
     // 【ＭＶ】強制実行フラグを解除
     // ※強制フラグが立っていると、ステートのターン経過が行われないため。
     if (BattleManager.isForcedTurn && BattleManager.isForcedTurn()) {
@@ -1097,6 +1103,24 @@ function goStateSkill(subject, skillId) {
     
     return true;
 }
+
+/**
+ * ●行動終了時
+ */
+const _Game_Battler_onAllActionsEnd = Game_Battler.prototype.onAllActionsEnd;
+Game_Battler.prototype.onAllActionsEnd = function() {
+    const action = BattleManager._action;
+
+    // ステート終了時のスキルなら終了処理を行わない。
+    if (mEndStateSkillId && action) {
+        if (action.item().id == mEndStateSkillId) {
+            mEndStateSkillId = null;
+            return;
+        }
+    }
+
+    _Game_Battler_onAllActionsEnd.apply(this, arguments);
+};
 
 /**
  * 【独自】ステート終了スキルを実行する。
@@ -1149,6 +1173,16 @@ Sprite_Actor.prototype.refreshMotion = function() {
 
     _Sprite_Actor_refreshMotion.apply(this, arguments);
 }
+
+/**
+ * ●アクション開始時
+ */
+const _BattleManager_startAction = BattleManager.startAction;
+BattleManager.startAction = function() {
+    // フラグを解除
+    mEndStateSkillId = null;
+    _BattleManager_startAction.apply(this, arguments);
+};
 
 /**
  * ●アクション終了時
