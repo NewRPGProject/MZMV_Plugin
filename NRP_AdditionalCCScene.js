@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.06 Implemented a class change screen for multiple classes.
+ * @plugindesc v1.07 Implemented a class change screen for multiple classes.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -24,9 +24,9 @@
  * - Different images can be specified for different professions and actors.
  *   (Face, Character, Battler)
  * 
- * ------------------------------------------
- * ■Usage
- * ------------------------------------------
+ * -------------------------------------------------------------------
+ * [Usage]
+ * -------------------------------------------------------------------
  * Register your candidate professions
  * in the "ClassList" of the plugin parameters.
  * You can also set the class change condition at that time.
@@ -50,9 +50,9 @@
  * ※With the functionality of NRP_AdditionalClasses.js,
  *   only two classes can be displayed on the status screen.
  * 
- * ------------------------------------------
- * ■Plugin Command
- * ------------------------------------------
+ * -------------------------------------------------------------------
+ * [Plugin Command]
+ * -------------------------------------------------------------------
  * ◆SceneStart
  * Call the class change screen.
  * You can specify the actor to be the target of the class change.
@@ -63,9 +63,9 @@
  * This is useful, for example, for professions
  * that can only be class changed in certain locations.
  * 
- * ------------------------------------------
- * ■Note of Classes
- * ------------------------------------------
+ * -------------------------------------------------------------------
+ * [Note of Classes]
+ * -------------------------------------------------------------------
  * If you write the following, the description
  * will be displayed on the class change screen.
  * Line breaks and control characters are also possible.
@@ -74,7 +74,9 @@
  * ~Text~
  * </ClassMessage>
  * 
+ * -------------------------------------------------------------------
  * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
@@ -139,11 +141,23 @@
  * @default true
  * @desc Prohibit actors from stacking class changes to the same class.
  * 
+ * @param SwapClasses
+ * @parent UseMultipleClasses
+ * @type boolean
+ * @default true
+ * @desc If NoDuplicateSlots is on, selecting a class already in service is treated as a swap.
+ * 
  * @param AddBlankToLeaveSub
  * @parent UseMultipleClasses
  * @type boolean
  * @default true
  * @desc Add an empty field to remove the subclass.
+ * 
+ * @param UseClassFocus
+ * @type boolean
+ * @default true
+ * @desc Select class information for class change.
+ * If off, the class change is immediate.
  * 
  * @param PreviousClassOneLine
  * @parent UseMultipleClasses
@@ -435,7 +449,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.06 多重職業用の転職画面を実装。
+ * @plugindesc v1.07 多重職業用の転職画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -454,9 +468,9 @@
  * ・職業やアクター毎に異なる画像を指定可
  * 　（顔グラ、キャラグラ、バトラー）
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * ■使用方法
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * プラグインパラメータの『職業一覧』に、候補となる職業を登録してください。
  * その際、転職条件の設定も可能です。
  * 条件を満たさない職業は表示されません。
@@ -477,9 +491,9 @@
  * ※NRP_AdditionalClasses.jsの機能では、
  * 　ステータス画面に二つまでしか職業を表示できません。
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * ■プラグインコマンド
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * ◆シーン開始
  * 転職画面を呼び出します。
  * 転職の対象とするアクターを指定可能です。
@@ -488,9 +502,9 @@
  * また、追加の職業一覧を指定可能です。
  * 例えば、特定の場所でのみ転職可能な職業などに便利です。
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * ■職業のメモ欄
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * 以下のように記述すれば、転職画面に説明が表示されます。
  * 改行や制御文字も可能です。
  * 
@@ -498,7 +512,9 @@
  * ～表示したい文章～
  * </ClassMessage>
  * 
+ * -------------------------------------------------------------------
  * ■利用規約
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
@@ -546,6 +562,13 @@
  * @default true
  * @desc 職業を外すための空欄を追加します。
  * 
+ * @param UseClassFocus
+ * @text 確認用に選択を挟む
+ * @type boolean
+ * @default true
+ * @desc 転職時に一旦、職業情報を選択状態にします。
+ * オフなら即座に転職します。
+ * 
  * @param ClassChangeMessage
  * @text 転職時のメッセージ
  * @type string
@@ -580,6 +603,13 @@
  * @type boolean
  * @default true
  * @desc アクターが同じ職業に重ねて転職することを禁止します。
+ * 
+ * @param SwapClasses
+ * @parent UseMultipleClasses
+ * @text 職業の入替許可
+ * @type boolean
+ * @default true
+ * @desc スロットの重複禁止がオンの場合、既に就いている職業を選択した場合は入れ替えとして扱います。
  * 
  * @param AddBlankToLeaveSub
  * @parent UseMultipleClasses
@@ -981,12 +1011,14 @@ const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pClassList = parseStruct2(parameters["ClassList"]);
 const pNoDuplicate = toBoolean(parameters["NoDuplicate"], false);
 const pAddBlankToLeave = toBoolean(parameters["AddBlankToLeave"], true);
+const pUseClassFocus = toBoolean(parameters["UseClassFocus"], true);
 const pClassChangeMessage = setDefault(parameters["ClassChangeMessage"]);
 const pSoundSuccess = parameters["SoundSuccess"];
 // 複数職業関連
 const pUseMultipleClasses = toBoolean(parameters["UseMultipleClasses"], false);
 const pNumberOfSlots = setDefault(parameters["NumberOfSlots"], "2");
 const pNoDuplicateSlots = toBoolean(parameters["NoDuplicateSlots"], true);
+const pSwapClasses = toBoolean(parameters["SwapClasses"], true);
 const pAddBlankToLeaveSub = toBoolean(parameters["AddBlankToLeaveSub"], true);
 const pPreviousClassOneLine = toBoolean(parameters["PreviousClassOneLine"], false);
 // レイアウト関連
@@ -1509,21 +1541,62 @@ Scene_AdditionalCC.prototype.onClassChangeSelectCancel = function() {
  * ●転職確認
  */
 Scene_AdditionalCC.prototype.onClassChangeConfirm = function() {
-    this._infoWindow.select(0);
-    this._infoWindow.activate();
+    // 確認を行う場合
+    if (pUseClassFocus) {
+        this._infoWindow.select(0);
+        this._infoWindow.activate();
+        return;
+    }
+
+    // 読取専用の場合は終了
+    if (mReadOnly) {
+        this._selectWindow.activate();
+        return;
+    }
+
+    //---------------------------------------
+    // 即時転職
+    //---------------------------------------
+    // 転職成功効果音
+    if (pSoundSuccess) {
+        AudioManager.playSe({"name":pSoundSuccess, "volume":90, "pitch":100, "pan":0})
+    // 指定がない場合はデフォルトの決定音
+    } else {
+        SoundManager.playOk();
+    }
+    // 転職実行
+    this.onClassChangeOk();
 };
 
 /**
  * ●転職確定
  */
 Scene_AdditionalCC.prototype.onClassChangeOk = function() {
+    const actor = this._actor;
     // 選択中の職業を取得
     const classItem = this._selectWindow.item();
     // 職業が存在しない場合（外す）
     if (!classItem) {
-        this._actor.changeAdditionalClass(null, mClassIndex);
+        actor.changeAdditionalClass(null, mClassIndex);
         this.classChangeEnd();
         return;
+    }
+
+    // 既に就いている職業を交換した場合
+    if (pSwapClasses && pNoDuplicateSlots && actor.additionalClass(classItem.id)) {
+        // 変更しようとしているスロットの現在職業を取得
+        const swapClassId = actor.currentAdditionalClass(mClassIndex).id;
+
+        // 就いている職業のＩＤとインデックスを取得
+        let i;
+        for (i = 0; i < actor._additionalClassIds.length; i++) {
+            if (classItem.id == actor._additionalClassIds[i]) {
+                break;
+            }
+        }
+        const swapIndex = i;
+        // 交換実行
+        this._actor.changeAdditionalClass(swapClassId, swapIndex);
     }
 
     // 転職実行
@@ -1532,7 +1605,7 @@ Scene_AdditionalCC.prototype.onClassChangeOk = function() {
     if (pClassChangeMessage) {
         // 成功メッセージの表示
         const text = pClassChangeMessage.format(
-            this._actor.name(),
+            actor.name(),
             classItem.name
         );
         $gameMessage.add(text);
@@ -3441,8 +3514,12 @@ function isClassEnabled(item, actor) {
     if (!item) {
         return true;
     }
-    // 既に就いている職業の場合は無効
+    // 既に自分が就いている職業の場合は無効
     if (pNoDuplicateSlots && actor.additionalClass(item.id)) {
+        // ただし、交換可能の場合は許可
+        if (pSwapClasses) {
+            return true;
+        }
         return false;
 
     // 職業の重複禁止
