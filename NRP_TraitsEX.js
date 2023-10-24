@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.012 Create special traits.
+ * @plugindesc v1.02 Create special traits.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -107,6 +107,11 @@
  * If the number is 0, the result is hidden; if it is 1,
  * it is treated as a miss; if it is 2, it is treated as an evade.
  * 
+ * You can also create a skill that ignores invincibility and hits
+ * by specifying the following in the note field of the skill
+ * 
+ * <IgnoreInvincible>
+ * 
  * -------------------------------------------------------------------
  * [Terms]
  * -------------------------------------------------------------------
@@ -143,7 +148,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.012 特殊な特徴を実現します。
+ * @plugindesc v1.02 特殊な特徴を実現します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -240,6 +245,11 @@
  * 無敵になってあらゆるスキルを受けつけなくなります。
  * 数値が0なら結果非表示, 1ならミス、2なら回避として扱います。
  * 
+ * また、スキルのメモ欄に以下を指定すると、
+ * 無敵状態を無視して命中するスキルを作成できます。
+ * 
+ * <IgnoreInvincible>
+ * 
  * -------------------------------------------------------------------
  * ■利用規約
  * -------------------------------------------------------------------
@@ -327,6 +337,12 @@ let mTarget = null;
 const _Game_Action_apply = Game_Action.prototype.apply;
 Game_Action.prototype.apply = function(target) {
     mTarget = target;
+
+    // 無敵無効スキルなら以降を処理しない。
+    if (this.item().meta.IgnoreInvincible) {
+        _Game_Action_apply.apply(this, arguments);
+        return;
+    }
 
     for (const object of getTraitObjects(target)) {
         // 無敵ステートがあれば無効化
