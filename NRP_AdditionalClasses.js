@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.101 Multiple classes allow for a highly flexible growth system.
+ * @plugindesc v1.11 Multiple classes allow for a highly flexible growth system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -520,7 +520,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.101 多重職業によって自由度の高い成長システムを実現。
+ * @plugindesc v1.11 多重職業によって自由度の高い成長システムを実現。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -1292,7 +1292,7 @@ function changeExp(actor, index, additionalClassId, exp, show) {
         for (let i = 0; i < additionalClasses.length; i++) {
             const additionalClass = additionalClasses[i];
             // 経験値の増減
-            additionalClass.changeExp(additionalClass.exp() + exp, show, i);
+            additionalClass.changeExp(additionalClass.exp() + exp, show, i, exp);
         }
     }
 }
@@ -1663,15 +1663,19 @@ AdditionalClass.prototype.maxLevel = function() {
 
 /**
  * ●経験値を変更
+ * ※expは加算済みの経験値
  */
-AdditionalClass.prototype.changeExp = function(exp, show, index) {
+AdditionalClass.prototype.changeExp = function(exp, show, index, difExp) {
     const expActor = this.expActor();
     const skillActor = this.actor();
     const classId = this.id;
 
     // サブ職業倍率
     if (index >= 1) {
-        exp *= expActor.subClassExpRate(index);
+        // 加算前の経験値を求める。
+        const originalExp = exp - difExp;
+        // 経験値差分に倍率をかけることでサブ職業の経験値を計算
+        exp = originalExp + difExp * expActor.subClassExpRate(index);
     }
 
     expActor._exp[classId] = Math.max(exp, 0);
@@ -2100,7 +2104,7 @@ if (pUseNormalExp) {
             }
 
             const newExp = additionalClass.exp() + value;
-            additionalClass.changeExp(newExp, show, i);
+            additionalClass.changeExp(newExp, show, i, value);
         }
     };
 }
@@ -2237,8 +2241,9 @@ Game_Actor.prototype.gainClassExp = function(classExp, ignoreBench) {
             addExp *= this.finalClassExpRate()
         }
 
-        const newExp = additionalClass.currentExp() + Math.round(addExp);
-        additionalClass.changeExp(newExp, this.shouldDisplayLevelUp(), i);
+        const addExpRound = Math.round(addExp);
+        const newExp = additionalClass.currentExp() + addExpRound;
+        additionalClass.changeExp(newExp, this.shouldDisplayLevelUp(), i, addExpRound);
     }
 };
 
