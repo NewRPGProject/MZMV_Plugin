@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Set detailed settings for battleback and encounter rates.
+ * @plugindesc v1.03 Set detailed settings for battleback and encounter rates.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481820874.html
  *
@@ -151,7 +151,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 戦闘背景やエンカウント率を詳細設定。
+ * @plugindesc v1.03 戦闘背景やエンカウント率を詳細設定。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481820874.html
  *
@@ -575,7 +575,7 @@ if (Utils.RPGMAKER_NAME == "MZ") {
 }
 
 //----------------------------------------
-// マップ切替時
+// マップ切替時＆ロード時
 //----------------------------------------
 
 /**
@@ -597,7 +597,16 @@ Game_Map.prototype.changeTileset = function(tilesetId) {
  
     setTilesetInfo();
 };
- 
+
+/**
+ * ●ゲームロード時
+ */
+const _DataManager_extractSaveContents = DataManager.extractSaveContents;
+DataManager.extractSaveContents = function(contents) {
+    _DataManager_extractSaveContents.apply(this, arguments);
+    setTilesetInfo();
+};
+
 /**
  * ●タイルセットに情報を設定
  * ※常駐処理は避けて、極力処理はこちらでやっておく。
