@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v2.031 Extends the weapon display.
+ * @plugindesc v2.032 Extends the weapon display.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/484348477.html
@@ -279,7 +279,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.031 武器の表示を拡張します。
+ * @plugindesc v2.032 武器の表示を拡張します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/484348477.html
@@ -892,6 +892,11 @@ function getWeapon(actor) {
     if (actor._weaponId) {
         // 武器データを取得
         weapon = $dataWeapons[actor._weaponId];
+    }
+    // 正常なデータを取得できない場合はnull
+    // ※animatedSVEnemies.js用に調整
+    if (weapon.id == null) {
+        return null;
     }
     return weapon;
 }
