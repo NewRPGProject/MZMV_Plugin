@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.071 Change the equipment slots at will.
+ * @plugindesc v1.08 Change the equipment slots at will.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489626316.html
  *
@@ -51,6 +51,25 @@
  * <AddEquipSlot3:7>
  * 
  * ※Please note that the order is: unmarked, 2, 3.
+ * 
+ * -------------------------------------------------------------------
+ * ■Prohibits equipment of the same kind
+ * -------------------------------------------------------------------
+ * Specify the name of the equipment kind.
+ * 
+ * <EquipUnique:[kind]>
+ * 
+ * This makes it impossible to equip
+ * the same kind of equipment at the same time.
+ * This kind name has nothing to do
+ * with "armor type" or "equipment type".
+ * 
+ * For example, in a work where all armor can be freely equipped
+ * like accessories, it is possible to prohibit combinations
+ * such as head armor (hat and helmet)
+ * that would be uncomfortable if equipped in duplicate.
+ * 
+ * In that case, set the same kind name to note on all head armor.
  * 
  * -------------------------------------------------------------------
  * [Show on another page]
@@ -129,11 +148,16 @@
  * @type number[]
  * @desc Equipment type to be displayed on the status screen.
  * If blank, it will be displayed until it fits in the window.
+ * 
+ * @param ArmorTypeUnique
+ * @type boolean
+ * @default false
+ * @desc Disables the ability to equip multiple pieces of equipment with the same armor type.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.071 装備スロットを自由に変更。
+ * @plugindesc v1.08 装備スロットを自由に変更。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489626316.html
  * 
@@ -177,6 +201,21 @@
  * <AddEquipSlot3:7>
  * 
  * ※無印, 2, 3の順序であることにご注意ください。
+ * 
+ * -------------------------------------------------------------------
+ * ■同一系統の装備を禁止
+ * -------------------------------------------------------------------
+ * 装備の系統名を指定します。
+ * 
+ * <EquipUnique:[系統名]>
+ * 
+ * これにより、同じ系統の装備を同時に装備できなくなります。
+ * この系統名は『防具タイプ』や『装備タイプ』とは無関係です。
+ * 例えば、全ての防具を装飾品のように自由に装備できる作品において、
+ * 頭防具（帽子と兜）のように重複して装備すると
+ * 違和感がある組み合わせを禁止できます。
+ * 
+ * その場合は、全ての頭防具のメモ欄に同じ系統名を設定してください。
  * 
  * -------------------------------------------------------------------
  * ■別ページに表示
@@ -251,6 +290,12 @@
  * @type number[]
  * @desc ステータス画面に表示する装備スロット（装備タイプ）です。
  * 空白時はウィンドウに収まるまで全表示します。
+ * 
+ * @param ArmorTypeUnique
+ * @text 同一防具タイプの装備禁止
+ * @type boolean
+ * @default false
+ * @desc 防具タイプが同じ装備を複数装備できなくします。
  */
 
 (function() {
@@ -297,13 +342,11 @@ const pAdjustInitEquip = toBoolean(parameters["AdjustInitEquip"], false);
 const pDualWieldPosition = toNumber(parameters["DualWieldPosition"], 2);
 const pPagingEquipmentType = parameters["PagingEquipmentType"];
 const pStatusShowSlots = parseStruct1(parameters["StatusShowSlots"]);
+const pArmorTypeUnique = toBoolean(parameters["ArmorTypeUnique"], false);
 
 //-----------------------------------------------------------------------------
 // Game_Actor
 //-----------------------------------------------------------------------------
-
-// スロット保持用
-let mSlots;
 
 if (pAdjustInitEquip) {
     /**
@@ -600,6 +643,45 @@ function changeSlots(slots, addEquipSlot) {
         }
     }
 }
+
+//-----------------------------------------------------------------------------
+// Window_EquipItem
+//-----------------------------------------------------------------------------
+
+/**
+ * ●装備できるかどうか？
+ */
+const _Window_EquipItem_isEnabled = Window_EquipItem.prototype.isEnabled;
+Window_EquipItem.prototype.isEnabled = function(item) {
+    // アイテムが空欄の場合は終了
+    if (!item) {
+        return _Window_EquipItem_isEnabled.apply(this, arguments);
+    }
+
+    // 対象の装備の系統指定
+    const equipUnique = item.meta.EquipUnique;
+
+    // アクターの装備チェック
+    for (let slotId = 0; slotId < this._actor.equips().length; slotId++) {
+        // 選択中のスロットについては除外
+        if (slotId == this._slotId) {
+            continue
+        }
+        const equip = this._actor.equips()[slotId];
+        // 装備が有効な場合
+        if (equip) {
+            // 同系統の装備が存在すれば装備不可
+            if (equipUnique && equipUnique == equip.meta.EquipUnique) {
+                return false;
+            // 同一の防具タイプが存在すれば装備不可
+            } else if (pArmorTypeUnique && item.atypeId && item.atypeId == equip.atypeId) {
+                return false;
+            }
+        }
+    }
+
+    return _Window_EquipItem_isEnabled.apply(this, arguments);
+};
 
 //-----------------------------------------------------------------------------
 // ページ切替機能（Scene_Equip & Window_EquipSlot）
