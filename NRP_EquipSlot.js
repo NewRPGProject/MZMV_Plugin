@@ -53,7 +53,7 @@
  * ※Please note that the order is: unmarked, 2, 3.
  * 
  * -------------------------------------------------------------------
- * ■Prohibits equipment of the same kind
+ * ■Equip Unique
  * -------------------------------------------------------------------
  * Specify the name of the equipment kind.
  * 
