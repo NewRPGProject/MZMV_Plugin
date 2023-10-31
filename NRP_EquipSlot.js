@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.08 Change the equipment slots at will.
+ * @plugindesc v1.081 Change the equipment slots at will.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489626316.html
  *
@@ -157,7 +157,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.08 装備スロットを自由に変更。
+ * @plugindesc v1.081 装備スロットを自由に変更。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489626316.html
  * 
@@ -645,8 +645,43 @@ function changeSlots(slots, addEquipSlot) {
 }
 
 //-----------------------------------------------------------------------------
-// Window_EquipItem
+// 同一系統の装備を禁止
 //-----------------------------------------------------------------------------
+
+// スロット番号管理用
+let mSlotId = null;
+
+/**
+ * ●最強装備の選定
+ */
+const _Game_Actor_bestEquipItem = Game_Actor.prototype.bestEquipItem;
+Game_Actor.prototype.bestEquipItem = function(slotId) {
+    mSlotId = slotId;
+    const ret = _Game_Actor_bestEquipItem.apply(this, arguments);
+    mSlotId = null;
+    return ret;
+};
+
+/**
+ * ●装備可能かどうか？
+ * ※bestEquipItemから呼ばれる場合に対応
+ */
+const _Game_BattlerBase_canEquip = Game_BattlerBase.prototype.canEquip;
+Game_BattlerBase.prototype.canEquip = function(item) {
+    // スロットの指定がない場合
+    // アイテムが無効な場合
+    // またはequipsメソッドが無効（敵キャラ）の場合
+    if (!mSlotId || !item || !this.equips) {
+        return _Game_BattlerBase_canEquip.apply(this, arguments);
+    }
+
+    // 装備制限に引っかかるか？
+    if (this.isEquipUnique(item, mSlotId)) {
+        return false;
+    }
+
+    return _Game_BattlerBase_canEquip.apply(this, arguments);
+};
 
 /**
  * ●装備できるかどうか？
@@ -658,29 +693,40 @@ Window_EquipItem.prototype.isEnabled = function(item) {
         return _Window_EquipItem_isEnabled.apply(this, arguments);
     }
 
+    // 装備制限に引っかかるか？
+    if (this._actor.isEquipUnique(item, this._slotId)) {
+        return false;
+    }
+
+    return _Window_EquipItem_isEnabled.apply(this, arguments);
+};
+
+/**
+ * 【独自】装備制限に引っかかるか？
+ */
+Game_BattlerBase.prototype.isEquipUnique = function(item, slotId) {
     // 対象の装備の系統指定
     const equipUnique = item.meta.EquipUnique;
 
     // アクターの装備チェック
-    for (let slotId = 0; slotId < this._actor.equips().length; slotId++) {
+    for (let tempSlotId = 0; tempSlotId < this.equips().length; tempSlotId++) {
         // 選択中のスロットについては除外
-        if (slotId == this._slotId) {
-            continue
+        if (tempSlotId == slotId) {
+            continue;
         }
-        const equip = this._actor.equips()[slotId];
+        const equip = this.equips()[tempSlotId];
         // 装備が有効な場合
         if (equip) {
             // 同系統の装備が存在すれば装備不可
             if (equipUnique && equipUnique == equip.meta.EquipUnique) {
-                return false;
+                return true;
             // 同一の防具タイプが存在すれば装備不可
             } else if (pArmorTypeUnique && item.atypeId && item.atypeId == equip.atypeId) {
-                return false;
+                return true;
             }
         }
     }
-
-    return _Window_EquipItem_isEnabled.apply(this, arguments);
+    return false;
 };
 
 //-----------------------------------------------------------------------------
