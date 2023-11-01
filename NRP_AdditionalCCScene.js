@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.07 Implemented a class change screen for multiple classes.
+ * @plugindesc v1.071 Implemented a class change screen for multiple classes.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -83,6 +83,10 @@
  * The author is not responsible,
  * but will deal with defects to the extent possible.
  * 
+ * @-----------------------------------------------------
+ * @ [Plugin Commands]
+ * @-----------------------------------------------------
+ * 
  * @command SceneStart
  * @desc Call the class change screen. If no actor is specified, the selection screen for actors is also displayed.
  * 
@@ -100,7 +104,9 @@
  * @desc This is the additional ClassList.
  * Combine with the ClassList of the plugin parameter.
  * 
- * 
+ * @-----------------------------------------------------
+ * @ [Plugin Parameters]
+ * @-----------------------------------------------------
  * 
  * @param ClassList
  * @type struct<Class>[]
@@ -449,7 +455,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.07 多重職業用の転職画面を実装。
+ * @plugindesc v1.071 多重職業用の転職画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -519,6 +525,10 @@
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
  * 
+ * @-----------------------------------------------------
+ * @ プラグインコマンド
+ * @-----------------------------------------------------
+ * 
  * @command SceneStart
  * @text シーン開始
  * @desc 転職画面を呼び出します。
@@ -542,7 +552,9 @@
  * @desc 転職の対象となる職業一覧の追加分です。
  * プラグインパラメータの職業一覧に結合します。
  * 
- * 
+ * @-----------------------------------------------------
+ * @ プラグインパラメータ
+ * @-----------------------------------------------------
  * 
  * @param ClassList
  * @text 職業一覧
@@ -1584,8 +1596,14 @@ Scene_AdditionalCC.prototype.onClassChangeOk = function() {
 
     // 既に就いている職業を交換した場合
     if (pSwapClasses && pNoDuplicateSlots && actor.additionalClass(classItem.id)) {
+        let swapClassId;
         // 変更しようとしているスロットの現在職業を取得
-        const swapClassId = actor.currentAdditionalClass(mClassIndex).id;
+        if (actor.currentAdditionalClass(mClassIndex)) {
+            swapClassId = actor.currentAdditionalClass(mClassIndex).id;    
+        // 変更先が空欄の場合
+        } else {
+            swapClassId = null;
+        }
 
         // 就いている職業のＩＤとインデックスを取得
         let i;
