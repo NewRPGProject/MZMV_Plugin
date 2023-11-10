@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.04 Create a charge skill.
+ * @plugindesc v1.041 Create a charge skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/474413155.html
  *
@@ -105,7 +105,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 ため技作成用の機能を提供します。
+ * @plugindesc v1.041 ため技作成用の機能を提供します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/474413155.html
  *
@@ -219,10 +219,10 @@ BattleManager.startAction = function() {
     // ため技開始
     startCharge(this._subject);
     // 行動取得
-    var action = this._subject.currentAction();
+    const action = this._subject.currentAction();
     // 行動が取得できなければ終了
     // ※ため開始状態（skillId:0）を飛ばすため
-    if (!action.item()) {
+    if (!action || !action.item()) {
         return;
     }
 
@@ -234,8 +234,8 @@ BattleManager.startAction = function() {
  * ●ため技開始
  */
 function startCharge(subject) {
-    var a = subject; // eval参照用
-    var action = subject.currentAction();
+    const a = subject; // eval参照用
+    const action = subject.currentAction();
 
     // スキルが取得できなければ終了
     if (!action.item()) {
@@ -266,7 +266,7 @@ function startCharge(subject) {
     }
 
     // eval参照用
-    var chargeSpeedRate = getChargeSpeedRate(action);
+    const chargeSpeedRate = getChargeSpeedRate(action);
 
     // 即時発動条件を満たしているなら、以降処理せず実行
     if (isNoCharge(action, chargeSpeedRate)) {
@@ -287,10 +287,10 @@ function startCharge(subject) {
  * ※ため終わったスキルを発動するタイミングかを判定
  */
 function isSkillCast(item, subject) {
-    var a = subject; // eval参照用
+    const a = subject; // eval参照用
 
     // ため用ステート
-    var chargeStateId = item.meta.ChargeState;
+    let chargeStateId = item.meta.ChargeState;
     // ChargeStateの設定がなければ、ため技ではない。
     if (chargeStateId) {
         // 数式評価
@@ -311,9 +311,9 @@ let mChargeStateId = null;
  * ※本来、選択したスキルとは別にため開始スキルを実行する。
  */
 function chargeSkill(subject, action, chargeStateId, chargeSpeedRate) {
-    var a = subject; // eval参照用
-    var item = action.item();
-    var keepActions = subject._actions; // アクション保持用
+    const a = subject; // eval参照用
+    const item = action.item();
+    const keepActions = subject._actions; // アクション保持用
 
     // ため時の速度補正
     action._chargeSpeedRate = chargeSpeedRate;
@@ -349,10 +349,10 @@ function chargeSkill(subject, action, chargeStateId, chargeSpeedRate) {
     subject._chargeSkills[chargeStateId] = chargeSkill;
 
     // ため技の表示名
-    var chargeName = item.meta.ChargeName;
+    const chargeName = item.meta.ChargeName;
 
     // 消費タイミングが『ため開始時』の場合
-    var chargeCost = item.meta.ChargeCost;
+    const chargeCost = item.meta.ChargeCost;
     if (chargeCost) {
         // 消費を求めて減算する。
         subject._mp -= subject.skillMpCost(item);
@@ -485,7 +485,7 @@ Window_SkillList.prototype.drawSkillCost = function(skill, x, y, width) {
  */
 function setChargeName(chargeName, action, item, subject) {
     // eval参照用
-    var a = subject;
+    const a = subject;
 
     // 表示名変更
     if (action.item() && chargeName) {
