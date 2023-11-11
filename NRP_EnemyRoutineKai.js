@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.081 Improve the enemy's action routine.
+ * @plugindesc v1.082 Improve the enemy's action routine.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/473218336.html
  *
@@ -137,7 +137,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.081 敵行動ルーチンを改善します。
+ * @plugindesc v1.082 敵行動ルーチンを改善します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/473218336.html
  *
@@ -872,6 +872,9 @@ function isEffectSubstitute(effect) {
     if (effect.code == Game_Action.EFFECT_ADD_STATE) {
         // さらにステート情報を確認
         const dataState = $dataStates[effect.dataId];
+        if (!dataState) {
+            return false;
+        }
         // 特徴が特殊フラグかつ身代わりである。
         if (dataState.traits.some(trait => trait.code == Game_BattlerBase.TRAIT_SPECIAL_FLAG
                 && trait.dataId == Game_BattlerBase.FLAG_ID_SUBSTITUTE)) {
