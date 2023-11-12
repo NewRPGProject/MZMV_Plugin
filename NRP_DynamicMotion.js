@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.271 When executing skills, call motion freely.
+ * @plugindesc v1.272 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help When executing skills(items), call motion freely.
@@ -555,7 +555,7 @@
  */
 
 /*:ja
- * @plugindesc v1.271 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.272 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在にモーションを呼び出します。
@@ -2856,6 +2856,9 @@ Sprite.prototype.startDynamicMotion = function(dynamicMotion) {
             interpreter.setDynamicDuration(dynamicMotion);
         }
     }
+
+    // 初期化
+    mDynamicMotion = null;
 };
 
 /**
