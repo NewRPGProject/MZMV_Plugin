@@ -12,6 +12,7 @@
  * 
  * - Change the size of the command window
  * - Enable control characters for commands.
+ *   ※Icon and font size changes are enabled.
  * - Do not fade out BGM at the beginning of the game.
  * 
  * Note that the placement of the command window can be changed
@@ -77,6 +78,7 @@
  * 
  * ・コマンドウィンドウのサイズ調整
  * ・コマンドの制御文字の有効化
+ * 　※アイコンやフォントサイズの変更が有効になります。
  * ・ゲーム開始時のＢＧＭをフェードアウトさせない。
  * 
  * なお、コマンドウィンドウの配置は、
