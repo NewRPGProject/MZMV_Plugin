@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Changes the message speed.
+ * @plugindesc v1.03 Changes the message speed.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/485101364.html
  *
@@ -88,7 +88,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 メッセージ速度を変更します。
+ * @plugindesc v1.03 メッセージ速度を変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/485101364.html
  *
@@ -247,8 +247,12 @@ Window_Message.prototype.updateMessage = function() {
     // 出力する文字数を蓄積
     mMessageCount += getMessageSpeed() / 100;
 
-    // 本来の処理を呼び出し
-    const ret = _Window_Message_updateMessage.apply(this, arguments);
+    let ret = true;
+
+    // 出力するメッセージがある場合は本来の処理を呼び出し
+    if (mMessageCount >= 1) {
+        ret = _Window_Message_updateMessage.apply(this, arguments);
+    }
 
     mDisableShowFast = false;
     return ret;
