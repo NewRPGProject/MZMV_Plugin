@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Display parallaxes freely.
+ * @plugindesc v1.011 Display parallaxes freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488413806.html
  *
@@ -165,9 +165,9 @@
  * The author is not responsible,
  * but will deal with defects to the extent possible.
  * 
- * @------------------------------------------------------------------
+ * @-----------------------------------------------------
  * @ [Plugin Commands]
- * @------------------------------------------------------------------
+ * @-----------------------------------------------------
  * 
  * @command AddParallax
  * @desc Add Parallax to the current map or battle screen.
@@ -217,12 +217,13 @@
  * @type number
  * @max 255
  * @default 255
- * @desc The opacity of the image; 255 makes it completely opaque.
+ * @desc The opacity of the image; Max 255.
+ * Formula is also valid (e.g. $gameVariables.value(1))
  * 
  * @arg Options
  * @type struct<Option>
  * 
- * @------------------------------------------------------------------
+ * @-----------------------------------------------------
  * 
  * @command ChangeParallax
  * @desc Manipulate & change Parallax information for the specified ID.
@@ -270,12 +271,13 @@
  * @arg Opacity
  * @type number
  * @max 255
- * @desc The opacity of the image; 255 makes it completely opaque.
+ * @desc The opacity of the image; Max 255.
+ * Formula is also valid (e.g. $gameVariables.value(1))
  * 
  * @arg Options
  * @type struct<Option>
  * 
- * @------------------------------------------------------------------
+ * @-----------------------------------------------------
  * 
  * @command RemoveParallax
  * @desc Removes the Parallax with the specified ID.
@@ -284,9 +286,9 @@
  * @arg Id
  * @desc ID of the Parallax to be removed.
  * 
- * @------------------------------------------------------------------
+ * @-----------------------------------------------------
  * @ [Plugin Parameters]
- * @------------------------------------------------------------------
+ * @-----------------------------------------------------
  * @param UseBattlebackSort
  * @type boolean
  * @default false
@@ -352,7 +354,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 自在に遠景（近景）を表示します。
+ * @plugindesc v1.011 自在に遠景（近景）を表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488413806.html
  *
@@ -504,9 +506,9 @@
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
  * 
- * @------------------------------------------------------------------
+ * @-----------------------------------------------------
  * @ プラグインコマンド
- * @------------------------------------------------------------------
+ * @-----------------------------------------------------
  * 
  * @command AddParallax
  * @text 遠景を追加
@@ -569,12 +571,13 @@
  * @max 255
  * @default 255
  * @desc 画像の不透明度です。0～255が有効。
+ * 数式（テキスト）も有効（例：$gameVariables.value(1)）
  * 
  * @arg Options
  * @text オプション
  * @type struct<Option>
  * 
- * @------------------------------------------------------------------
+ * @-----------------------------------------------------
  * 
  * @command ChangeParallax
  * @text 遠景を変更
@@ -635,12 +638,13 @@
  * @type number
  * @max 255
  * @desc 画像の不透明度です。0～255が有効。
+ * 数式（テキスト）も有効（例：$gameVariables.value(1)）
  * 
  * @arg Options
  * @text オプション
  * @type struct<Option>
  * 
- * @------------------------------------------------------------------
+ * @-----------------------------------------------------
  * 
  * @command RemoveParallax
  * @text 遠景を削除
@@ -651,9 +655,9 @@
  * @text ＩＤ
  * @desc 削除対象とする遠景のＩＤです。
  * 
- * @------------------------------------------------------------------
+ * @-----------------------------------------------------
  * @ プラグインパラメータ
- * @------------------------------------------------------------------
+ * @-----------------------------------------------------
  * @param UseBattlebackSort
  * @text 戦闘背景の表示優先度を設定
  * @type boolean
@@ -849,6 +853,7 @@ function setParallaxData(parallax, params) {
     parallax.scrollX = params.scrollX;
     parallax.scrollY = params.scrollY;
     parallax.z = params.z;
+    parallax.paramOpacity = params.opacity;
     parallax.opacity = eval(params.opacity);
     parallax.blendMode = params.blendMode;
     parallax.parallaxX = params.parallaxX;
@@ -952,6 +957,7 @@ PluginManager.registerCommand(PLUGIN_NAME, "ChangeParallax", function(args) {
         parallax.mapY = changeValue(parallax.mapY, params.mapY);
         parallax.z = changeValue(parallax.z, params.z);
         parallax.opacity = changeValue(parallax.opacity, params.opacity);
+        parallax.paramOpacity = changeValue(parallax.paramOpacity, params.opacity);
         parallax.parallaxTile = changeValue(parallax.parallaxTile, params.parallaxTile);
 
         // 特殊な調整をする項目
@@ -1180,6 +1186,8 @@ Spriteset_Base.prototype.updateParallaxPlus = function() {
         // 遠景自体のスクロール値を加算
         parallax.origin.x += eval(parallax.scrollX);
         parallax.origin.y += eval(parallax.scrollY);
+        // 不透明度の数式反映
+        parallax.opacity = eval(parallax.paramOpacity);
 
         // マップ座標の指定がある場合は補正
         parallax.setMapPosition(diffX, diffY);
