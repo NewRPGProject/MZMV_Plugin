@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.011 Realize changes in the target side (such as friendly fire).
+ * @plugindesc v1.02 Realize changes in the target side (such as friendly fire).
  * @orderAfter NRP_BattleTargetCursor
  * @orderBefore NRP_VisualTurn
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
@@ -15,7 +15,9 @@
  * 
  * For example, you can attack an ally or heal an enemy.
  * 
- * ■Usage
+ * -------------------------------------------------------------------
+ * [Usage]
+ * -------------------------------------------------------------------
  * Just by installing it, switching the target side will be enabled.
  * In the initial state, the target side is switched by PageUp/Down.
  * (This is equivalent to the LR button on a gamepad.)
@@ -25,7 +27,9 @@
  * By turning on the "AlwaysSelection" parameter,
  * you can make those skills switch the target side as well.
  * 
- * ■Note on skills (items)
+ * -------------------------------------------------------------------
+ * [Note on skills (items)]
+ * -------------------------------------------------------------------
  * You can disable or enable changes to the target side for each skill.
  * Please specify the following in the note field of the skill
  * 
@@ -36,7 +40,9 @@
  * ※If not specified, it will follow the setting
  *   of "EnableAllSkills" in the plugin parameters.
  * 
- * ■Notice
+ * -------------------------------------------------------------------
+ * [Notice]
+ * -------------------------------------------------------------------
  * Depending on the plugin parameters,
  * you can set the left/right key (assuming side view)
  * or up/down key (assuming front view) to switch the target side.
@@ -50,18 +56,28 @@
  * you should be able to switch the target up and down.
  * If you want to turn on "ChangeSideByUpDown", please do the opposite.
  * 
+ * -------------------------------------------------------------------
  * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
  * The author is not responsible,
  * but will deal with defects to the extent possible.
  * 
+ * @------------------------------------------------------------------
+ * @ Plugin Parameters
+ * @------------------------------------------------------------------
  * @param EnableAllSkills
  * @type boolean
  * @default true
  * @desc Enable target side change for all skills.
  * You can specify exceptions in the Notes field.
+ * 
+ * @param EnableTouch
+ * @type boolean
+ * @default true
+ * @desc Enable to change the target side by touch operation.
  * 
  * @param <Selection>
  * 
@@ -117,7 +133,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.011 対象サイドの変更（パーティアタックなど）を実現します。
+ * @plugindesc v1.02 対象サイドの変更（パーティアタックなど）を実現します。
  * @orderAfter NRP_BattleTargetCursor
  * @orderBefore NRP_VisualTurn
  * @author 砂川赳 (http://newrpg.seesaa.net/)
@@ -128,7 +144,9 @@
  * 
  * 例えば、味方を攻撃したり、敵を回復したりできます。
  * 
+ * -------------------------------------------------------------------
  * ■使用法
+ * -------------------------------------------------------------------
  * 導入するだけで対象サイドの切替が有効となります。
  * 初期状態ではPageUp/Downで対象サイドを切り替えます。
  * （ゲームパッドではいわゆるＬＲボタンに相当）
@@ -138,7 +156,9 @@
  * 『常に選択を表示』のパラメータをオンにすることで、
  * それらのスキルも対象サイドを切り替えられるようにできます。
  * 
+ * -------------------------------------------------------------------
  * ■スキル（アイテム）のメモ欄
+ * -------------------------------------------------------------------
  * スキル毎に対象サイドの変更を無効化または有効化できます。
  * スキルのメモ欄に以下を指定してください。
  * 
@@ -149,7 +169,9 @@
  * ※指定がない場合はプラグインパラメータにある
  * 　『全スキルを有効化』の設定に従います。
  * 
+ * -------------------------------------------------------------------
  * ■注意点
+ * -------------------------------------------------------------------
  * プラグインパラメータによって、左右キー（サイドビューを想定）や
  * 上下キー（フロントビューを想定）で、
  * 対象サイドを切り替えられるように設定できます。
@@ -162,17 +184,28 @@
  * 上下で対象を切り替えられるようにしてください。
  * 『上下でサイド切替』をオンにする場合はその逆です。
  * 
+ * -------------------------------------------------------------------
  * ■利用規約
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
  * 
+ * @------------------------------------------------------------------
+ * @ Plugin Parameters
+ * @------------------------------------------------------------------
  * @param EnableAllSkills
  * @text 全スキルを有効化
  * @type boolean
  * @default true
  * @desc 全てのスキルで対象サイドの変更を有効とします。
  * メモ欄で例外を指定できます。
+ * 
+ * @param EnableTouch
+ * @text タッチ操作を有効化
+ * @type boolean
+ * @default true
+ * @desc タッチ操作による対象サイドの変更を有効とします。
  * 
  * @param <Selection>
  * @text ＜選択の表示＞
@@ -291,6 +324,7 @@ function setDefault(str, def) {
 const parameters = PluginManager.parameters("NRP_PartyAttack");
 
 const pEnableAllSkills = toBoolean(parameters["EnableAllSkills"], true);
+const pEnableTouch = toBoolean(parameters["EnableTouch"], true);
 const pAlwaysSelection = toBoolean(parameters["AlwaysSelection"], false);
 const pUserSelection = toBoolean(parameters["UserSelection"], false);
 const pEveryoneSelection = toBoolean(parameters["EveryoneSelection"], false);
@@ -299,9 +333,9 @@ const pChangeSideByLeftRight = toBoolean(parameters["ChangeSideByLeftRight"], fa
 const pChangeSideByUpDown = toBoolean(parameters["ChangeSideByUpDown"], false);
 const pKeepWindow = toBoolean(parameters["KeepWindow"], false);
 
-//----------------------------------------
+//-----------------------------------------------------------------------------
 // 共通処理（Scene_Battle）
-//----------------------------------------
+//-----------------------------------------------------------------------------
 
 let mNoUpdateStatusWindowPosition = false;
 
@@ -315,7 +349,7 @@ Scene_Battle.prototype.targetSideChangeToActor = function() {
     if (!action.isTargetSideChangeOk()) {
         // そのままウィンドウを有効化して操作継続
         this._enemyWindow.activate();
-        return;
+        return false;
     }
 
     // 対象サイドを反転
@@ -339,6 +373,9 @@ Scene_Battle.prototype.targetSideChangeToActor = function() {
         this._enemyWindow.deselect();
         this._actorWindow.x = Graphics.width * 2;
     }
+
+    // サイド変更成功
+    return true;
 }
 
 /**
@@ -351,7 +388,7 @@ Scene_Battle.prototype.targetSideChangeToEnemy = function() {
     if (!action.isTargetSideChangeOk()) {
         // そのままウィンドウを有効化して操作継続
         this._actorWindow.activate();
-        return;
+        return false;
     }
 
     // 対象サイドを反転
@@ -374,6 +411,9 @@ Scene_Battle.prototype.targetSideChangeToEnemy = function() {
         this._actorWindow.deselect();
         this._enemyWindow.x = Graphics.width * 2;
     }
+
+    // サイド変更成功
+    return true;
 }
 
 // ウィンドウ表示を保持する場合
@@ -475,9 +515,9 @@ Scene_Battle.prototype.commandCancel = function() {
     }
 };
 
-//----------------------------------------
+//-----------------------------------------------------------------------------
 // 共通処理（Game_Action）
-//----------------------------------------
+//-----------------------------------------------------------------------------
 
 /**
  * 【独自】対象の反転
@@ -603,9 +643,9 @@ if (!Game_Action.prototype.isForEveryone) {
     };
 }
 
-//----------------------------------------
+//-----------------------------------------------------------------------------
 // PageUp/Downによる切替
-//----------------------------------------
+//-----------------------------------------------------------------------------
 
 if (pChangeSideByPageUpDown) {
     /**
@@ -631,9 +671,9 @@ if (pChangeSideByPageUpDown) {
     };
 }
 
-//----------------------------------------
+//-----------------------------------------------------------------------------
 // カーソル左右による切替
-//----------------------------------------
+//-----------------------------------------------------------------------------
 
 if (pChangeSideByLeftRight) {
     /**
@@ -653,9 +693,9 @@ if (pChangeSideByLeftRight) {
     };
 }
 
-//----------------------------------------
+//-----------------------------------------------------------------------------
 // カーソル上下による切替
-//----------------------------------------
+//-----------------------------------------------------------------------------
 
 if (pChangeSideByUpDown) {
     /**
@@ -675,9 +715,9 @@ if (pChangeSideByUpDown) {
     };
 }
 
-//----------------------------------------
+//-----------------------------------------------------------------------------
 // 常に選択を表示
-//----------------------------------------
+//-----------------------------------------------------------------------------
 
 if (pAlwaysSelection) {
     /**
@@ -948,6 +988,70 @@ function selectActorEX(window) {
         }
     }
 }
+
+//-----------------------------------------------------------------------------
+// タッチ操作に対応
+//-----------------------------------------------------------------------------
+
+if (pEnableTouch) {
+    /**
+     * ●アクターのタッチ操作
+     */
+    const _Window_BattleActor_processTouch = Window_BattleActor.prototype.processTouch;
+    Window_BattleActor.prototype.processTouch = function() {
+        // $gameTemp.clearTouchState()が元の処理で呼ばれるので、
+        // クリアされる前の値を保持しておく。
+        const target = $gameTemp.touchTarget();
+
+        _Window_BattleActor_processTouch.apply(this, arguments);
+
+        if (this.isOpenAndActive()) {
+            if (target) {
+                // 敵キャラサイドを選択した場合（追加）
+                const enemies = $gameTroop.aliveMembers();
+                if (enemies.includes(target)) {
+                    // 対象サイドを敵キャラへ変更
+                    const changeOk = SceneManager._scene.targetSideChangeToEnemy();
+                    if (changeOk) {
+                        SceneManager._scene._enemyWindow.select(enemies.indexOf(target));
+                    }
+                }
+                $gameTemp.clearTouchState();
+            }
+        }
+    };
+
+    /**
+     * ●敵キャラのタッチ操作
+     */
+    const _Window_BattleEnemy_processTouch = Window_BattleEnemy.prototype.processTouch;
+    Window_BattleEnemy.prototype.processTouch = function() {
+        // $gameTemp.clearTouchState()が元の処理で呼ばれるので、
+        // クリアされる前の値を保持しておく。
+        const target = $gameTemp.touchTarget();
+
+        _Window_BattleEnemy_processTouch.apply(this, arguments);
+
+        if (this.isOpenAndActive()) {
+            if (target) {
+                // アクターサイドを選択した場合（追加）
+                const members = $gameParty.battleMembers();
+                if (members.includes(target)) {
+                    // 対象サイドをアクターへ変更
+                    const changeOk = SceneManager._scene.targetSideChangeToActor();
+                    if (changeOk) {
+                        SceneManager._scene._actorWindow.select(members.indexOf(target));
+                    }
+                }
+                $gameTemp.clearTouchState();
+            }
+        }
+    };
+}
+
+//-----------------------------------------------------------------------------
+// その他
+//-----------------------------------------------------------------------------
 
 /**
  * ●NRP_SkillRangeEX連携用（mainTargetAllIfを想定）
