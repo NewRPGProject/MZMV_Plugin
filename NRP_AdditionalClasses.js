@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.11 Multiple classes allow for a highly flexible growth system.
+ * @plugindesc v1.12 Multiple classes allow for a highly flexible growth system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -520,7 +520,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.11 多重職業によって自由度の高い成長システムを実現。
+ * @plugindesc v1.12 多重職業によって自由度の高い成長システムを実現。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -1203,6 +1203,8 @@ PluginManager.registerCommand(PLUGIN_NAME, "RemoveClass", function(args) {
     const fillGap = toBoolean(args.FillGap);
     // 追加職業の削除
     actor.leaveAdditionalClass(additionalClassId, index, fillGap);
+    // 追加職業のスキル再習得
+    actor.setAllAdditionalClassesSkills();
 });
 
 /**
@@ -1841,6 +1843,8 @@ Game_Actor.prototype.changeAdditionalClass = function(classId, index) {
 
         // クリア時（classId==null）は終了
         if (!classId) {
+            // 追加職業のスキル再習得
+            this.setAllAdditionalClassesSkills();
             // リフレッシュ（無効になった装備品の解除など）
             this.refresh();
             return;
@@ -1861,8 +1865,8 @@ Game_Actor.prototype.changeAdditionalClass = function(classId, index) {
         }
     }
 
-    // 追加職業のスキル習得
-    this.setAdditionalClassSkills(new AdditionalClass(this, classId));
+    // 追加職業のスキル再習得
+    this.setAllAdditionalClassesSkills();
     // リフレッシュ（無効になった装備品の解除など）
     this.refresh();
 };
@@ -1886,17 +1890,13 @@ Game_Actor.prototype.leaveAdditionalClass = function(classId, index, fillGap) {
 
     // スキルを維持しない場合はスキルを忘れる。
     const additionalClass = this.additionalClass(classId);
-    // 職業のレベルを取得
-    const level = additionalClass.level;
-    // レベル以下のスキルを削除
+    // 習得スキルを削除
     for (const learning of additionalClass._data.learnings) {
-        if (learning.level <= level) {
-            // 転職時も維持するスキルなら削除しない。
-            if (isKeepSkill(learning.skillId)) {
-                continue;
-            }
-            this.forgetSkill(learning.skillId);
+        // 転職時も維持するスキルなら削除しない。
+        if (isKeepSkill(learning.skillId)) {
+            continue;
         }
+        this.forgetSkill(learning.skillId);
     }
 
     if (fillGap) {
