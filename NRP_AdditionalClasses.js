@@ -189,6 +189,18 @@
  * The number is the class ID.
  * 
  * -------------------------------------------------------------------
+ * [Notice]
+ * -------------------------------------------------------------------
+ * The standard specification is that when an actor changes classes,
+ * he/she forgets the skills learned in that class.
+ * In that case, the relevant skills are forgotten
+ * without distinction, even if they were learned in other ways.
+ * (This distinction is hard to make, and we have no plans to fix it.)
+ * 
+ * Please make sure that skills learned in additional classes
+ * and skills learned by other means are registered separately.
+ * 
+ * -------------------------------------------------------------------
  * [Terms]
  * -------------------------------------------------------------------
  * There are no restrictions.
@@ -692,6 +704,17 @@
  * ◆actor.isAdditionalClassId(1);
  * アクターが追加職業に就いているかを判定します。
  * 数値は職業ＩＤです。
+ * 
+ * -------------------------------------------------------------------
+ * ■注意点
+ * -------------------------------------------------------------------
+ * 標準では転職すると、その職業で覚えたスキルを忘れる仕様になっています。
+ * その際、該当のスキルは他の方法で覚えたスキルであっても、
+ * 区別なく忘れてしまいます。
+ * （仕様上、区別が大変なので、修正の予定もありません。）
+ * 
+ * 追加職業で習得するスキルと、その他の手段で習得するスキルは、
+ * 区別して登録するようにお願いします。
  * 
  * -------------------------------------------------------------------
  * ■利用規約
