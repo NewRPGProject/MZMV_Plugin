@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.272 When executing skills, call motion freely.
+ * @plugindesc v1.28 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help When executing skills(items), call motion freely.
@@ -555,7 +555,7 @@
  */
 
 /*:ja
- * @plugindesc v1.272 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.28 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在にモーションを呼び出します。
@@ -2392,8 +2392,8 @@ Game_Battler.prototype.isDynamicMotionRequested = function() {
  */
 Sprite_Battler.prototype.motions = function() {
     const battler = this._battler;
-    // バトラーが取得できなければ空の配列
-    if (!battler) {
+    // 値が取得できなければ空の配列
+    if (!battler || !battler._motions) {
         return [];
     }
     return battler._motions;

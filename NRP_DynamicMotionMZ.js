@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.211 When executing skills, call motion freely.
+ * @plugindesc v1.22 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -561,7 +561,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.211 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.22 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -2450,8 +2450,8 @@ Game_Battler.prototype.isDynamicMotionRequested = function() {
  */
 Sprite_Battler.prototype.motions = function() {
     const battler = this._battler;
-    // バトラーが取得できなければ空の配列
-    if (!battler) {
+    // 値が取得できなければ空の配列
+    if (!battler || !battler._motions) {
         return [];
     }
     return battler._motions;
