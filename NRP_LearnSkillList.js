@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.04 A list-style skill learning system.
+ * @plugindesc v1.05 A list-style skill learning system.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -300,6 +300,12 @@
  * @desc The height of the actor window.
  * If blank, it is extended to the maximum.
  * 
+ * @param ActorChangeInvalid
+ * @parent <ActorWindow>
+ * @type boolean
+ * @default false
+ * @desc If a plugin command is invoked with an actor specified, the actor is prohibited from being changed.
+ * 
  * @param <ConfirmWindow>
  * @desc This item relates to the confirmation window when learning the skill system.
  * 
@@ -442,7 +448,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.04 リスト形式のスキル習得システム。
+ * @plugindesc v1.05 リスト形式のスキル習得システム。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -774,6 +780,13 @@
  * @desc アクターウィンドウの縦幅です。
  * 空白の場合は最大まで伸ばします。
  * 
+ * @param ActorChangeInvalid
+ * @text アクターの変更無効
+ * @parent <ActorWindow>
+ * @type boolean
+ * @default false
+ * @desc プラグインコマンドにて、アクターを指定して呼び出した場合はアクターの変更を禁止します。
+ * 
  * @param <ConfirmWindow>
  * @text ＜確認ウィンドウ関連＞
  * @desc スキルシステムを習得する際の確認ウィンドウに関する項目です。
@@ -1016,6 +1029,7 @@ const pHiddenHelp = toBoolean(parameters["HiddenHelp"]);
 // アクターウィンドウ関連
 const pActorWindowWidth = toNumber(parameters["ActorWindowWidth"]);
 const pActorWindowHeight = toNumber(parameters["ActorWindowHeight"]);
+const pActorChangeInvalid = toBoolean(parameters["ActorChangeInvalid"], false);
 // 確認ウィンドウ関連
 const pConfirmMessage = parameters["ConfirmMessage"];
 const pConfirmButtonOk = parameters["ConfirmButtonOk"];
@@ -1032,6 +1046,9 @@ const pDisableSwitch = toNumber(parameters["DisableSwitch"]);
 const SYMBOL_SKILL_SYSTEM = "skillSystem";
 const SKILL_POINT_KEY = "skillPoint";
 
+// アクターの変更禁止
+let mActorChangeInvalid = false;
+
 //-----------------------------------------------------------------------------
 // ＭＺ用プラグインコマンド
 //-----------------------------------------------------------------------------
@@ -1040,11 +1057,17 @@ const SKILL_POINT_KEY = "skillPoint";
  * ●シーン開始
  */
 PluginManager.registerCommand(PLUGIN_NAME, "SceneStart", function(args) {
+    mActorChangeInvalid = false;
+
     // アクターを取得
     const actor = getActor(args);
     // 対象に設定
     if (actor) {
         $gameParty.setMenuActor(actor);
+        // アクターの変更禁止
+        if (pActorChangeInvalid) {
+            mActorChangeInvalid = true;
+        }
     // 指定がない場合はクリア
     } else {
         $gameParty._menuActorId = 0;
@@ -1239,6 +1262,8 @@ Scene_LearnSkillSelectActor.prototype.start = function() {
  * ●アクターの選択確定
  */
 Scene_LearnSkillSelectActor.prototype.onActorOk = function() {
+    // アクターの選択許可
+    mActorChangeInvalid = false;
     // アクター選択ウィンドウの選択結果を反映
     const actor = this._statusWindow.actor(this._statusWindow.index());
     $gameParty.setMenuActor(actor);
@@ -1307,8 +1332,11 @@ Scene_LearnSkillList.prototype.createSkillListWindow = function() {
     this._skillListWindow.setHelpWindow(this._helpWindow);
     this._skillListWindow.setHandler("ok", this.onSkillListOk.bind(this));
     this._skillListWindow.setHandler('cancel', this.onSkillListCancel.bind(this));
-    this._skillListWindow.setHandler("pagedown", this.nextActor.bind(this));
-    this._skillListWindow.setHandler("pageup", this.previousActor.bind(this));
+    // アクターの変更禁止の場合を除く
+    if (!mActorChangeInvalid) {
+        this._skillListWindow.setHandler("pagedown", this.nextActor.bind(this));
+        this._skillListWindow.setHandler("pageup", this.previousActor.bind(this));
+    }
     this.addWindow(this._skillListWindow);
 };
 
@@ -1465,6 +1493,14 @@ Scene_LearnSkillList.prototype.onActorChange = function() {
     Scene_MenuBase.prototype.onActorChange.call(this);
     this.refreshActor();
     this._skillListWindow.activate();
+};
+
+/**
+ * ●アクター取得
+ */
+Scene_LearnSkillList.prototype.updateActor = function() {
+    // パーティメンバー以外も有効にする。
+    this._actor = $gameActors.actor($gameParty._menuActorId)
 };
 
 //-----------------------------------------------------------------------------
@@ -2168,6 +2204,8 @@ if (pShowMenuCommandPosition != null) {
 
         // スキル習得画面へ
         if (this._commandWindow.currentSymbol() == SYMBOL_SKILL_SYSTEM) {
+            // アクターの選択許可
+            mActorChangeInvalid = false;
             SceneManager.push(Scene_LearnSkillList);
         }
     };
