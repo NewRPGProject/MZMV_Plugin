@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Extend the effect of the skill.
+ * @plugindesc v1.031 Extend the effect of the skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -119,7 +119,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 スキルの効果を拡張します。
+ * @plugindesc v1.031 スキルの効果を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -287,6 +287,12 @@ BattleManager.invokeAction = function(subject, target) {
  */
 const _BattleManager_endAction = BattleManager.endAction;
 BattleManager.endAction = function() {
+    // アクションが取得できない場合は終了
+    if (!this._action) {
+        _BattleManager_endAction.apply(this, arguments);
+        return;
+    }
+
     const a = this._subject;
     const b = a;
 
