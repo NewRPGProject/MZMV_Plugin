@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Extend the specification of magic reflection.
+ * @plugindesc v1.011 Extend the specification of magic reflection.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_DamageTiming
  * @url http://newrpg.seesaa.net/article/483027532.html
@@ -138,7 +138,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 魔法反射の仕様を拡張します。
+ * @plugindesc v1.011 魔法反射の仕様を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_DamageTiming
  * @url http://newrpg.seesaa.net/article/483027532.html
@@ -402,7 +402,7 @@ BattleManager.updateAction = function() {
     // 対象がなければ
     if (!this._targets.length) {
         // 反射対象が存在する場合、ダメージ処理を実行
-        if (this._reflectTargets.length) {
+        if (this._reflectTargets && this._reflectTargets.length) {
             const reflectTarget = this._reflectTargets.shift();
             // ただし、再反射禁止フラグを立てておく
             this._action._noRefrection = true;
