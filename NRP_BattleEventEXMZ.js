@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.06 Extends the functionality of battle events.
+ * @plugindesc v1.061 Extends the functionality of battle events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_ChargeSkill
  * @orderAfter NRP_EnemyRoutineKai
@@ -227,7 +227,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.06 バトルイベントの機能を拡張します。
+ * @plugindesc v1.061 バトルイベントの機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_ChargeSkill
  * @orderAfter NRP_EnemyRoutineKai
@@ -845,6 +845,12 @@ Window_BattleLog.prototype.endAction = function(subject) {
  */
 const _Game_Interpreter_command339 = Game_Interpreter.prototype.command339;
 Game_Interpreter.prototype.command339 = function(params) {
+    // スキル使用判定の影響軽減がオンの場合
+    if (isForceValidFlexible()) {
+        // 行動制約を無視しない
+        mForceValid = true;
+    }
+
     // プラグインコマンドで行動主体の上書きが指定されていた場合
     if (plForceSubject) {
         var isActor = params[0];      // 敵なら0, 味方なら1
@@ -867,12 +873,6 @@ Game_Interpreter.prototype.command339 = function(params) {
         return true;
     }
 
-    // スキル使用判定の影響軽減がオンの場合
-    if (isForceValidFlexible()) {
-        // 行動制約を無視しない
-        mForceValid = true;
-    }
-    
     // 元処理実行
     return _Game_Interpreter_command339.apply(this, arguments);
 };
