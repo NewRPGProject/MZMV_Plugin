@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.081 Change the equipment slots at will.
+ * @plugindesc v1.09 Change the equipment slots at will.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489626316.html
  *
@@ -157,7 +157,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.081 装備スロットを自由に変更。
+ * @plugindesc v1.09 装備スロットを自由に変更。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489626316.html
  * 
@@ -408,6 +408,19 @@ if (pAdjustInitEquip) {
     };
 }
 
+/**
+ * ●無効になった装備を外す
+ */
+const _Game_Actor_releaseUnequippableItems = Game_Actor.prototype.releaseUnequippableItems;
+Game_Actor.prototype.releaseUnequippableItems = function(forcing) {
+    // この処理中のみスロット変化による装備解除を有効にする。
+    // ※ただし、forcingがfalseの場合のみが対象
+    // 　trueの場合はステータス変化の参照など内部的な処理なので対象外
+    mReleaseUnequippableItems = !forcing;
+    _Game_Actor_releaseUnequippableItems.apply(this, arguments);
+    mReleaseUnequippableItems = false;
+};
+
 if (pDefaultEquipSlots) {
     /**
      * 【上書】スロットの生成
@@ -484,9 +497,10 @@ Game_Actor.prototype.equipSlots = function() {
     slots.sort((a, b) => a - b);
 
     //-------------------------------------------------------------
+    // 装備解除を行う場合、
     // スロット情報に変化がないかチェックし、変化があれば装備欄を調整
     //-------------------------------------------------------------
-    if (!equalSlots(this._oldSlots, slots)) {
+    if (mReleaseUnequippableItems && !equalSlots(this._oldSlots, slots)) {
         //----------------------------------------------------
         // 装備マップとスロット配列を元に装備用オブジェクトを作成
         //----------------------------------------------------
@@ -523,6 +537,9 @@ Game_Actor.prototype.forceChangeEquip = function(slotId, item) {
     }
     _Game_Actor_forceChangeEquip.apply(this, arguments);
 };
+
+// 装備解除判定用フラグ
+let mReleaseUnequippableItems = false;
 
 /**
  * ●装備タイプと装備（複数）をマッピングして返す
