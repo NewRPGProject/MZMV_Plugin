@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.271 Automate & super-enhance battle animations.
+ * @plugindesc v1.28 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help Call battle animations freely from skills (items).
@@ -488,7 +488,7 @@
  */
 
 /*:ja
- * @plugindesc v1.271 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.28 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在に戦闘アニメーションを呼び出します。
@@ -4013,6 +4013,26 @@ Sprite_Enemy.prototype.isEnemy = function() {
  * ※色々と無理矢理ですが、ご容赦ください。
  */
 if (pReferenceBattler == 1) {
+    /*
+     * Game_Actor.prototype.onBattleStartが未定義の場合は事前に定義
+     * ※これをしておかないと以後のGame_Battler側への追記が反映されない。
+     */
+    if (Game_Actor.prototype.onBattleStart == Game_Battler.prototype.onBattleStart) {
+        Game_Actor.prototype.onBattleStart = function() {
+            Game_Battler.prototype.onBattleStart.apply(this, arguments);
+        }
+    }
+
+    /*
+     * Game_Enemy.prototype.onBattleStartが未定義の場合は事前に定義
+     * ※これをしておかないと以後のGame_Battler側への追記が反映されない。
+     */
+    if (Game_Enemy.prototype.onBattleStart == Game_Battler.prototype.onBattleStart) {
+        Game_Enemy.prototype.onBattleStart = function() {
+            Game_Battler.prototype.onBattleStart.apply(this, arguments);
+        }
+    }
+
     /**
      * ●戦闘開始時
      */
@@ -4026,6 +4046,7 @@ if (pReferenceBattler == 1) {
         this._battler._isDynamicDummy = true;
         this._actor = this._battler;
     };
+
     var _Game_Enemy_onBattleStart = Game_Enemy.prototype.onBattleStart;
     Game_Enemy.prototype.onBattleStart = function() {
         _Game_Enemy_onBattleStart.apply(this, arguments);
