@@ -3,13 +3,15 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Add an auto-battle command.
+ * @plugindesc v1.02 Add an auto-battle command.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/498941158.html
  *
  * @help Add an auto-battle command.
  * The battle will be executed automatically
  * until the cancel key is pressed.
+ * ※It can also be released by touch operation with a right click.
+ *   Or left-click and hold to release.
  * 
  * Initially, it behaves like an auto-battle
  * with special flag of traits,
@@ -69,12 +71,13 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 自動戦闘コマンドを追加します。
+ * @plugindesc v1.02 自動戦闘コマンドを追加します。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/498941158.html
  *
  * @help 自動戦闘コマンドを追加します。
  * キャンセルキーを押すまで自動で戦闘を実行するようになります。
+ * ※タッチ操作でも右クリックで解除、または左クリック長押しで解除します。
  * 
  * 初期状態では特徴の特殊フラグの自動戦闘と同様の挙動を取りますが、
  * 通常攻撃だけをさせることも可能です。
@@ -242,7 +245,9 @@ Scene_Battle.prototype.startActorCommandSelection = function() {
 const _Scene_Battle_update = Scene_Battle.prototype.update;
 Scene_Battle.prototype.update = function() {
     // 自動戦闘中の場合、かつキャンセル押下時
-    if (BattleManager.isAutoBattleMode() && Input.isPressed("cancel")) {
+    // タッチ操作でも右クリックまたは長押しで解除
+    if (BattleManager.isAutoBattleMode()
+            && (Input.isPressed("cancel") || TouchInput.isCancelled() || TouchInput.isLongPressed())) {
         // 自動戦闘解除
         BattleManager.setAutoBattleMode(false);
         // キャンセルの効果音
