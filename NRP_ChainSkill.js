@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.05 Chain skills together.
+ * @plugindesc v1.051 Chain skills together.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -245,7 +245,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.05 スキルを連結する。
+ * @plugindesc v1.051 スキルを連結する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -1166,6 +1166,10 @@ if (pNoEnemyFlash) {
     Sprite_Enemy.prototype.startWhiten = function() {
         // 連結スキル中はフラッシュ不要
         if (mIsChain) {
+            // ＴＰＢの場合はフリーズするので1を設定（※原因不明……）
+            if (BattleManager.isTpb()) {
+                this._effectDuration = 1;
+            }
             return;
         }
         _Sprite_Enemy_startWhiten.apply(this, arguments);
