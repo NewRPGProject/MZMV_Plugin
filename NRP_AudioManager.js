@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Manage audio files.
+ * @plugindesc v1.03 Manage audio files.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483999181.html
  *
@@ -329,7 +329,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 音声ファイルの管理を行う。
+ * @plugindesc v1.03 音声ファイルの管理を行う。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483999181.html
  *
@@ -788,9 +788,15 @@ AudioManager.playBgm = function(bgm, pos) {
 
     // ディープコピーする。
     const newBgm = {...bgm};
-    // 別名があれば変換
+    // 別名があれば取得
     const aliasName = getAlias(newBgm, pBgmAliases);
-    if (aliasName) {
+
+    // 別名が空欄なら演奏停止
+    if (aliasName === "") {
+        this.stopBgm();
+        return;
+    // 別名があれば変換
+    } else if (aliasName) {
         newBgm.name = aliasName;
     }
 
@@ -861,9 +867,15 @@ AudioManager.playBgs = function(bgs, pos) {
 
     // ディープコピーする。
     const newBgs = {...bgs};
-    // 別名があれば変換
+    // 別名があれば取得
     const aliasName = getAlias(newBgs, pBgsAliases);
-    if (aliasName) {
+
+    // 別名が空欄なら演奏停止
+    if (aliasName === "") {
+        this.stopBgs();
+        return;
+    // 別名があれば変換
+    } else if (aliasName) {
         newBgs.name = aliasName;
     }
 
@@ -934,9 +946,14 @@ AudioManager.playMe = function(me) {
 
     // ディープコピーする。
     const newMe = {...me};
-    // 別名があれば変換
+    // 別名を取得
     const aliasName = getAlias(newMe, pMeAliases);
-    if (aliasName) {
+
+    // 別名が空欄なら演奏しない
+    if (aliasName === "") {
+        return;
+    // 別名があれば変換
+    } else if (aliasName) {
         newMe.name = aliasName;
     }
 
@@ -979,9 +996,14 @@ AudioManager.playSe = function(se) {
 
     // ディープコピーする。
     const newSe = {...se};
-    // 別名があれば変換
+    // 別名を取得
     const aliasName = getAlias(newSe, pSeAliases);
-    if (aliasName) {
+
+    // 別名が空欄なら演奏しない
+    if (aliasName === "") {
+        return;
+    // 別名があれば変換
+    } else if (aliasName) {
         newSe.name = aliasName;
     }
 
