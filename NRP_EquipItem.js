@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Allow items to be equipped.
+ * @plugindesc v1.04 Allow items to be equipped.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489576403.html
  *
@@ -109,7 +109,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 アイテムを装備できるようにする。
+ * @plugindesc v1.04 アイテムを装備できるようにする。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489576403.html
  *
@@ -386,12 +386,18 @@ Game_BattlerBase.prototype.canEquipItem = function(item) {
  */
 if (!pUseOriginalCommand) {
     /**
-     * 【上書】アイテムの使用判定
+     * ●アイテムの使用判定
      */
+    const _Game_BattlerBase_meetsItemConditions = Game_BattlerBase.prototype.meetsItemConditions;
     Game_BattlerBase.prototype.meetsItemConditions = function(item) {
-        // アクターの所持品をそのまま使うため、パーティの所持数チェックは削除
-        return this.meetsUsableItemConditions(item);
-        // return this.meetsUsableItemConditions(item) && $gameParty.hasItem(item);
+        // 戦闘時
+        if ($gameParty.inBattle()) {
+            // アクターの所持品をそのまま使うため、パーティの所持数チェックは削除
+            return this.meetsUsableItemConditions(item);
+            // return this.meetsUsableItemConditions(item) && $gameParty.hasItem(item);
+        }
+        // 戦闘以外はそのまま
+        return _Game_BattlerBase_meetsItemConditions.apply(this, arguments);
     };
 }
 
