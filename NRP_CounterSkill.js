@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Create counter skill.
+ * @plugindesc v1.03 Create counter skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_ChainSkill
  * @url https://newrpg.seesaa.net/article/500432213.html
@@ -217,7 +217,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 反撃スキルを作成する。
+ * @plugindesc v1.03 反撃スキルを作成する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_ChainSkill
  * @url https://newrpg.seesaa.net/article/500432213.html
@@ -487,6 +487,8 @@ let mCounterList = [];
 let mOriginalSubject = null;
 // 元のアクション
 let mOriginalAction = null;
+// 元のカウンター実行者のアクションステート
+let mOriginalCounterActionState = null;
 // カウンター実行中フラグ
 let mInCounter = false;
 // 対象となったバトラー
@@ -516,6 +518,7 @@ BattleManager.startTurn = function() {
     mCounterList = [];
     mOriginalSubject = null;
     mOriginalAction = null;
+    mOriginalCounterActionState = null;
     mInCounter = false;
     mTargetBattlers = [];
 
@@ -548,6 +551,8 @@ BattleManager.updateAction = function() {
     if (mInCounter) {
         // Window_BattleLogのendActionだけを呼び出す。
         this._logWindow.endAction(this._subject);
+        // アクションステートを元に戻す。
+        this._subject.setActionState(mOriginalCounterActionState);
     }
 
     // 反撃予約リストに登録がない場合　→　終了処理を実行
@@ -565,6 +570,7 @@ BattleManager.updateAction = function() {
         mInCounter = false;
         mOriginalSubject = null;
         mOriginalAction = null;
+        mOriginalCounterActionState = null;
 
         // endActionを呼び出し、本来のアクションの終了処理を実行する。
         _BattleManager_updateAction.apply(this, arguments);
@@ -665,6 +671,11 @@ Game_Battler.prototype.counterForceAction = function(skillId, target) {
         action.decideRandomTarget();
     } else {
         action.setTarget(targetIndex);
+    }
+
+    // カウンター実行前のアクションステートを保持
+    if (!mOriginalCounterActionState) {
+        mOriginalCounterActionState = this._actionState;
     }
 
     // カウンタースキルを次のアクションとして実行するため、
