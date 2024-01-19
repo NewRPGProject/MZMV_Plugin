@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.061 Extends the functionality of battle events.
+ * @plugindesc v1.062 Extends the functionality of battle events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_ChargeSkill
  * @orderAfter NRP_EnemyRoutineKai
@@ -227,7 +227,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.061 バトルイベントの機能を拡張します。
+ * @plugindesc v1.062 バトルイベントの機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_ChargeSkill
  * @orderAfter NRP_EnemyRoutineKai
@@ -1098,6 +1098,46 @@ Game_Unit.prototype.smoothTarget = function(index) {
     
     // 元処理実行
     return _Game_Unit_smoothTarget.call(this, index);
+};
+
+/**
+ * ●相手サイドが対象
+ */
+const _Game_Action_targetsForOpponents = Game_Action.prototype.targetsForOpponents;
+Game_Action.prototype.targetsForOpponents = function() {
+    // 強制対象リストの指定があれば、通常の処理を行う。
+    // ※NRP_EnemyRoutineKai.jsとの競合対策
+    if (plForceTargets) {
+        const unit = this.opponentsUnit();
+        if (this.isForRandom()) {
+            return this.randomTargets(unit);
+        } else {
+            return this.targetsForAlive(unit);
+        }
+    }
+    return _Game_Action_targetsForOpponents.apply(this, arguments);
+};
+
+/**
+ * ●味方サイドが対象
+ */
+const _Game_Action_targetsForFriends = Game_Action.prototype.targetsForFriends;
+Game_Action.prototype.targetsForFriends = function() {
+    // 強制対象リストの指定があれば、通常の処理を行う。
+    // ※NRP_EnemyRoutineKai.jsとの競合対策
+    if (plForceTargets) {
+        const unit = this.friendsUnit();
+        if (this.isForUser()) {
+            return [this.subject()];
+        } else if (this.isForDeadFriend()) {
+            return this.targetsForDead(unit);
+        } else if (this.isForAliveFriend()) {
+            return this.targetsForAlive(unit);
+        } else {
+            return this.targetsForDeadAndAlive(unit);
+        }
+    }
+    return _Game_Action_targetsForFriends.apply(this, arguments);
 };
 
 /**
