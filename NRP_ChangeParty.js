@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Implemented a party change screen.
+ * @plugindesc v1.02 Implemented a party change screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/500297653.html
  *
@@ -158,7 +158,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 パーティ編成画面を実装。
+ * @plugindesc v1.02 パーティ編成画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/500297653.html
  *
@@ -999,6 +999,18 @@ Window_ChangePartyBench.prototype.isUsePage = function() {
 //-----------------------------------------------------------------------------
 // Game_Party
 //-----------------------------------------------------------------------------
+
+/**
+ * ●メニュー画面で参照するアクターを設定
+ */
+const _Game_Party_setMenuActor = Game_Party.prototype.setMenuActor;
+Game_Party.prototype.setMenuActor = function(actor) {
+    // アクターが無効なら処理しない。
+    if (!actor) {
+        return;
+    }
+    _Game_Party_setMenuActor.apply(this, arguments);
+};
 
 /**
  * 【独自】最大戦闘人数を設定する。
