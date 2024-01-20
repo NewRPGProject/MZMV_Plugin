@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Extends event acceleration feature.
+ * @plugindesc v1.02 Extends event acceleration feature.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483801702.html
  *
@@ -24,11 +24,15 @@
  * For example, it is possible to speed up the entire event
  * by combining the key with a message skipping plugin.
  * 
- * ■Acknowledgements
+ * -------------------------------------------------------------------
+ * [Acknowledgements]
+ * -------------------------------------------------------------------
  * This plugin is inspired
  * by FastForwardCustomize.js created by Triacontane.
  * 
+ * -------------------------------------------------------------------
  * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
@@ -70,6 +74,11 @@
  * @desc Speeds up sprite drawing.
  * Animations, balloons, etc. are also accelerated.
  * 
+ * @param NotCancelMessageWait
+ * @type boolean
+ * @default false
+ * @desc Do not disable message wait when speeding up.
+ * 
  * @param <Touch>
  * @desc This is the event acceleration setting for touch operations.
  * If not specified, the same settings as above will be used.
@@ -94,7 +103,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 イベント高速化機能を拡張します。
+ * @plugindesc v1.02 イベント高速化機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483801702.html
  *
@@ -114,11 +123,15 @@
  * 例えば、メッセージスキップ系のプラグインとキーを合わせることで、
  * イベント全体を高速化することも可能です。
  * 
+ * -------------------------------------------------------------------
  * ■謝辞
+ * -------------------------------------------------------------------
  * 当プラグインはトリアコンタン様作成の
  * FastForwardCustomize.jsを参考にさせて頂きました。
  * 
+ * -------------------------------------------------------------------
  * ■利用規約
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
@@ -163,6 +176,12 @@
  * @default false
  * @desc 描画処理を高速化します。
  * アニメーションやフキダシなども高速化されます。
+ * 
+ * @param NotCancelMessageWait
+ * @text メッセージウェイトを有効化
+ * @type boolean
+ * @default false
+ * @desc 高速化時にメッセージウェイトを無効化しないようにします。
  * 
  * @param <Touch>
  * @text ＜タッチ関連＞
@@ -215,6 +234,7 @@ const pSpeedMultiply = toNumber(parameters["SpeedMultiply"], 2);
 const pSpeedVariableId = toNumber(parameters["SpeedVariableId"]);
 const pPressWait = toNumber(parameters["PressWait"], 24);
 const pFastSprite = toBoolean(parameters["FastSprite"], false);
+const pNotCancelMessageWait = toBoolean(parameters["NotCancelMessageWait"], false);
 const pTouchSpeedMultiply = toNumber(parameters["TouchSpeedMultiply"], pSpeedMultiply);
 const pTouchSpeedVariableId = toNumber(parameters["TouchSpeedVariableId"], pSpeedVariableId);
 const pTouchPressWait = toNumber(parameters["TouchPressWait"], pPressWait);
@@ -282,6 +302,16 @@ Scene_Map.prototype.isFastForward = function() {
 
     return false;
 };
+
+if (pNotCancelMessageWait) {
+    /**
+     * ●メッセージ待ちを飛ばす
+     */
+    Scene_Message.prototype.cancelMessageWait = function() {
+        // キャンセル処理を無効化する。
+        // this._messageWindow.cancelWait();
+    };
+}
 
 /**
  * ●高速化倍率
