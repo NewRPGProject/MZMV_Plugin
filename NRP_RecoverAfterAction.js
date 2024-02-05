@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.002 Implemented a system of recovery after action.
+ * @plugindesc v1.01 Implemented a system of recovery after action.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/498761194.html
  *
@@ -195,7 +195,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.002 行動後に回復するシステムを実装。
+ * @plugindesc v1.01 行動後に回復するシステムを実装。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/498761194.html
  *
@@ -876,6 +876,9 @@ Window_RecoverAction.prototype.drawItem = function(index) {
     // 右表示の場合
     if (pHorizontalPosition == "right") {
         this.x = Graphics.boxWidth - this.width;
+    // 左表示の場合
+    } else {
+        this.x = 0
     }
 
     // 該当がある場合は表示
