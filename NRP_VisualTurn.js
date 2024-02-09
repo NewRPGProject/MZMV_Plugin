@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.164 The order of actions is displayed on the battle screen.
+ * @plugindesc v2.00 The order of actions is displayed on the battle screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -21,6 +21,7 @@
  * <CtbCharacter:[FileName],[Index],[SwitchNo]>
  * <CtbSvActor:[FileName],[SwitchNo]>
  * <CtbPicture:[FileName],[SwitchNo]>
+ * <CtbEnemy:[FileName],[SwitchNo]>
  *
  * If the specified switch is ON,
  * it will take precedence over the plugin parameter specification.
@@ -56,6 +57,15 @@
  * Note that the order is unmarked -> 1 -> 2...
  * If you make a mistake, it will not work.
  *
+ * ◆Adjust image crop position
+ * You can adjust the crop position of the image
+ * by the specified value by doing the following.
+ * For example, if a face is misaligned and does not fit
+ * in the image, you can use this function.
+ * 
+ * <CtbCutAdjustX:10>
+ * <CtbCutAdjustY:10>
+ * 
  * For more information, please see below.
  * http://newrpg.seesaa.net/article/472840225.html
  * 
@@ -146,15 +156,13 @@
  * @parent <Symbol Image>
  * @type number
  * @default 100
- * @desc This is the width to display the symbol image.
- * 100 if you don't specify it.
+ * @desc The width to display the symbol image.
  *
  * @param height
  * @parent <Symbol Image>
  * @type number
  * @default 32
- * @desc This is the height to display the symbol image.
- * 32 if you don't specify it.
+ * @desc The height to display the symbol image.
  *
  * @param zoom
  * @parent <Symbol Image>
@@ -189,6 +197,62 @@
  * @desc How to highlight the symbol in the target selection.
  * Whitewash the image or cover it with a white rectangle.
  * 
+ * @param cutAdjustX
+ * @parent <Symbol Image>
+ * @type number @min -999 @max 999
+ * @desc Adjust the X coordinate to crop the image.
+ *
+ * @param cutAdjustY
+ * @parent <Symbol Image>
+ * @type number @min -999 @max 999
+ * @desc Adjust the Y coordinate to crop the image.
+ * 
+ * @param useSprite
+ * @parent <Symbol Image>
+ * @type boolean
+ * @default false
+ * @desc Changes the display method of the image to a sprite.
+ * The window will no longer be displayed.
+ * 
+ * @param actorMaskImage
+ * @parent useSprite
+ * @text [MZ]actorMaskImage
+ * @type file
+ * @dir img/pictures
+ * @desc Mask image to hide the symbol.
+ * For MZ only.
+ * 
+ * @param intervalX
+ * @parent useSprite
+ * @type number
+ * @desc The horizontal spacing between images.
+ * If omitted, the width of the image is used as is.
+ * 
+ * @param intervalY
+ * @parent useSprite
+ * @type number
+ * @desc The vertical spacing between images.
+ * If omitted, the height of the image is used as is.
+ * 
+ * @param symbolAdjustX
+ * @parent useSprite
+ * @type string
+ * @desc Adjusts X of the image. Formula is possible.
+ * e.g.: index == 0 ? -50 : 0
+ *
+ * @param symbolAdjustY
+ * @parent useSprite
+ * @type string
+ * @desc Adjusts Y of the image. Formula is possible.
+ * e.g.: index == 0 ? -50 : 0
+ * 
+ * @param adjustZoom
+ * @parent useSprite
+ * @type string
+ * @default 100
+ * @desc Correct scale. Formula is possible.
+ * e.g.: index == 0 ? 100 : 50
+ * 
  * @param <Enemy Symbol Image>
  *
  * @param enemyGraphicMode
@@ -200,8 +264,14 @@
  * @option 2:Character @value 2
  * @option 3:SV Battler @value 3
  * @option 4:Picture @value 4
+ * @option 5:Enemy @value 5
  * @desc Enemy graphic mode, same as Actors when played with None.
  *
+ * @param enemyZoom
+ * @parent <Enemy Symbol Image>
+ * @type number
+ * @desc Magnification of the symbol image. Set it to 100 as the standard. When omitted, same as Actor.
+ * 
  * @param enemyFileName
  * @parent <Enemy Symbol Image>
  * @type string
@@ -220,6 +290,25 @@
  * @type file
  * @dir img/pictures
  * @desc Specify a picture for the background of each enemy.
+ * 
+ * @param enemyCutAdjustX
+ * @parent <Enemy Symbol Image>
+ * @type number @min -999 @max 999
+ * @desc Adjust the X coordinate to crop the enemy image.
+ * When omitted, same as Actor.
+ *
+ * @param enemyCutAdjustY
+ * @parent <Enemy Symbol Image>
+ * @type number @min -999 @max 999
+ * @desc Adjust the Y coordinate to crop the enemy image.
+ * When omitted, same as Actor.
+ * 
+ * @param enemyMaskImage
+ * @parent <Enemy Symbol Image>
+ * @text enemyMaskImage
+ * @type file
+ * @dir img/pictures
+ * @desc Mask image to hide the symbol.
  * 
  * @param <Enemy Visual ID>
  * 
@@ -250,6 +339,18 @@
  * @default ABCDEFGHIJKLMNOPQRSTUVWXYZ
  * @desc An array of identifiers to use.
  *
+ * @param visualIdAdjustX
+ * @text Ｘ座標補正
+ * @parent <Enemy Visual ID>
+ * @type number
+ * @desc 識別子のＸ座標を補正します。
+ *
+ * @param visualIdAdjustY
+ * @text Ｙ座標補正
+ * @parent <Enemy Visual ID>
+ * @type number
+ * @desc 識別子のＹ座標を補正します。
+ * 
  * @param <DisplayEachWindow>
  *
  * @param overlapWindows
@@ -289,7 +390,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.164 行動順序を戦闘画面へ表示します。
+ * @plugindesc v2.00 行動順序を戦闘画面へ表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -306,6 +407,7 @@
  * <CtbCharacter:[ファイル名],[インデックス],[スイッチ番号]>
  * <CtbSvActor:[ファイル名],[スイッチ番号]>
  * <CtbPicture:[ファイル名],[スイッチ番号]>
+ * <CtbEnemy:[ファイル名],[スイッチ番号]>
  *
  * 指定したスイッチがONの場合、
  * プラグインパラメータの指定よりも優先して表示されます。
@@ -337,6 +439,13 @@
  * 上下の順番は問いませんが、番号が大きいほうが優先されます。
  * 無印→1→2...という順番であることに注意してください。
  * 間違えると機能しません。
+ * 
+ * ◆画像の切り取り位置を補正
+ * 以下のようにすれば、指定した数値分だけ画像の切り取り位置を調整できます。
+ * 顔の位置がズレていて収まらないといった場合に活用してください。
+ * 
+ * <CtbCutAdjustX:10>
+ * <CtbCutAdjustY:10>
  *
  * その他、細かい仕様については、以下をご覧ください。
  * http://newrpg.seesaa.net/article/472840225.html
@@ -433,7 +542,7 @@
  * @option 3:SV戦闘キャラ表示 @value 3
  * @default 1
  * @desc 画像表示モードです。0:名前表示、1:顔グラ表示、2:キャラグラ表示、3:SV戦闘キャラ。
- *
+ * 
  * @param width
  * @text 横幅
  * @parent <Symbol Image>
@@ -484,7 +593,71 @@
  * @option 四角 @value square
  * @desc 対象選択中のシンボルを強調する方法です。
  * 画像を白色表示するか白い四角形をかぶせるか？
+ * 
+ * @param cutAdjustX
+ * @text 画像切取Ｘ座標補正
+ * @parent <Symbol Image>
+ * @type number @min -999 @max 999
+ * @desc シンボルの画像を切り取るＸ座標を補正します。
  *
+ * @param cutAdjustY
+ * @text 画像切取Ｙ座標補正
+ * @parent <Symbol Image>
+ * @type number @min -999 @max 999
+ * @desc シンボルの画像を切り取るＹ座標を補正します。
+ * 
+ * @param useSprite
+ * @text スプライト表示
+ * @parent <Symbol Image>
+ * @type boolean
+ * @default false
+ * @desc 画像の表示方法をスプライトに変更します。
+ * ウィンドウは表示されなくなります。
+ * 
+ * @param actorMaskImage
+ * @parent useSprite
+ * @text [MZ]マスク画像
+ * @type file
+ * @dir img/pictures
+ * @desc シンボルを隠すためのマスク画像です。
+ * この機能はＭＺ専用です。
+ * 
+ * @param intervalX
+ * @text 画像の横間隔
+ * @parent useSprite
+ * @type number
+ * @desc シンボル画像同士の横の間隔です。
+ * 省略時は画像の横幅をそのまま使います。
+ * 
+ * @param intervalY
+ * @text 画像の縦間隔
+ * @parent useSprite
+ * @type number
+ * @desc シンボル画像同士の縦の間隔です。
+ * 省略時は画像の縦幅をそのまま使います。
+ * 
+ * @param symbolAdjustX
+ * @text Ｘ座標補正
+ * @parent useSprite
+ * @type string
+ * @desc シンボル画像のＸ座標を補正します。数式可
+ * 例：index == 0 ? -50 : 0
+ *
+ * @param symbolAdjustY
+ * @text Ｙ座標補正
+ * @parent useSprite
+ * @type string
+ * @desc シンボル画像のＹ座標を補正します。数式可
+ * 例：index == 0 ? -50 : 0
+ * 
+ * @param adjustZoom
+ * @text 表示倍率補正
+ * @parent useSprite
+ * @type string
+ * @default 100
+ * @desc 拡大率を補正（背景画像含む）します。数式可。
+ * 例：index == 0 ? 100 : 50
+ * 
  * @param <Enemy Symbol Image>
  * @text ＜敵の画像関連＞
  * @desc 見出しです。
@@ -499,8 +672,16 @@
  * @option 2:キャラグラ表示 @value 2
  * @option 3:SV戦闘キャラ表示 @value 3
  * @option 4:ピクチャー表示 @value 4
- * @desc 敵の画像表示モードです。0:名前,1:顔グラ,2:キャラグラ,3:SV戦闘キャラ,4:ピクチャー。指定なしなら味方と同じ。
+ * @option 5:敵キャラ表示 @value 5
+ * @desc 敵の画像表示方法。0:名前,1:顔グラ,2:キャラグラ,3:SV戦闘キャラ,4:ピクチャー,5:敵キャラ。指定なしなら味方と同じ。
  *
+ * @param enemyZoom
+ * @text 表示倍率
+ * @parent <Enemy Symbol Image>
+ * @type number
+ * @desc シンボル画像の拡大率です。
+ * 100を基準に設定してください。指定なしなら味方と同じ。
+ * 
  * @param enemyFileName
  * @text 画像ファイル
  * @parent <Enemy Symbol Image>
@@ -523,6 +704,27 @@
  * @type file
  * @dir img/pictures
  * @desc 敵個別の背景となるピクチャーを指定します。
+ * 
+ * @param enemyCutAdjustX
+ * @text 画像切取Ｘ座標補正
+ * @parent <Enemy Symbol Image>
+ * @type number @min -999 @max 999
+ * @desc シンボルの画像を切り取るＸ座標を補正します。
+ * 省略時はアクターと同じ。
+ *
+ * @param enemyCutAdjustY
+ * @text 画像切取Ｙ座標補正
+ * @parent <Enemy Symbol Image>
+ * @type number @min -999 @max 999
+ * @desc シンボルの画像を切り取るＹ座標を補正します。
+ * 省略時はアクターと同じ。
+ * 
+ * @param enemyMaskImage
+ * @parent <Enemy Symbol Image>
+ * @text マスク画像
+ * @type file
+ * @dir img/pictures
+ * @desc シンボルを隠すためのマスク画像です。
  * 
  * @param <Enemy Visual ID>
  * @text ＜敵の識別子関連＞
@@ -559,6 +761,18 @@
  * @default ABCDEFGHIJKLMNOPQRSTUVWXYZ
  * @desc 使用する識別子の配列です。
  *
+ * @param visualIdAdjustX
+ * @text Ｘ座標補正
+ * @parent <Enemy Visual ID>
+ * @type number @min -999 @max 999
+ * @desc 識別子のＸ座標を補正します。
+ *
+ * @param visualIdAdjustY
+ * @text Ｙ座標補正
+ * @parent <Enemy Visual ID>
+ * @type number @min -999 @max 999
+ * @desc 識別子のＹ座標を補正します。
+ * 
  * @param <DisplayEachWindow>
  * @text ＜各ウィンドウの表示＞
  * @desc 見出しです。
@@ -607,6 +821,9 @@
 "use strict";
 
 function toNumber(str, def) {
+    if (str == undefined || str == "") {
+        return def;
+    }
     return isNaN(str) ? def : +(str || def);
 }
 function setDefault(str, def) {
@@ -627,28 +844,44 @@ const pDispNumber = toNumber(parameters["dispNumber"], 0);
 const pHorizon = toNumber(parameters["horizon"], 0);
 const pAdjustX = setDefault(parameters["adjustX"], 0);
 const pAdjustY = setDefault(parameters["adjustY"], 0);
-const pWindowPadding = toNumber(parameters["windowPadding"], 18);
-const pWindowOpacity = toNumber(parameters["windowOpacity"], 255);
+let pWindowPadding = toNumber(parameters["windowPadding"], 18);
+let pWindowOpacity = toNumber(parameters["windowOpacity"], 255);
 const pWindowDark = toNumber(parameters["windowDark"], 0);
 const pWindowBackImage = parameters["windowBackImage"];
 
 const pGraphicMode = toNumber(parameters["graphicMode"], 1);
 const pEnemyGraphicMode = parameters["enemyGraphicMode"];
-const pWidth = toNumber(parameters["width"], 114);
+const pWidth = toNumber(parameters["width"], 100);
 const pHeight = toNumber(parameters["height"], 32);
 const pZoom = toNumber(parameters["zoom"], 100) / 100;
 const pCharacterDirection = setDefault(parameters["characterDirection"], "down");
 const pActorBackImage = parameters["actorBackImage"];
-const pselectedHighlightType = setDefault(parameters["selectedHighlightType"], "image");
+const pCutAdjustX = toNumber(parameters["cutAdjustX"], 0);
+const pCutAdjustY = toNumber(parameters["cutAdjustY"], 0);
+
+const pUseSprite = toBoolean(parameters["useSprite"], false);
+const pActorMaskImage = setDefault(parameters["actorMaskImage"]);
+const pSelectedHighlightType = setDefault(parameters["selectedHighlightType"], "image");
+const pIntervalX = toNumber(parameters["intervalX"]);
+const pIntervalY = toNumber(parameters["intervalY"]);
+const pSymbolAdjustX = setDefault(parameters["symbolAdjustX"], 0);
+const pSymbolAdjustY = setDefault(parameters["symbolAdjustY"], 0);
+const pAdjustZoom = setDefault(parameters["adjustZoom"], 100);
     
 const pEnemyFileName = setDefault(parameters["enemyFileName"], "Monster");
 const pEnemyFileIndex = toNumber(parameters["enemyFileIndex"], 6);
+const pEnemyZoom = toNumber(parameters["enemyZoom"], toNumber(parameters["zoom"], 100)) / 100;
 const pEnemyBackImage = parameters["enemyBackImage"];
+const pEnemyCutAdjustX = toNumber(parameters["enemyCutAdjustX"], pCutAdjustX);
+const pEnemyCutAdjustY = toNumber(parameters["enemyCutAdjustY"], pCutAdjustY);
+const pEnemyMaskImage = setDefault(parameters["enemyMaskImage"]);
 
 const pUseVisualId = toBoolean(parameters["useVisualId"], false);
 const pVisualIdSize = toNumber(parameters["visualIdSize"], 0);
 const pVisualIdColor = toNumber(parameters["visualIdColor"], 0);
 const pVisualIdArray = setDefault(parameters["visualIdArray"], "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+const pVisualIdAdjustX = toNumber(parameters["visualIdAdjustX"], 0);
+const pVisualIdAdjustY = toNumber(parameters["visualIdAdjustY"], 0);
 
 const pOverlapWindows = toBoolean(parameters["overlapWindows"], true);
 const pAutoHidden = toBoolean(parameters["autoHidden"], false);
@@ -656,8 +889,19 @@ const pDisplayForSkillSelect = toBoolean(parameters["displayForSkillSelect"], tr
 const pKeepCommandWindow = toBoolean(parameters["keepCommandWindow"], true);
 const pHideTargetingHelp = toBoolean(parameters["hideTargetingHelp"], true);
 
+// スプライト使用時の座標調整（未使用）
+const SPRITE_ADD_X = 0;
+const SPRITE_ADD_Y = 0;
 // CTTB用のターン参加人数
 var mCttbCount = -1;
+
+// スプライトを使用する場合
+if (pUseSprite) {
+    // ウィンドウ透明（非表示）
+    pWindowOpacity = 0;
+    // 余白を0に。
+    pWindowPadding = 0;
+}
 
 /**
  * ●行動順序の作成
@@ -699,9 +943,12 @@ Window_BattleCtb.prototype.initialize = function() {
     var height = 0;
     var padding = this.standardPadding();
 
+    // eval計算用
+    const index = 0;
+
     // 縦
     if (pHorizon == 0) {
-        width = pWidth + padding * 2;
+        width = eval(pWidth) + padding * 2;
         // この時点ではサイズ不明なので画面いっぱいまで確保する。
         // （行動順リストが設定されていないため）
         // ここで確保しておかないと初期描画ができない。
@@ -711,7 +958,7 @@ Window_BattleCtb.prototype.initialize = function() {
     } else if (pHorizon == 1) {
         // この時点ではサイズ不明なので画面いっぱいまで確保する。
         width = Graphics.boxWidth;
-        height = pHeight + padding * 2;
+        height = eval(pHeight) + padding * 2;
     }
     
     // MVの場合
@@ -834,6 +1081,17 @@ NrpVisualTurn.visualTurnList = function(actionBattlers) {
         return;
     }
     var dispNumber = getDispNumber();
+
+    // 順序表示用のスプライトをクリア
+    const spriteset = getSpriteset();
+    // 順序表示用のスプライトが作成済の場合
+    if (spriteset._visualTurnSprites) {
+        // 削除処理を行う。
+        for (const sprite of spriteset._visualTurnSprites) {
+            spriteset._battleField.removeChild(sprite);
+        }
+    }
+    spriteset._visualTurnSprites = [];
     
     /*
      * ウィンドウの位置とサイズを設定
@@ -842,10 +1100,13 @@ NrpVisualTurn.visualTurnList = function(actionBattlers) {
     var ySize = 0;
     var padding = win.padding * 2; // ウィンドウの余白サイズ
 
+    // eval計算用
+    let index = 0;
+
     // 縦
     if (pHorizon == 0) {
-        xSize = pWidth + padding;
-        ySize = dispNumber * pHeight + padding;
+        xSize = eval(pWidth) + padding;
+        ySize = dispNumber * eval(pHeight) + padding;
         
         // 【CTTB用】境界線用の間隔を加算
         if (mCttbCount > 0 && mCttbCount < dispNumber) {
@@ -854,13 +1115,13 @@ NrpVisualTurn.visualTurnList = function(actionBattlers) {
 
     // 横
     } else if (pHorizon == 1) {
-        xSize = dispNumber * pWidth + padding;
+        xSize = dispNumber * eval(pWidth) + padding;
         // 【CTTB用】境界線用の間隔を加算
         if (mCttbCount > 0 && mCttbCount < dispNumber) {
             xSize += 32;
         }
         
-        ySize = pHeight + padding;
+        ySize = eval(pHeight) + padding;
     }
 
     // ウィンドウの位置・サイズ変更を実行
@@ -883,11 +1144,11 @@ NrpVisualTurn.visualTurnList = function(actionBattlers) {
     var x = 0;
     var y = 0;
 
-    for (var i = 0; i < dispNumber; i++) {
-        var battler = actionBattlers[i];
+    for (index = 0; index < dispNumber; index++) {
+        var battler = actionBattlers[index];
 
         // 【CTTB用】ターン外のキャラとは隙間を空ける
-        if (mCttbCount == i) {
+        if (mCttbCount == index) {
             // 縦表示
             if (pHorizon == 0) {
                 y += 16;
@@ -901,15 +1162,27 @@ NrpVisualTurn.visualTurnList = function(actionBattlers) {
             }
         }
 
+        // 位置を補正する。
+        const x2 = x + eval(pSymbolAdjustX);
+        const y2 = y + eval(pSymbolAdjustY);
+
         // キャラ描画
-        this.drawCtbBattler(battler, x, y, dispNumber, i);
+        this.drawCtbBattler(battler, x2, y2, dispNumber, index);
         
         // 縦表示
         if (pHorizon == 0) {
-            y += pHeight;
+            if (pIntervalY != null) {
+                y += pIntervalY;
+            } else {
+                y += eval(pHeight);
+            }
         // 横表示
         } else {
-            x += pWidth;
+            if (pIntervalX != null) {
+                x += pIntervalX;
+            } else {
+                x += eval(pWidth);
+            }
         }
     }
 }
@@ -932,21 +1205,21 @@ function getDispNumber() {
 /**
  * ● 行動順序用、バトラーの描画
  */
-NrpVisualTurn.drawCtbBattler = function(battler, x, y, battlersLength, i) {
+NrpVisualTurn.drawCtbBattler = function(battler, x, y, battlersLength, index) {
     const win = this._ctbWindow;
     var opacity = 255;
     
     // 【CTTB用】ターン外だと半透明
-    if (i >= mCttbCount) {
+    if (index >= mCttbCount) {
         opacity = 150;
     } else {
         opacity = 255; // 通常
     }
 
     // 背景描画
-    win.drawPersonalBackImage(battler, x, y);
+    win.drawPersonalBackImage(battler, x, y, index);
     // シンボル画像表示
-    win.drawCtbBattler(battler, x, y, opacity);
+    win.drawCtbBattler(battler, x, y, index, opacity);
 }
 
 /**
@@ -965,9 +1238,9 @@ NrpVisualTurn.getGraphicMode = function(battler) {
  * ●CTB用の名前表示
  * ※ウィンドウ縦表示専用。横表示だとバグります。
  */
-Window_BattleCtb.prototype.drawName = function(battler, x, y, opacity) {
-    const width = pWidth;
-    const height = pHeight;
+Window_BattleCtb.prototype.drawName = function(battler, x, y, index, opacity) {
+    const width = eval(pWidth);
+    const height = eval(pHeight);
 
     var name = battler.name();
     if (battler.isActor()) {
@@ -995,7 +1268,7 @@ Window_BattleCtb.prototype.drawName = function(battler, x, y, opacity) {
 /**
  * ●バトラー毎の順序表示を行う。
  */
-Window_BattleCtb.prototype.drawCtbBattler = function(battler, x, y, opacity) {
+Window_BattleCtb.prototype.drawCtbBattler = function(battler, x, y, index, opacity) {
     // 表示モードによって判断し、bitmapを読み込む。
     const bitmap = this.loadBitmap(battler);
     
@@ -1008,11 +1281,11 @@ Window_BattleCtb.prototype.drawCtbBattler = function(battler, x, y, opacity) {
     
     // 名前表示なら制御せずそのまま描画
     if (graphicMode == 0) {
-        this.drawName(battler, x, y, opacity);
+        this.drawName(battler, x, y, index, opacity);
         return;
     }
 
-    this.drawSymbol(bitmap, imageIndex, isBigCharacter, battler, x, y, opacity, graphicMode);    
+    this.drawSymbol(bitmap, imageIndex, isBigCharacter, battler, x, y, index, opacity, graphicMode);    
 };
 
 /**
@@ -1065,8 +1338,18 @@ Window_BattleCtb.prototype.loadBitmap = function(battler) {
         this._graphicMode = 4;
         return ImageManager.loadPicture(imageName);
     }
-    
-    var graphicMode = NrpVisualTurn.getGraphicMode(battler);
+    // 敵キャラ
+    imageName = NrpVisualTurn.getMetaImageName(data, "CtbEnemy");
+    if (imageName) {
+        this._graphicMode = 5;
+        if ($gameSystem.isSideView()) {
+            return ImageManager.loadSvEnemy(imageName);
+        } else {
+            return ImageManager.loadEnemy(imageName);
+        }
+    }
+
+    const graphicMode = NrpVisualTurn.getGraphicMode(battler);
     
     // 0:名前表示
     if (graphicMode == 0) {
@@ -1110,6 +1393,15 @@ Window_BattleCtb.prototype.loadBitmap = function(battler) {
             imageName = pEnemyFileName;
         }
         bitmap = ImageManager.loadPicture(imageName);
+
+    // 5:敵キャラ表示
+    } else if (graphicMode == 5) {
+        imageName = battler.battlerName();
+        if ($gameSystem.isSideView()) {
+            bitmap = ImageManager.loadSvEnemy(imageName);
+        } else {
+            bitmap = ImageManager.loadEnemy(imageName);
+        }
     }
     
     this._graphicMode = graphicMode;
@@ -1185,31 +1477,35 @@ NrpVisualTurn.getMetaImageNameSwitch = function(metaValue, metaTagName, defaultI
  * ●CTB用のシンボル表示
  */
 Window_BattleCtb.prototype.drawSymbol = function(
-        bitmap, imageIndex, isBigCharacter, battler, x, y, opacity, graphicMode) {
+        bitmap, imageIndex, isBigCharacter, battler, x, y, index, opacity, graphicMode) {
     // 1:顔グラ表示
     if (graphicMode == 1) {
-        this.drawFace(bitmap, imageIndex, battler, x, y, opacity);
+        this.drawFace(bitmap, imageIndex, battler, x, y, index, opacity);
         
     // 2:キャラグラ表示
     } else if (graphicMode == 2) {
-        this.drawCharacter(bitmap, imageIndex, isBigCharacter, battler, x, y, opacity);
+        this.drawCharacter(bitmap, imageIndex, isBigCharacter, battler, x, y, index, opacity);
         
     // 3:SV表示
     } else if (graphicMode == 3) {
-        this.drawSvActor(bitmap, battler, x, y, opacity);
+        this.drawSvActor(bitmap, battler, x, y, index, opacity);
         
     // 4:ピクチャー表示
     } else if (graphicMode == 4) {
-        this.drawPicture(bitmap, battler, x, y, opacity);
+        this.drawPicture(bitmap, battler, x, y, index, opacity);
+
+    // 5:敵キャラ表示
+    } else if (graphicMode == 5) {
+        this.drawEnemy(bitmap, battler, x, y, index, opacity);
     }
 };
 
 /**
  * ●CTB用の顔グラ表示
  */
-Window_BattleCtb.prototype.drawFace = function(bitmap, imageIndex, battler, x, y, opacity) {
-    const width = pWidth;
-    const height = pHeight;
+Window_BattleCtb.prototype.drawFace = function(bitmap, imageIndex, battler, x, y, index, opacity) {
+    const width = eval(pWidth);
+    const height = eval(pHeight);
 
     // 規格上の顔グラサイズ
     var imageWidth;
@@ -1257,15 +1553,15 @@ Window_BattleCtb.prototype.drawFace = function(bitmap, imageIndex, battler, x, y
     //----------------------------------------------------------
     // 描画実行
     //----------------------------------------------------------
-    this.drawSymbolCommon(drawArgs);
+    this.drawSymbolCommon(drawArgs, index);
 };
 
 /**
  * ●CTB用のキャラグラ表示
  */
-Window_BattleCtb.prototype.drawCharacter = function(bitmap, imageIndex, isBig, battler, x, y, opacity) {
-    const width = pWidth;
-    const height = pHeight;
+Window_BattleCtb.prototype.drawCharacter = function(bitmap, imageIndex, isBig, battler, x, y, index, opacity) {
+    const width = eval(pWidth);
+    const height = eval(pHeight);
 
     // 規格上１キャラの横幅、縦幅
     const imageWidth = bitmap.width / (isBig ? 3 : 12);
@@ -1308,15 +1604,15 @@ Window_BattleCtb.prototype.drawCharacter = function(bitmap, imageIndex, isBig, b
     //----------------------------------------------------------
     // 描画実行
     //----------------------------------------------------------
-    this.drawSymbolCommon(drawArgs);
+    this.drawSymbolCommon(drawArgs, index);
 };
 
 /**
  * ●CTB用のSV戦闘キャラ表示
  */
-Window_BattleCtb.prototype.drawSvActor = function(bitmap, battler, x, y, opacity) {
-    const width = pWidth;
-    const height = pHeight;
+Window_BattleCtb.prototype.drawSvActor = function(bitmap, battler, x, y, index, opacity) {
+    const width = eval(pWidth);
+    const height = eval(pHeight);
 
     // 待機モーションの中央を取得
     var motionIndex = 0;
@@ -1360,15 +1656,15 @@ Window_BattleCtb.prototype.drawSvActor = function(bitmap, battler, x, y, opacity
     //----------------------------------------------------------
     // 描画実行
     //----------------------------------------------------------
-    this.drawSymbolCommon(drawArgs);
+    this.drawSymbolCommon(drawArgs, index);
 };
 
 /**
  * ●CTB用のピクチャー表示
  */
-Window_BattleCtb.prototype.drawPicture = function(bitmap, battler, x, y, opacity) {
-    const width = pWidth;
-    const height = pHeight;
+Window_BattleCtb.prototype.drawPicture = function(bitmap, battler, x, y, index, opacity) {
+    const width = eval(pWidth);
+    const height = eval(pHeight);
 
     // 画像の縦幅、横幅
     var imageWidth = bitmap.width;
@@ -1406,15 +1702,67 @@ Window_BattleCtb.prototype.drawPicture = function(bitmap, battler, x, y, opacity
     //----------------------------------------------------------
     // 描画実行
     //----------------------------------------------------------
-    this.drawSymbolCommon(drawArgs);
+    this.drawSymbolCommon(drawArgs, index);
+};
+
+/**
+ * ●CTB用の敵キャラ表示
+ */
+Window_BattleCtb.prototype.drawEnemy = function(bitmap, battler, x, y, index, opacity) {
+    const width = eval(pWidth);
+    const height = eval(pHeight);
+
+    // 画像の縦幅、横幅
+    var imageWidth = bitmap.width;
+    var imageHeight = bitmap.height;
+    
+    // 描画用の引数配列（sw, sh, dx, dy, pw, phを計算）
+    const drawArgs = makeDrawArgsAutoZoom(x, y, width, height, imageWidth, imageHeight);
+
+    //----------------------------------------------------------
+    // sx, syは表示タイプによって異なるため別途計算
+    //----------------------------------------------------------
+    const sw = drawArgs.sw;
+    const sh = drawArgs.sh;
+    
+    // 切り取り開始位置
+    var sx = 0;
+    var sy = 0;
+    
+    // 全体を描画できない場合、画像中央を取得するように調整
+    if (sw < imageWidth) {
+        sx += (imageWidth - sw) / 2;
+    }
+    // 全体を描画できない場合、画像中央を取得するように調整
+    if (sh < imageHeight) {
+        sy += (imageHeight - sh) / 2;
+    }
+    
+    drawArgs.sx = sx;
+    drawArgs.sy = sy;
+
+    drawArgs.bitmap = bitmap;
+    drawArgs.battler = battler;
+    drawArgs.opacity = opacity;
+    
+    //----------------------------------------------------------
+    // 描画実行
+    //----------------------------------------------------------
+    this.drawSymbolCommon(drawArgs, index);
 };
 
 /**
  * ●CTB用のシンボル表示共通部分
  */
-Window_BattleCtb.prototype.drawSymbolCommon = function(drawArgs) {
-    const sx = drawArgs.sx;
-    const sy = drawArgs.sy;
+Window_BattleCtb.prototype.drawSymbolCommon = function(drawArgs, index) {
+    const battler = drawArgs.battler;
+
+    // 画像切取位置の調整
+    const cutAdjustX = getCutAdjustX(battler);
+    const cutAdjustY = getCutAdjustY(battler);
+    const sx = drawArgs.sx - cutAdjustX;
+    const sy = drawArgs.sy - cutAdjustY;
+
     const sw = drawArgs.sw;
     const sh = drawArgs.sh;
     const dx = drawArgs.dx;
@@ -1425,40 +1773,121 @@ Window_BattleCtb.prototype.drawSymbolCommon = function(drawArgs) {
     const height = drawArgs.height;
 
     const bitmap = drawArgs.bitmap;
-    const battler = drawArgs.battler;
     const opacity = drawArgs.opacity;
+    const sprite = new Sprite();
 
     // 不透明度
     this.contents.paintOpacity = opacity;
 
-    // 対象選択時の白表示
-    if (battler._selected) {
-        // 白枠表示
-        if (pselectedHighlightType == "square") {
-            // シンボルを描画
-            this.contents.blt(bitmap, sx, sy, sw, sh, dx, dy, pw, ph);
-            // 白枠をかぶせる。（※幅は小さいほうに合わせる）
-            this.drawSelected(dx, dy, Math.min(pw, width), Math.min(ph, height));
+    // スプライト表示
+    if (pUseSprite) {
+        const adjustZoom = eval(pAdjustZoom) / 100;
 
-        // 画像を白表示
-        } else {
-            // 変更前のBitmapの色調を保持
-            const originalPixels = getBitmapPixels(bitmap);
-            // Bitmapの色調変更
-            bitmap.adjustTone(128, 128, 128);
-            // 描画
-            this.contents.blt(bitmap, sx, sy, sw, sh, dx, dy, pw, ph);
-            // Bitmapの色調を戻す
-            setBitmapPixels(bitmap, originalPixels);
+        const spriteset = getSpriteset();
+        sprite.bitmap = bitmap;
+
+        sprite.x = this.x + SPRITE_ADD_X + drawArgs.x;
+        sprite.y = this.y + SPRITE_ADD_Y + drawArgs.y;
+        sprite.anchor.x = 0;
+        sprite.anchor.y = 0;
+        
+        // 元画像から必要な領域を切り抜き
+        sprite.setFrame(sx, sy, sw, sh);
+        // 画像の幅と枠の幅を元に倍率を設定
+        sprite.scale.x = drawArgs.zoom * adjustZoom;
+        sprite.scale.y = drawArgs.zoom * adjustZoom;
+        // Ｚ座標には適当に大きな数字を設定
+        sprite.z = 10001;
+        // 選択時の色変更
+        if (battler._selected) {
+            sprite.setBlendColor([255, 255, 255, 128]);
         }
 
-    // 通常描画
+        // 画面表示に追加
+        spriteset._visualTurnSprites.push(sprite);
+        spriteset._battleField.addChild(sprite);
+
+        let maskImage = pActorMaskImage;
+        if (battler.isEnemy() && pEnemyMaskImage) {
+            maskImage = pEnemyMaskImage;
+        }
+
+        // マスク用スプライトがあれば設定
+        if (maskImage) {
+            const maskSprite = new Sprite();
+            maskSprite.bitmap = ImageManager.loadPicture(maskImage);
+            maskSprite.x = sprite.x;
+            maskSprite.y = sprite.y;
+            maskSprite.anchor.x = sprite.anchor.x;
+            maskSprite.anchor.y = sprite.anchor.y;
+            maskSprite.scale.x = adjustZoom;
+            maskSprite.scale.y = adjustZoom;
+            spriteset._visualTurnSprites.push(maskSprite);
+            spriteset._battleField.addChild(maskSprite);
+            sprite.mask = maskSprite;
+        }
+
+    // ウィンドウ表示
     } else {
-        this.contents.blt(bitmap, sx, sy, sw, sh, dx, dy, pw, ph);
+        // 対象選択時の白表示
+        if (battler._selected) {
+            // 白枠表示
+            if (pSelectedHighlightType == "square") {
+                // シンボルを描画
+                this.contents.blt(bitmap, sx, sy, sw, sh, dx, dy, pw, ph);
+                // 白枠をかぶせる。（※幅は小さいほうに合わせる）
+                this.drawSelected(dx, dy, Math.min(pw, width), Math.min(ph, height));
+
+            // 画像を白表示
+            } else {
+                // 変更前のBitmapの色調を保持
+                const originalPixels = getBitmapPixels(bitmap);
+                // Bitmapの色調変更
+                bitmap.adjustTone(128, 128, 128);
+                // 描画
+                this.contents.blt(bitmap, sx, sy, sw, sh, dx, dy, pw, ph);
+                // Bitmapの色調を戻す
+                setBitmapPixels(bitmap, originalPixels);
+            }
+
+        // 通常描画
+        } else {
+            this.contents.blt(bitmap, sx, sy, sw, sh, dx, dy, pw, ph);
+        }
     }
-    
+
     // 敵の表示用識別子を描画
-    this.drawEnemyVisualId(battler, dx, dy, pw, ph);
+    this.drawEnemyVisualId(battler, sprite, drawArgs, index);
+}
+
+/**
+ * ●バトラー個別の画像切取Ｘ座標の補正値
+ */
+function getCutAdjustX(battler) {
+    // プラグインパラメータから取得
+    let cutAdjustX = battler.isActor() ? pCutAdjustX : pEnemyCutAdjustX;
+    // meta値があれば補正
+    const data = battler.isActor() ? battler.actor() : battler.enemy();
+    const metaCutAdjustX = data.meta.CtbCutAdjustX;
+    if (metaCutAdjustX != null) {
+        cutAdjustX += eval(metaCutAdjustX);
+    }
+    return cutAdjustX;
+}
+
+/**
+ * ●バトラー個別の画像切取Ｙ座標の補正値
+ */
+function getCutAdjustY(battler) {
+    // プラグインパラメータから取得
+    let cutAdjustY = battler.isActor() ? pCutAdjustY : pEnemyCutAdjustY;
+    // meta値があれば補正
+    const data = battler.isActor() ? battler.actor() : battler.enemy();
+    const metaCutAdjustY = data.meta.CtbCutAdjustY;
+    if (metaCutAdjustY != null) {
+        cutAdjustY += eval(metaCutAdjustY);
+    }
+    return cutAdjustY;
 }
 
 /**
@@ -1502,6 +1931,62 @@ function makeDrawArgs(x, y, width, height, imageWidth, imageHeight) {
     drawArgs.dy = dy;
     drawArgs.width = width;
     drawArgs.height = height;
+    drawArgs.zoom = pZoom;
+
+    return drawArgs;
+}
+
+/**
+ * ●描画用の引数配列を生成（倍率を自動設定）する。
+ */
+function makeDrawArgsAutoZoom(x, y, width, height, imageWidth, imageHeight) {
+    // 画像の幅と枠の幅を元に倍率を設定
+    const zoomX = width / imageWidth;
+    const zoomY = height / imageHeight;
+    // 縦横の中で小さいほうに合わせる。
+    const zoomSmaller = Math.min(zoomX, zoomY);
+    // 設定された倍率をかける。
+    // ※ただし、最大でも1
+    const zoom = Math.min(zoomSmaller * pEnemyZoom, 1);
+
+    // 最終的に描画するサイズ
+    // 収まるなら画像のサイズ、収まらないなら範囲いっぱいまで
+    const pw = Math.min(width, imageWidth * zoom);
+    const ph = Math.min(height, imageHeight * zoom);
+    
+    // 切り取る画像サイズ
+    let sw = Math.floor(pw / zoom);
+    let sh = Math.floor(ph / zoom);
+
+    // 切り取る画像サイズが規格の範囲を超えている。
+    // 元のサイズ比率を保ったまま調整する。
+    if (sw > imageWidth || sh > imageHeight) {
+        if (sw >= sh) {
+            sh = Math.floor(sh * imageWidth / sw);
+            sw = imageWidth;
+
+        } else {
+            sw = Math.floor(sw * imageHeight / sh);
+            sh = imageHeight;
+        }
+    }
+
+    const dx = x + width / 2 - pw / 2;
+    const dy = y + height / 2 - ph / 2;
+
+    // 描画用の引数配列
+    const drawArgs = {};
+    drawArgs.x = x;
+    drawArgs.y = y;
+    drawArgs.pw = pw;
+    drawArgs.ph = ph;
+    drawArgs.sw = sw;
+    drawArgs.sh = sh;
+    drawArgs.dx = dx;
+    drawArgs.dy = dy;
+    drawArgs.width = width;
+    drawArgs.height = height;
+    drawArgs.zoom = zoom;
 
     return drawArgs;
 }
@@ -1509,21 +1994,54 @@ function makeDrawArgs(x, y, width, height, imageWidth, imageHeight) {
 /**
  * ●敵の表示用識別子を描画
  */
-Window_BattleCtb.prototype.drawEnemyVisualId = function(battler, dx, dy, pw, ph) {
+Window_BattleCtb.prototype.drawEnemyVisualId = function(battler, sprite, drawArgs, index) {
     if (!battler.isEnemy() || !pUseVisualId) {
+        return;
+    }
+
+    const adjustZoom = eval(pAdjustZoom) / 100;
+    const width = eval(pWidth) * adjustZoom;
+    const height = eval(pHeight) * adjustZoom;
+
+    const dx = drawArgs.dx;
+    const dy = drawArgs.dy;
+
+    // スプライト使用時は番号もスプライト描画する。
+    if (pUseSprite) {
+        const spriteset = getSpriteset();
+        // 識別子を描画する。
+        const visualIdSprite = new Sprite();
+        visualIdSprite.bitmap = new Bitmap(48, 48);
+        visualIdSprite.bitmap.fontFace = $gameSystem.mainFontFace();
+        visualIdSprite.bitmap.fontSize = pVisualIdSize * adjustZoom;
+        if (pVisualIdColor) {
+            visualIdSprite.bitmap.textColor = ColorManager.textColor(pVisualIdColor);
+        }
+        visualIdSprite.anchor.x = sprite.anchor.x;
+        visualIdSprite.anchor.y = sprite.anchor.x;
+        visualIdSprite.x = sprite.x + width - 20 +  pVisualIdAdjustX;
+        visualIdSprite.y = sprite.y + height - 40 + pVisualIdAdjustY;
+        // Ｚ座標には適当に大きな数字を設定
+        // ※ただし、シンボルよりは大きな値
+        visualIdSprite.z = 10002;
+        visualIdSprite.bitmap.drawText(battler.visualId(), 0, 0, 48, 48, "left");
+        spriteset._visualTurnSprites.push(visualIdSprite);
+        spriteset._battleField.addChild(visualIdSprite);
         return;
     }
 
     // フォントサイズ指定
     if (pVisualIdSize) {
-        this.contents.fontSize = pVisualIdSize;
+        this.contents.fontSize = pVisualIdSize * adjustZoom;
     }
     // 文字色設定
     if (pVisualIdColor) {
         this.changeTextColor(this.textColor(pVisualIdColor));
     }
-    var y = dy + ph - this.contents.fontSize - 2; // 右下付近
-    this.drawText(battler.visualId(), dx, y, pw, "right");
+    // 右下付近
+    const x = dx - 5 + pVisualIdAdjustX;
+    const y = dy + height - this.contents.fontSize - 2 - 15 + pVisualIdAdjustY;
+    this.drawText(battler.visualId(), x, y, width, "right");
 };
 
 /**
@@ -1602,7 +2120,25 @@ Window_BattleCtb.prototype.drawWindowBackImage = function() {
         return;
     }
 
-    var bitmap = ImageManager.loadPicture(pWindowBackImage);
+    const bitmap = ImageManager.loadPicture(pWindowBackImage);
+
+    // スプライト表示
+    if (pUseSprite) {
+        const spriteset = getSpriteset();
+        const sprite = new Sprite();
+        sprite.bitmap = bitmap;
+        sprite.x = this.x + SPRITE_ADD_X;
+        sprite.y = this.y + SPRITE_ADD_Y;
+        sprite.anchor.x = 0;
+        sprite.anchor.y = 0;
+        // Ｚ座標には適当に大きな数字を設定
+        // ※ただし、個別背景よりも下
+        sprite.z = 10000;
+        // 画面に追加
+        spriteset._visualTurnSprites.push(sprite);
+        spriteset._battleField.addChild(sprite);
+        return;
+    }
 
     this.contents.paintOpacity = 255;
     this.contents.blt(bitmap, 0, 0, bitmap.width, bitmap.height, 0, 0);
@@ -1611,7 +2147,7 @@ Window_BattleCtb.prototype.drawWindowBackImage = function() {
 /**
  * ●アクター・バトラーの背景に表示するピクチャー描画
  */
-Window_BattleCtb.prototype.drawPersonalBackImage = function(battler, x, y) {
+Window_BattleCtb.prototype.drawPersonalBackImage = function(battler, x, y, index) {
     var bitmap = null;
     
     // 味方／敵に対応する背景画像があれば読み込む
@@ -1624,8 +2160,29 @@ Window_BattleCtb.prototype.drawPersonalBackImage = function(battler, x, y) {
         return;
     }
 
-    this.contents.paintOpacity = 255;
-    this.contents.blt(bitmap, 0, 0, bitmap.width, bitmap.height, x, y);
+    // スプライト表示
+    if (pUseSprite) {
+        const adjustZoom = eval(pAdjustZoom) / 100;
+        const spriteset = getSpriteset();
+        const sprite = new Sprite();
+        sprite.bitmap = bitmap;
+        sprite.x = this.x + SPRITE_ADD_X + x;
+        sprite.y = this.y + SPRITE_ADD_Y + y;
+        sprite.anchor.x = 0;
+        sprite.anchor.y = 0;
+        sprite.scale.x = adjustZoom;
+        sprite.scale.y = adjustZoom;
+        // Ｚ座標には適当に大きな数字を設定
+        sprite.z = 10001;
+        // 画面に追加
+        spriteset._visualTurnSprites.push(sprite);
+        spriteset._battleField.addChild(sprite);
+
+    // ウィンドウ表示
+    } else {
+        this.contents.paintOpacity = 255;
+        this.contents.blt(bitmap, 0, 0, bitmap.width, bitmap.height, x, y);
+    }
 };
 
 /**
@@ -2123,6 +2680,13 @@ function setBitmapPixels(bitmap, newPixels) {
 function getBitmapContext(bitmap) {
     return bitmap.context || bitmap._context;
 };
+
+/**
+ * ●現在の画面のSpritesetを取得する。
+ */
+function getSpriteset() {
+    return SceneManager._scene._spriteset;
+}
 
 //-----------------------------------------------------------------------------
 // ＭＶ対応
