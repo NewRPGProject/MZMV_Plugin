@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v2.00 The order of actions is displayed on the battle screen.
+ * @plugindesc v2.01 The order of actions is displayed on the battle screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -12,7 +12,7 @@
  * Be sure to place this plugin below the plugins that control those turns.
  *
  * -------------------------------------------------------------------
- * [Note]
+ * [Note (Actor, Enemy)]
  * -------------------------------------------------------------------
  * You can specify individual images
  * by writing the following in the actor and enemy's note.
@@ -65,6 +65,18 @@
  * 
  * <CtbCutAdjustX:10>
  * <CtbCutAdjustY:10>
+ * 
+ * -------------------------------------------------------------------
+ * [Note (Skill, Item)]
+ * -------------------------------------------------------------------
+ * The following can be specified in the notes for skills and items.
+ * 
+ * <CtbHide>
+ *
+ * Temporarily hides the action order window
+ * when activating a skill (item).
+ * This is useful when you want to create an effect
+ * that covers the entire screen.
  * 
  * For more information, please see below.
  * http://newrpg.seesaa.net/article/472840225.html
@@ -216,11 +228,9 @@
  * 
  * @param actorMaskImage
  * @parent useSprite
- * @text [MZ]actorMaskImage
  * @type file
  * @dir img/pictures
  * @desc Mask image to hide the symbol.
- * For MZ only.
  * 
  * @param intervalX
  * @parent useSprite
@@ -305,10 +315,10 @@
  * 
  * @param enemyMaskImage
  * @parent <Enemy Symbol Image>
- * @text enemyMaskImage
  * @type file
  * @dir img/pictures
  * @desc Mask image to hide the symbol.
+ * When omitted, same as Actor.
  * 
  * @param <Enemy Visual ID>
  * 
@@ -340,16 +350,14 @@
  * @desc An array of identifiers to use.
  *
  * @param visualIdAdjustX
- * @text Ｘ座標補正
  * @parent <Enemy Visual ID>
  * @type number
- * @desc 識別子のＸ座標を補正します。
+ * @desc Adjust the X coordinate of the identifier.
  *
  * @param visualIdAdjustY
- * @text Ｙ座標補正
  * @parent <Enemy Visual ID>
  * @type number
- * @desc 識別子のＹ座標を補正します。
+ * @desc Adjust the Y coordinate of the identifier.
  * 
  * @param <DisplayEachWindow>
  *
@@ -390,7 +398,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.00 行動順序を戦闘画面へ表示します。
+ * @plugindesc v2.01 行動順序を戦闘画面へ表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -398,7 +406,7 @@
  * このプラグインは必ずターン制御を行うプラグインよりも下に配置してください。
  *
  * -------------------------------------------------------------------
- * ■メモ欄
+ * ■メモ欄（アクター、敵キャラ）
  * -------------------------------------------------------------------
  * アクター、敵キャラのメモ欄に以下を記述すれば、
  * 画像の個別指定が可能です。
@@ -446,6 +454,16 @@
  * 
  * <CtbCutAdjustX:10>
  * <CtbCutAdjustY:10>
+ *
+ * -------------------------------------------------------------------
+ * ■メモ欄（スキル、アイテム）
+ * -------------------------------------------------------------------
+ * スキル、アイテムのメモ欄に以下を指定可能です。
+ * 
+ * <CtbHide>
+ *
+ * スキル（アイテム）発動時、行動順序ウィンドウを一時的に隠します。
+ * 画面全体にかかるような演出を行いたい場合など。
  *
  * その他、細かい仕様については、以下をご覧ください。
  * http://newrpg.seesaa.net/article/472840225.html
@@ -598,13 +616,13 @@
  * @text 画像切取Ｘ座標補正
  * @parent <Symbol Image>
  * @type number @min -999 @max 999
- * @desc シンボルの画像を切り取るＸ座標を補正します。
+ * @desc シンボル画像を切り取るＸ座標を補正します。
  *
  * @param cutAdjustY
  * @text 画像切取Ｙ座標補正
  * @parent <Symbol Image>
  * @type number @min -999 @max 999
- * @desc シンボルの画像を切り取るＹ座標を補正します。
+ * @desc シンボル画像を切り取るＹ座標を補正します。
  * 
  * @param useSprite
  * @text スプライト表示
@@ -616,11 +634,10 @@
  * 
  * @param actorMaskImage
  * @parent useSprite
- * @text [MZ]マスク画像
+ * @text マスク画像
  * @type file
  * @dir img/pictures
  * @desc シンボルを隠すためのマスク画像です。
- * この機能はＭＺ専用です。
  * 
  * @param intervalX
  * @text 画像の横間隔
@@ -671,9 +688,9 @@
  * @option 1:顔グラ表示 @value 1
  * @option 2:キャラグラ表示 @value 2
  * @option 3:SV戦闘キャラ表示 @value 3
- * @option 4:ピクチャー表示 @value 4
+ * @option 4:ピクチャ表示 @value 4
  * @option 5:敵キャラ表示 @value 5
- * @desc 敵の画像表示方法。0:名前,1:顔グラ,2:キャラグラ,3:SV戦闘キャラ,4:ピクチャー,5:敵キャラ。指定なしなら味方と同じ。
+ * @desc 敵の画像表示方法。0:名前,1:顔グラ,2:キャラグラ,3:SV戦闘キャラ,4:ピクチャ,5:敵キャラ。指定なしなら味方と同じ。
  *
  * @param enemyZoom
  * @text 表示倍率
@@ -725,6 +742,7 @@
  * @type file
  * @dir img/pictures
  * @desc シンボルを隠すためのマスク画像です。
+ * 省略時はアクターと同じ。
  * 
  * @param <Enemy Visual ID>
  * @text ＜敵の識別子関連＞
@@ -1782,12 +1800,14 @@ Window_BattleCtb.prototype.drawSymbolCommon = function(drawArgs, index) {
     // スプライト表示
     if (pUseSprite) {
         const adjustZoom = eval(pAdjustZoom) / 100;
+        const enemyAdjustX = drawArgs.enemyAdjustX * adjustZoom;
+        const enemyAdjustY = drawArgs.enemyAdjustY * adjustZoom;
 
         const spriteset = getSpriteset();
         sprite.bitmap = bitmap;
 
-        sprite.x = this.x + SPRITE_ADD_X + drawArgs.x;
-        sprite.y = this.y + SPRITE_ADD_Y + drawArgs.y;
+        sprite.x = this.x + SPRITE_ADD_X + drawArgs.x + enemyAdjustX;
+        sprite.y = this.y + SPRITE_ADD_Y + drawArgs.y + enemyAdjustY;
         sprite.anchor.x = 0;
         sprite.anchor.y = 0;
         
@@ -1816,8 +1836,9 @@ Window_BattleCtb.prototype.drawSymbolCommon = function(drawArgs, index) {
         if (maskImage) {
             const maskSprite = new Sprite();
             maskSprite.bitmap = ImageManager.loadPicture(maskImage);
-            maskSprite.x = sprite.x;
-            maskSprite.y = sprite.y;
+            // 描画時に敵画像をズラした分を戻す。
+            maskSprite.x = sprite.x - enemyAdjustX;
+            maskSprite.y = sprite.y - enemyAdjustY;
             maskSprite.anchor.x = sprite.anchor.x;
             maskSprite.anchor.y = sprite.anchor.y;
             maskSprite.scale.x = adjustZoom;
@@ -1923,6 +1944,8 @@ function makeDrawArgs(x, y, width, height, imageWidth, imageHeight) {
     const drawArgs = {};
     drawArgs.x = x;
     drawArgs.y = y;
+    drawArgs.enemyAdjustX = 0;
+    drawArgs.enemyAdjustY = 0;
     drawArgs.pw = pw;
     drawArgs.ph = ph;
     drawArgs.sw = sw;
@@ -1971,6 +1994,9 @@ function makeDrawArgsAutoZoom(x, y, width, height, imageWidth, imageHeight) {
         }
     }
 
+    // 座標を中央に調整
+    const enemyAdjustX = (width - pw) / 2;
+    const enemyAdjustY = (height - ph) / 2;
     const dx = x + width / 2 - pw / 2;
     const dy = y + height / 2 - ph / 2;
 
@@ -1978,6 +2004,8 @@ function makeDrawArgsAutoZoom(x, y, width, height, imageWidth, imageHeight) {
     const drawArgs = {};
     drawArgs.x = x;
     drawArgs.y = y;
+    drawArgs.enemyAdjustX = enemyAdjustX;
+    drawArgs.enemyAdjustY = enemyAdjustY;
     drawArgs.pw = pw;
     drawArgs.ph = ph;
     drawArgs.sw = sw;
@@ -2019,8 +2047,10 @@ Window_BattleCtb.prototype.drawEnemyVisualId = function(battler, sprite, drawArg
         }
         visualIdSprite.anchor.x = sprite.anchor.x;
         visualIdSprite.anchor.y = sprite.anchor.x;
-        visualIdSprite.x = sprite.x + width - 20 +  pVisualIdAdjustX;
-        visualIdSprite.y = sprite.y + height - 40 + pVisualIdAdjustY;
+        // ウィンドウ位置＋画像始点＋右下
+        visualIdSprite.x = this.x + drawArgs.x + width - 20 + pVisualIdAdjustX;
+        visualIdSprite.y = this.y + drawArgs.y + height - 40 + pVisualIdAdjustY;
+
         // Ｚ座標には適当に大きな数字を設定
         // ※ただし、シンボルよりは大きな値
         visualIdSprite.z = 10002;
