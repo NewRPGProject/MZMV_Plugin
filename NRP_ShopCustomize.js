@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Customize the shop scene.
+ * @plugindesc v1.002 Customize the shop scene.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/498469379.html
  *
@@ -186,7 +186,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 店画面をカスタマイズします。
+ * @plugindesc v1.002 店画面をカスタマイズします。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/498469379.html
  *
@@ -394,6 +394,12 @@
  * @desc 能力変化なし時の装備記号の色です。
  * システムカラーで指定してください。
  */
+
+function Sprite_ShopCustomizeActor() {
+    this.initialize(...arguments);
+}
+Sprite_ShopCustomizeActor.prototype = Object.create(Sprite.prototype);
+Sprite_ShopCustomizeActor.prototype.constructor = Sprite_ShopCustomizeActor;
 
 (function() {
 "use strict";
@@ -716,6 +722,9 @@ Window_ShopActor.prototype.refresh = function() {
             actorSprite.opacity = 128;
         }
 
+        // アイテムを設定
+        actorSprite.setItem(this._item);
+
         // アクターの装備状況を表示
         let equipSprite = this._equipStateSprites[i];
         equipSprite.x = x + 20 + pEquipSymbolAdjustX;
@@ -992,13 +1001,6 @@ Window_ShopStatus.prototype.paramX = function() {
 //   マップを想定したメソッドは除去してエラーに対処
 //-----------------------------------------------------------------------------
 
-function Sprite_ShopCustomizeActor() {
-    this.initialize(...arguments);
-}
-
-Sprite_ShopCustomizeActor.prototype = Object.create(Sprite.prototype);
-Sprite_ShopCustomizeActor.prototype.constructor = Sprite_ShopCustomizeActor;
-
 Sprite_ShopCustomizeActor.prototype.initialize = function(character) {
     Sprite.prototype.initialize.call(this);
     this.initMembers();
@@ -1021,6 +1023,10 @@ Sprite_ShopCustomizeActor.prototype.setActor = function(actor) {
 
 Sprite_ShopCustomizeActor.prototype.actor = function() {
     return this._actor;
+};
+
+Sprite_ShopCustomizeActor.prototype.setItem = function(item) {
+    this._item = item;
 };
 
 Sprite_ShopCustomizeActor.prototype.update = function() {
