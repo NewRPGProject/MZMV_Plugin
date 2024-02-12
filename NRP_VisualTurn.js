@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v2.01 The order of actions is displayed on the battle screen.
+ * @plugindesc v2.011 The order of actions is displayed on the battle screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -398,7 +398,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.01 行動順序を戦闘画面へ表示します。
+ * @plugindesc v2.011 行動順序を戦闘画面へ表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -2031,9 +2031,6 @@ Window_BattleCtb.prototype.drawEnemyVisualId = function(battler, sprite, drawArg
     const width = eval(pWidth) * adjustZoom;
     const height = eval(pHeight) * adjustZoom;
 
-    const dx = drawArgs.dx;
-    const dy = drawArgs.dy;
-
     // スプライト使用時は番号もスプライト描画する。
     if (pUseSprite) {
         const spriteset = getSpriteset();
@@ -2047,9 +2044,19 @@ Window_BattleCtb.prototype.drawEnemyVisualId = function(battler, sprite, drawArg
         }
         visualIdSprite.anchor.x = sprite.anchor.x;
         visualIdSprite.anchor.y = sprite.anchor.x;
+
+        const x = drawArgs.x;
+        const y = drawArgs.y;
+        // 固定値による位置調整
+        const constantX = -20 * adjustZoom;
+        const constantY = -40 * adjustZoom;
+        // プラグインパラメータによる位置調整
+        const adjustX = pVisualIdAdjustX * adjustZoom;
+        const adjustY = pVisualIdAdjustY * adjustZoom;
+
         // ウィンドウ位置＋画像始点＋右下
-        visualIdSprite.x = this.x + drawArgs.x + width - 20 + pVisualIdAdjustX;
-        visualIdSprite.y = this.y + drawArgs.y + height - 40 + pVisualIdAdjustY;
+        visualIdSprite.x = this.x + x + width + constantX + adjustX;
+        visualIdSprite.y = this.y + y + height + constantY + adjustY;
 
         // Ｚ座標には適当に大きな数字を設定
         // ※ただし、シンボルよりは大きな値
