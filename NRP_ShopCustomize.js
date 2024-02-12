@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.002 Customize the shop scene.
+ * @plugindesc v1.001 Customize the shop scene.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/498469379.html
  *
@@ -186,7 +186,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.002 店画面をカスタマイズします。
+ * @plugindesc v1.001 店画面をカスタマイズします。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/498469379.html
  *
