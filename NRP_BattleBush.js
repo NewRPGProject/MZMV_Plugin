@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.031 Apply the bush effect to the battle background.
+ * @plugindesc v1.04 Apply the bush effect to the battle background.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_ShadowAndLevitate
  * @url http://newrpg.seesaa.net/article/486468229.html
@@ -191,7 +191,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.031 戦闘背景に茂み効果を適用します。
+ * @plugindesc v1.04 戦闘背景に茂み効果を適用します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_ShadowAndLevitate
  * @url http://newrpg.seesaa.net/article/486468229.html
@@ -846,10 +846,11 @@ Sprite_Enemy.prototype.calcBushDepth = function() {
  */
 Sprite_Enemy.prototype.isOutOfBush = function() {
     // ボスの消滅エフェクト時は処理停止
+    // （NRP_EnemyCollapse.jsの独自エフェクトにも対応）
     // ※体が削れていく演出にupdateFrameを使用しているため、
     // 　茂み処理を停止しないとうまく動作しなくなる。
     // 　同様にupdateFrameを使用する演出を追加した場合は対処が必要
-    if (this._effectType === "bossCollapse") {
+    if (this._effectType === "bossCollapse" || this._effectType === "originalCollapse") {
         return true;
     }
 
