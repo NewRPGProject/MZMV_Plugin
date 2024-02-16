@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.02 Implemented a party change screen.
+ * @plugindesc v1.03 Implemented a party change screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/500297653.html
  *
@@ -158,7 +158,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.02 パーティ編成画面を実装。
+ * @plugindesc v1.03 パーティ編成画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/500297653.html
  *
@@ -1054,8 +1054,11 @@ if (pAllowRelease && pShowOtherPage) {
      * ●表示項目数
      */
     Window_MenuStatus.prototype.maxItems = function() {
-        // 空白分を追加
-        return $gameParty.size() + this.numVisibleRows() - $gameParty.battleMembers().length;
+        // １ページの表示人数を取得
+        // ※競合を避けるためthis.maxVisibleItems()は使わない。
+        const maxVisibleItems = this.numVisibleRows() * this.maxCols();
+        // 空白分を追加（パーティ人数 + （１ページの表示人数 - 戦闘人数））
+        return $gameParty.size() + maxVisibleItems - $gameParty.battleMembers().length;
     };
 
     /**
@@ -1063,9 +1066,10 @@ if (pAllowRelease && pShowOtherPage) {
      */
     Window_MenuStatus.prototype.actor = function(index) {
         const members = $gameParty.members();
-
+        // １ページの表示人数を取得
+        const maxVisibleItems = this.numVisibleRows() * this.maxCols();
         // 空白を挿入する。
-        const blankLength = this.numVisibleRows() - $gameParty.battleMembers().length;
+        const blankLength = maxVisibleItems - $gameParty.battleMembers().length;
         for (let i = 0; i < blankLength; i++) {
             members.splice($gameParty.battleMembers().length, 0, null);
         }
