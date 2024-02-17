@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Manage audio files.
+ * @plugindesc v1.04 Manage audio files.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483999181.html
  *
@@ -329,7 +329,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 音声ファイルの管理を行う。
+ * @plugindesc v1.04 音声ファイルの管理を行う。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483999181.html
  *
@@ -787,12 +787,15 @@ AudioManager.playBgm = function(bgm, pos) {
     }
 
     // ディープコピーする。
-    const newBgm = {...bgm};
+    let newBgm = {...bgm};
     // 別名があれば取得
     const aliasName = getAlias(newBgm, pBgmAliases);
 
+    // 別名が取得できなければ元のパラメータを使用
+    if (aliasName === undefined) {
+        newBgm = bgm;
     // 別名が空欄なら演奏停止
-    if (aliasName === "") {
+    } else if (aliasName === "") {
         this.stopBgm();
         return;
     // 別名があれば変換
@@ -822,9 +825,12 @@ AudioManager.updateBgmParameters = function(bgm) {
     // ディープコピーする。
     const newBgm = {...bgm};
     // 設定を取得してnewBgmに保持
-    setAudioAdjust(newBgm, pBgmSettings);
-
-    _AudioManager_updateBgmParameters.call(this, newBgm);
+    if (setAudioAdjust(newBgm, pBgmSettings)) {
+        _AudioManager_updateBgmParameters.call(this, newBgm);
+        return;
+    }
+    // 設定がなかった場合は元の処理を使用
+    _AudioManager_updateBgmParameters.apply(this, arguments);
 };
 
 /**
@@ -866,12 +872,15 @@ AudioManager.playBgs = function(bgs, pos) {
     }
 
     // ディープコピーする。
-    const newBgs = {...bgs};
+    let newBgs = {...bgs};
     // 別名があれば取得
     const aliasName = getAlias(newBgs, pBgsAliases);
 
+    // 別名が取得できなければ元のパラメータを使用
+    if (aliasName === undefined) {
+        newBgs = bgs;
     // 別名が空欄なら演奏停止
-    if (aliasName === "") {
+    } else if (aliasName === "") {
         this.stopBgs();
         return;
     // 別名があれば変換
@@ -901,9 +910,12 @@ AudioManager.updateBgsParameters = function(bgs) {
     // ディープコピーする。
     const newBgs = {...bgs};
     // 設定を取得してnewBgsに保持
-    setAudioAdjust(newBgs, pBgsSettings);
-
-    _AudioManager_updateBgsParameters.call(this, newBgs);
+    if (setAudioAdjust(newBgs, pBgsSettings)) {
+        _AudioManager_updateBgsParameters.call(this, newBgs);
+        return;
+    }
+    // 設定がなかった場合は元の処理を使用
+    _AudioManager_updateBgsParameters.apply(this, arguments);
 };
 
 /**
@@ -945,12 +957,15 @@ AudioManager.playMe = function(me) {
     }
 
     // ディープコピーする。
-    const newMe = {...me};
+    let newMe = {...me};
     // 別名を取得
     const aliasName = getAlias(newMe, pMeAliases);
 
+    // 別名が取得できなければ元のパラメータを使用
+    if (aliasName === undefined) {
+        newMe = me;
     // 別名が空欄なら演奏しない
-    if (aliasName === "") {
+    } else if (aliasName === "") {
         return;
     // 別名があれば変換
     } else if (aliasName) {
@@ -974,9 +989,12 @@ AudioManager.updateMeParameters = function(me) {
     // ディープコピーする。
     const newMe = {...me};
     // 設定を取得してnewMeに保持
-    setAudioAdjust(newMe, pMeSettings);
-
-    _AudioManager_updateMeParameters.call(this, newMe);
+    if (setAudioAdjust(newMe, pMeSettings)) {
+        _AudioManager_updateMeParameters.call(this, newMe);
+        return;
+    }
+    // 設定がなかった場合は元の処理を使用
+    _AudioManager_updateMeParameters.apply(this, arguments);
 };
 
 //----------------------------------------
@@ -995,12 +1013,15 @@ AudioManager.playSe = function(se) {
     }
 
     // ディープコピーする。
-    const newSe = {...se};
+    let newSe = {...se};
     // 別名を取得
     const aliasName = getAlias(newSe, pSeAliases);
 
+    // 別名が取得できなければ元のパラメータを使用
+    if (aliasName === undefined) {
+        newSe = se;
     // 別名が空欄なら演奏しない
-    if (aliasName === "") {
+    } else if (aliasName === "") {
         return;
     // 別名があれば変換
     } else if (aliasName) {
@@ -1024,9 +1045,12 @@ AudioManager.updateSeParameters = function(buffer, se) {
     // ディープコピーする。
     const newSe = {...se};
     // 設定を取得してnewSeに保持
-    setAudioAdjust(newSe, pSeSettings);
-
-    _AudioManager_updateSeParameters.call(this, buffer, newSe);
+    if (setAudioAdjust(newSe, pSeSettings)) {
+        _AudioManager_updateSeParameters.call(this, buffer, newSe);
+        return;
+    }
+    // 設定がなかった場合は元の処理を使用
+    _AudioManager_updateSeParameters.apply(this, arguments);
 };
 
 //----------------------------------------
@@ -1071,7 +1095,7 @@ function setAudioAdjust(audio, settings) {
     const setting = settings.find(setting => setting.Name == audio.name);
     // 設定がなければ処理しない。
     if (!setting) {
-        return;
+        return false;
     }
 
     const adjustVolume = toNumber(setting.Volume);
@@ -1087,6 +1111,7 @@ function setAudioAdjust(audio, settings) {
     if (adjustPan != undefined) {
         audio.pan = audio.pan + adjustPan;
     }
+    return true;
 }
 
 /**
