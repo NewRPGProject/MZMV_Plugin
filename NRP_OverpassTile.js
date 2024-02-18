@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.04 Realize a high-performance overpass.
+ * @plugindesc v1.05 Realize a high-performance overpass.
  * @author Takeshi Sunagawa (original triacontane & Yoji Ojima)
  * @orderAfter NRP_EventCollisionEX
  * @orderAfter NRP_BushEX
@@ -192,7 +192,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 高機能な立体交差を実現します。
+ * @plugindesc v1.05 高機能な立体交差を実現します。
  * @author 砂川赳 (original トリアコンタン & Yoji Ojima)
  * @orderAfter NRP_EventCollisionEX
  * @orderAfter NRP_BushEX
@@ -917,7 +917,7 @@ if (pConsiderLadder) {
      */
     Game_CharacterBase.prototype.isOnLadder = function() {
         // キャラクターが上層にいる場合
-        if (this._higher) {
+        if (this._higher || this._overpassFly) {
             return $gameMap.isLadderHigher(this._x, this._y);
         }
 
