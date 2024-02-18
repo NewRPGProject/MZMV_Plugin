@@ -59,6 +59,12 @@
  * according to the progress of the story,
  * your current location, or the time of day.
  * 
+ * Also, normally for options and save/load screens,
+ * There is no distinction between when they are called up
+ * from the title and when they are called up from the menu.
+ * There is a way to distinguish between the two
+ * by providing a switch that is always on during the game.
+ * 
  * @-----------------------------------------------------
  * @ [Plugin Parameters]
  * @-----------------------------------------------------
@@ -193,6 +199,10 @@
  * 条件次第で背景が変化するようにできます。
  * 例えば、物語の進行や現在地、時間帯に応じて
  * 背景を変化させることができます。
+ * 
+ * また、オプションやセーブ／ロード画面については通常、
+ * タイトルから呼び出した場合とメニューから呼び出した場合は区別されません。
+ * ゲーム中は常にオンとなるスイッチを用意することで、区別する方法があります。
  * 
  * -------------------------------------------------------------------
  * ■利用規約
