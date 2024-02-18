@@ -12,7 +12,7 @@
  * or change the background with a switch.
  * 
  * Note that this actually covers not only the menu,
- * but also the options, save/load, shop, game end,
+ * but also the options, save/load, game end, shop, 
  * and name input scenes.
  * (Strictly speaking, a scene that inherits Scene_MenuBase)
  * 
@@ -150,7 +150,7 @@
  * 背景をスクロールさせたり、スイッチで背景を切り替える設定も可能です。
  * 
  * 実際にはメニューだけでなく、
- * オプション、セーブ／ロード、店、ゲーム終了、名前入力
+ * オプション、セーブ／ロード、ゲーム終了、店、名前入力
  * の各シーンも対象となることにご注意ください。
  * （厳密には、Scene_MenuBaseを継承したシーン）
  * 
