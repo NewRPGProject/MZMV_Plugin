@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.071 Implemented a class change screen for multiple classes.
+ * @plugindesc v1.08 Implemented a class change screen for multiple classes.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -455,7 +455,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.071 多重職業用の転職画面を実装。
+ * @plugindesc v1.08 多重職業用の転職画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -969,6 +969,30 @@
  * @dir img/sv_actors
  * @desc 使用するＳＶアクター画像のファイルです。
  */
+
+//-----------------------------------------------------------------------------
+// Windows_ClassSlot
+//
+// 現在の職業選択用ウィンドウ
+
+function Windows_ClassSlot() {
+    this.initialize(...arguments);
+}
+
+Windows_ClassSlot.prototype = Object.create(Window_Selectable.prototype);
+Windows_ClassSlot.prototype.constructor = Windows_ClassSlot;
+
+//-----------------------------------------------------------------------------
+// Windows_SelectClasses
+//
+// 職業選択用ウィンドウ
+
+function Windows_SelectClasses() {
+    this.initialize(...arguments);
+}
+
+Windows_SelectClasses.prototype = Object.create(Window_Selectable.prototype);
+Windows_SelectClasses.prototype.constructor = Windows_SelectClasses;
 
 (function() {
 "use strict";
@@ -1835,13 +1859,6 @@ Scene_AdditionalCC.prototype.showMessage = function(message) {
 //
 // 現在の職業選択用ウィンドウ
 
-function Windows_ClassSlot() {
-    this.initialize(...arguments);
-}
-
-Windows_ClassSlot.prototype = Object.create(Window_Selectable.prototype);
-Windows_ClassSlot.prototype.constructor = Windows_ClassSlot;
-
 Windows_ClassSlot.prototype.initialize = function(rect) {
     Window_Selectable.prototype.initialize.call(this, rect);
 
@@ -2067,20 +2084,14 @@ Windows_ClassSlot.prototype.flushTextState = function(textState) {
 //
 // 職業選択用ウィンドウ
 
-function Windows_SelectClasses() {
-    this.initialize(...arguments);
-}
-
-Windows_SelectClasses.prototype = Object.create(Window_Selectable.prototype);
-Windows_SelectClasses.prototype.constructor = Windows_SelectClasses;
-
 Windows_SelectClasses.prototype.initialize = function(rect) {
     Window_Selectable.prototype.initialize.call(this, rect);
 };
 
 Windows_SelectClasses.prototype.refresh = function() {
     this.makeItemList();
-    this.select(0);
+    // 再選択で更新
+    this.select(this.index());
     Window_Selectable.prototype.refresh.call(this);
 };
 
