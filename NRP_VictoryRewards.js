@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.032 Customize the display after a battle victory.
+ * @plugindesc v1.04 Customize the display after a battle victory.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499138292.html
  *
@@ -228,7 +228,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.032 戦闘勝利時の表示をカスタマイズします。
+ * @plugindesc v1.04 戦闘勝利時の表示をカスタマイズします。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499138292.html
  *
@@ -595,16 +595,15 @@ BattleManager.displayDefeatMessage = function() {
  */
 const _BattleManager_updateBattleEnd = BattleManager.updateBattleEnd;
 BattleManager.updateBattleEnd = function() {
-    _BattleManager_updateBattleEnd.apply(this, arguments);
-    // ウィンドウの変更終了
-    mIsRewardsMessage = false;
-
     // 終了コモンイベントを実行
     if (pEndCommmonEvent) {
         $gameTemp.reserveCommonEvent(pEndCommmonEvent);
         $gameTroop._interpreter.setupReservedCommonEvent();
         $gameTroop._interpreter.update();
     }
+    _BattleManager_updateBattleEnd.apply(this, arguments);
+    // ウィンドウの変更終了
+    mIsRewardsMessage = false;
 }
 
 /**
