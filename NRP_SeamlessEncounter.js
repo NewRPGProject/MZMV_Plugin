@@ -7,7 +7,8 @@
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/502501086.html
  *
- * @help Make the battle start effect seamless.
+ * @help It provides a seamless battle start effect
+ * with no intervening darkening.
  * Zooming and rotation are also possible.
  * 
  * Note that even with seamless effects,
@@ -88,7 +89,7 @@
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/502501086.html
  *
- * @help シームレスな戦闘開始演出を提供します。
+ * @help 暗転を挟まないシームレスな戦闘開始演出を提供します。
  * ズームや回転などの演出も同時に可能です。
  * 
  * なお、シームレスといっても最低限のロード時間は必要となるので、
