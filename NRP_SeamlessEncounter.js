@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Make the battle start effect seamless.
+ * @plugindesc v1.001 Make the battle start effect seamless.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/502501086.html
  *
@@ -68,7 +68,7 @@
  * @desc Zoom speed (per 1/60 second) during the start of battle effect.
  * 
  * @param RotationSpeed
- * @type number @decimals 2
+ * @type number @decimals 2 @min -9 @max 9
  * @default 0
  * @desc Rotation speed (per 1/60 second) during the start of battle effect.
  * 
@@ -85,7 +85,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 戦闘開始演出をシームレスにします。
+ * @plugindesc v1.001 戦闘開始演出をシームレスにします。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/502501086.html
  *
@@ -151,7 +151,7 @@
  * 
  * @param RotationSpeed
  * @text 回転速度
- * @type number @decimals 2
+ * @type number @decimals 2 @min -9 @max 9
  * @default 0
  * @desc 戦闘開始演出時の回転速度（1/60秒当たり）です。
  * 
