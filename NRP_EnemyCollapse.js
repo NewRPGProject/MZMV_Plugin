@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Change the effect when an enemy collapses.
+ * @plugindesc v1.001 Change the effect when an enemy collapses.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @orderAfter NRP_DamageTiming
  * @url https://newrpg.seesaa.net/article/501277851.html
@@ -157,7 +157,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 敵消滅時の演出を変更する。
+ * @plugindesc v1.001 敵消滅時の演出を変更する。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @orderAfter NRP_DamageTiming
  * @url https://newrpg.seesaa.net/article/501277851.html
@@ -525,9 +525,12 @@ Sprite_Enemy.prototype.updateOriginalCollapse = function() {
         return;
     }
 
+    // 消滅時間が小数だと余剰計算ができないので切り捨てする。
+    const effectDuration = Math.floor(this._effectDuration);
+
     // 振動
     const shakeStrength = setDefault(eval(collapseData.ShakeStrength), 0);
-    this._shake = (this._effectDuration % 2) == 0 ? -shakeStrength : shakeStrength;
+    this._shake = (effectDuration % 2) == 0 ? -shakeStrength : shakeStrength;
     // 合成方法
     const blendMode = setDefault(eval(collapseData.BlendMode), 1);
     this.blendMode = blendMode;
@@ -537,7 +540,7 @@ Sprite_Enemy.prototype.updateOriginalCollapse = function() {
     // 効果音２
     if (collapseData.Sound2 && collapseData.Sound2Interval) {
         const sound2Interval = eval(collapseData.Sound2Interval);
-        if (this._effectDuration % sound2Interval === sound2Interval - 1) {
+        if (effectDuration % sound2Interval === sound2Interval - 1) {
             AudioManager.playSe({"name":collapseData.Sound2, "volume":90, "pitch":100, "pan":0})
         }
     }
