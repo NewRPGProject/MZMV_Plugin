@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v2.014 The order of actions is displayed on the battle screen.
+ * @plugindesc v2.02 The order of actions is displayed on the battle screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -398,7 +398,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.014 行動順序を戦闘画面へ表示します。
+ * @plugindesc v2.02 行動順序を戦闘画面へ表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -1800,6 +1800,7 @@ Window_BattleCtb.prototype.drawSymbolCommon = function(drawArgs, index) {
     // スプライト表示
     if (pUseSprite) {
         const adjustZoom = eval(pAdjustZoom) / 100;
+        // 敵用の座標補正（アクターの場合は0になる。）
         const enemyAdjustX = drawArgs.enemyAdjustX * adjustZoom;
         const enemyAdjustY = drawArgs.enemyAdjustY * adjustZoom;
 
@@ -2241,6 +2242,58 @@ Window_BattleCtb.prototype.skillHide = function() {
     // ウィンドウ非表示
     this.hide();
 };
+
+/**
+ * ●ウィンドウを閉じる（演出なし）
+ */
+Window_BattleCtb.prototype.hide = function() {
+    Window_Base.prototype.hide.call(this);
+
+    // スプライトを非表示にする。
+    const spriteset = getSpriteset();
+    if (spriteset._visualTurnSprites) {
+        spriteset._visualTurnSprites.forEach(sprite => sprite.visible = false);
+    }
+}
+
+/**
+ * ●ウィンドウを開く（演出なし）
+ */
+Window_BattleCtb.prototype.show = function() {
+    Window_Base.prototype.show.call(this);
+
+    // スプライトを表示する。
+    const spriteset = getSpriteset();
+    if (spriteset._visualTurnSprites) {
+        spriteset._visualTurnSprites.forEach(sprite => sprite.visible = true);
+    }
+}
+
+/**
+ * ●ウィンドウを閉じる
+ */
+Window_BattleCtb.prototype.close = function() {
+    Window_Base.prototype.close.call(this);
+
+    // スプライトを非表示にする。
+    const spriteset = getSpriteset();
+    if (spriteset._visualTurnSprites) {
+        spriteset._visualTurnSprites.forEach(sprite => sprite.visible = false);
+    }
+}
+
+/**
+ * ●ウィンドウを開く
+ */
+Window_BattleCtb.prototype.open = function() {
+    Window_Base.prototype.open.call(this);
+
+    // スプライトを表示する。
+    const spriteset = getSpriteset();
+    if (spriteset._visualTurnSprites) {
+        spriteset._visualTurnSprites.forEach(sprite => sprite.visible = true);
+    }
+}
 
 /**
  * ● 【CTTB用】ターン外境界線の描画
