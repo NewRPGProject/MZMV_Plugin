@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.021 Implement the "Call Enemy" function.
+ * @plugindesc v1.03 Implement the "Call Enemy" function.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_TroopRandomFormation
  * @url http://newrpg.seesaa.net/article/485838070.html
@@ -169,7 +169,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.021 敵キャラの『仲間を呼ぶ』を実装します。
+ * @plugindesc v1.03 敵キャラの『仲間を呼ぶ』を実装します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_TroopRandomFormation
  * @url http://newrpg.seesaa.net/article/485838070.html
@@ -496,6 +496,9 @@ BattleManager.invokeAction = function(subject, target) {
 // Game_Action
 //-----------------------------------------------------------------------------
 
+// 呼び出す敵キャラのスプライト
+let mNewEnemySprite = null;
+
 /**
  * 【独自】敵キャラを呼ぶ
  */
@@ -503,7 +506,7 @@ Game_Action.prototype.callEnemy = function(enemyId, callArgs) {
     // 既に制限数に達している場合は処理停止
     if (pMaxEnemyNo && pMaxEnemyNo <= $gameTroop.aliveMembers().length) {
         // 失敗メッセージを表示
-        BattleManager._logWindow.displayCallEnemy(this, this.subject(), callArgs);
+        BattleManager._logWindow.displayCallEnemy(this, this.subject(), null, callArgs);
         return;
     }
 
@@ -514,12 +517,11 @@ Game_Action.prototype.callEnemy = function(enemyId, callArgs) {
     $gameTroop.makeUniqueNames();
 
     // 敵キャラ画像を事前ロードしておく。
-    const newSprite = new Sprite_Enemy(newEnemy)
-    newSprite.updateBitmap();
+    mNewEnemySprite = new Sprite_Enemy(newEnemy);
     
     // 成功メッセージを表示
     this.makeSuccess(newEnemy);
-    BattleManager._logWindow.displayCallEnemy(this, newEnemy, callArgs);
+    BattleManager._logWindow.displayCallEnemy(this, newEnemy, mNewEnemySprite, callArgs);
 };
 
 /**
@@ -615,11 +617,12 @@ Sprite_Enemy.prototype.setCallPosition = function(args) {
 /**
  * 【独自】呼び出しメッセージを表示
  */
-Window_BattleLog.prototype.displayCallEnemy = function(action, target, callArgs) {
+Window_BattleLog.prototype.displayCallEnemy = function(action, target, targetSprite, callArgs) {
     if (target.result().success && pSuccessMessage) {
         this.push('addText', pSuccessMessage.format(target.name()));
-        // 敵キャラ画像をロードする時間を作るためにpushする。
-        this.push("performCallEnemy", action, target, callArgs);
+        // updateWaitModeを挟んで、敵キャラ画像のロードを待たせる。
+        this._waitMode = "callEnemy"
+        this.push("performCallEnemy", action, target, targetSprite, callArgs);
 
     } else if (pFailureMessage) {
         this.push('addText', pFailureMessage.format(target.name()));
@@ -627,13 +630,27 @@ Window_BattleLog.prototype.displayCallEnemy = function(action, target, callArgs)
 };
 
 /**
+ * ●ウェイト判定
+ */
+const _Window_BattleLog_updateWaitMode = Window_BattleLog.prototype.updateWaitMode;
+Window_BattleLog.prototype.updateWaitMode = function() {
+    // 敵キャラ呼び出しの場合、画像読込を待つ
+    if (this._waitMode == "callEnemy") {
+        // 画像が読み込めていない場合は待つ
+        if (mNewEnemySprite && !mNewEnemySprite.bitmap.isReady()) {
+            return true;
+        }
+    }
+    return _Window_BattleLog_updateWaitMode.apply(this, arguments);
+};
+
+/**
  * 【独自】敵キャラの登場演出
  */
-Window_BattleLog.prototype.performCallEnemy = function(action, newEnemy, callArgs) {
+Window_BattleLog.prototype.performCallEnemy = function(action, newEnemy, newSprite, callArgs) {
     // 描画
-    const spriteset = BattleManager._spriteset;
-    // スプライトの作成
-    const newSprite = new Sprite_Enemy(newEnemy)
+    const spriteset = this._spriteset;
+
     // DynamicAnimation&Motionの指定があれば取得
     const dynamicId = getDynamicId(action, newEnemy, callArgs);
     if (dynamicId) {
@@ -642,7 +659,7 @@ Window_BattleLog.prototype.performCallEnemy = function(action, newEnemy, callArg
     }
     // 敵キャラのスプライトに追加
     spriteset._enemySprites.push(newSprite);
-    // 表示順を調整する多面に並び替え
+    // 表示順を調整するために並び替え
     // ※DynamicMotion併用時は常時処理しているため、あまり意味はない。
     spriteset._enemySprites.sort(spriteset.compareEnemySprite.bind(spriteset));
     // スプライトを画面に追加
