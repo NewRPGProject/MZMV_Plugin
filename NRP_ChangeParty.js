@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.03 Implemented a party change screen.
+ * @plugindesc v1.04 Implemented a party change screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/500297653.html
  *
@@ -158,7 +158,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.03 パーティ編成画面を実装。
+ * @plugindesc v1.04 パーティ編成画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/500297653.html
  *
@@ -1177,6 +1177,21 @@ if (pDisableReserveFormation) {
 //-----------------------------------------------------------------------------
 
 if (pDisableReserveSkill) {
+    /**
+     * ●メニュー画面でのアイテム使用者の決定
+     * ※内部的に『薬の知識』の率が高いアクターを選択している模様。
+     */
+    const _Scene_Item_user = Scene_Item.prototype.user;
+    Scene_Item.prototype.user = function() {
+        const keepInBattle = $gameParty._inBattle;
+        // 一時的に使用者を戦闘メンバーに限定（控えメンバーは無効にする。）
+        $gameParty._inBattle = true;
+        const user = _Scene_Item_user.apply(this, arguments);
+        // 元に戻す。
+        $gameParty._inBattle = keepInBattle;
+        return user;
+    };
+
     /**
      * ●スキルの使用可否
      */
