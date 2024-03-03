@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.041 Display the cursor when selecting a target in battle.
+ * @plugindesc v1.042 Display the cursor when selecting a target in battle.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482370647.html
  *
@@ -269,7 +269,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.041 戦闘時、選択中の対象にカーソルを表示
+ * @plugindesc v1.042 戦闘時、選択中の対象にカーソルを表示
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482370647.html
  *
@@ -699,10 +699,11 @@ if (pHideEnemyNameList) {
          */
         const _Scene_Battle_startEnemySelection = Scene_Battle.prototype.startEnemySelection;
         Scene_Battle.prototype.startEnemySelection = function() {
+            // ステータスウィンドウの表示状態を保持する。
+            // ※通常攻撃時にウィンドウを残しておくため。
+            const keepVisible = this._statusWindow.visible;
             _Scene_Battle_startEnemySelection.apply(this, arguments);
-
-            // ステータスウィンドウを非表示しない。
-            this._statusWindow.show();
+            this._statusWindow.visible = keepVisible;
         };
     }
 }
