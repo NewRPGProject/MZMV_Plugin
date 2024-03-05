@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Change the event's passage determination.
+ * @plugindesc v1.02 Change the event's passage determination.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_EventCollisionEX
  * @url http://newrpg.seesaa.net/article/486134190.html
@@ -72,7 +72,7 @@
  * 
  * @param PassageTypeList
  * @type struct<PassageType>[]
- * @default ["{\"TypeId\":\"FLY\",\"PassageList\":\"\",\"BasePassage\":\"on\",\"ExtendCollied\":\"true\"}","{\"TypeId\":\"FISH\",\"PassageList\":\"[\\\"{\\\\\\\"PassageId\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"Memo\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"<Condition>\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"TerrainTag\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"RegionId\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"AutotileType\\\\\\\":\\\\\\\"0\\\\\\\",\\\\\\\"TileId\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"<PassageSetting>\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"CanPass\\\\\\\":\\\\\\\"true\\\\\\\"}\\\"]\",\"BasePassage\":\"off\",\"ExtendCollied\":\"false\"}"]
+ * @default ["{\"TypeId\":\"FLY\",\"PassageList\":\"\",\"BasePassage\":\"on\",\"ExtendCollied\":\"true\",\"IgnoreLadder\":\"true\"}","{\"TypeId\":\"FISH\",\"PassageList\":\"[\\\"{\\\\\\\"PassageId\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"Memo\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"<Condition>\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"TerrainTag\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"RegionId\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"AutotileType\\\\\\\":\\\\\\\"0\\\\\\\",\\\\\\\"TileId\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"<PassageSetting>\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"CanPass\\\\\\\":\\\\\\\"true\\\\\\\"}\\\"]\",\"BasePassage\":\"off\",\"ExtendCollied\":\"false\",\"IgnoreLadder\":\"false\"}"]
  * @desc This is a list to register the passage type settings.
  */
 
@@ -97,6 +97,11 @@
  * @type boolean
  * @default false
  * @desc The collision detection is given to events other than "Passage type identifier" and the trigger is enabled.
+ * 
+ * @param IgnoreLadder
+ * @type boolean
+ * @default false
+ * @desc It will not be affected by the ladder attribute.
  */
 
 /*~struct~Passage:
@@ -146,7 +151,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 イベントの通行判定を変更します。
+ * @plugindesc v1.02 イベントの通行判定を変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_EventCollisionEX
  * @url http://newrpg.seesaa.net/article/486134190.html
@@ -210,7 +215,7 @@
  * @param PassageTypeList
  * @text 通行タイプリスト
  * @type struct<PassageType>[]
- * @default ["{\"TypeId\":\"FLY\",\"PassageList\":\"\",\"BasePassage\":\"on\",\"ExtendCollied\":\"true\"}","{\"TypeId\":\"FISH\",\"PassageList\":\"[\\\"{\\\\\\\"PassageId\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"Memo\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"<Condition>\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"TerrainTag\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"RegionId\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"AutotileType\\\\\\\":\\\\\\\"0\\\\\\\",\\\\\\\"TileId\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"<PassageSetting>\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"CanPass\\\\\\\":\\\\\\\"true\\\\\\\"}\\\"]\",\"BasePassage\":\"off\",\"ExtendCollied\":\"false\"}"]
+ * @default ["{\"TypeId\":\"FLY\",\"PassageList\":\"\",\"BasePassage\":\"on\",\"ExtendCollied\":\"true\",\"IgnoreLadder\":\"true\"}","{\"TypeId\":\"FISH\",\"PassageList\":\"[\\\"{\\\\\\\"PassageId\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"Memo\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"<Condition>\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"TerrainTag\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"RegionId\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"AutotileType\\\\\\\":\\\\\\\"0\\\\\\\",\\\\\\\"TileId\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"<PassageSetting>\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"CanPass\\\\\\\":\\\\\\\"true\\\\\\\"}\\\"]\",\"BasePassage\":\"off\",\"ExtendCollied\":\"false\",\"IgnoreLadder\":\"false\"}"]
  * @desc 通行タイプの設定を登録する一覧です。
  */
 
@@ -239,6 +244,12 @@
  * @type boolean
  * @default false
  * @desc 『通常キャラと重ならない』以外のイベントにも衝突判定を付与し、トリガーを有効化します。
+ * 
+ * @param IgnoreLadder
+ * @text ハシゴ属性を無視
+ * @type boolean
+ * @default false
+ * @desc ハシゴ属性の影響を受けないようになります。
  */
 
 /*~struct~Passage:ja
@@ -391,6 +402,7 @@ for (const passageType of pPassageTypeList) {
     passageType.passageList = parseStruct2(passageType.PassageList);
     passageType.basePassage = passageType.BasePassage;
     passageType.extendCollied = toBoolean(passageType.ExtendCollied);
+    passageType.ignoreLadder = toBoolean(passageType.IgnoreLadder);
 
     // 通行設定
     for (const passage of passageType.passageList) {
@@ -517,6 +529,18 @@ Game_CharacterBase.prototype.isCollidedWithEvents = function(x, y) {
     return ret;
 };
 
+/**
+ * ●ハシゴ上にいるかどうか？
+ */
+const _Game_CharacterBase_isOnLadder = Game_CharacterBase.prototype.isOnLadder;
+Game_CharacterBase.prototype.isOnLadder = function() {
+    // ハシゴ属性を無視する場合
+    if (this._isIgnoreLadder) {
+        return false;
+    }
+    return _Game_CharacterBase_isOnLadder.apply(this, arguments);
+};
+
 //-----------------------------------------------------------------------------
 // Game_Event
 //-----------------------------------------------------------------------------
@@ -532,6 +556,7 @@ Game_Event.prototype.initialize = function(mapId, eventId) {
     // メモ欄に、当たり判定の設定があれば反映
     if (setting) {
         this._isExtendCollied = setting.extendCollied;
+        this._isIgnoreLadder = setting.ignoreLadder;
     }
 };
 
