@@ -386,7 +386,7 @@
  * @text ウィンドウ画像（名前付）
  * @type file
  * @dir img/system
- * @desc 名前欄がある場合、通常のウィンドウ画像の代わりに使用するの画像です。
+ * @desc 名前欄がある場合、通常のウィンドウ画像の代わりに使用する画像です。
  * 
  * @param MaskImage
  * @parent <MessageWindow>
