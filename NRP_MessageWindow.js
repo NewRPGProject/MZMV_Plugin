@@ -46,6 +46,10 @@
  * and the name box, and the other is to use a different image only
  * when a name is displayed.
  * 
+ * Also, since the original window will remain as it is,
+ * please set opacity to 0 and hide the frame.
+ * ※You may decorate it with an image while leaving the original window.
+ * 
  * -------------------------------------------------------------------
  * [Mask Image Function]
  * -------------------------------------------------------------------
@@ -267,6 +271,10 @@
  * 
  * メッセージウィンドウと名前欄で別々の画像を使用する方法と、
  * 名前の表示がある場合のみ、別の画像を使用する方法の二通りに対応しています。
+ * 
+ * また、そのままだと元のウィンドウが残ってしまうため、
+ * 不透明度を０にした上で、枠を非表示にしてください。
+ * ※元のウィンドウを残した上で画像で装飾しても構いません。
  * 
  * -------------------------------------------------------------------
  * ■マスク画像機能
