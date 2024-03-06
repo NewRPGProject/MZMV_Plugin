@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.03 Adjust the message window.
+ * @plugindesc v1.04 Adjust the message window.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -34,6 +34,17 @@
  * 
  * This is useful, for example, when you want to have
  * two lines of text in a scene displaying a large image.
+ * 
+ * -------------------------------------------------------------------
+ * [Window Imaging]
+ * -------------------------------------------------------------------
+ * Images can be used to display the message window and name box.
+ * Images should be placed in the img\system folder.
+ * 
+ * Two methods are supported:
+ * one is to use separate images for the message window
+ * and the name box, and the other is to use a different image only
+ * when a name is displayed.
  * 
  * -------------------------------------------------------------------
  * [Mask Image Function]
@@ -110,6 +121,34 @@
  * @desc Opacity of the message window.
  * 255 makes it completely opaque.
  * 
+ * @param HideWindowFrame
+ * @parent <MessageWindow>
+ * @type boolean
+ * @default false
+ * @desc Hides the message window frame.
+ * 
+ * @param WindowImage
+ * @parent <MessageWindow>
+ * @type file
+ * @dir img/system
+ * @desc Image for window.
+ * 
+ * @param AdjustWindowImageX
+ * @parent WindowImage
+ * @type number @min -9999 @max 9999
+ * @desc Adjusts the X coordinate of the window image.
+ * 
+ * @param AdjustWindowImageY
+ * @parent WindowImage
+ * @type number @min -9999 @max 9999
+ * @desc Adjusts the Y coordinate of the window image.
+ * 
+ * @param WindowImageName
+ * @parent WindowImage
+ * @type file
+ * @dir img/system
+ * @desc If there is a name box, this is the image to use instead of the normal window image.
+ * 
  * @param MaskImage
  * @parent <MessageWindow>
  * @type file
@@ -147,6 +186,34 @@
  * @desc Opacity of the name field.
  * 255 makes it completely opaque.
  * 
+ * @param HideNameBoxFrame
+ * @parent <NameBoxWindow>
+ * @type boolean
+ * @default false
+ * @desc Hide the frame in the name box.
+ * 
+ * @param OverlapNameBox
+ * @parent <NameBoxWindow>
+ * @type boolean
+ * @default false
+ * @desc The message window should not disappear even if the name box overlaps.
+ * 
+ * @param NameBoxImage
+ * @parent <NameBoxWindow>
+ * @type file
+ * @dir img/system
+ * @desc Image for name box.
+ * 
+ * @param AdjustNameBoxImageX
+ * @parent NameBoxImage
+ * @type number @min -9999 @max 9999
+ * @desc Adjust the X coordinate of the name box image.
+ * 
+ * @param AdjustNameBoxImageY
+ * @parent NameBoxImage
+ * @type number @min -9999 @max 9999
+ * @desc Adjust the Y coordinate of the name box image.
+ * 
  * @param <ChoiceWindow>
  * @desc This section is about choices.
  * 
@@ -159,7 +226,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.03 メッセージウィンドウを調整する。
+ * @plugindesc v1.04 メッセージウィンドウを調整する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -191,6 +258,15 @@
  * 
  * 例えば「一枚絵を表示するシーンでは文章を２行にしたい」
  * といった場合に便利です。
+ * 
+ * -------------------------------------------------------------------
+ * ■ウィンドウの画像化
+ * -------------------------------------------------------------------
+ * メッセージウィンドウおよび名前欄を画像で表示することができます。
+ * 画像はimg\systemフォルダに配置してください。
+ * 
+ * メッセージウィンドウと名前欄で別々の画像を使用する方法と、
+ * 名前の表示がある場合のみ、別の画像を使用する方法の二通りに対応しています。
  * 
  * -------------------------------------------------------------------
  * ■マスク画像機能
@@ -250,14 +326,14 @@
  * 
  * @param AdjustMessageX
  * @parent <MessageWindow>
- * @text 文章のＸ座標調整
- * @type number
+ * @text 文章のＸ座標補正
+ * @type number @min -9999 @max 9999
  * @desc 文章のＸ座標を調整します。
  * 
  * @param AdjustMessageY
  * @parent <MessageWindow>
- * @text 文章のＹ座標調整
- * @type number
+ * @text 文章のＹ座標補正
+ * @type number @min -9999 @max 9999
  * @desc 文章のＹ座標を調整します。
  * 
  * @param MessageFontSize
@@ -270,6 +346,39 @@
  * @text ウィンドウの不透明度
  * @desc メッセージウィンドウの不透明度です。
  * 255で完全な不透明になります。
+ * 
+ * @param HideWindowFrame
+ * @parent <MessageWindow>
+ * @text ウィンドウ枠を非表示
+ * @type boolean
+ * @default false
+ * @desc メッセージウィンドウの枠を非表示にします。
+ * 
+ * @param WindowImage
+ * @parent <MessageWindow>
+ * @text ウィンドウ画像
+ * @type file
+ * @dir img/system
+ * @desc ウィンドウ用の画像です。
+ * 
+ * @param AdjustWindowImageX
+ * @parent WindowImage
+ * @text ウィンドウ画像のＸ補正
+ * @type number @min -9999 @max 9999
+ * @desc ウィンドウ画像のＸ座標を調整します。
+ * 
+ * @param AdjustWindowImageY
+ * @parent WindowImage
+ * @text ウィンドウ画像のＹ補正
+ * @type number @min -9999 @max 9999
+ * @desc ウィンドウ画像のＹ座標を調整します。
+ * 
+ * @param WindowImageName
+ * @parent WindowImage
+ * @text ウィンドウ画像（名前付）
+ * @type file
+ * @dir img/system
+ * @desc 名前欄がある場合、通常のウィンドウ画像の代わりに使用するの画像です。
  * 
  * @param MaskImage
  * @parent <MessageWindow>
@@ -316,6 +425,39 @@
  * @text 名前欄の不透明度
  * @desc 名前欄の不透明度です。
  * 255で完全な不透明になります。
+ * 
+ * @param HideNameBoxFrame
+ * @parent <NameBoxWindow>
+ * @text 名前欄の枠を非表示
+ * @type boolean
+ * @default false
+ * @desc 名前欄の枠を非表示にします。
+ * 
+ * @param OverlapNameBox
+ * @parent <NameBoxWindow>
+ * @text 名前欄の重なり対応
+ * @type boolean
+ * @default false
+ * @desc 名前欄が重なっても、メッセージウィンドウが消えないようにします。
+ * 
+ * @param NameBoxImage
+ * @parent <NameBoxWindow>
+ * @text 名前欄画像
+ * @type file
+ * @dir img/system
+ * @desc 名前ウィンドウ用の画像です。
+ * 
+ * @param AdjustNameBoxImageX
+ * @parent NameBoxImage
+ * @text 名前欄画像のＸ補正
+ * @type number @min -9999 @max 9999
+ * @desc 名前画像のＸ座標を調整します。
+ * 
+ * @param AdjustNameBoxImageY
+ * @parent NameBoxImage
+ * @text 名前欄画像のＹ補正
+ * @type number @min -9999 @max 9999
+ * @desc 名前欄画像のＹ座標を調整します。
  * 
  * @param <ChoiceWindow>
  * @text ＜選択肢＞
@@ -378,6 +520,11 @@ const pAdjustMessageX = toNumber(parameters["AdjustMessageX"], 0);
 const pAdjustMessageY = toNumber(parameters["AdjustMessageY"], 0);
 const pMessageFontSize = setDefault(parameters["MessageFontSize"]);
 const pWindowOpacity = setDefault(parameters["WindowOpacity"]);
+const pHideWindowFrame = toBoolean(parameters["HideWindowFrame"], false);
+const pWindowImage = setDefault(parameters["WindowImage"]);
+const pAdjustWindowImageX = toNumber(parameters["AdjustWindowImageX"], 0);
+const pAdjustWindowImageY = toNumber(parameters["AdjustWindowImageY"], 0);
+const pWindowImageName = setDefault(parameters["WindowImageName"]);
 const pMaskImage = setDefault(parameters["MaskImage"]);
 const pNoMaskOpacity = setDefault(parameters["NoMaskOpacity"]);
 const pFixIconY = toBoolean(parameters["FixIconY"]);
@@ -385,6 +532,11 @@ const pNameBoxAdjustX = setDefault(parameters["NameBoxAdjustX"]);
 const pNameBoxAdjustY = setDefault(parameters["NameBoxAdjustY"]);
 const pNameBoxFontSize = setDefault(parameters["NameBoxFontSize"]);
 const pNameBoxOpacity = setDefault(parameters["NameBoxOpacity"]);
+const pHideNameBoxFrame = toBoolean(parameters["HideNameBoxFrame"], false);
+const pOverlapNameBox = toBoolean(parameters["OverlapNameBox"], false);
+const pNameBoxImage = setDefault(parameters["NameBoxImage"]);
+const pAdjustNameBoxImageX = toNumber(parameters["AdjustNameBoxImageX"], 0);
+const pAdjustNameBoxImageY = toNumber(parameters["AdjustNameBoxImageY"], 0);
 const pFixChoiceX = toBoolean(parameters["FixChoiceX"], true);
 
 // ----------------------------------------------------------------------------
@@ -473,6 +625,11 @@ Window_Message.prototype.initialize = function(rect) {
     this.contentsSprite().y += pAdjustMessageY;
 
     mInitialHeight = this.height;
+
+    // ウィンドウ枠を非表示
+    if (pHideWindowFrame) {
+        this.frameVisible = false;
+    }
 };
 
 /*
@@ -552,6 +709,18 @@ Window_Message.prototype.updatePlacement = function() {
     // Ｙ座標
     if (pWindowY != null) {
         this.y = eval(pWindowY);
+    }
+
+    // ウィンドウ画像の指定が存在する場合
+    if (this._windowImageSprite) {
+        const sprite = this._windowImageSprite;
+        // 名前欄があるかどうかで分岐
+        if (pWindowImageName && this._nameBoxWindow && this._nameBoxWindow.windowWidth() > 0) {
+            sprite.bitmap = ImageManager.loadSystem(pWindowImageName);
+        } else if (pWindowImage) {
+            sprite.bitmap = ImageManager.loadSystem(pWindowImage);
+        }
+        sprite.move(pAdjustWindowImageX, pAdjustWindowImageY);
     }
 };
 
@@ -702,6 +871,34 @@ Window_Message.prototype.backSprite = function() {
     }
 }
 
+/*
+ * Window_Messageのメソッドが未定義の場合は事前に定義
+ * ※これをしておかないと以後のWindow側への追記が反映されない。
+ */
+if (Window_Message.prototype._createBackSprite == Window.prototype._createBackSprite) {
+    Window_Message.prototype._createBackSprite = function() {
+        return Window.prototype._createBackSprite.apply(this, arguments);
+    }
+}
+if (Window_Message.prototype._refreshBack == Window.prototype._refreshBack) {
+    Window_Message.prototype._refreshBack = function() {
+        return Window.prototype._refreshBack.apply(this, arguments);
+    }
+}
+
+/**
+ * ●ウィンドウ画像の作成
+ */
+const _Window_Message_createBackSprite = Window_Message.prototype._createBackSprite;
+Window_Message.prototype._createBackSprite = function() {
+    _Window_Message_createBackSprite.apply(this, arguments);
+
+    if (pWindowImage || pWindowImageName) {
+        this._windowImageSprite = new Sprite();
+        this._container.addChild(this._windowImageSprite);
+    }
+};
+
 // ----------------------------------------------------------------------------
 // Window_ChoiceList
 // ----------------------------------------------------------------------------
@@ -750,6 +947,10 @@ if (typeof Window_NameBox !== "undefined") {
         if (pNameBoxOpacity != null) {
             this.backOpacity = eval(pNameBoxOpacity);
         }
+        // ウィンドウ枠を非表示
+        if (pHideNameBoxFrame) {
+            this.frameVisible = false;
+        }
     };
 
     /**
@@ -790,6 +991,60 @@ if (typeof Window_NameBox !== "undefined") {
             this.contents.fontSize = eval(pNameBoxFontSize);
         };
     }
+}
+
+/*
+ * Window_NameBoxのメソッドが未定義の場合は事前に定義
+ * ※これをしておかないと以後のWindow側への追記が反映されない。
+ */
+if (Window_NameBox.prototype._createBackSprite == Window.prototype._createBackSprite) {
+    Window_NameBox.prototype._createBackSprite = function() {
+        return Window.prototype._createBackSprite.apply(this, arguments);
+    }
+}
+if (Window_NameBox.prototype._refreshBack == Window.prototype._refreshBack) {
+    Window_NameBox.prototype._refreshBack = function() {
+        return Window.prototype._refreshBack.apply(this, arguments);
+    }
+}
+
+/**
+ * ●ウィンドウ画像の作成
+ */
+const _Window_NameBox_createBackSprite = Window_NameBox.prototype._createBackSprite;
+Window_NameBox.prototype._createBackSprite = function() {
+    _Window_NameBox_createBackSprite.apply(this, arguments);
+    this._windowImageSprite = new Sprite();
+    this._container.addChild(this._windowImageSprite);
+};
+
+/**
+ * ●ウィンドウ画像の更新
+ */
+const _Window_NameBox_refreshBack = Window_NameBox.prototype._refreshBack;
+Window_NameBox.prototype._refreshBack = function() {
+    _Window_NameBox_refreshBack.apply(this, arguments);
+
+    const sprite = this._windowImageSprite;
+    sprite.bitmap = ImageManager.loadSystem(pNameBoxImage);
+    sprite.move(this.x + pAdjustNameBoxImageX, this.y + pAdjustNameBoxImageY);
+};
+
+// ----------------------------------------------------------------------------
+// Scene_Message
+// ----------------------------------------------------------------------------
+
+// 名前欄の重なり対応
+if (pOverlapNameBox) {
+    /**
+     * ●名前ウィンドウの生成
+     */
+    const _Scene_Message_createNameBoxWindow = Scene_Message.prototype.createNameBoxWindow;
+    Scene_Message.prototype.createNameBoxWindow = function() {
+        _Scene_Message_createNameBoxWindow.apply(this, arguments);
+        // 名前ウィンドウの下が消えないよう調整
+        this.addChild(this._windowLayer.removeChild(this._nameBoxWindow));
+    };
 }
 
 })();
