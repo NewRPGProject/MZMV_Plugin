@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.04 Adjust the message window.
+ * @plugindesc v1.041 Adjust the message window.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -230,7 +230,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.04 メッセージウィンドウを調整する。
+ * @plugindesc v1.041 メッセージウィンドウを調整する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -976,6 +976,12 @@ if (typeof Window_NameBox !== "undefined") {
         if (pNameBoxAdjustY != null) {
             this.y += eval(pNameBoxAdjustY);
         }
+
+        // ウィンドウ画像の指定が存在する場合
+        if (this._windowImageSprite) {
+            const sprite = this._windowImageSprite;
+            sprite.move(pAdjustNameBoxImageX, pAdjustNameBoxImageY);
+        }
     };
 
     if (pNameBoxFontSize != null) {
@@ -999,44 +1005,48 @@ if (typeof Window_NameBox !== "undefined") {
             this.contents.fontSize = eval(pNameBoxFontSize);
         };
     }
-}
 
-/*
- * Window_NameBoxのメソッドが未定義の場合は事前に定義
- * ※これをしておかないと以後のWindow側への追記が反映されない。
- */
-if (Window_NameBox.prototype._createBackSprite == Window.prototype._createBackSprite) {
+    /*
+    * Window_NameBoxのメソッドが未定義の場合は事前に定義
+    * ※これをしておかないと以後のWindow側への追記が反映されない。
+    */
+    if (Window_NameBox.prototype._createBackSprite == Window.prototype._createBackSprite) {
+        Window_NameBox.prototype._createBackSprite = function() {
+            return Window.prototype._createBackSprite.apply(this, arguments);
+        }
+    }
+    if (Window_NameBox.prototype._refreshBack == Window.prototype._refreshBack) {
+        Window_NameBox.prototype._refreshBack = function() {
+            return Window.prototype._refreshBack.apply(this, arguments);
+        }
+    }
+
+    /**
+     * ●ウィンドウ画像の作成
+     */
+    const _Window_NameBox_createBackSprite = Window_NameBox.prototype._createBackSprite;
     Window_NameBox.prototype._createBackSprite = function() {
-        return Window.prototype._createBackSprite.apply(this, arguments);
-    }
-}
-if (Window_NameBox.prototype._refreshBack == Window.prototype._refreshBack) {
+        _Window_NameBox_createBackSprite.apply(this, arguments);
+
+        if (pNameBoxImage) {
+            this._windowImageSprite = new Sprite();
+            this._container.addChild(this._windowImageSprite);
+        }
+    };
+
+    /**
+     * ●ウィンドウ画像の更新
+     */
+    const _Window_NameBox_refreshBack = Window_NameBox.prototype._refreshBack;
     Window_NameBox.prototype._refreshBack = function() {
-        return Window.prototype._refreshBack.apply(this, arguments);
-    }
+        _Window_NameBox_refreshBack.apply(this, arguments);
+
+        if (pNameBoxImage) {
+            const sprite = this._windowImageSprite;
+            sprite.bitmap = ImageManager.loadSystem(pNameBoxImage);
+        }
+    };
 }
-
-/**
- * ●ウィンドウ画像の作成
- */
-const _Window_NameBox_createBackSprite = Window_NameBox.prototype._createBackSprite;
-Window_NameBox.prototype._createBackSprite = function() {
-    _Window_NameBox_createBackSprite.apply(this, arguments);
-    this._windowImageSprite = new Sprite();
-    this._container.addChild(this._windowImageSprite);
-};
-
-/**
- * ●ウィンドウ画像の更新
- */
-const _Window_NameBox_refreshBack = Window_NameBox.prototype._refreshBack;
-Window_NameBox.prototype._refreshBack = function() {
-    _Window_NameBox_refreshBack.apply(this, arguments);
-
-    const sprite = this._windowImageSprite;
-    sprite.bitmap = ImageManager.loadSystem(pNameBoxImage);
-    sprite.move(this.x + pAdjustNameBoxImageX, this.y + pAdjustNameBoxImageY);
-};
 
 // ----------------------------------------------------------------------------
 // Scene_Message
