@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.041 Adjust the message window.
+ * @plugindesc v1.042 Adjust the message window.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -230,7 +230,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.041 メッセージウィンドウを調整する。
+ * @plugindesc v1.042 メッセージウィンドウを調整する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -980,7 +980,14 @@ if (typeof Window_NameBox !== "undefined") {
         // ウィンドウ画像の指定が存在する場合
         if (this._windowImageSprite) {
             const sprite = this._windowImageSprite;
-            sprite.move(pAdjustNameBoxImageX, pAdjustNameBoxImageY);
+            // 名前欄が有効な場合
+            if (this.windowWidth() > 0) {
+                sprite.move(pAdjustNameBoxImageX, pAdjustNameBoxImageY);
+                sprite.visible = true;
+            // 名前欄が無効な場合
+            } else {
+                sprite.visible = false;
+            }
         }
     };
 
