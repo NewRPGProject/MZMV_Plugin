@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.011 Action during the return of DynamicMotion
+ * @plugindesc v1.02 Action during the return of DynamicMotion
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicMotionMZ
  * @url https://newrpg.seesaa.net/article/499269749.html
@@ -66,11 +66,16 @@
  * @type boolean
  * @default false
  * @desc Wait for the return of the battler at the end of turn.
+ * 
+ * @param WaitRegeneration
+ * @type boolean
+ * @default true
+ * @desc Adjust the display of HP regeneration, poison, etc. to be displayed upon return.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.011 DynamicMotionの帰還中に行動
+ * @plugindesc v1.02 DynamicMotionの帰還中に行動
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicMotionMZ
  * @url https://newrpg.seesaa.net/article/499269749.html
@@ -134,6 +139,12 @@
  * @type boolean
  * @default false
  * @desc ターン終了時にバトラーの帰還を待ちます。
+ * 
+ * @param WaitRegeneration
+ * @text 再生表示を待つ
+ * @type boolean
+ * @default true
+ * @desc ＨＰ再生や毒などの表示を帰還後に表示するように調整します。
  */
 
 (function() {
@@ -161,6 +172,7 @@ const pWaitIfUser = toBoolean(parameters["WaitIfUser"]);
 const pKeepReturningMotion = toBoolean(parameters["KeepReturningMotion"]);
 const pWaitBattleEnd = toBoolean(parameters["WaitBattleEnd"]);
 const pWaitTurnEnd = toBoolean(parameters["WaitTurnEnd"]);
+const pWaitRegeneration = toBoolean(parameters["WaitRegeneration"], true);
 
 // ----------------------------------------------------------------------------
 // 共通変数
@@ -447,6 +459,93 @@ Spriteset_Battle.prototype.isAnyoneMoving = function() {
     // 帰還中は除外する。
     return this.battlerSprites().some(sprite => !sprite.canReturningAction() && sprite.isMoving());
 };
+
+// ----------------------------------------------------------------------------
+// 再生ダメージ遅延表示
+// ----------------------------------------------------------------------------
+
+if (pWaitRegeneration) {
+    /**
+     * 【上書】再生ダメージ表示
+     */
+    Window_BattleLog.prototype.displayRegeneration = function(subject) {
+        this.push("popupDamageRegeneration", subject);
+    };
+
+    /**
+     * 【独自】再生ダメージポップアップ
+     */
+    Window_BattleLog.prototype.popupDamageRegeneration = function(target) {
+        if (target.shouldPopupDamage()) {
+            target.startDamagePopupRegeneration();
+        }
+    };
+
+    /**
+     * ●ダメージポップアップクリア
+     */
+    const _Game_Battler_clearDamagePopup = Game_Battler.prototype.clearDamagePopup;
+    Game_Battler.prototype.clearDamagePopup = function() {
+        _Game_Battler_clearDamagePopup.apply(this, arguments);
+        this._damagePopupRegeneration = false;
+    };
+
+    /**
+     * 【独自】再生用ダメージポップアップの開始
+     */
+    Game_Battler.prototype.startDamagePopupRegeneration = function() {
+        Game_Battler.prototype.startDamagePopup.call(this);
+        this._damagePopupRegeneration = true;
+    };
+
+    /**
+     * ●ダメージスプライトの作成
+     */
+    const _Sprite_Battler_createDamageSprite = Sprite_Battler.prototype.createDamageSprite;
+    Sprite_Battler.prototype.createDamageSprite = function() {
+        _Sprite_Battler_createDamageSprite.apply(this, arguments);
+
+        // 再生表示の場合
+        if (this._battler._damagePopupRegeneration) {
+            // 直前に追加されたSprite_Damageを取得
+            const damage = this._damages[this._damages.length - 1];
+            // 再生用フラグを設定
+            damage._isRegenerationWait = true;
+            // 親を参照できるように
+            damage._spriteBattler = this;
+            // 表示を消しておく
+            damage.visible = false;
+
+            // この時点では表示されないので後で座標を設定する。
+            // そのため、最初のダメージとの座標差分を取得しておく。
+            const firstDamage = this._damages[0];
+            damage._diffX = damage.x - firstDamage.x;
+            damage._diffY = damage.y - firstDamage.y;
+        }
+    };
+
+    /**
+     * ●ダメージスプライトの更新
+     */
+    const _Sprite_Damage_update = Sprite_Damage.prototype.update;
+    Sprite_Damage.prototype.update = function() {
+        // 帰還が終わるまで待つ。
+        if (this._isRegenerationWait) {
+            if (this._spriteBattler.isReturning()) {
+                return;
+            }
+            // 帰還終了ならば表示開始
+            this._isRegenerationWait = false;
+            this.visible = true;
+            // 座標を調整
+            const spriteBattler = this._spriteBattler;
+            this.x = spriteBattler.x + spriteBattler.damageOffsetX() + this._diffX;
+            this.y = spriteBattler.y + spriteBattler.damageOffsetY() + this._diffY;
+        }
+
+        _Sprite_Damage_update.apply(this, arguments);
+    };
+}
 
 // ----------------------------------------------------------------------------
 // 共通関数
