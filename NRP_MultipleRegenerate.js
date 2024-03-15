@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Allow simultaneous display of HP and MP regeneration.
+ * @plugindesc v1.001 Allow simultaneous display of HP and MP regeneration.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/502669111.html
  *
@@ -39,7 +39,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 ＨＰ再生とＭＰ再生の同時表示を可能にする。
+ * @plugindesc v1.001 ＨＰ再生とＭＰ再生の同時表示を可能にする。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/502669111.html
  *
@@ -110,6 +110,9 @@ const _Sprite_Battler_createDamageSprite = Sprite_Battler.prototype.createDamage
 Sprite_Battler.prototype.createDamageSprite = function() {
     const result = this._battler.result();
 
+    // ディレイ値をリセット
+    result.multipleRegenerateDelay = 0;
+
     // ミス・回避の場合
     if (result.missed || result.evaded) {
         // そのまま通常表示
@@ -138,7 +141,6 @@ Sprite_Battler.prototype.createDamageSprite = function() {
         result.hpDamage = 0;
         result.mpDamage = 0;
         result.tpDamage = 0;
-        result.multipleRegenerateDelay = 0;
 
         // ＨＰダメージ／回復の表示
         if (result.hpAffected) {
