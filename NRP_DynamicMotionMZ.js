@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.22 When executing skills, call motion freely.
+ * @plugindesc v1.221 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -561,7 +561,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.22 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.221 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -3958,6 +3958,18 @@ Sprite.prototype.getDynamicMotionEndTime = function() {
 //------------------------------------------
 
 if (pUsePriority) {
+    /**
+     * ●ダメージスプライトの初期化
+     */
+    const _Sprite_Damage_initialize = Sprite_Damage.prototype.initialize;
+    Sprite_Damage.prototype.initialize = function() {
+        _Sprite_Damage_initialize.apply(this, arguments);
+
+        // 適当にＺ座標を設定
+        // 後発の画像（spriteIdが大きい）を優先表示するように調整
+        this.z = 9 + (this.spriteId / 999999999999999);
+    };
+
     /**
      * ●更新処理
      */
