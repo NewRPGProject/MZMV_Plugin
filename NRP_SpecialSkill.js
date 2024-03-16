@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.03 Implementation of the special skill system.
+ * @plugindesc v1.04 Implementation of the special skill system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_CountTimeBattle
  * @url https://newrpg.seesaa.net/article/489968387.html
@@ -201,6 +201,17 @@
  * @desc Decrease ActionValue for ranged/continuous techniques.
  * e.g:"value / count" attenuates to the amount of increase / number of hits.
  * 
+ * @param WaitChargedAnimation
+ * @type boolean
+ * @default true
+ * @desc Wait for charged animation.
+ * It is always treated as on in MV.
+ * 
+ * @param ChargedAnimationInterval
+ * @type number
+ * @default 15
+ * @desc The display interval when charged animation overlaps.
+ * 
  * @-----------------------------------------------------------
  * 
  * @param <GaugeLayout>
@@ -395,6 +406,10 @@
  * @type animation
  * @desc This animation is displayed when the special gauge is full.
  * 
+ * @param ChargedDynamicSkill
+ * @type skill
+ * @desc This is the DynamicAnimation&Motion skill production that is executed when the special gauge is full.
+ * 
  * @-----------------------------------------------------------
  * 
  * @param <GaugeLayout>
@@ -421,7 +436,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.03 奥義システムの実装。
+ * @plugindesc v1.04 奥義システムの実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_CountTimeBattle
  * @url https://newrpg.seesaa.net/article/489968387.html
@@ -613,6 +628,19 @@
  * @type string
  * @desc 範囲技／多段技にてヒット毎のゲージ上昇量を減少させます。
  * 例：「value / count」で上昇量／ヒット数へと減衰。
+ * 
+ * @param WaitChargedAnimation
+ * @text 満タンアニメを待つ
+ * @type boolean
+ * @default true
+ * @desc 満タン時のアニメを待ちます。
+ * ＭＶでは常にオンとして扱われます。
+ * 
+ * @param ChargedAnimationInterval
+ * @text 満タンアニメの間隔
+ * @type number
+ * @default 15
+ * @desc 満タン時のアニメが重なった場合の表示間隔です。
  * 
  * @-----------------------------------------------------------
  * 
@@ -844,6 +872,11 @@
  * @type animation
  * @desc 奥義ゲージが満タンになった際のアニメーションです。
  * 
+ * @param ChargedDynamicSkill
+ * @text 満タン時Dynamicスキル
+ * @type skill
+ * @desc 奥義ゲージが満タンになった際に実行するDynamicAnimation&Motionのスキル演出です。
+ * 
  * @-----------------------------------------------------------
  * 
  * @param <GaugeLayout>
@@ -918,6 +951,8 @@ const pPlusOnlyHit = toBoolean(parameters["PlusOnlyHit"], false);
 const pNotPlusWhenUsed = toBoolean(parameters["NotPlusWhenUsed"], false);
 const pNotPlusSameTarget = toBoolean(parameters["NotPlusSameTarget"], false);
 const pMultipleAttenuation = parameters["MultipleAttenuation"];
+const pWaitChargedAnimation = toBoolean(parameters["WaitChargedAnimation"], true);
+const pChargedAnimationInterval = toNumber(parameters["GaugeInterval"], 0);
 const pShowGaugeNumber = toBoolean(parameters["ShowGaugeNumber"], false);
 const pLabelWidth = toNumber(parameters["LabelWidth"]);
 const pGaugeWidth = toNumber(parameters["GaugeWidth"]);
@@ -947,6 +982,10 @@ if (!pSpecialTypeList) {
 
 // 対象記憶用
 let mTargetIndexes = [];
+// チャージアニメーション管理用
+let mChargeList = [];
+// チャージアニメーションの管理用
+let mChargeCount = 0;
 
 //-----------------------------------------------------------------------------
 // プラグインコマンド
@@ -993,6 +1032,30 @@ function addSpecialGauge(actor, specialSkillType, value) {
         }
     }
 }
+
+//-----------------------------------------------------------------------------
+// BattleManager
+//-----------------------------------------------------------------------------
+
+/**
+ * ●戦闘開始
+ */
+const _BattleManager_startBattle = BattleManager.startBattle;
+BattleManager.startBattle = function() {
+    // チャージアニメーション管理リストをクリア
+    mChargeList = [];
+    _BattleManager_startBattle.apply(this, arguments);
+}
+
+/**
+ * ●アクション開始
+ */
+const _BattleManager_startAction = BattleManager.startAction;
+BattleManager.startAction = function() {
+    // チャージアニメーションのカウントクリア
+    mChargeCount = 0;
+    _BattleManager_startAction.apply(this, arguments);
+};
 
 //-----------------------------------------------------------------------------
 // Game_BattlerBase
@@ -1114,6 +1177,9 @@ Game_BattlerBase.prototype.addNewState = function(stateId) {
 const _Game_Battler_onBattleStart = Game_Battler.prototype.onBattleStart;
 Game_Battler.prototype.onBattleStart = function(advantageous) {
     _Game_Battler_onBattleStart.apply(this, arguments);
+
+    // チャージアニメーション用カウントをクリア
+    mChargeCount = 0;
 
     // 途中適用対策
     this.clearSpecialGaugesIfNecessary();
@@ -1277,9 +1343,34 @@ Game_Battler.prototype.addSpecialGauge = function(index, value) {
     this._specialGauges[index] = Math.max(this._specialGauges[index], 0);
 
     // 値が満タンになった場合は演出実行
-    if ($gameParty.inBattle() && this._specialGauges[index] == gaugeMax && gaugeData.ChargedAnimation) {
-        callAnimation(this, eval(gaugeData.ChargedAnimation));
+    if ($gameParty.inBattle() && this._specialGauges[index] == gaugeMax) {
+        const chargeData = {};
+        chargeData.target = this;
+        chargeData.targetSprite = getBattlerSprite(this);
+        // チャージアニメーション同士の時間差を設定
+        chargeData.delay = mChargeCount * pChargedAnimationInterval;
+
+        // チャージアニメーション管理リストに追加
+        // DynamicAnimation
+        if (gaugeData.ChargedDynamicSkill) {
+            chargeData.dynamicId = eval(gaugeData.ChargedDynamicSkill);
+            mChargeList.push(chargeData);
+        // 通常アニメーション
+        } else if (gaugeData.ChargedAnimation) {
+            chargeData.animationId = eval(gaugeData.ChargedAnimation);
+            mChargeList.push(chargeData);
+        }
+
+        mChargeCount++;
     }
+}
+
+/**
+ * ●指定したバトラーのスプライトを取得する。
+ */
+function getBattlerSprite(battler) {
+    const spriteset = SceneManager._scene._spriteset;
+    return spriteset.battlerSprites().find(s => s._battler == battler);
 }
 
 /**
@@ -1869,6 +1960,75 @@ Sprite_Gauge.prototype.specialGaugeIndex = function() {
 // };
 
 //-----------------------------------------------------------------------------
+// Spriteset_Base
+//-----------------------------------------------------------------------------
+
+// MZの場合
+if (Utils.RPGMAKER_NAME != "MV") {
+    if (!pWaitChargedAnimation) {
+        /**
+         * ●アニメーションの実行中判定
+         * ※実際にはウェイト判定に使う。
+         */
+        const _Spriteset_Base_isAnimationPlaying = Spriteset_Base.prototype.isAnimationPlaying;
+        Spriteset_Base.prototype.isAnimationPlaying = function() {
+            // 全てのアニメーションがnoWaitならば待たない。
+            // これによって、演出時のウェイトなくす。
+            if (this._animationSprites.length > 0
+                    && this._animationSprites.every(sprite => sprite._noWait)) {
+                return false;
+            }
+
+            return _Spriteset_Base_isAnimationPlaying.apply(this, arguments);
+        };
+    }
+}
+
+//-----------------------------------------------------------------------------
+// Spriteset_Battle
+//-----------------------------------------------------------------------------
+
+/**
+ * ●戦闘スプライト更新
+ */
+const _Spriteset_Battle_update = Spriteset_Battle.prototype.update;
+Spriteset_Battle.prototype.update = function() {
+    // チャージアニメーションリストに登録がある場合
+    if (mChargeList.length > 0) {
+        for (const chargeData of mChargeList) {
+            const sprite = chargeData.targetSprite;
+
+            // NRP_DynamicReturningAction.js併用時
+            // 帰還中は実行しない。
+            if (sprite.isReturning && sprite.isReturning()) {
+                break;
+            }
+
+            // ディレイが終わるまで処理待ち
+            if (chargeData.delay > 0) {
+                chargeData.delay--;
+                continue;
+            }
+
+            // DynamicAnimationを実行
+            if (chargeData.dynamicId) {
+                callDynamic(chargeData.target, chargeData.dynamicId);
+            // 通常アニメーションを実行
+            } else if (chargeData.animationId) {
+                callAnimation(chargeData.target, chargeData.animationId);
+            }
+
+            // 要素を削除するためのフラグ
+            chargeData.deleteFlg = true;
+        }
+        // 処理が終わった要素を除去
+        mChargeList = mChargeList.filter(data => !data.deleteFlg);
+    }
+
+    _Spriteset_Battle_update.apply(this, arguments);
+};
+
+//-----------------------------------------------------------------------------
 // 共通
 //-----------------------------------------------------------------------------
 
@@ -2019,6 +2179,48 @@ function isGaugeConditionOK(index, a) {
 //-----------------------------------------------------------------------------
 
 /**
+ * ●DynamicAnimation&Motionを呼び出し
+ */
+function callDynamic(battler, dynamicId) {
+    // 実行するDynamicAnimation情報を持ったアクション
+    const dynamicAction = makeAction(dynamicId, battler);
+    // バトラーを対象にする。
+    const targets = [battler];
+    // 引き継ぎたい情報をセット
+    const mapAnimation = [];
+    // バトラーを行動主体にする。
+    // ※これがないと行動主体を取得できない。
+    mapAnimation.subject = battler;
+    // ウェイトしないためのフラグ
+    if (!pWaitChargedAnimation) {
+        mapAnimation.isParallel = true;
+    }
+    // 空のWindow_BattleLogを作成し、DynamicAnimationを起動
+    const win = new Window_BattleLog(new Rectangle());
+    win.showDynamicAnimation(targets, dynamicAction, false, mapAnimation);
+}
+
+/**
+ * ●アクション情報の作成
+ */
+function makeAction(itemId, battleSubject, isItem) {
+    // 適当に先頭のキャラを行動主体にしてアクションを作成
+    // ※行動主体の情報は基本的に使わないので実際はほぼダミー
+    let subject = $gameParty.members()[0];
+    if (battleSubject) {
+        subject = battleSubject;
+    }
+    const action = new Game_Action(subject);
+    // アイテムかスキルかで分岐
+    if (isItem) {
+        action.setItem(itemId);
+    } else {
+        action.setSkill(itemId);
+    }
+    return action;
+}
+
+/**
  * ●アニメーション呼び出しを行う。
  * MV, MZの両方に対応
  */
@@ -2084,6 +2286,11 @@ function createAnimationSprite(targets, animation, mirror, delay) {
     sprite.setup(targetSprites, animation, mirror, delay, previous);
     spriteSet._effectsContainer.addChild(sprite);
     spriteSet._animationSprites.push(sprite);
+
+    if (!pWaitChargedAnimation) {
+        // ウェイトしないためのフラグ
+        sprite._noWait = true;
+    }
 };
 
 })();
