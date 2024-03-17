@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.04 Implementation of the special skill system.
+ * @plugindesc v1.05 Implementation of the special skill system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_CountTimeBattle
  * @url https://newrpg.seesaa.net/article/489968387.html
@@ -201,16 +201,26 @@
  * @desc Decrease ActionValue for ranged/continuous techniques.
  * e.g:"value / count" attenuates to the amount of increase / number of hits.
  * 
+ * @param <ChargedAnimation>
+ * 
  * @param WaitChargedAnimation
+ * @parent <ChargedAnimation>
  * @type boolean
  * @default true
  * @desc Wait for charged animation.
  * It is always treated as on in MV.
  * 
  * @param ChargedAnimationInterval
+ * @parent <ChargedAnimation>
  * @type number
  * @default 15
  * @desc The display interval when charged animation overlaps.
+ * 
+ * @param WaitDynamicMotion
+ * @parent <ChargedAnimation>
+ * @type boolean
+ * @default true
+ * @desc When DynamicMotion is used, wait for the return before executing the charged animation.
  * 
  * @-----------------------------------------------------------
  * 
@@ -436,7 +446,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.04 奥義システムの実装。
+ * @plugindesc v1.05 奥義システムの実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_CountTimeBattle
  * @url https://newrpg.seesaa.net/article/489968387.html
@@ -629,18 +639,30 @@
  * @desc 範囲技／多段技にてヒット毎のゲージ上昇量を減少させます。
  * 例：「value / count」で上昇量／ヒット数へと減衰。
  * 
+ * @param <ChargedAnimation>
+ * @text ＜満タンアニメーション＞
+ * 
  * @param WaitChargedAnimation
- * @text 満タンアニメを待つ
+ * @parent <ChargedAnimation>
+ * @text アニメーションを待つ
  * @type boolean
  * @default true
- * @desc 満タン時のアニメを待ちます。
+ * @desc 満タン時のアニメーション終了を待ちます。
  * ＭＶでは常にオンとして扱われます。
  * 
  * @param ChargedAnimationInterval
- * @text 満タンアニメの間隔
+ * @parent <ChargedAnimation>
+ * @text アニメーションの間隔
  * @type number
  * @default 15
- * @desc 満タン時のアニメが重なった場合の表示間隔です。
+ * @desc 満タン時のアニメーションが重なった場合の表示間隔です。
+ * 
+ * @param WaitDynamicMotion
+ * @parent <ChargedAnimation>
+ * @text DynamicMotionを待つ
+ * @type boolean
+ * @default true
+ * @desc DynamicMotion併用時、帰還を待ってから満タンアニメーションを実行します。
  * 
  * @-----------------------------------------------------------
  * 
@@ -953,6 +975,7 @@ const pNotPlusSameTarget = toBoolean(parameters["NotPlusSameTarget"], false);
 const pMultipleAttenuation = parameters["MultipleAttenuation"];
 const pWaitChargedAnimation = toBoolean(parameters["WaitChargedAnimation"], true);
 const pChargedAnimationInterval = toNumber(parameters["GaugeInterval"], 0);
+const pWaitDynamicMotion = toBoolean(parameters["WaitDynamicMotion"], true);
 const pShowGaugeNumber = toBoolean(parameters["ShowGaugeNumber"], false);
 const pLabelWidth = toNumber(parameters["LabelWidth"]);
 const pGaugeWidth = toNumber(parameters["GaugeWidth"]);
@@ -1996,12 +2019,24 @@ Spriteset_Battle.prototype.update = function() {
     // チャージアニメーションリストに登録がある場合
     if (mChargeList.length > 0) {
         for (const chargeData of mChargeList) {
+            const target = chargeData.target;
             const sprite = chargeData.targetSprite;
 
-            // NRP_DynamicReturningAction.js併用時
-            // 帰還中は実行しない。
-            if (sprite.isReturning && sprite.isReturning()) {
-                break;
+            // DynamicMotionのアクション終了を待つ場合
+            if (pWaitDynamicMotion) {
+                // 対象がDynamicMotion予約中の場合
+                if (target.isDynamicMotionRequested && target.isDynamicMotionRequested()) {
+                    break;
+
+                // 対象がアクション中の場合
+                } else if (sprite.isMotionPlaying && sprite.isMotionPlaying()) {
+                    break;
+
+                // NRP_DynamicReturningAction.js併用時
+                // 帰還中は実行しない。
+                } else if (sprite.isReturning && sprite.isReturning()) {
+                    break;
+                }
             }
 
             // ディレイが終わるまで処理待ち
@@ -2012,10 +2047,10 @@ Spriteset_Battle.prototype.update = function() {
 
             // DynamicAnimationを実行
             if (chargeData.dynamicId) {
-                callDynamic(chargeData.target, chargeData.dynamicId);
+                callDynamic(target, chargeData.dynamicId);
             // 通常アニメーションを実行
             } else if (chargeData.animationId) {
-                callAnimation(chargeData.target, chargeData.animationId);
+                callAnimation(target, chargeData.animationId);
             }
 
             // 要素を削除するためのフラグ
