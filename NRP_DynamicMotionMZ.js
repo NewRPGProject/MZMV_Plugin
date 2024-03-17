@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.221 When executing skills, call motion freely.
+ * @plugindesc v1.23 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -561,7 +561,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.221 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.23 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -1716,6 +1716,23 @@ BaseMotion.prototype.evalTimingStr = function (arg) {
 
     return retValue;
 };
+
+/**
+ * ●ターン処理
+ */
+const _BattleManager_processTurn = BattleManager.processTurn;
+BattleManager.processTurn = function() {
+    const subject = this._subject;
+    const action = subject.currentAction();
+
+    // startAction()より前に実行
+    // ※startAction()内に書くと、NRP_ChainSkill.jsと競合するのでここでやる。
+    if (action) {
+        // アクター位置の自動設定を禁止解除
+        this._noUpdateTargetPosition = false;
+    }
+    _BattleManager_processTurn.apply(this, arguments);
+}
 
 /**
  * ●モーションの生成開始
