@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.052 It makes MV animations correspond to DynamicAnimationMZ.
+ * @plugindesc v1.053 It makes MV animations correspond to DynamicAnimationMZ.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -104,7 +104,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.052 ＭＶ用アニメーションをDynamicAnimationMZに対応させます。
+ * @plugindesc v1.053 ＭＶ用アニメーションをDynamicAnimationMZに対応させます。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -506,23 +506,21 @@ Sprite_AnimationMV.prototype.updateDynamicAnimation = function() {
 
     // 初期フレームは透明の場合
     if (t == 0 && firstInvisible) {
-        this.opacity = 0;
+        opacity = 0;
     // 不透明度
     } else if (opacity != undefined) {
         opacity = eval(opacity);
-        if (opacity != undefined) {
-            this.opacity = opacity;
-        }
     // それ以外は255
     } else {
-        this.opacity = 255;
+        opacity = 255;
     }
+    if (opacity == undefined) {
+        opacity = 255;
+    }
+    this.opacity = opacity;
 
     // 残像の不透明度計算
     if (da.isAfterimage) {
-        if (opacity == undefined) {
-            opacity = 255;
-        }
         this.opacity = opacity * da.opacityRate;
     }
 
