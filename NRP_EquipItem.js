@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.04 Allow items to be equipped.
+ * @plugindesc v1.05 Allow items to be equipped.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489576403.html
  *
@@ -88,6 +88,11 @@
  * @default true
  * @desc For items not consumed, allow them to be used without restrictions.
  * 
+ * @param NoItemDisabled
+ * @type boolean
+ * @default false
+ * @desc If there is no item available, the command is not selectable.
+ * 
  * @param UseOriginalCommand
  * @type boolean
  * @default false
@@ -109,7 +114,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 アイテムを装備できるようにする。
+ * @plugindesc v1.05 アイテムを装備できるようにする。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489576403.html
  *
@@ -194,6 +199,12 @@
  * @default true
  * @desc 消耗なしのアイテムについては、制限なく使用できるようにします。
  * 
+ * @param NoItemDisabled
+ * @text アイテム無で選択不可
+ * @type boolean
+ * @default false
+ * @desc 使用できるアイテムが存在しない場合はコマンドを選択不可とします。
+ * 
  * @param UseOriginalCommand
  * @text 独自コマンドを使用
  * @type boolean
@@ -242,10 +253,11 @@ function setDefault(str, def) {
 
 const PLUGIN_NAME = "NRP_EquipItem";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
+const pEquipItemSlot = parameters["EquipItemSlot"];
 const pAutoEquipMode = toBoolean(parameters["AutoEquipMode"], false);
 const pUsedOnlyOnce = toBoolean(parameters["UsedOnlyOnce"], false);
 const pExceptDurables = toBoolean(parameters["ExceptDurables"], false);
-const pEquipItemSlot = parameters["EquipItemSlot"];
+const pNoItemDisabled = toBoolean(parameters["NoItemDisabled"], false);
 const pUseOriginalCommand = toBoolean(parameters["UseOriginalCommand"], false);
 const pCommandPosition = toNumber(parameters["CommandPosition"], 0);
 const pCommandName = parameters["CommandName"];
@@ -578,6 +590,31 @@ Game_Actor.prototype.isEquipChangeOk = function(slotId) {
     return _Game_Actor_isEquipChangeOk.apply(this, arguments);
 };
 
+/**
+ * 【独自】装備アイテムの一覧
+ */
+Game_Actor.prototype.equipItems = function() {
+    const data = [];
+
+    // アクターの装備品を取得
+    for (let slotId = 0; slotId < this._equips.length; slotId++) {
+        // 既に使用済のスロットだった場合は次へ
+        if (this.isUsedSlot(slotId)) {
+            continue;
+        }
+
+        const equip = this._equips[slotId];
+        // JSONデータを取得
+        const dataItem = equip.object();
+        // アイテムならば表示対象に追加
+        if (isEquipItem(dataItem)) {
+            data.push(dataItem);
+        }
+    }
+
+    return data;
+};
+
 //-----------------------------------------------------------------------------
 // Game_Item
 //-----------------------------------------------------------------------------
@@ -646,8 +683,27 @@ if (pUseOriginalCommand) {
 
         // 装備アイテムコマンドの追加
         if (this._actor) {
-            this._list.splice(pCommandPosition, 0, { name: pCommandName, symbol: "equipItem", enabled: true, ext: null});
+            // 道具を使用できるかどうか？
+            let canUseItem = true;
+            if (pNoItemDisabled) {
+                canUseItem = this._actor.equipItems().length ? true : false;
+            }
+            this._list.splice(pCommandPosition, 0, { name: pCommandName, symbol: "equipItem", enabled: canUseItem, ext: null});
         }
+    };
+
+// 独自コマンドを使用しない。かつ、道具がない場合は選択不可にする場合
+} else if (pNoItemDisabled) {
+    /**
+     * 【上書】道具コマンドの登録
+     */
+    Window_ActorCommand.prototype.addItemCommand = function() {
+        // 道具を使用できるかどうか？
+        let canUseItem = true;
+        if (this._actor) {
+            canUseItem = this._actor.equipItems().length ? true : false;
+        }
+        this.addCommand(TextManager.item, "item", canUseItem);
     };
 }
 
@@ -873,24 +929,9 @@ if (!pUseOriginalCommand) {
      * ●アイテム一覧作成
      */
     Window_BattleItem.prototype.makeItemList = function() {
-        this._data = [];
-
         // アクターの装備品を表示
         const actor = BattleManager.actor();
-        for (let slotId = 0; slotId < actor._equips.length; slotId++) {
-            // 既に使用済のスロットだった場合は次へ
-            if (actor.isUsedSlot(slotId)) {
-                continue;
-            }
-
-            const equip = actor._equips[slotId];
-            // JSONデータを取得
-            const dataItem = equip.object();
-            // アイテムならば表示対象に追加
-            if (isEquipItem(dataItem)) {
-                this._data.push(dataItem);
-            }
-        }
+        this._data = actor.equipItems();
     };
 
     /**
