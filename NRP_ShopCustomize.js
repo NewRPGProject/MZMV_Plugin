@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.001 Customize the shop scene.
+ * @plugindesc v1.01 Customize the shop scene.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/498469379.html
  *
@@ -186,7 +186,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.001 店画面をカスタマイズします。
+ * @plugindesc v1.01 店画面をカスタマイズします。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/498469379.html
  *
@@ -565,6 +565,12 @@ if (pDisplayActorWindow) {
 
         // ステータスウィンドウに連携
         this._statusWindow.setShopActorWindow(this._shopActorWindow);
+        // アイテムが取得できる場合はセット
+        // 外部プラグイン（即時装備系など）によって戻ってきた場合を想定
+        if (this._statusWindow._item) {
+            this._shopActorWindow.setup(this._statusWindow._item);
+            this._shopActorWindow.show();
+        }
     };
 
     /**
@@ -671,6 +677,16 @@ if (pDisplayActorWindow) {
         this._shopActorWindow.show();
     };
 }
+
+// const _Scene_Shop_update = Scene_Shop.prototype.update;
+// Scene_Shop.prototype.update = function() {
+//     _Scene_Shop_update.apply(this, arguments);
+
+//     if (this._shopActorWindow) {
+//         this._shopActorWindow.createActorSprites();
+//         this._shopActorWindow.refresh();
+//     }
+// };
 
 //-----------------------------------------------------------------------------
 // 【独自】Window_ShopActor（アクター用ウィンドウ）
@@ -835,6 +851,7 @@ Window_ShopActor.prototype.createActorSprites = function() {
         // アクター用のスプライトを作成
         const sprite = new Sprite_ShopCustomizeActor(character);
         sprite.setActor(actor);
+        sprite.update();
         this._actorSprites.push(sprite);
         this.addChild(sprite);
 
@@ -1044,7 +1061,10 @@ Sprite_ShopCustomizeActor.prototype.updateBitmap = function() {
 };
 
 Sprite_ShopCustomizeActor.prototype.isImageChanged = function() {
-    return Sprite_Character.prototype.isImageChanged.call(this);
+    return (
+        this._characterName !== this._character.characterName() ||
+        this._characterIndex !== this._character.characterIndex()
+    );
 };
 
 Sprite_ShopCustomizeActor.prototype.setCharacterBitmap = function() {
