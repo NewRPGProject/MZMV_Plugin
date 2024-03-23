@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.05 Allow items to be equipped.
+ * @plugindesc v1.06 Allow items to be equipped.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489576403.html
  *
@@ -114,7 +114,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.05 アイテムを装備できるようにする。
+ * @plugindesc v1.06 アイテムを装備できるようにする。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489576403.html
  *
@@ -323,16 +323,32 @@ const DEFAULT_EQUIP_TYPE = DEFAULT_SLOTS[0];
 // Scene_Boot
 //-----------------------------------------------------------------------------
 
-/**
- * ●ＤＢのロード完了後
- */
-const _Scene_Boot_onDatabaseLoaded = Scene_Boot.prototype.onDatabaseLoaded;
-Scene_Boot.prototype.onDatabaseLoaded = function() {
-    // アイテムデータに装備情報を書込
-    setItemData($dataItems);
+// ＭＶの場合
+if (Utils.RPGMAKER_NAME == "MV") {
+    /**
+     * ●ゲーム開始時
+     */
+    const _Scene_Boot_start = Scene_Boot.prototype.start;
+    Scene_Boot.prototype.start = function() {
+        // アイテムデータに装備情報を書込
+        setItemData($dataItems);
+        
+        _Scene_Boot_start.apply(this, arguments);
+    };
 
-    _Scene_Boot_onDatabaseLoaded.apply(this, arguments);
-};
+// ＭＺの場合
+} else {
+    /**
+     * ●ＤＢのロード完了後
+     */
+    const _Scene_Boot_onDatabaseLoaded = Scene_Boot.prototype.onDatabaseLoaded;
+    Scene_Boot.prototype.onDatabaseLoaded = function() {
+        // アイテムデータに装備情報を書込
+        setItemData($dataItems);
+
+        _Scene_Boot_onDatabaseLoaded.apply(this, arguments);
+    };
+}
 
 /**
  * ●データを書込
