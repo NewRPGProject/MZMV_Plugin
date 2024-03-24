@@ -5,7 +5,7 @@
  * @target MV MZ
  * @plugindesc v1.00 Add an equipment command to the shop.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
- * @url https://newrpg.seesaa.net/article/489626316.html
+ * @url https://newrpg.seesaa.net/article/502768907.html
  *
  * @help Add an equipment command to the shop.
  * Players will be able to change their equipment
@@ -34,7 +34,7 @@
  * @target MV MZ
  * @plugindesc v1.00 ショップに装備コマンドを追加
  * @author 砂川赳（http://newrpg.seesaa.net/）
- * @url https://newrpg.seesaa.net/article/489626316.html
+ * @url https://newrpg.seesaa.net/article/502768907.html
  *
  * @help ショップに装備コマンドを追加します。
  * プレイヤーはショップから出ることなく装備を変更できるようになります。
