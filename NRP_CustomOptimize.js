@@ -72,6 +72,11 @@
  * @type string
  * @desc Equipment type to be covered by Clear. If blank, all. Multiple can be specified. (e.g.: 4,6)
  * 
+ * @param SlotActorSwitch
+ * @type boolean
+ * @default true
+ * @desc Actor switching by Pageup and Pagedown is also enabled when changing equipment slots.
+ * 
  * @param HideOptimizeArea
  * @type boolean
  * @default false
@@ -178,6 +183,12 @@
  * @desc 全て外すの対象とする装備タイプです。空欄なら全て。
  * 複数指定可。（例：4,6）
  * 
+ * @param SlotActorSwitch
+ * @text スロット変更時アクター切替
+ * @type boolean
+ * @default true
+ * @desc 装備スロット変更時にPageup,Pagedownによるアクター切替を有効にします。
+ * 
  * @param HideOptimizeArea
  * @text 最強装備欄の省略
  * @type boolean
@@ -264,6 +275,7 @@ const PLUGIN_NAME = "NRP_CustomOptimize";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pOptimizeEquipmentType = setDefault(parameters["OptimizeEquipmentType"]);
 const pClearEquipmentType = setDefault(parameters["ClearEquipmentType"]);
+const pSlotActorSwitch = toBoolean(parameters["SlotActorSwitch"], false);
 const pHideOptimizeArea = toBoolean(parameters["HideOptimizeArea"], false);
 const pOptimizeKey = setDefault(parameters["OptimizeKey"]);
 const pOptimizeCommandList = parseStruct2(parameters["OptimizeCommandList"]);
@@ -300,25 +312,6 @@ if (pHideOptimizeArea) {
     };
 
     /**
-     * ●スロットウィンドウの作成
-     */
-    const _Scene_Equip_createSlotWindow = Scene_Equip.prototype.createSlotWindow;
-    Scene_Equip.prototype.createSlotWindow = function() {
-        _Scene_Equip_createSlotWindow.apply(this, arguments);
-
-        // キャンセル時は前画面へ戻る。
-        this._slotWindow.setHandler("cancel", this.popScene.bind(this));
-        // ＬＲで前後のアクターへ。
-        this._slotWindow.setHandler("pagedown", this.nextActor.bind(this));
-        this._slotWindow.setHandler("pageup", this.previousActor.bind(this));
-
-        // 最強装備用のウィンドウを開く
-        if (pOptimizeKey) {
-            this._slotWindow.setHandler(pOptimizeKey, this.openOptimizeWindow.bind(this));
-        }
-    };
-
-    /**
      * ●スロットウィンドウのサイズ
      */
     Scene_Equip.prototype.slotWindowRect = function() {
@@ -327,18 +320,6 @@ if (pHideOptimizeArea) {
         const ww = Graphics.boxWidth - this.statusWidth();
         const wh = this.mainAreaHeight();
         return new Rectangle(wx, wy, ww, wh);
-    };
-
-    /**
-     * ●アクター変更時
-     */
-    const _Scene_Equip_onActorChange = Scene_Equip.prototype.onActorChange;
-    Scene_Equip.prototype.onActorChange = function() {
-        _Scene_Equip_onActorChange.apply(this, arguments);
-
-        // スロットウィンドウにフォーカス。
-        this._slotWindow.activate();
-        this._slotWindow.select(0);
     };
 
     /**
@@ -420,6 +401,50 @@ if (pHideOptimizeArea) {
         this._commandWindow.deactivate();
         this._optimizeWindow.close();
         this._slotWindow.activate();
+    };
+}
+
+/**
+ * ●スロットウィンドウの作成
+ */
+const _Scene_Equip_createSlotWindow = Scene_Equip.prototype.createSlotWindow;
+Scene_Equip.prototype.createSlotWindow = function() {
+    _Scene_Equip_createSlotWindow.apply(this, arguments);
+
+    // ＬＲで前後のアクターへ。
+    if (pSlotActorSwitch) {
+        this._slotWindow.setHandler("pagedown", this.nextActor.bind(this));
+        this._slotWindow.setHandler("pageup", this.previousActor.bind(this));
+    }
+
+    if (pHideOptimizeArea) {
+        // キャンセル時は前画面へ戻る。
+        this._slotWindow.setHandler("cancel", this.popScene.bind(this));
+        // 最強装備用のウィンドウを開く
+        if (pOptimizeKey) {
+            this._slotWindow.setHandler(pOptimizeKey, this.openOptimizeWindow.bind(this));
+        }
+    }
+};
+
+// ＬＲで前後のアクターへ。
+if (pSlotActorSwitch) {
+    /**
+     * ●アクター変更時
+     */
+    const _Scene_Equip_onActorChange = Scene_Equip.prototype.onActorChange;
+    Scene_Equip.prototype.onActorChange = function() {
+        // スロットウィンドウにカーソルが残っている場合
+        if (this._slotWindow.index() >= 0) {
+            Scene_MenuBase.prototype.onActorChange.call(this);
+            this.refreshActor();
+            // 引き続きスロットウィンドウをアクティブにする。
+            this._slotWindow.activate();
+            this._slotWindow.select(0);
+            this._commandWindow.deactivate();
+            return;
+        }
+        _Scene_Equip_onActorChange.apply(this, arguments);
     };
 }
 
@@ -543,6 +568,38 @@ if (pHideOptimizeArea) {
         this.updateInputData();
         this.deactivate();
         this.callHandler(pOptimizeKey);
+    };
+}
+
+// アクター切替が有効な場合
+if (pSlotActorSwitch) {
+    /*
+    * メソッドが未定義の場合は事前に定義
+    * ※これをしておかないと以後の親クラスへの追記が反映されない。
+    */
+    if (Window_EquipSlot.prototype.processPageup == Window_Selectable.prototype.processPageup) {
+        Window_EquipSlot.prototype.processPageup = function() {
+            return Window_Selectable.prototype.processPageup.apply(this, arguments);
+        }
+    }
+    if (Window_EquipSlot.prototype.processPagedown == Window_Selectable.prototype.processPagedown) {
+        Window_EquipSlot.prototype.processPagedown = function() {
+            return Window_Selectable.prototype.processPagedown.apply(this, arguments);
+        }
+    }
+
+    const _Window_EquipSlot_processPageup = Window_EquipSlot.prototype.processPageup;
+    Window_EquipSlot.prototype.processPageup = function() {
+        _Window_EquipSlot_processPageup.apply(this, arguments);
+        // ページ切替後もアクティブを維持する。
+        this.activate();
+    };
+
+    const _Window_EquipSlot_processPagedown = Window_EquipSlot.prototype.processPagedown;
+    Window_EquipSlot.prototype.processPagedown = function() {
+        _Window_EquipSlot_processPagedown.apply(this, arguments);
+        // ページ切替後もアクティブを維持する。
+        this.activate();
     };
 }
 
