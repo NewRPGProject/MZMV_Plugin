@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.042 Adjust the message window.
+ * @plugindesc v1.043 Adjust the message window.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -230,7 +230,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.042 メッセージウィンドウを調整する。
+ * @plugindesc v1.043 メッセージウィンドウを調整する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -656,6 +656,18 @@ if (Window_Message.prototype.createContents == Window_Base.prototype.createConte
 const _Window_Message_createContents = Window_Message.prototype.createContents;
 Window_Message.prototype.createContents = function() {
     _Window_Message_createContents.apply(this, arguments);
+
+    if (this._windowImageSprite) {
+        // 縦幅が変更されている場合は画像表示の対象外なのでクリアする。
+        // ※想定の縦幅以外はうまく表示できないため
+        if (mInitialHeight != this.height) {
+            this._windowImageSprite.visible = false;
+            // システムの不透明度を設定
+            this.backOpacity = $gameSystem.windowOpacity();
+        } else {
+            this._windowImageSprite.visible = true;
+        }
+    }
 
     // 縦幅が変更されている場合はマスクの対象外なのでクリアする。
     // ※想定の縦幅以外はうまく表示できないため
