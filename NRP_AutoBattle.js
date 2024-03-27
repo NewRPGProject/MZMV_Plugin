@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Add an auto-battle command.
+ * @plugindesc v1.021 Add an auto-battle command.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/498941158.html
  *
@@ -71,7 +71,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 自動戦闘コマンドを追加します。
+ * @plugindesc v1.021 自動戦闘コマンドを追加します。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/498941158.html
  *
@@ -299,7 +299,9 @@ BattleManager.setAutoBattleActions = function() {
 
     // ＣＴＢの場合
     if (this._isCtb) {
-        this._subject.makeAutoBattleActions();
+        if (this._subject.isActor()) {
+            this._subject.makeAutoBattleActions();
+        }
         this.startTurn();
         return;
     }
