@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.10 Setting the battler's shadow & adding the levitation effect
+ * @plugindesc v1.101 Setting the battler's shadow & adding the levitation effect
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base animatedSVEnemies
  * @base NRP_DynamicMotionMZ
@@ -279,7 +279,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.10 バトラーの影を設定＆浮遊効果の追加
+ * @plugindesc v1.101 バトラーの影を設定＆浮遊効果の追加
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @orderAfter animatedSVEnemies
  * @orderAfter NRP_DynamicMotionMZ
@@ -1311,7 +1311,9 @@ Game_BattlerBase.prototype.eraseState = function(stateId) {
     if (state.meta.BattlerFloat != undefined) {
         const sprite = getBattlerSprite(this);
         // 影を未設定にして初期化
-        sprite._isSetShadow = false;
+        if (sprite) {
+            sprite._isSetShadow = false;
+        }
     }
 };
 
