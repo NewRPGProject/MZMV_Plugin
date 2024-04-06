@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Add shadows to messages.
+ * @plugindesc v1.01 Add shadows to messages.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/491354306.html
  *
@@ -96,7 +96,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 文章に影をつける。
+ * @plugindesc v1.01 文章に影をつける。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/491354306.html
  *
@@ -305,10 +305,10 @@ Window_Base.prototype.createContents = function() {
 };
 
 // ----------------------------------------------------------------------------
-// Sprite_Name
+// Sprite_Name (MZ)
 // ----------------------------------------------------------------------------
 
-if (pStatusName) {
+if (pStatusName && typeof Sprite_Name != "undefined") {
     /**
      * ●bitmapの生成
      */
@@ -322,10 +322,10 @@ if (pStatusName) {
 }
 
 // ----------------------------------------------------------------------------
-// Sprite_Gauge
+// Sprite_Gauge (MZ)
 // ----------------------------------------------------------------------------
 
-if (pStatusGauges) {
+if (pStatusGauges && typeof Sprite_Gauge != "undefined") {
     /**
      * ●bitmapの生成
      */
