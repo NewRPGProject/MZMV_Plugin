@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.001 Make the battle start effect seamless.
+ * @plugindesc v1.01 Make the battle start effect seamless.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/502501086.html
  *
@@ -85,7 +85,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.001 戦闘開始演出をシームレスにします。
+ * @plugindesc v1.01 戦闘開始演出をシームレスにします。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/502501086.html
  *
@@ -328,7 +328,7 @@ Scene_Battle.prototype.update = function() {
  */
 if (Scene_Battle.prototype.isBusy == Scene_Base.prototype.isBusy) {
     Scene_Battle.prototype.isBusy = function() {
-        Scene_Base.prototype.isBusy.apply(this, arguments);
+        return Scene_Base.prototype.isBusy.apply(this, arguments);
     }
 }
 
