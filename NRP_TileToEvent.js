@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.052 Automatically generate events on tiles.
+ * @plugindesc v1.06 Automatically generate events on tiles.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481496398.html
  *
@@ -186,7 +186,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.052 タイル上に自動でイベントを生成します。
+ * @plugindesc v1.06 タイル上に自動でイベントを生成します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481496398.html
  *
@@ -755,7 +755,6 @@ function tileToEvent(x, y, z, settingList, createFlg) {
         // 座標補正
         const eventX = x + setting.adjustX;
         const eventY = y + setting.adjustY;
-
         $gameMap.spawnTileEvent(getEventIdForTileEvent(setting.eventId), eventX, eventY);
     }
 }
@@ -1069,6 +1068,9 @@ DataManager.onLoad = function(object) {
             if (pInitEventOnLoad) {
                 // タイルイベントを全削除
                 for (const event of $gameMap.getTileEvents()) {
+                    // $dataMap.eventsにイベント情報を登録する。
+                    // これを先にやらないと安全に削除できない。
+                    event.linkEventData();
                     event.erase();
                 }
                 // イベント作成＆置換対象のタイルを非表示
@@ -1142,23 +1144,6 @@ Game_Player.prototype.requestMapReload = function() {
 
     // 非表示タイルを初期化
     mHiddenTiles = [];
-};
-
-//---------------------------------------------------
-// エラーに対処
-//---------------------------------------------------
-
-/**
- * ●リフレッシュ
- */
-const _Game_Event_refresh = Game_Event.prototype.refresh;
-Game_Event.prototype.refresh = function() {
-    // イベントが取得できない場合は処理しない。
-    // ※通常はあり得ないのだが、ロード時に不整合が起こる場合がある。
-    if (!this.event()) {
-        return;
-    }
-    _Game_Event_refresh.apply(this, arguments);
 };
 
 //---------------------------------------------------
