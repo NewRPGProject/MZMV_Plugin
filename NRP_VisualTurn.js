@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v2.02 The order of actions is displayed on the battle screen.
+ * @plugindesc v2.03 The order of actions is displayed on the battle screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -256,6 +256,18 @@
  * @desc Adjusts Y of the image. Formula is possible.
  * e.g.: index == 0 ? -50 : 0
  * 
+ * @param imageShiftX
+ * @parent useSprite
+ * @type string
+ * @desc Shifts the X of the image. Formula is possible.
+ * e.g.: a.isActor() ? 20 : -20
+ * 
+ * @param imageShiftY
+ * @parent useSprite
+ * @type string
+ * @desc Shifts the Y of the image. Formula is possible.
+ * e.g.: a.isActor() ? 20 : -20
+ * 
  * @param adjustZoom
  * @parent useSprite
  * @type string
@@ -398,7 +410,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.02 行動順序を戦闘画面へ表示します。
+ * @plugindesc v2.03 行動順序を戦闘画面へ表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -667,6 +679,20 @@
  * @desc シンボル画像のＹ座標を補正します。数式可
  * 例：index == 0 ? -50 : 0
  * 
+ * @param imageShiftX
+ * @text 画像Ｘ座標シフト
+ * @parent useSprite
+ * @type string
+ * @desc シンボル画像のＸ座標をシフトします。数式可
+ * 例：a.isActor() ? 20 : -20
+ * 
+ * @param imageShiftY
+ * @text 画像Ｙ座標シフト
+ * @parent useSprite
+ * @type string
+ * @desc シンボル画像のＹ座標をシフトします。数式可
+ * 例：a.isActor() ? 20 : -20
+ * 
  * @param adjustZoom
  * @text 表示倍率補正
  * @parent useSprite
@@ -884,6 +910,8 @@ const pIntervalX = toNumber(parameters["intervalX"]);
 const pIntervalY = toNumber(parameters["intervalY"]);
 const pSymbolAdjustX = setDefault(parameters["symbolAdjustX"], 0);
 const pSymbolAdjustY = setDefault(parameters["symbolAdjustY"], 0);
+const pImageShiftX = setDefault(parameters["imageShiftX"], 0);
+const pImageShiftY = setDefault(parameters["imageShiftY"], 0);
 const pAdjustZoom = setDefault(parameters["adjustZoom"], 100);
     
 const pEnemyFileName = setDefault(parameters["enemyFileName"], "Monster");
@@ -1803,12 +1831,15 @@ Window_BattleCtb.prototype.drawSymbolCommon = function(drawArgs, index) {
         // 敵用の座標補正（アクターの場合は0になる。）
         const enemyAdjustX = drawArgs.enemyAdjustX * adjustZoom;
         const enemyAdjustY = drawArgs.enemyAdjustY * adjustZoom;
+        // 画像の位置調整
+        const imageShiftX = getImageShiftX(battler);
+        const imageShiftY = getImageShiftY(battler);
 
         const spriteset = getSpriteset();
         sprite.bitmap = bitmap;
 
-        sprite.x = this.x + SPRITE_ADD_X + drawArgs.x + enemyAdjustX;
-        sprite.y = this.y + SPRITE_ADD_Y + drawArgs.y + enemyAdjustY;
+        sprite.x = this.x + SPRITE_ADD_X + drawArgs.x + enemyAdjustX + imageShiftX;
+        sprite.y = this.y + SPRITE_ADD_Y + drawArgs.y + enemyAdjustY + imageShiftY;
         sprite.anchor.x = 0;
         sprite.anchor.y = 0;
         
@@ -1838,8 +1869,8 @@ Window_BattleCtb.prototype.drawSymbolCommon = function(drawArgs, index) {
             const maskSprite = new Sprite();
             maskSprite.bitmap = ImageManager.loadPicture(maskImage);
             // 描画時に敵画像をズラした分を戻す。
-            maskSprite.x = sprite.x - enemyAdjustX;
-            maskSprite.y = sprite.y - enemyAdjustY;
+            maskSprite.x = sprite.x - enemyAdjustX - imageShiftX;
+            maskSprite.y = sprite.y - enemyAdjustY - imageShiftY;
             maskSprite.anchor.x = sprite.anchor.x;
             maskSprite.anchor.y = sprite.anchor.y;
             maskSprite.scale.x = adjustZoom;
@@ -1880,6 +1911,38 @@ Window_BattleCtb.prototype.drawSymbolCommon = function(drawArgs, index) {
 
     // 敵の表示用識別子を描画
     this.drawEnemyVisualId(battler, sprite, drawArgs, index);
+}
+
+/**
+ * ●バトラー個別の画像シフトＸ座標の補正値
+ */
+function getImageShiftX(battler) {
+    const a = battler;
+    // プラグインパラメータから取得
+    let imageShiftX = eval(pImageShiftX);
+    // meta値があれば補正
+    const data = battler.isActor() ? battler.actor() : battler.enemy();
+    const metaImageShiftX = data.meta.CtbImageShiftX;
+    if (metaImageShiftX != null) {
+        imageShiftX += eval(metaImageShiftX);
+    }
+    return imageShiftX;
+}
+
+/**
+ * ●バトラー個別の画像シフトＹ座標の補正値
+ */
+function getImageShiftY(battler) {
+    const a = battler;
+    // プラグインパラメータから取得
+    let imageShiftY = eval(pImageShiftY);
+    // meta値があれば補正
+    const data = battler.isActor() ? battler.actor() : battler.enemy();
+    const metaImageShiftY = data.meta.CtbImageShiftY;
+    if (metaImageShiftY != null) {
+        imageShiftY += eval(metaImageShiftY);
+    }
+    return imageShiftY;
 }
 
 /**
@@ -1979,8 +2042,8 @@ function makeDrawArgsAutoZoom(x, y, width, height, imageWidth, imageHeight) {
     const ph = Math.min(height, imageHeight * zoom);
     
     // 切り取る画像サイズ
-    let sw = Math.floor(pw / zoom);
-    let sh = Math.floor(ph / zoom);
+    let sw = Math.floor(pw * pEnemyZoom / zoom);
+    let sh = Math.floor(ph * pEnemyZoom / zoom);
 
     // 切り取る画像サイズが規格の範囲を超えている。
     // 元のサイズ比率を保ったまま調整する。
