@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.08 Place enemy groups automatically and randomly.
+ * @plugindesc v1.081 Place enemy groups automatically and randomly.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475049887.html
  *
@@ -169,7 +169,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.08 敵グループを自動でランダム配置します。
+ * @plugindesc v1.081 敵グループを自動でランダム配置します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475049887.html
  *
@@ -903,8 +903,9 @@ function getDistanceValue(a, b) {
     const ay = a.y;
     const aCenterY = ay - a.height/2;
     // 浮遊プラグインによるズレを考慮して足元の座標を取得
-    const bx = b.x;
+    const bx = getCenterX(b);
     const by = getFootY(b);
+
     const bCenterY = by - b.height/2;
 
     // 中心同士の距離を計算
@@ -962,14 +963,30 @@ function getDistanceValue(a, b) {
 }
 
 /**
+ * ●中央のＸ座標を取得する。
+ */
+function getCenterX(sprite) {
+    // スプライトが移動中の場合はホーム座標を参照
+    if (sprite.isMoving()) {
+        return sprite._battler._homeX;
+    }
+    return sprite.x;
+}
+
+/**
  * ●足元のＹ座標を取得する。
  */
 function getFootY(sprite) {
+    let y = sprite.y;
+    // スプライトが移動中の場合はホーム座標を参照
+    if (sprite.isMoving()) {
+        y = sprite._battler._homeY;
+    }
     // NRP_ShadowAndLevitate.jsの浮遊値
     if (sprite.floatHeight) {
-        return sprite.y + sprite.floatHeight - sprite.floatSwing;
+        return y + sprite.floatHeight - sprite.floatSwing;
     }
-    return sprite.y;
+    return y;
 }
 
 /**
@@ -993,37 +1010,14 @@ BattleManager.getSprite = function(battler) {
 };
 
 /**
- * 指定したバトラーのスプライトを取得する。
+ * ●指定したバトラーのスプライトを取得する。
  */
 function getBattlerSprite(battler) {
-    if (!battler || !BattleManager._spriteset) {
-        return undefined;
-    }
+    const spriteset = BattleManager._spriteset;
+    const sprites = spriteset.battlerSprites();
 
-    var sprite;
-
-    var actorSprites = BattleManager._spriteset._actorSprites;
-    var enemySprites = BattleManager._spriteset._enemySprites;
-
-    if (battler.isActor()) {
-        for (var i = 0; i < actorSprites.length; i++) {
-            var s = actorSprites[i];
-            if (s._battler == battler) {
-                sprite = s;
-                break;
-            }
-        }
-    } else {
-        for (var i = 0; i < enemySprites.length; i++) {
-            var s = enemySprites[i];
-            if (s._battler == battler) {
-                sprite = s;
-                break;
-            }
-        }
-    }
-
-    return sprite;
+    // 一致があれば返す
+    return sprites.find(s => s._battler == battler);
 }
 
 })();
