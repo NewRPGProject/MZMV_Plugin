@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.12 Multiple classes allow for a highly flexible growth system.
+ * @plugindesc v1.13 Multiple classes allow for a highly flexible growth system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -528,11 +528,29 @@
  * @type string
  * @default -------
  * @desc The notation of experience when the occupation level is reached to the maximum.
+ * 
+ * @param ShowMaxLevelMessage
+ * @type boolean
+ * @default false
+ * @desc Displays a message when an additional class reaches the max level.
+ * 
+ * @param MaxLevelMessage
+ * @parent ShowMaxLevelMessage
+ * @type string
+ * @default %1 mastered %2!
+ * @desc The message when the max level is reached.
+ * %1=actor name, %2=class name, %3=level
+ * 
+ * @param ShowBenchMaxLevel
+ * @parent ShowMaxLevelMessage
+ * @type boolean
+ * @default false
+ * @desc The message is forced to be displayed for the reserved members as well. Function only when used with NRP_BenchMembersExp.js.
  */
 
 /*:ja
  * @target MZ
- * @plugindesc v1.12 多重職業によって自由度の高い成長システムを実現。
+ * @plugindesc v1.13 多重職業によって自由度の高い成長システムを実現。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -1108,6 +1126,28 @@
  * @type string
  * @default -------
  * @desc 職業レベルが最大になった際の経験値欄の表記です。
+ * 
+ * @param ShowMaxLevelMessage
+ * @text 最大レベルでメッセージ表示
+ * @type boolean
+ * @default false
+ * @desc 追加職業が最大レベルに到達した際にメッセージを表示します。
+ * 
+ * @param MaxLevelMessage
+ * @parent ShowMaxLevelMessage
+ * @text 最大レベル時の文章
+ * @type string
+ * @default %1は%2を極めた！
+ * @desc 最大レベル到達時のメッセージです。
+ * %1=アクター名, %2=職業名, %3=レベルです。
+ * 
+ * @param ShowBenchMaxLevel
+ * @parent ShowMaxLevelMessage
+ * @text 控えも強制表示
+ * @type boolean
+ * @default false
+ * @desc 控えメンバーもメッセージを強制表示します。
+ * NRP_BenchMembersExp.js併用時のみ機能。
  */
 
 //-----------------------------------------------------------------------------
@@ -1177,6 +1217,9 @@ const pShowLevelOnStatus = toBoolean(parameters["ShowLevelOnStatus"], true);
 const pNormalExpWidth = toNumber(parameters["NormalExpWidth"], 110);
 const pClassExpWidth = toNumber(parameters["ClassExpWidth"], 110);
 const pClassLvMaxExp = setDefault(parameters["ClassLvMaxExp"], "-------");
+const pShowMaxLevelMessage = toBoolean(parameters["ShowMaxLevelMessage"], false);
+const pMaxLevelMessage = setDefault(parameters["MaxLevelMessage"]);
+const pShowBenchMaxLevel = toBoolean(parameters["ShowBenchMaxLevel"], false);
 
 //----------------------------------------
 // ＭＺ用プラグインコマンド
@@ -1190,6 +1233,9 @@ if (!PluginManager.registerCommand) {
 // 重複チェック用
 let mTmpAdditionalClassIds = [];
 let mNoDuplicateExp = false;
+
+// イベントコマンドから呼び出されたかどうかの判定
+let mCommandFlg = false;
 
 /**
  * ●職業の追加
@@ -1234,6 +1280,9 @@ PluginManager.registerCommand(PLUGIN_NAME, "RemoveClass", function(args) {
  * ●経験値の増減
  */
 PluginManager.registerCommand(PLUGIN_NAME, "ChangeExp", function(args) {
+    // イベントコマンドから呼び出されたかどうかの判定
+    mCommandFlg = true;
+
     // インデックス
     const index = toNumber(args.Index);
     // 追加職業
@@ -1326,6 +1375,9 @@ function changeExp(actor, index, additionalClassId, exp, show) {
  * ●レベルの増減
  */
 PluginManager.registerCommand(PLUGIN_NAME, "ChangeLevel", function(args) {
+    // イベントコマンドから呼び出されたかどうかの判定
+    mCommandFlg = true;
+
     // インデックス
     const index = toNumber(args.Index);
     // 追加職業
@@ -1716,9 +1768,15 @@ AdditionalClass.prototype.changeExp = function(exp, show, index, difExp) {
     }
 
     // レベルアップした場合
-    if (show && this._level > lastLevel) {
+    if (this._level > lastLevel) {
         // メッセージを表示
-        this.displayLevelUp(skillActor.findNewSkills(lastSkills));
+        if (show) {
+            this.displayLevelUp(skillActor.findNewSkills(lastSkills));
+        }
+        // 最大レベル到達を表示
+        if (this.maxLevel() == this._level) {
+            this.displayLevelMax(show);
+        }
     }
     expActor.refresh();
 };
@@ -1776,6 +1834,38 @@ AdditionalClass.prototype.displayLevelUp = function(newSkills) {
     }
 
     mDisplayLevelUp = true;
+};
+
+/**
+ * ●レベルアップ限界の表示
+ */
+AdditionalClass.prototype.displayLevelMax = function(show) {
+    // 表示しない場合
+    if (!pShowMaxLevelMessage) {
+        return;
+    }
+
+    // コマンド呼び出し、かつ非表示
+    if (mCommandFlg && !show) {
+        // 表示しない。
+        return;
+    }
+
+    const actor = this.actor();
+
+    // レベルアップの非表示対象（控え要員）は表示しない。
+    // ただし、控えは強制表示する場合は例外
+    // ※NRP_BenchMembersExp.jsによる制御
+    if (!actor.shouldDisplayLevelUp() && !pShowBenchMaxLevel) {
+        return;
+    }
+
+    const text = pMaxLevelMessage.format(actor.name(), this.name, this._level);
+    // 控え要員の場合のみ改ページする。
+    if (!actor.shouldDisplayLevelUp()) {
+        $gameMessage.newPage();
+    }
+    $gameMessage.add(text);
 };
 
 //----------------------------------------
@@ -2181,6 +2271,9 @@ Game_Enemy.prototype.classExp = function() {
  */
 const _BattleManager_makeRewards = BattleManager.makeRewards;
 BattleManager.makeRewards = function() {
+    // イベントコマンドから呼び出されたかどうかの判定
+    mCommandFlg = false;
+
     _BattleManager_makeRewards.apply(this, arguments);
 
     // 報酬に職業経験値を追加
