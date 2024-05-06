@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.021 Set enemy parameters in terms of levels and percentages.
+ * @plugindesc v1.022 Set enemy parameters in terms of levels and percentages.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484538732.html
  *
@@ -175,7 +175,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.021 敵の能力値をレベルと百分率で設定
+ * @plugindesc v1.022 敵の能力値をレベルと百分率で設定
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484538732.html
  *
@@ -443,7 +443,7 @@ Game_Enemy.prototype.setup = function(enemyId, x, y) {
     }
 
     // レベルは最低でも1を設定
-    if (!this._level) {
+    if (!this._level || this._level < 1) {
         this._level = 1;
     }
 
