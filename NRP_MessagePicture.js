@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.071 Display a picture when showing text.
+ * @plugindesc v1.08 Display a picture when showing text.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -271,6 +271,24 @@
  * @option 2:Multiply @value 2
  * @option 3:Screen @value 3
  * @desc This is a blend mode of drawing a picture.
+ * 
+ * @param UseEdgeFadeout
+ * @type boolean
+ * @default false
+ * @desc Fade out the edges of the picture to either the left or right.
+ * 
+ * @param FadeStartX
+ * @parent UseEdgeFadeout
+ * @type number @min -9999 @max 9999
+ * @default 0
+ * @desc X coordinate at which the fade-out will begin.
+ * 0 is the left edge of the image.
+ * 
+ * @param FadeGradient
+ * @parent UseEdgeFadeout
+ * @type number @min -255 @max 255
+ * @default 5
+ * @desc Opacity varying per pixel. Fade out toward the left if positive, toward the right if negative.
  */
 //-----------------------------------------------------------------------------
 // Difference
@@ -378,7 +396,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.071 文章の表示時に立ち絵を表示する。
+ * @plugindesc v1.08 文章の表示時に立ち絵を表示する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -715,6 +733,28 @@
  * @option 2:乗算 @value 2
  * @option 3:スクリーン @value 3
  * @desc ピクチャを描画する合成方法です。
+ * 
+ * @param UseEdgeFadeout
+ * @text 端をフェードアウト
+ * @type boolean
+ * @default false
+ * @desc ピクチャの端を左右いずれかへとフェードアウトします。
+ * 
+ * @param FadeStartX
+ * @parent UseEdgeFadeout
+ * @text フェード開始Ｘ座標
+ * @type number @min -9999 @max 9999
+ * @default 0
+ * @desc フェードアウトを開始するＸ座標です。
+ * 0が画像の左端となります。
+ * 
+ * @param FadeGradient
+ * @parent UseEdgeFadeout
+ * @text フェードする強さ
+ * @type number @min -255 @max 255
+ * @default 5
+ * @desc １ピクセル当たりで変化する不透明度です。
+ * 正なら左、負なら右に向かってフェードアウト。
  */
 //-----------------------------------------------------------------------------
 // Difference
@@ -905,9 +945,14 @@ Game_Interpreter.prototype.command101 = function(params) {
         erasePicture();
         return _Game_Interpreter_command101.apply(this, arguments);
     }
-
     // 差分情報を反映
     pictureData = getMatchDifferenceData(name, pictureData);
+
+    // ピクチャ画像が未設定なら削除
+    if (isBlank(pictureData.Picture)) {
+        erasePicture();
+        return _Game_Interpreter_command101.apply(this, arguments);
+    }
 
     // ピクチャを表示
     showPicture(pictureData);
@@ -917,6 +962,16 @@ Game_Interpreter.prototype.command101 = function(params) {
 
     return _Game_Interpreter_command101.apply(this, arguments);
 };
+
+/**
+ * ●空白チェック
+ */
+function isBlank(str) {
+    if (!str || str == "") {
+        return true;
+    }
+    return false;
+}
 
 /**
  * ●ピクチャを表示する。
@@ -932,58 +987,15 @@ function showPicture(pictureData) {
     // ピクチャの表示
     showPictureAndMove(
         pictureParams[0], pictureParams[1], pictureParams[1], pictureParams[2], point.x, point.y,
-        pictureParams[6], pictureParams[7], pictureParams[8], pictureParams[9]
+        pictureParams[6], pictureParams[7], pictureParams[8], pictureParams[9], pictureData
     );
-
-    // 付属ピクチャがあれば生成
-    if (pictureData.attachedPictures) {
-        const attachedPictures = pictureData.attachedPictures;
-        let pictureId = pictureParams[0];
-
-        // 先に差分を削除
-        for (let i = 0; i < mMaxAttachedPictures; i++) {
-            $gameScreen.erasePicture(mPictureId + i + 1);
-        }
-
-        for (const diffPicture of attachedPictures) {
-            // 追加の数だけピクチャＩＤを加算
-            pictureId++;
-            // 付属ピクチャの表示
-            if (diffPicture) {
-                showPictureAndMove(
-                    pictureId, pictureParams[1], diffPicture, pictureParams[2], point.x, point.y,
-                    pictureParams[6], pictureParams[7], pictureParams[8], pictureParams[9]
-                );
-            }
-        }
-
-    // なければ削除
-    } else {
-        // 差分も削除
-        for (let i = 0; i < mMaxAttachedPictures; i++) {
-            $gameScreen.erasePicture(mPictureId + i + 1);
-        }
-    }
-
-    // リフレッシュが必要かの判定
-    if (needsRefresh(mPictureData, pictureData)) {
-        const spriteset = getSpriteset();
-
-        // 立絵画像毎に更新
-        for (const picture of spriteset.getMessagePictures()) {
-            picture.update();
-            picture.updateBitmap();
-            // 非表示にしておく。
-            picture.visible = false;
-        }
-    }
 }
 
 /**
  * ●ピクチャを表示および移動する
  * ※フェードインなども考慮
  */
-function showPictureAndMove(pictureId, basePicture, picture, origin, x, y, scaleX, scaleY, opacity, blendMode) {
+function showPictureAndMove(pictureId, basePicture, picture, origin, x, y, scaleX, scaleY, opacity, blendMode, pictureData) {
     let fadeFlag = false; 
 
     // フェードイン時間が設定されている場合
@@ -999,7 +1011,7 @@ function showPictureAndMove(pictureId, basePicture, picture, origin, x, y, scale
     if (fadeFlag) {
         // ピクチャの表示
         // pictureId, name, origin, x, y, scaleX, scaleY, opacity, blendMode
-        $gameScreen.showPicture(pictureId, picture, origin, x, y, scaleX, scaleY, 0, blendMode);
+        $gameScreen.showMessagePicture(pictureId, picture, origin, x, y, scaleX, scaleY, 0, blendMode, pictureData);
         // pictureId, origin, x, y, scaleX, scaleY, opacity, blendMode, duration, easingType
         $gameScreen.movePicture(
             pictureId, origin, x, y, scaleX, scaleY, opacity, blendMode, pFadeInDuration, 0
@@ -1009,9 +1021,38 @@ function showPictureAndMove(pictureId, basePicture, picture, origin, x, y, scale
     } else {
         // ピクチャの表示
         // pictureId, name, origin, x, y, scaleX, scaleY, opacity, blendMode
-        $gameScreen.showPicture(pictureId, picture, origin, x, y, scaleX, scaleY, opacity, blendMode);
+        $gameScreen.showMessagePicture(pictureId, picture, origin, x, y, scaleX, scaleY, opacity, blendMode, pictureData);
     }
 }
+
+/**
+ * 【独自】立ち絵の表示
+ */
+Game_Screen.prototype.showMessagePicture = function(
+    pictureId, name, origin, x, y, scaleX, scaleY, opacity, blendMode, pictureData
+) {
+    this.showPicture(pictureId, name, origin, x, y, scaleX, scaleY, opacity, blendMode);
+
+    const attachedPictures = pictureData.attachedPictures;
+
+    // ピクチャに必要な情報を保持させる。
+    const realPictureId = this.realPictureId(pictureId);
+    const picture = this._pictures[realPictureId];
+    picture._attachedPictures = attachedPictures;
+
+    // ピクチャの端をフェードアウトする場合
+    if (pictureData.UseEdgeFadeout) {
+        picture._fadeStartX = toNumber(pictureData.FadeStartX);
+        picture._fadeGradient = toNumber(pictureData.FadeGradient);
+    }
+
+    // 差分ピクチャが存在する場合、事前にロードしておく。
+    if (attachedPictures) {
+        for (const diffPicture of attachedPictures) {
+            ImageManager.loadPicture(diffPicture);
+        }
+    }
+};
 
 /**
  * ●スイッチが有効かどうか？
@@ -1038,43 +1079,10 @@ function erasePicture() {
     if (mPictureId) {
         $gameScreen.erasePicture(mPictureId);
         
-        // 差分も削除
-        for (let i = 0; i < mMaxAttachedPictures; i++) {
-            $gameScreen.erasePicture(mPictureId + i + 1);
-        }
-
         // 変数クリア
         mPictureId = null;
         mPictureData = null;
     }
-}
-
-/**
- * ●変更検知
- * ※描画更新用の調整が必要かの判定
- * 　位置や拡大率が変更された際、前の画像のまま
- * 　一瞬だけ新しい設定で描画されてしまう問題への対処。
- */
-function needsRefresh(oldData, newData) {
-    // データが存在しないならば処理不要
-    if (!oldData) {
-        return false;
-    }
-
-    // 原点、位置、拡大率、不透明度、合成方法が変更された時
-    if (oldData.Origin != newData.Origin
-            || oldData.AdjustX != newData.AdjustX
-            || oldData.AdjustY != newData.AdjustY
-            || oldData.DiffAdjustX != newData.DiffAdjustX
-            || oldData.DiffAdjustY != newData.DiffAdjustY
-            || oldData.ScaleX != newData.ScaleX
-            || oldData.ScaleY != newData.ScaleY
-            || oldData.Opacity != newData.Opacity
-            || oldData.BlendMode != newData.BlendMode
-            ) {
-        return true;
-    }
-    return false;
 }
 
 /**
@@ -1090,14 +1098,11 @@ function getMatchPictureData(name) {
 
     // 名前欄に指定されている登録ＩＤ
     let nameResistId = null;
-    // マッチしたかどうか？
-    let isMatch = false;
     // 名前欄に対する\MP[登録ＩＤ]の一致状況を取得
     const matchStrs = upperName.match(".*\\" + pControlCharacterPicture + "\\[(.*?)\\].*");
     if (matchStrs) {
         // 登録ＩＤを抜き出す。
         nameResistId = matchStrs[1];
-        isMatch = true;
 
         // 全ピクチャのリストをループし、一致する情報を取得
         for (const picture of pPictureList) {
@@ -1178,7 +1183,14 @@ function getMatchDifferenceData(name, pictureData) {
         nameDiffId = matchStrs[1];
         // さらに差分を取得
         return setDifferenceData(pictureData, nameDiffId);
+
+    // 差分がない場合は付属ピクチャのみを設定
+    } else {
+        if (pictureData.AttachedPictures) {
+            pictureData.attachedPictures = JSON.parse(pictureData.AttachedPictures);
+        }
     }
+
     // 差分なしなら、そのまま返す
     return pictureData;
 }
@@ -1277,6 +1289,9 @@ function getNewValue(oldValue, newValue) {
 // Sprite_Picture
 // ----------------------------------------------------------------------------
 
+/**
+ * ●ピクチャ画像の更新
+ */
 const _Sprite_Picture_updateBitmap = Sprite_Picture.prototype.updateBitmap;
 Sprite_Picture.prototype.updateBitmap = function() {
     // 立絵の場合
@@ -1287,11 +1302,58 @@ Sprite_Picture.prototype.updateBitmap = function() {
             return;
         }
 
-        // 他に読込未完了のピクチャがあるなら停止
-        if (!spriteset._isMessgePicturesReady) {
-            // 非表示にしておく。
-            this.visible = false;
+        const picture = this.picture();
+        if (!picture) {
+            _Sprite_Picture_updateBitmap.apply(this, arguments);
             return;
+        }
+
+        const pictureName = picture.name();
+        const attachedPictures = picture._attachedPictures;
+
+        // ピクチャ情報の変化を確認
+        if (this._attachedPictures != attachedPictures) {
+            // 情報が変化したらピクチャ名をクリア
+            // これにより、本体ピクチャに変化がない場合でも
+            // loadBitmapが強制的に呼ばれるようになる。
+            this._pictureName = "";
+            this._attachedPictures = attachedPictures;
+        }
+
+        // ピクチャ名が変化した場合はロード状況をクリア
+        if (this._pictureName !== pictureName) {
+            this._isMessagePictureLoaded = false;
+        }
+
+        // ロード完了でない場合
+        if (!this._isMessagePictureLoaded) {
+            const bitmap = ImageManager.loadPicture(pictureName);
+            // 読み込めてないbitmapがある場合は待つ
+            if (!bitmap.isReady()) {
+                // 非表示にしておく。
+                this.visible = false;
+                return;
+            }
+
+            // 付属ピクチャが存在する場合
+            // 表示の時間差をなくすため、タイミングを合わせる。
+            if (attachedPictures && attachedPictures.length > 0) {
+                for (const diffPicture of attachedPictures) {
+                    // 付属ピクチャの表示
+                    if (diffPicture) {
+                        const diffBmp = ImageManager.loadPicture(diffPicture);
+                        // 読み込めてないbitmapがある場合は待つ
+                        if (!diffBmp.isReady()) {
+                            // 非表示にしておく。
+                            this.visible = false;
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // ロード完了フラグ
+            this._isMessagePictureLoaded = true;
         }
     }
 
@@ -1299,13 +1361,62 @@ Sprite_Picture.prototype.updateBitmap = function() {
 };
 
 /**
+ * ●ピクチャ画像の読込
+ */
+const _Sprite_Picture_loadBitmap = Sprite_Picture.prototype.loadBitmap;
+Sprite_Picture.prototype.loadBitmap = function() {
+    // 立絵の場合
+    if (this.isMessagePicture()) {
+        const picture = this.picture();
+        const attachedPictures = picture._attachedPictures;
+
+        const mainBitmap = ImageManager.loadPicture(this._pictureName);
+        // 中間ビットマップを生成する。
+        const dummyBitmap = new Bitmap(mainBitmap.width, mainBitmap.height);
+        // メインビットマップを描き込む。
+        dummyBitmap.blt(mainBitmap, 0, 0, mainBitmap.width, mainBitmap.height, 0, 0);
+
+        // 差分ピクチャが存在する場合
+        if (attachedPictures && attachedPictures.length > 0) {
+            // 付属ピクチャの表示
+            for (const diffPicture of attachedPictures) {
+                // bitmapの上に差分を描き込む。
+                const diffBmp = ImageManager.loadPicture(diffPicture);
+                dummyBitmap.blt(diffBmp, 0, 0, diffBmp.width, diffBmp.height, 0, 0);
+            }
+        }
+
+        const fadeStartX = picture._fadeStartX; // フェードインを開始する画像のＸ座標
+        const fadeGradient = picture._fadeGradient; // 傾斜（透明度の変化量）
+
+        // 透明フェード処理
+        if (fadeGradient != null && fadeGradient != 0) {
+            // 中間ビットマップを反映
+            this.bitmap = new Bitmap(mainBitmap.width, mainBitmap.height);
+            // 不透明度を徐々に上げることによってフェードイン
+            for (let i = 0; i < mainBitmap.width; i++) {
+                this.bitmap.paintOpacity = Math.max((i - fadeStartX) * fadeGradient, 0);
+                this.bitmap.blt(dummyBitmap, i, 0, 1, mainBitmap.height, i, 0);
+            }
+            this.bitmap.paintOpacity = 255;
+
+        // 通常時
+        } else {
+            // そのまま中間ビットマップを設定
+            this.bitmap = dummyBitmap;
+        }
+        return;
+    }
+
+    _Sprite_Picture_loadBitmap.apply(this, arguments);
+};
+
+/**
  * 【独自】立絵を構成するピクチャかどうかを判定
  */
 Sprite_Picture.prototype.isMessagePicture = function() {
-    const pictureId = this._pictureId;
-    const maxPictureId = pPictureId + mMaxAttachedPictures;
     // ピクチャが立絵の対象の場合
-    if (pictureId >= pPictureId && pictureId <= maxPictureId) {
+    if (this._pictureId == pPictureId) {
         return true;
     }
     return false;
@@ -1314,40 +1425,6 @@ Sprite_Picture.prototype.isMessagePicture = function() {
 // ----------------------------------------------------------------------------
 // Spriteset_Base
 // ----------------------------------------------------------------------------
-
-/**
- * ●更新処理
- */
-const _Spriteset_Base_update = Spriteset_Base.prototype.update;
-Spriteset_Base.prototype.update = function() {
-    this._isMessgePicturesReady = this.checkMessgePicturesReady();
-
-    _Spriteset_Base_update.apply(this, arguments);
-};
-
-/**
- * 【独自】メッセージ用ピクチャの読込が完了しているか？
- */
-Spriteset_Base.prototype.checkMessgePicturesReady = function() {
-    // ピクチャの配列を取得
-    // ※NRP_PicturePriorityなどでピクチャの参照場所が変わるので考慮
-    const pictures = this.getMessagePictures();
-
-    // ピクチャ毎にループ
-    for (const spritePicture of pictures) {
-        if (!spritePicture || !spritePicture.bitmap) {
-            continue;
-        }
-        const bitmap = spritePicture.bitmap;
-        // 読込状況をチェック
-        if (bitmap && !bitmap.isReady()) {
-            // 未完了ならばfalse
-            return false;
-        }
-    }
-
-    return true;
-};
 
 /**
  * 【独自】立絵ピクチャの配列を取得
@@ -1530,20 +1607,15 @@ if (pShowAboveWindow) {
         this._messagePictureContainer = new Sprite();
         this._messagePictureContainer.setFrame(rect.x, rect.y, rect.width, rect.height);
         this._messagePictureContainer.addChild(new Sprite_Picture(pPictureId));
-
-        // 自動的に差分の最大数を取得して拡張
-        for (let i = 0; i < mMaxAttachedPictures; i++) {
-            this._messagePictureContainer.addChild(new Sprite_Picture(pPictureId + i + 1));
-        }
     };
 
     /**
      * ●画像の読み込み
      * ※DP_MapZoom.js（MNKR_DP_MapZoomMZ.js）との競合対処
      */
-    const _Sprite_Picture_loadBitmap = Sprite_Picture.prototype.loadBitmap;
+    const _Sprite_Picture_loadBitmap2 = Sprite_Picture.prototype.loadBitmap;
     Sprite_Picture.prototype.loadBitmap = function () {
-        _Sprite_Picture_loadBitmap.apply(this, arguments);
+        _Sprite_Picture_loadBitmap2.apply(this, arguments);
 
         // 対象のピクチャならばズーム対応無効
         if (this.isMessagePicture()) {
