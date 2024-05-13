@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Enable actor switching with left/right cursor keys.
+ * @plugindesc v1.01 Enable actor switching with left/right cursor keys.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/502790367.html
  *
@@ -51,11 +51,16 @@
  * @type string[]
  * @default ["Window_SkillType","Window_Status","Window_EquipSlot","Window_LearnSkillList"]
  * @desc The name of the target windows.
+ * 
+ * @param AllowRepeat
+ * @type boolean
+ * @default true
+ * @desc Allows continuous switching by holding down the cursor keys.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 アクター切替をカーソルの左右で可能に
+ * @plugindesc v1.01 アクター切替をカーソルの左右で可能に
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/502790367.html
  *
@@ -97,6 +102,12 @@
  * @type string[]
  * @default ["Window_SkillType","Window_Status","Window_EquipSlot","Window_LearnSkillList"]
  * @desc 対象とするウィンドウ名です。
+ * 
+ * @param AllowRepeat
+ * @text 連続切替を許可
+ * @type boolean
+ * @default true
+ * @desc カーソルキー押しっぱなしによる連続切替を許可します。
  */
 
 (function() {
@@ -114,10 +125,19 @@ function parseStruct1(arg) {
     }
     return ret;
 }
+function toBoolean(str, def) {
+    if (str === true || str === "true") {
+        return true;
+    } else if (str === false || str === "false") {
+        return false;
+    }
+    return def;
+}
 
 const PLUGIN_NAME = "NRP_ActorSwitchLR";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pTargetWindows = parseStruct1(parameters["TargetWindows"]);
+const pAllowRepeat = toBoolean(parameters["AllowRepeat"], true);
 
 //-----------------------------------------------------------------------------
 // Window_Selectable
@@ -131,13 +151,26 @@ Window_Selectable.prototype.processHandling = function() {
     // ウィンドウ名が一致する場合
     if (pTargetWindows.includes(this.constructor.name)) {
         if (this.isOpenAndActive()) {
-            // pagedownが有効かつ右を押した場合
-            if (this.isHandled("pagedown") && Input.isTriggered("right")) {
-                return this.processPagedown();
-            }
-            // pageupが有効かつ左を押した場合
-            if (this.isHandled("pageup") && Input.isTriggered("left")) {
-                return this.processPageup();
+            // 押しっぱなし許可
+            if (pAllowRepeat) {
+                // pagedownが有効かつ右を押した場合
+                if (this.isHandled("pagedown") && Input.isRepeated("right")) {
+                    return this.processPagedown();
+                }
+                // pageupが有効かつ左を押した場合
+                if (this.isHandled("pageup") && Input.isRepeated("left")) {
+                    return this.processPageup();
+                }
+            // 押しっぱなし無効
+            } else {
+                // pagedownが有効かつ右を押した場合
+                if (this.isHandled("pagedown") && Input.isTriggered("right")) {
+                    return this.processPagedown();
+                }
+                // pageupが有効かつ左を押した場合
+                if (this.isHandled("pageup") && Input.isTriggered("left")) {
+                    return this.processPageup();
+                }
             }
         }
     }
