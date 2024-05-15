@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Make the battle start effect seamless.
+ * @plugindesc v1.02 Make the battle start effect seamless.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/502501086.html
  *
@@ -23,6 +23,11 @@
  * Settings on the upper side will be used first.
  * For example, by making a switch a condition,
  * you can change the direction only for boss battles.
+ * 
+ * If "NoEffect" is turned on, the effect
+ * by this plugin will not be executed.
+ * This is useful when you want to use this plugin
+ * together with other plugins.
  * 
  * -------------------------------------------------------------------
  * [Terms]
@@ -81,11 +86,47 @@
  * @type boolean
  * @default true
  * @desc Wait for the fade-in process to finish before the player's operation takes effect.
+ * 
+ * @param Se
+ * @type struct<SeSetting>
+ * @desc It is a sound effect to be played.
+ * 
+ * @param NoEffect
+ * @type boolean
+ * @default false
+ * @desc The plugin does not execute the effect.
+ * However, only sound effects are played.
+ */
+/*~struct~SeSetting:
+ * @param Name
+ * @type file
+ * @dir audio/se
+ * @desc File name of the SE.
+ * 
+ * @param Volume
+ * @type number
+ * @max 200
+ * @default 90
+ * @desc The volume of the SE.
+ * The default value is 90.
+ * 
+ * @param Pitch
+ * @type number
+ * @default 100
+ * @desc The pitch of the SE.
+ * Set the value based on 100.
+ * 
+ * @param Pan
+ * @type number
+ * @max 100 @min -100
+ * @default 0
+ * @desc The pan of the SE.
+ * Set the value based on 0.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 戦闘開始演出をシームレスにします。
+ * @plugindesc v1.02 戦闘開始演出をシームレスにします。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/502501086.html
  *
@@ -102,6 +143,10 @@
  * 上側にある設定が優先して使用されます。
  * スイッチを条件にすることで、
  * ボス戦のみ演出を変更するといったことができます。
+ * 
+ * また、『演出なし』をオンにすると、
+ * 当プラグインよる演出が実行されなくなります。
+ * 他のプラグインによる演出と併用したい場合に有用です。
  * 
  * -------------------------------------------------------------------
  * ■利用規約
@@ -166,6 +211,48 @@
  * @type boolean
  * @default true
  * @desc フェードイン処理の終了を待ってから操作を有効にします。
+ * 
+ * @param Se
+ * @text 効果音
+ * @type struct<SeSetting>
+ * @desc 演奏する効果音です。
+ * 
+ * @param NoEffect
+ * @text 演出なし
+ * @type boolean
+ * @default false
+ * @desc 当プラグインによる演出を実行しません。
+ * ただし、効果音だけは演奏されます。
+ */
+/*~struct~SeSetting:ja
+ * @param Name
+ * @text ファイル名
+ * @type file
+ * @dir audio/se
+ * @desc ＳＥのファイル名です。
+ * 
+ * @param Volume
+ * @text 音量
+ * @type number
+ * @max 200
+ * @default 90
+ * @desc 効果音の音量です。
+ * 初期値は90です。
+ * 
+ * @param Pitch
+ * @text ピッチ
+ * @type number
+ * @default 100
+ * @desc 効果音のピッチです。
+ * 100を基準に設定してください。
+ * 
+ * @param Pan
+ * @text 位相
+ * @type number
+ * @max 100 @min -100
+ * @default 0
+ * @desc 効果音の位相です。
+ * 0を基準に設定してください。
  */
 
 (function() {
@@ -213,33 +300,45 @@ const pEncounterList = parseStruct2(parameters["EncounterList"]);
 // Scene_Map
 //-----------------------------------------------------------------------------
 
+/**
+ * ●戦闘開始エフェクト
+ */
+const _Scene_Map_startEncounterEffect = Scene_Map.prototype.startEncounterEffect;
 Scene_Map.prototype.startEncounterEffect = function() {
-    // キャラクターは残しておく。
-    // this._spriteset.hideCharacters();
-    // this._encounterEffectDuration = this.encounterEffectSpeed();
+    const encounterData = getEncounterData();
+    if (encounterData) {
+        // 効果音の演奏
+        if (encounterData.Se) {
+            const seData = JSON.parse(encounterData.Se);
+            if (seData && seData.Name) {
+                AudioManager.playSe({"name":seData.Name, "volume":seData.Volume, "pitch":seData.Pitch, "pan":seData.Pan})
+            }
+        }
 
-    this._encounterEffectDuration = 0;
+        // 演出なし
+        if (encounterData.NoEffect) {
+            _Scene_Map_startEncounterEffect.apply(this, arguments);
+            return;
+        }
 
-    BattleManager.playBattleBgm();
-    // 現在の画面をキャプチャしてマスクを準備
-    this.snapForBattleBackground();
+        // キャラクターは残しておく。
+        // this._spriteset.hideCharacters();
+        // this._encounterEffectDuration = this.encounterEffectSpeed();
+
+        this._encounterEffectDuration = 0;
+
+        BattleManager.playBattleBgm();
+        // 現在の画面をキャプチャしてマスクを準備
+        this.snapForBattleBackground();
+        return;
+    }
+
+    _Scene_Map_startEncounterEffect.apply(this, arguments);
 };
 
 //-----------------------------------------------------------------------------
 // Scene_Battle
 //-----------------------------------------------------------------------------
-
-/**
- * 【上書】戦闘開始のフェードイン
- * ※削除
- */
-Scene_Battle.prototype.startFadeIn = function(duration, white) {
-    // this._fadeSign = 1;
-    // this._fadeDuration = duration || 30;
-    // this._fadeWhite = white;
-    // this._fadeOpacity = 255;
-    // this.updateColorFilter();
-};
 
 /**
  * ●表示オブジェクトの作成
@@ -256,17 +355,20 @@ Scene_Battle.prototype.createDisplayObjects = function() {
  * 【独自】前面にマップ画面のキャプチャを表示してマスクする。
  */
 Scene_Battle.prototype.createFrontMask = function() {
-    this._encounterData = null;
+    this._frontMaskSprite = null;
 
     // 対象の戦闘演出リストを取得
-    for (const encounter of pEncounterList) {
-        const switchNo = setDefault(encounter.Switch);
-        // スイッチの指定がない。またはスイッチが一致している場合
-        if (!switchNo || $gameSwitches.value(switchNo)) {
-            this._encounterData = encounter;
-            break;
-        }
+    const encounterData = getEncounterData();
+
+    // 取得できない場合は終了
+    if (!encounterData) {
+        return;
+    // 無効の場合は終了
+    } else if (toBoolean(encounterData.NoEffect)) {
+        return;
     }
+
+    this._encounterData = encounterData;
 
     this._frontMaskSprite = new Sprite();
     this._frontMaskSprite.bitmap = SceneManager.backgroundBitmap();
@@ -276,6 +378,19 @@ Scene_Battle.prototype.createFrontMask = function() {
     this._frontMaskSprite.y = Graphics.height / 2;
     this.addChild(this._frontMaskSprite);
 };
+
+/**
+ * ●戦闘開始のフェードイン
+ */
+const _Scene_Battle_startFadeIn = Scene_Battle.prototype.startFadeIn;
+Scene_Battle.prototype.startFadeIn = function(duration, white) {
+    // 処理の指定がある場合は終了
+    if (this._encounterData) {
+        return;
+    }
+    _Scene_Battle_startFadeIn.apply(this, arguments);
+};
+
 
 let mEffectTime = 0;
 
@@ -346,5 +461,24 @@ Scene_Battle.prototype.isBusy = function() {
     }
     return _Scene_Battle_isBusy.apply(this, arguments);
 };
+
+//-----------------------------------------------------------------------------
+// 共通関数
+//-----------------------------------------------------------------------------
+
+/**
+ * ●エンカウントデータを取得
+ */
+function getEncounterData() {
+    // 対象の戦闘演出リストを取得
+    for (const encounter of pEncounterList) {
+        const switchNo = setDefault(encounter.Switch);
+        // スイッチの指定がない。またはスイッチが一致している場合
+        if (!switchNo || $gameSwitches.value(switchNo)) {
+            return encounter;
+        }
+    }
+    return null;
+}
 
 })();
