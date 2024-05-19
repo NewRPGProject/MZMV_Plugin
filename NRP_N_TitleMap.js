@@ -27,7 +27,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.03 Use a map as title screen.
+ * @plugindesc v1.04 Use a map as title screen.
  * @author Takeshi Sunagawa（Original: Nolonar）
  * @orderAfter ExtraGauge
  * @url https://github.com/Nolonar/RM_Plugins
@@ -55,12 +55,40 @@
  * @min 0
  * @max 255
  * 
+ * @param readSaveFile
+ * @text Read save file
+ * @desc Refer to the save file so that the contents can be reflected.
+ * @type boolean
+ * @default false
+ * 
+ * @param saveFileId
+ * @parent readSaveFile
+ * @text Save file ID
+ * @desc The number of the save file to be referenced.
+ * 0: Auto Save, 1: First File
+ * @type number
+ * @min 0
+ * @default 0
+ * 
+ * @param disabledParallelCommon
+ * @parent readSaveFile
+ * @text Disabled Parallel Common
+ * @desc Triggers disable common events for automatic execution and parallel processing.
+ * @type boolean
+ * @default true
+ * 
  * 
  * @help By using the map as the title screen,
  * a variety of effects can be realized.
  * 
  * This plugin is based on N_TitleMap.js (Version 1.0.3)
  * and modified by Takeshi Sunagawa to prevent conflicts.
+ * 
+ * Also, the ability to reference the contents of a save file is added.
+ * (By default, it references the auto-save.)
+ * Since switches, variables, party, items, etc. can be referenced,
+ * it is possible to create effects such as changing the background
+ * or BGM depending on the progress of the game.
  * 
  * The original N_TitleMap.js (by Nolonar) can be found below.
  * https://github.com/Nolonar/RM_Plugins
@@ -119,7 +147,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.03 マップをタイトル画面として使用する。
+ * @plugindesc v1.04 マップをタイトル画面として使用する。
  * @author 砂川赳（オリジナル：Nolonar様）
  * @orderAfter ExtraGauge
  * @url https://github.com/Nolonar/RM_Plugins
@@ -147,11 +175,39 @@
  * @min 0
  * @max 255
  * 
+ * @param readSaveFile
+ * @text セーブファイルを参照
+ * @desc セーブファイルを参照し、内容を反映できるようにします。
+ * @type boolean
+ * @default false
+ * 
+ * @param saveFileId
+ * @parent readSaveFile
+ * @text セーブファイル番号
+ * @desc 参照するセーブファイルの番号です。
+ * 0:オートセーブ, 1:一番目のファイル
+ * @type number
+ * @min 0
+ * @default 0
+ * 
+ * @param disabledParallelCommon
+ * @parent readSaveFile
+ * @text 並列コモンの無効化
+ * @desc トリガーが自動実行や並列処理のコモンイベントを無効化します。
+ * @type boolean
+ * @default true
+ * 
+ * 
  * @help マップをタイトル画面として使用することで、
  * 様々な演出を実現可能とします。
  * 
  * 当プラグインはN_TitleMap.js（Version 1.0.3）を
  * 元に砂川赳が競合対策などの改造を施したものです。
+ * 
+ * また、セーブファイルの内容を参照する機能を追加しています。
+ * （初期状態ではオートセーブを参照します。）
+ * スイッチや変数、仲間、アイテムなどが参照できるので、
+ * 進行状況によって、背景やＢＧＭを変更するような演出が可能となります。
  * 
  * オリジナルのN_TitleMap.js（Nolonar様）は以下にあります。
  * https://github.com/Nolonar/RM_Plugins
@@ -214,12 +270,28 @@
  */
 
 (() => {
+    function toBoolean(val, def) {
+        // 空白なら初期値を返す
+        if (val === "" || val === undefined) {
+            return def;
+            
+        // 既にboolean型なら、そのまま返す
+        } else if (typeof val === "boolean") {
+            return val;
+        }
+        // 文字列ならboolean型に変換して返す
+        return val.toLowerCase() == "true";
+    }
+
     const PLUGIN_NAME = "NRP_N_TitleMap";
 
     const parameters = PluginManager.parameters(PLUGIN_NAME);
     parameters.mapId = Number(parameters.mapId) || 1;
-    parameters.startX = Number(parameters.startX) || null; // ADD T.Sunagawa
-    parameters.startY = Number(parameters.startY) || null; // ADD T.Sunagawa
+    parameters.startX = Number(parameters.startX) || null;
+    parameters.startY = Number(parameters.startY) || null;
+    parameters.readSaveFile = toBoolean(parameters.readSaveFile, false);
+    parameters.saveFileId = Number(parameters.saveFileId) || 0;
+    parameters.disabledParallelCommon = toBoolean(parameters.disabledParallelCommon, true);
 
     //=========================================================================
     // Scene_TitleMap
@@ -228,6 +300,14 @@
     Scene_Title = class Scene_TitleMap extends Scene_Map {
         create() {
             Scene_Base.prototype.create.call(this);
+
+            // セーブファイルを参照する場合
+            if (parameters.readSaveFile) {
+                DataManager.loadGame(parameters.saveFileId)
+                    .then(() => this.onLoadSuccess())
+                    .catch(() => this.onLoadFailure());
+            }
+
             DataManager.loadMapData(parameters.mapId);
             this.createCommandWindow();
             // Scene_Map will create its own window layer later on.
@@ -237,7 +317,6 @@
             // player returns to Title.
             DataManager.setupNewGame();
 
-            // ADD T.Sunagawa
             // 場所移動中のままになっているのでクリア
             $gamePlayer.clearTransferInfo();
         }
@@ -270,7 +349,6 @@
             $dataMap.autoplayBgm = false; // Use Title Scene BGM instead.
             $gameMap.autoplay();
 
-            // ADD T.Sunagawa
             // 開始位置を設定
             if (parameters.startX != null) {
                 $gamePlayer.center(parameters.startX, parameters.startY);
@@ -287,6 +365,22 @@
             Scene_Title_old.prototype.playTitleMusic();
         }
 
+        // セーブファイルのロード成功時
+        onLoadSuccess() {
+            // 以下はクリアしておく。
+            // （そうしないとロードしたマップの現状まで再現してしまう。）
+            $gamePlayer = new Game_Player();
+            $gameMap = new Game_Map();
+            $gameScreen = new Game_Screen();
+            $gameTimer = new Game_Timer();
+
+            this._loadSuccess = true;
+        };
+
+        // セーブファイルのロード失敗時
+        onLoadFailure() {
+        };
+
         stop() {
             Scene_Base.prototype.stop.call(this);
         }
@@ -296,7 +390,6 @@
         }
 
         fadeOutAll() {
-            // ADD T.Sunagawa
             // フェードアウト前に画面キャプチャをかぶせる
             // ※フェード中に画面が乱れるので、それを防ぐための措置。
             SceneManager.snapForBackground();
@@ -315,7 +408,6 @@
         }
 
         update() {
-            // ADD T.Sunagawa
             // 場所移動中は処理を停止
             // ※ニューゲームによる場所移動後まで処理が走ってしまいエラーになるため。
             if ($gamePlayer.isTransferring()) {
@@ -349,7 +441,6 @@
             stopVideo();
         }
 
-        // ADD T.Sunagawa
         isBusy() {
             // コマンドウィンドウが閉じるのを待つ
             return this._commandWindow.isClosing() || super.isBusy();
@@ -377,6 +468,31 @@
     Scene_Load.prototype.onLoadSuccess = function () {
         Scene_Load_onLoadSuccess.call(this);
         resetWeather();
+    }
+
+    //=========================================================================
+    // Game_Map
+    //=========================================================================
+
+    // 並列＆自動コモンイベントの無効化
+    if (parameters.readSaveFile && parameters.disabledParallelCommon) {
+        const _Game_Map_autorunCommonEvents = Game_Map.prototype.autorunCommonEvents;
+        Game_Map.prototype.autorunCommonEvents = function() {
+            // タイトル画面ならば自動コモンを無効
+            if (SceneManager._scene.constructor.name == "Scene_TitleMap") {
+                return [];
+            }
+            return _Game_Map_autorunCommonEvents.apply(this, arguments);
+        };
+
+        const _Game_Map_parallelCommonEvents = Game_Map.prototype.parallelCommonEvents;
+        Game_Map.prototype.parallelCommonEvents = function() {
+            // タイトル画面ならば並列コモンを無効
+            if (SceneManager._scene.constructor.name == "Scene_TitleMap") {
+                return [];
+            }
+            return _Game_Map_parallelCommonEvents.apply(this, arguments);
+        };
     }
 
     //=========================================================================
