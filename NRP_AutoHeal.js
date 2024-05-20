@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.002 It enables the "Auto Heal" command.
+ * @plugindesc v1.01 It enables the "Auto Heal" command.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/480069638.html
  * 
@@ -215,6 +215,15 @@
  * @desc Sets the message display method.
  * The message in case of failure is the same in both cases.
  * 
+ * @param MessageBackgroundType
+ * @parent <Message>
+ * @type select
+ * @option Normal @value 0
+ * @option Dimmer @value 1
+ * @option Transparency @value 2
+ * @default 0
+ * @desc Message window background type.
+ * 
  * @param MessageSuccess
  * @parent <Message>
  * @type text
@@ -292,7 +301,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.002 自動回復コマンド（まんたん）を実現
+ * @plugindesc v1.01 自動回復コマンド（まんたん）を実現
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/480069638.html
  *
@@ -505,6 +514,16 @@
  * @desc メッセージの表示方式を設定します。
  * なお、失敗時のメッセージはいずれも同じです。
  * 
+ * @param MessageBackgroundType
+ * @parent <Message>
+ * @text ウィンドウ背景
+ * @type select
+ * @option 0:ウィンドウ @value 0
+ * @option 1:暗くする @value 1
+ * @option 2:透明 @value 2
+ * @default 0
+ * @desc メッセージウィンドウの背景です。
+ * 
  * @param MessageSuccess
  * @text 回復成功メッセージ
  * @parent <Message>
@@ -642,6 +661,7 @@ const pUseReserveMembers = toBoolean(parameters["UseReserveMembers"], false);
 const pTargetReserveMembers = toBoolean(parameters["TargetReserveMembers"], false);
 
 const pMessageType = toNumber(parameters["MessageType"], 0);
+const pMessageBackgroundType = toNumber(parameters["MessageBackgroundType"], 0);
 const pMessageSuccess = parameters["MessageSuccess"];
 const pMessageUnnecessary = parameters["MessageUnnecessary"];
 const pMessageFailure = parameters["MessageFailure"];
@@ -1427,6 +1447,8 @@ function successMessage(message) {
     // メッセージが有効な場合
     if (message && pMessageType) {
         const window = scene._messageWindow;
+        // ウィンドウ背景の設定
+        $gameMessage.setBackground(pMessageBackgroundType);
 
         // 1:簡易表示
         if (pMessageType == 1) {
@@ -1471,6 +1493,8 @@ function failureMessage(message) {
 
     // メッセージが有効な場合
     if (message && pMessageType) {
+        // ウィンドウ背景の設定
+        $gameMessage.setBackground(pMessageBackgroundType);
         $gameMessage.add(message);
 
         // メッセージウィンドウにフォーカス
@@ -1518,6 +1542,16 @@ if (pMessageType) {
 // 詳細ログを表示する場合
 if (pMessageType == 2 || pMessageType == 3) {
     /**
+     * メソッドが未定義の場合は事前に定義
+     * ※これをしておかないと以後の親側への追記が反映されない。
+     */
+    if (Window_Message.prototype.updateOpen == Window_Base.prototype.updateOpen) {
+        Window_Message.prototype.updateOpen = function() {
+            return Window_Base.prototype.updateOpen.apply(this, arguments);
+        }
+    }
+
+    /**
      * ●ウィンドウを開く更新処理
      */
     const _Window_Message_updateOpen = Window_Message.prototype.updateOpen;
@@ -1542,6 +1576,16 @@ if (pMessageType == 2 || pMessageType == 3) {
     };
 
     /**
+     * メソッドが未定義の場合は事前に定義
+     * ※これをしておかないと以後の親側への追記が反映されない。
+     */
+    if (Window_Message.prototype.updateClose == Window_Base.prototype.updateClose) {
+        Window_Message.prototype.updateClose = function() {
+            return Window_Base.prototype.updateClose.apply(this, arguments);
+        }
+    }
+    
+    /**
      * ●ウィンドウを閉じる更新処理
      */
     const _Window_Message_updateClose = Window_Message.prototype.updateClose;
@@ -1558,6 +1602,39 @@ if (pMessageType == 2 || pMessageType == 3) {
             // クリア
             m_keepMessageWindowHeight = undefined;
             m_keepMessageWindowY = undefined;
+        }
+    };
+
+    /**
+     * メソッドが未定義の場合は事前に定義
+     * ※これをしておかないと以後の親側への追記が反映されない。
+     */
+    if (Window_Message.prototype.refreshDimmerBitmap == Window_Base.prototype.refreshDimmerBitmap) {
+        Window_Message.prototype.refreshDimmerBitmap = function() {
+            return Window_Base.prototype.refreshDimmerBitmap.apply(this, arguments);
+        }
+    }
+
+    /**
+     * ●暗くするウィンドウのリフレッシュ
+     */
+    const _Window_Message_refreshDimmerBitmap = Window_Message.prototype.refreshDimmerBitmap;
+    Window_Message.prototype.refreshDimmerBitmap = function() {
+        _Window_Message_refreshDimmerBitmap.apply(this, arguments);
+
+        // 暗くするウィンドウの場合のサイズ調整
+        if (this._dimmerSprite && m_bigWindowFlg) {
+            const bitmap = this._dimmerSprite.bitmap;
+            const w = bitmap.width;
+            const h = Graphics.boxHeight; // 画面の縦幅いっぱいまで
+            const m = this.padding;
+            const c1 = ColorManager.dimColor1();
+            const c2 = ColorManager.dimColor2();
+            bitmap.resize(w, h);
+            bitmap.gradientFillRect(0, 0, w, m, c2, c1, true);
+            bitmap.fillRect(0, m, w, h - m * 2, c1);
+            bitmap.gradientFillRect(0, h - m, w, m, c1, c2, true);
+            this._dimmerSprite.setFrame(0, 0, w, h);
         }
     };
 }
