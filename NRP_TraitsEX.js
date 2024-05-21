@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Create special traits.
+ * @plugindesc v1.04 Create special traits.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -63,6 +63,13 @@
  * Also, 0 is treated as a normal attack.
  * If omitted, the plugin parameter settings are used.
  * If left blank, all are valid.
+ * 
+ * <InflictedDamageScript:[Script]>
+ * Scripts are executed according to the damage multiplier to be inflicted.
+ * Use with <InflictedDamageRate>.
+ * 
+ * ◆e.g.: Performs a flush when the damage multiplier is 1.5 or greater.
+ * <InflictedDamageScript:1.5 <= rate ? $gameScreen.startFlash([255,255,255,128], 10) : null>
  * 
  * -------------------------------------------------------------------
  * [Change of state's duration in turns]
@@ -148,7 +155,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 特殊な特徴を実現します。
+ * @plugindesc v1.04 特殊な特徴を実現します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -205,6 +212,13 @@
  * また、0は通常攻撃として扱われます。
  * 省略時はプラグインパラメータの設定を使用します。
  * 空欄にした場合は全て有効となります。
+ * 
+ * <InflictedDamageScript:[Script]>
+ * 与えるダメージ倍率によってスクリプトを実行します。
+ * <InflictedDamageRate>とセットで使用してください。
+ * 
+ * ◆例：ダメージ倍率が１．５以上の場合にフラッシュを実行します。
+ * <InflictedDamageScript:1.5 <= rate ? $gameScreen.startFlash([255,255,255,128], 10) : null>
  * 
  * -------------------------------------------------------------------
  * ■ステート継続ターンの変更
@@ -417,7 +431,15 @@ Game_Action.prototype.applyVariance = function(damage, variance) {
     for (const object of getTraitObjects(subject)) {
         const inflictedDamageRate = object.meta.InflictedDamageRate;
         if (inflictedDamageRate != null && isValidDamageRate(this.item(), object)) {
-            value *= eval(inflictedDamageRate);
+            const rate = eval(inflictedDamageRate);
+
+            // スクリプトを実行
+            const inflictedDamageScript = object.meta.InflictedDamageScript;
+            if (inflictedDamageScript) {
+                eval(inflictedDamageScript);
+            }
+
+            value *= rate;
         }
     }
 
