@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.031 Extend the effect of the skill.
+ * @plugindesc v1.04 Extend the effect of the skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -119,7 +119,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.031 スキルの効果を拡張します。
+ * @plugindesc v1.04 スキルの効果を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -399,7 +399,7 @@ Game_Action.prototype.itemEffectAddNormalState = function(target, effect) {
         const b = mTarget;
 
         // 一時的にステート付加率を書き換え
-        effect.value1 = eval(stateRate);
+        effect.value1 = eval(stateRate) / 100;
         // 実行
         _Game_Action_itemEffectAddNormalState.apply(this, arguments);
         // 元に戻す
