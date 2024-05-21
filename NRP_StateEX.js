@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.06 Extend the functionality of the state in various ways.
+ * @plugindesc v1.07 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -20,6 +20,10 @@
  *     whose hit is determined by state resistance.
  * - State that activates a skill when it is released after a turn.
  *   For example, Mortal Ray is possible.
+ * 
+ * You can also have a popup appear when an add state misses.
+ * ※Normally, only the decision based
+ *   on the success rate of the skill is displayed.
  * 
  * -------------------------------------------------------------------
  * [Regeneration Value Settings]
@@ -261,6 +265,12 @@
  * @default 0
  * @desc Latest Priority: Priority is given to new states.
  * Maximum Priority: Priority is given to stronger states.
+ * 
+ * @param ShowStateMiss
+ * @type boolean
+ * @default false
+ * @desc Displays a miss when the state is missed.
+ * This applies to skills with a damage type of None.
  */
 //-----------------------------------------------------------------------------
 // Parameter
@@ -289,7 +299,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.06 ステートの機能を色々と拡張します。
+ * @plugindesc v1.07 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -305,6 +315,9 @@
  * 　　ＦＦシリーズのグラビデや即死効果など。
  * ・ターン経過で解除された際にスキルを発動するステート
  * 　例えば、死の宣告などが可能です。
+ * 
+ * また、ステート付加が外れた際に、ミスを表示するようにできます。
+ * ※通常はスキルの成功率による判定しか表示されません。
  * 
  * -------------------------------------------------------------------
  * ■再生値の設定
@@ -537,6 +550,13 @@
  * @default 0
  * @desc 最新優先：新しくかけたステートを優先します。
  * 最大優先：効果の大きいほうを優先します。
+ * 
+ * @param ShowStateMiss
+ * @text ステートのミスを表示
+ * @type boolean
+ * @default false
+ * @desc ステート付加が外れた際に、ミスを表示するようにします。
+ * ダメージタイプが『なし』のスキルが対象です。
  */
 //-----------------------------------------------------------------------------
 // Parameter
@@ -604,6 +624,7 @@ const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pParameterList = parseStruct2(parameters["ParameterList"]);
 const pAlwaysUpdateState = toBoolean(parameters["AlwaysUpdateState"], false);
 const pUpdateType = toNumber(parameters["UpdateType"], 0);
+const pShowStateMiss = toBoolean(parameters["ShowStateMiss"], false);
 
 /**
  * ●効率化のため事前変換
@@ -1339,6 +1360,30 @@ if (pAlwaysUpdateState) {
             return false;
         }
         return _Game_BattlerBase_isStateAffected.apply(this, arguments);
+    };
+}
+
+// ----------------------------------------------------------------------------
+// ステートのミスを表示
+// ----------------------------------------------------------------------------
+
+if (pShowStateMiss) {
+    const _Game_Action_apply = Game_Action.prototype.apply;
+    Game_Action.prototype.apply = function(target) {
+        _Game_Action_apply.apply(this, arguments);
+
+        const result = target.result();
+
+        // スキルが命中かつダメージタイプがなし
+        if (result.isHit() && this.item().damage.type == 0) {
+            // ステート付加が最低一つ存在している。
+            if (this.item().effects.some(effect => effect.code == Game_Action.EFFECT_ADD_STATE)) {
+                // かつ、失敗した。
+                if (!result.success) {
+                    result.missed = true;
+                }
+            }
+        }
     };
 }
 
