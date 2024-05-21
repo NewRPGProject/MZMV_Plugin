@@ -87,9 +87,9 @@
  * 
  * @param WindowWidth
  * @type string
- * @default 600
+ * @default 500
  * @desc The width of the window.
- * The default value is 600.
+ * The default value is 500.
  * 
  * @param WindowHeight
  * @type string
@@ -258,9 +258,9 @@
  * @param WindowWidth
  * @text ウィンドウの横幅
  * @type string
- * @default 600
+ * @default 500
  * @desc ウィンドウの横幅です。
- * 初期値は600です。
+ * 初期値は500です。
  * 
  * @param WindowHeight
  * @text ウィンドウの縦幅
