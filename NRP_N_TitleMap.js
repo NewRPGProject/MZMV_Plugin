@@ -27,7 +27,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.04 Use a map as title screen.
+ * @plugindesc v1.05 Use a map as title screen.
  * @author Takeshi Sunagawa（Original: Nolonar）
  * @orderAfter ExtraGauge
  * @url https://github.com/Nolonar/RM_Plugins
@@ -54,6 +54,11 @@
  * @type number
  * @min 0
  * @max 255
+ * 
+ * @param mapReset
+ * @desc Reset the state of the title map when returning from continue or options.
+ * @type boolean
+ * @default false
  * 
  * @param readSaveFile
  * @text Read save file
@@ -147,7 +152,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.04 マップをタイトル画面として使用する。
+ * @plugindesc v1.05 マップをタイトル画面として使用する。
  * @author 砂川赳（オリジナル：Nolonar様）
  * @orderAfter ExtraGauge
  * @url https://github.com/Nolonar/RM_Plugins
@@ -174,6 +179,12 @@
  * @type number
  * @min 0
  * @max 255
+ * 
+ * @param mapReset
+ * @text マップをリセットする
+ * @desc コンティニューやオプションから戻った際、タイトルマップの状態をリセットします。
+ * @type boolean
+ * @default false
  * 
  * @param readSaveFile
  * @text セーブファイルを参照
@@ -289,6 +300,7 @@
     parameters.mapId = Number(parameters.mapId) || 1;
     parameters.startX = Number(parameters.startX) || null;
     parameters.startY = Number(parameters.startY) || null;
+    parameters.mapReset = toBoolean(parameters.mapReset, false);
     parameters.readSaveFile = toBoolean(parameters.readSaveFile, false);
     parameters.saveFileId = Number(parameters.saveFileId) || 0;
     parameters.disabledParallelCommon = toBoolean(parameters.disabledParallelCommon, true);
@@ -301,8 +313,18 @@
         create() {
             Scene_Base.prototype.create.call(this);
 
+            // 既にマップが読み込まれている場合
+            // ※コンティニューやオプションから戻った場合。かつマップリセットしない場合
+            if ($gameMap.mapId() == parameters.mapId && !parameters.mapReset) {
+                this._initFlg = false;
+            // それ以外
+            // ※起動時やゲーム中からタイトルへ戻った場合
+            } else {
+                this._initFlg = true;
+            }
+
             // セーブファイルを参照する場合
-            if (parameters.readSaveFile) {
+            if (this._initFlg && parameters.readSaveFile) {
                 DataManager.loadGame(parameters.saveFileId)
                     .then(() => this.onLoadSuccess())
                     .catch(() => this.onLoadFailure());
@@ -315,7 +337,9 @@
 
             // Needed to avoid player character from appearing on TitleMap when
             // player returns to Title.
-            DataManager.setupNewGame();
+            if (this._initFlg) {
+                DataManager.setupNewGame();
+            }
 
             // 場所移動中のままになっているのでクリア
             $gamePlayer.clearTransferInfo();
@@ -345,9 +369,12 @@
         }
 
         onMapLoaded() {
-            $gameMap.setup(parameters.mapId);
-            $dataMap.autoplayBgm = false; // Use Title Scene BGM instead.
-            $gameMap.autoplay();
+            // 初期化時以外は演奏しない。
+            if (this._initFlg) {
+                $gameMap.setup(parameters.mapId);
+                $dataMap.autoplayBgm = false; // Use Title Scene BGM instead.
+                $gameMap.autoplay();
+            }
 
             // 開始位置を設定
             if (parameters.startX != null) {
@@ -362,7 +389,10 @@
 
         start() {
             super.start();
-            Scene_Title_old.prototype.playTitleMusic();
+            // 初期化時以外は演奏しない。
+            if (this._initFlg) {
+                Scene_Title_old.prototype.playTitleMusic();
+            }
         }
 
         // セーブファイルのロード成功時
@@ -417,7 +447,6 @@
 
             $gameMap.update(true);
             $gameScreen.update();
-
             this.updateWaitCount();
             Scene_Base.prototype.update.call(this);
         }
