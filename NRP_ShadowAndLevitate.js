@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.101 Setting the battler's shadow & adding the levitation effect
+ * @plugindesc v1.11 Setting the battler's shadow & adding the levitation effect
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base animatedSVEnemies
  * @base NRP_DynamicMotionMZ
@@ -266,6 +266,12 @@
  * @default 120
  * @desc The period of the amplitude of the actor floating effect. Formulae allowed. 60 equals 1 second.
  * 
+ * @param ActorShadowDeadHide
+ * @parent <Actor Shadow>
+ * @type boolean
+ * @default false
+ * @desc If the actor is in dead motion, hide the shadow.
+ * 
  * @param RandomStartFloatHeight
  * @type boolean
  * @default true
@@ -279,7 +285,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.101 バトラーの影を設定＆浮遊効果の追加
+ * @plugindesc v1.11 バトラーの影を設定＆浮遊効果の追加
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @orderAfter animatedSVEnemies
  * @orderAfter NRP_DynamicMotionMZ
@@ -555,6 +561,13 @@
  * @desc アクターの浮遊効果の振幅の周期です。数式可。
  * 60が1秒に相当します。
  * 
+ * @param ActorShadowDeadHide
+ * @parent <Actor Shadow>
+ * @text 戦闘不能で影を非表示
+ * @type boolean
+ * @default false
+ * @desc アクターが戦闘不能モーション時に影を非表示にします。
+ * 
  * @param RandomStartFloatHeight
  * @text 浮遊開始位置をランダム化
  * @type boolean
@@ -642,6 +655,7 @@ const pActorShadowOpacity = toNumber(parameters["ActorShadowOpacity"], 255);
 const pActorFloatHeight = setDefault(parameters["ActorFloatHeight"], "24");
 const pActorFloatAmplitude = setDefault(parameters["ActorFloatAmplitude"], "5");
 const pActorFloatPeriodicTime = setDefault(parameters["ActorFloatPeriodicTime"], "120");
+const pActorShadowDeadHide = toBoolean(parameters["ActorShadowDeadHide"], false);
 // 共通
 const pRandomStartFloatHeight = toBoolean(parameters["RandomStartFloatHeight"], true);
 const pTransparencyJumpHeight = toNumber(parameters["TransparencyJumpHeight"]);
@@ -863,6 +877,12 @@ Sprite_Actor.prototype.initShadowPosition = function() {
  */
 const _Sprite_Actor_updateShadow = Sprite_Actor.prototype.updateShadow;
 Sprite_Actor.prototype.updateShadow = function() {
+    // 戦闘不能モーション中は影を非表示
+    if (pActorShadowDeadHide && this._motion == Sprite_Actor.MOTIONS["dead"]) {
+        this._shadowSprite.visible = false;
+        return;
+    }
+
     // 影の初期化を行うかどうか？
     if (this.isInitShadow()) {
         this.initBattlerShadow();
