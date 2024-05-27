@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Extends event acceleration feature.
+ * @plugindesc v1.01 Extends event acceleration feature.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484313722.html
  *
@@ -97,11 +97,22 @@
  * @param StartCommonEvent
  * @type common_event
  * @desc This is a common event that is called when the event test starts.
+ * 
+ * @param OmitBattleSwitch
+ * @type switch
+ * @desc This switch is used to omit combat for testing purposes.
+ * It does not support victory or defeat branches.
+ * 
+ * @param ShowBattleEffect
+ * @parent OmitBattleSwitch
+ * @type boolean
+ * @default false
+ * @desc The start of battle is also displayed during battle omission.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 イベントテストの機能を拡張します。
+ * @plugindesc v1.01 イベントテストの機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484313722.html
  *
@@ -196,6 +207,19 @@
  * @text 開始時コモンイベント
  * @type common_event
  * @desc イベントテスト開始時に呼び出されるコモンイベントです。
+ * 
+ * @param OmitBattleSwitch
+ * @text 戦闘省略用スイッチ
+ * @type switch
+ * @desc テスト用に戦闘を省略するためのスイッチです。
+ * ※勝利、敗北の分岐には対応していません。
+ * 
+ * @param ShowBattleEffect
+ * @parent OmitBattleSwitch
+ * @text 戦闘開始演出を表示
+ * @type boolean
+ * @default false
+ * @desc 戦闘省略時も戦闘開始演出を表示します。
  */
 (function() {
 "use strict";
@@ -221,6 +245,8 @@ const pDefaultMapId = toNumber(parameters["DefaultMapId"], 1);
 const pTestSwitch = toNumber(parameters["TestSwitch"]);
 const pThisEventIdVariable = toNumber(parameters["ThisEventIdVariable"]);
 const pStartCommonEvent = toNumber(parameters["StartCommonEvent"]);
+const pOmitBattleSwitch = toNumber(parameters["OmitBattleSwitch"]);
+const pShowBattleEffect = toBoolean(parameters["ShowBattleEffect"], false);
 
 /**
  * ●イベントテストの設定
@@ -282,6 +308,48 @@ Game_Map.prototype.setupTestEvent = function() {
     }
 
     return result;
+};
+
+//-----------------------------------------------------------------------------
+// 戦闘省略
+//-----------------------------------------------------------------------------
+
+/**
+ * ●エンカウント制御
+ */
+const _Scene_Map_updateEncounter = Scene_Map.prototype.updateEncounter;
+Scene_Map.prototype.updateEncounter = function() {
+    // 戦闘省略
+    if (!pShowBattleEffect && $gameSwitches.value(pOmitBattleSwitch)) {
+        return true;
+    }
+    _Scene_Map_updateEncounter.apply(this, arguments);
+};
+
+/**
+ * ●戦闘の処理
+ */
+const _Game_Interpreter_command301 = Game_Interpreter.prototype.command301;
+Game_Interpreter.prototype.command301 = function(params) {
+    // 戦闘省略
+    if (!pShowBattleEffect && $gameSwitches.value(pOmitBattleSwitch)) {
+        return true;
+    }
+    return _Game_Interpreter_command301.apply(this, arguments);
+};
+
+/**
+ * ●戦闘開始
+ */
+const _BattleManager_startBattle = BattleManager.startBattle;
+BattleManager.startBattle = function() {
+    // 戦闘省略
+    if (pShowBattleEffect && $gameSwitches.value(pOmitBattleSwitch)) {
+        // 即時戦闘中断
+        BattleManager.abort();
+        return;
+    }
+    _BattleManager_startBattle.apply(this, arguments);
 };
 
 })();
