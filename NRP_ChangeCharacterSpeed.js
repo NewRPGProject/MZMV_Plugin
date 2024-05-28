@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Change the character's movement speed in detail.
+ * @plugindesc v1.03 Change the character's movement speed in detail.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481254085.html
  *
@@ -17,6 +17,7 @@
  * - Can change the default value of Always Dash to On.
  * - Set the initial speed of the player and vehicles.
  * - Can change the speed when dashing.
+ * - Can change the speed of stepping.
  * 
  * -------------------------------------------------------------------
  * [Usage]
@@ -92,6 +93,10 @@
  * 
  * Change the speed of events with event IDs from 1 to 10 to 3.5.
  * 
+ * To change the step speed, do the following.
+ * 
+ * > nrp.changecharacterspeed.stepspeed 3.5
+ * 
  * -------------------------------------------------------------------
  * [Terms]
  * -------------------------------------------------------------------
@@ -100,6 +105,10 @@
  * and rights indication are also optional.
  * The author is not responsible,
  * but will deal with defects to the extent possible.
+ * 
+ * @-----------------------------------------------------
+ * @ Plugin Commands
+ * @-----------------------------------------------------
  * 
  * @command ChangeSpeed
  * @desc Changes the character's speed.
@@ -116,11 +125,39 @@
  * @option this._eventId + 1 #EventID+1
  * 
  * @arg Speed
- * @desc This is the movement speed to be changed. 4 is the standard speed.
+ * @desc The movement speed to be changed. 4 is the normal speed.
  * @type number
  * @decimals 3 @min -99
  * @default 4
  * 
+ * @-----------------------------------------------------
+ * 
+ * @command ChangeStepSpeed
+ * @desc Changes the character's step speed.
+ * If Speed is blank, then cancel the setting.
+ * 
+ * @arg Target
+ * @desc Specify the target to change the step speed.
+ * You can specify multiple targets.
+ * @type combo
+ * @default 0 #This Event
+ * @option 0 #This Event
+ * @option -1 #Player
+ * @option 1,2,3 #Multiple
+ * @option 1~3 #Range
+ * @option this._eventId + 1 #EventID+1
+ * 
+ * @arg Speed
+ * @desc The step speed to be changed. 4 is the normal.
+ * If it is blank, then cancel the setting.
+ * 
+ * @type number
+ * @decimals 3 @min -99
+ * @default 4
+ * 
+ * @-----------------------------------------------------
+ * @ Plugin Parameters
+ * @-----------------------------------------------------
  * 
  * @param DefaultAlwaysDash
  * @desc Turn on the default value for Always On Dash in Options.
@@ -135,6 +172,12 @@
  * @desc The speed that the player adds when dashing. The default value is 1. If 0, disable dash.
  * @type number
  * @decimals 3 @min -99
+ * 
+ * @param UseStepSpeed
+ * @desc Enable the ability to change the step speed.
+ * Turn off if it conflicts with other plugins.
+ * @type boolean
+ * @default true
  * 
  * @param <BasicSpeedRate>
  * 
@@ -170,7 +213,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 キャラクターの移動速度を細かく変更します。
+ * @plugindesc v1.03 キャラクターの移動速度を細かく変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481254085.html
  *
@@ -184,6 +227,7 @@
  * ・常時ダッシュの初期値をオンに変更可能。
  * ・プレイヤーや乗り物の初期速度を設定。
  * ・ダッシュ時の速度を変更可能。
+ * ・足踏みの速度を変更可能。
  * 
  * -------------------------------------------------------------------
  * ■使用方法
@@ -222,7 +266,12 @@
  * <MoveSpeed:3.5>
  * イベントの速度を3.5にします。
  * 
+ * <StepSpeed:5>
+ * 足踏みの速度を5にします。
+ * 
+ * -------------------------------------------------------------------
  * ■ＭＺ用プラグインコマンド
+ * -------------------------------------------------------------------
  * 『速度の変更』により対象と速度を指定してください。
  * プレイヤーや各イベントを対象にできます。
  * 同時に複数のイベントを対象とすることも可能です。
@@ -230,6 +279,8 @@
  * 例えば、対象を"1,2,3"とすると一つずつ指定できます。
  * また、"1~5"で一括指定となります。
  * ※コンボボックスに例があるのでご利用ください。
+ * 
+ * 『足踏み速度の変更』も同様です。
  * 
  * -------------------------------------------------------------------
  * ■ＭＶ用プラグインコマンド
@@ -253,12 +304,20 @@
  * 
  * イベントＩＤが1～10までのイベントの速度を3.5に変更します。
  * 
+ * 足踏み速度を変更する場合は以下のようになります。
+ * 
+ * > nrp.changecharacterspeed.stepspeed 3.5
+ * 
  * -------------------------------------------------------------------
  * ■利用規約
  * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
+ * 
+ * @-----------------------------------------------------
+ * @ プラグインコマンド
+ * @-----------------------------------------------------
  * 
  * @command ChangeSpeed
  * @text 速度の変更
@@ -284,6 +343,36 @@
  * @decimals 3 @min -99
  * @default 4
  * 
+ * @-----------------------------------------------------
+ * 
+ * @command ChangeStepSpeed
+ * @text 足踏み速度の変更
+ * @desc キャラクターの足踏み速度を変更します。
+ * 速度が空欄なら設定を解除します。
+ * 
+ * @arg Target
+ * @text 対象
+ * @desc 足踏み速度を変更する対象を指定します。
+ * 複数指定も可能です。
+ * @type combo
+ * @default 0 #このイベント
+ * @option 0 #このイベント
+ * @option -1 #プレイヤー
+ * @option 1,2,3 #複数指定
+ * @option 1~3 #範囲指定
+ * @option this._eventId + 1 #イベントID+1
+ * 
+ * @arg Speed
+ * @text 足踏み速度
+ * @desc 変更する足踏み速度です。4が標準速になります。
+ * 空欄なら設定を解除します。
+ * @type number
+ * @decimals 3 @min -99
+ * @default 4
+ * 
+ * @-----------------------------------------------------
+ * @ プラグインパラメータ
+ * @-----------------------------------------------------
  * 
  * @param DefaultAlwaysDash
  * @text 常時ダッシュの初期値
@@ -303,6 +392,13 @@
  * 小数も指定可能です。0ならダッシュ無効化。
  * @type number
  * @decimals 3 @min -99
+ * 
+ * @param UseStepSpeed
+ * @text 足踏速度の変更を許可
+ * @desc 足踏み速度の変更機能を有効にします。
+ * 他プラグインと競合する場合はオフに。
+ * @type boolean
+ * @default true
  * 
  * @param <BasicSpeedRate>
  * @text ＜基本速度＞
@@ -380,6 +476,7 @@ const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pDefaultAlwaysDash = toBoolean(parameters["DefaultAlwaysDash"]);
 const pPlayerSpeed = toNumber(parameters["PlayerSpeed"]);
 const pPlusSpeedDash = toNumber(parameters["PlusSpeedDash"]);
+const pUseStepSpeed = toBoolean(parameters["UseStepSpeed"], true);
 const pPlayerBasicSpeedRate = toNumber(parameters["PlayerBasicSpeedRate"]);
 const pEventBasicSpeedRate = toNumber(parameters["EventBasicSpeedRate"]);
 const pBoatSpeed = toNumber(parameters["BoatSpeed"]);
@@ -474,6 +571,27 @@ PluginManager.registerCommand(PLUGIN_NAME, "ChangeSpeed", function(args) {
     }
 });
 
+/**
+ * ●足踏み速度の変更
+ */
+PluginManager.registerCommand(PLUGIN_NAME, "ChangeStepSpeed", function(args) {
+    const targetId = setDefault(getCommandValue(args.Target), "0");
+    const speed = toNumber(getCommandValue(args.Speed));
+
+    // 対象を生成
+    // ※bindによってthisをメソッドに渡す。
+    const targets = makeTargets.bind(this)(targetId);
+    // 対象が取得できなければ処理しない。
+    if (targets.length == 0) {
+        return;
+    }
+
+    // 速度変更
+    for (const target of targets) {
+        target._stepSpeed = speed;
+    }
+});
+
 //----------------------------------------
 // ＭＶ用のプラグインコマンド
 //----------------------------------------
@@ -512,6 +630,27 @@ Game_Interpreter.prototype.pluginCommand = function(command, args) {
             target.setMoveSpeed(speed);
         }
 
+    // 足踏み速度を変更
+    } else if (lowerCommand === "nrp.changecharacterspeed.stepspeed") {
+        const speed = toNumber(args[0]);
+        const targetId = setDefault(plTarget, "0");
+
+        // 設定したらクリア
+        plTarget = undefined;
+
+        // 対象を生成
+        // ※bindによってthisをメソッドに渡す。
+        const targets = makeTargets.bind(this)(targetId);
+        // 対象が取得できなければ処理しない。
+        if (targets.length == 0) {
+            return;
+        }
+
+        // 速度変更
+        for (const target of targets) {
+            target._stepSpeed = speed;
+        }
+
     // 対象の設定
     } else if (lowerCommand === "nrp.changecharacterspeed.target") {
         // 引数が空白で区切られていた時のため連結しておく。
@@ -530,6 +669,14 @@ Game_Event.prototype.setupPageSettings = function() {
     const speed = this.event().meta.MoveSpeed;
     if (speed != null) {
         this.setMoveSpeed(toNumber(speed));
+    }
+
+    // 足踏み速度の設定があれば反映
+    if (pUseStepSpeed) {
+        const stepSpeed = this.event().meta.StepSpeed;
+        if (stepSpeed != null) {
+            this._stepSpeed = toNumber(stepSpeed);
+        }
     }
 };
 
@@ -649,5 +796,17 @@ if (pDefaultAlwaysDash) {
         };
     }
 }
+
+/**
+ * ●足踏みウェイト
+ */
+const _Game_CharacterBase_animationWait = Game_CharacterBase.prototype.animationWait;
+Game_CharacterBase.prototype.animationWait = function() {
+    // 足踏み速度の指定がある場合
+    if (pUseStepSpeed && this._stepSpeed != null) {
+        return (9 - this._stepSpeed) * 3;
+    }
+    return _Game_CharacterBase_animationWait.apply(this, arguments);
+};
 
 })();
