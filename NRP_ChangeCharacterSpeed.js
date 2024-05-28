@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Change the character's movement speed in detail.
+ * @plugindesc v1.02 Change the character's movement speed in detail.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481254085.html
  *
@@ -18,7 +18,9 @@
  * - Set the initial speed of the player and vehicles.
  * - Can change the speed when dashing.
  * 
+ * -------------------------------------------------------------------
  * [Usage]
+ * -------------------------------------------------------------------
  * Set each speed from the plugin parameters.
  * The initial value of the movement speed will be changed.
  * 
@@ -26,14 +28,38 @@
  * a multiplier will be applied to all movement speeds.
  * Please use the method that is most convenient for you.
  * 
+ * The speed value should refer to the move speed of the event.
+ * 
+ * ・1: x8 Slower
+ * ・2: x4 Slower
+ * ・3: x2 Slower
+ * ・4: Normal
+ * ・5: x2 Faster
+ * ・6: x4 Faster
+ * 
+ * Values outside of this range can also be set.
+ * Each increase of 1 in the value doubles the speed,
+ * and each decrease of 1 halves the speed.
+ * Decimals and negative values are also valid.
+ * 
+ * For example, 3.5 is the speed between normal and x2 Slower.
+ * 0 is x16 Slower and -1 is x32 Slower.
+ * 
+ * However, the maximum speed is "8:x16 Faster".
+ * ※If the speed is faster than this, it will move 2 grids
+ *   in an instant and will not be able to stop at the specified grid.
+ * 
+ * -------------------------------------------------------------------
  * [Setting Notes]
+ * -------------------------------------------------------------------
  * The following can be specified as events note.
  * 
  * <MoveSpeed:3.5>
  * Set the event speed to 3.5.
- * In other words, it is between standard speed and 1/2 times speed.
  * 
+ * -------------------------------------------------------------------
  * [Plugin commands for MZ]
+ * -------------------------------------------------------------------
  * Specify the target and speed using "ChangeSpeed".
  * You can target a player or each events.
  * You can target multiple events at the same time.
@@ -43,7 +69,9 @@
  * and if the target is "1~5", you can specify them all at once.
  * There is an example in the combo box, so please use it.
  *
+ * -------------------------------------------------------------------
  * [Plugin commands for MV]
+ * -------------------------------------------------------------------
  * > nrp.changecharacterspeed.speed 3.5
  * 
  * Change the speed of the target to 3.5.
@@ -64,7 +92,9 @@
  * 
  * Change the speed of events with event IDs from 1 to 10 to 3.5.
  * 
+ * -------------------------------------------------------------------
  * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
@@ -88,7 +118,7 @@
  * @arg Speed
  * @desc This is the movement speed to be changed. 4 is the standard speed.
  * @type number
- * @decimals 3
+ * @decimals 3 @min -99
  * @default 4
  * 
  * 
@@ -99,12 +129,12 @@
  * @param PlayerSpeed
  * @desc The movement speed of the player when walking. The initial value is 4.
  * @type number
- * @decimals 3
+ * @decimals 3 @min -99
  * 
  * @param PlusSpeedDash
  * @desc The speed that the player adds when dashing. The default value is 1. If 0, disable dash.
  * @type number
- * @decimals 3
+ * @decimals 3 @min -99
  * 
  * @param <BasicSpeedRate>
  * 
@@ -125,22 +155,22 @@
  * @param BoatSpeed
  * @desc The boat's movement speed. The initial value is 4.
  * @type number
- * @decimals 3
+ * @decimals 3 @min -99
  * 
  * @param ShipSpeed
  * @desc The ship's movement speed. The initial value is 5.
  * @type number
- * @decimals 3
+ * @decimals 3 @min -99
  * 
  * @param AirShipSpeed
  * @desc The airship's movement speed. The default value is 6.
  * @type number
- * @decimals 3
+ * @decimals 3 @min -99
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 キャラクターの移動速度を細かく変更します。
+ * @plugindesc v1.02 キャラクターの移動速度を細かく変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481254085.html
  *
@@ -155,7 +185,9 @@
  * ・プレイヤーや乗り物の初期速度を設定。
  * ・ダッシュ時の速度を変更可能。
  * 
+ * -------------------------------------------------------------------
  * ■使用方法
+ * -------------------------------------------------------------------
  * プラグインパラメータより各速度を設定してください。
  * 移動速度の初期値が変更されます。
  * 
@@ -163,12 +195,32 @@
  * 全ての移動速度に対して倍率がかかります。
  * 使いやすい方法をご利用ください。
  * 
+ * 速度の値はイベントの移動速度を参考にしてください。
+ * 
+ * ・1: 1/8倍速
+ * ・2: 1/4倍速
+ * ・3: 1/2倍速
+ * ・4: 標準速
+ * ・5: 2倍速
+ * ・6: 4倍速
+ * 
+ * ここから外れた値も設定可能です。
+ * 数値を１増やす毎に速度が２倍、１減らす毎に速度が半減します。
+ * 小数やマイナス値も有効です。
+ * 
+ * 例えば、3.5は標準速と1/2倍速の中間の速さになります。
+ * 0は1/16倍速、-1は1/32倍速になります。
+ * 
+ * ただし、速さは『8: 16倍速』が限度です。
+ * ※これより速いと一瞬で２マス移動してしまい、指定のマスに止まれないため。
+ * 
+ * -------------------------------------------------------------------
  * ■メモ欄の指定
+ * -------------------------------------------------------------------
  * 以下をイベントのメモ欄に指定できます。
  * 
  * <MoveSpeed:3.5>
  * イベントの速度を3.5にします。
- * つまり、標準速と1/2倍速の中間です。
  * 
  * ■ＭＺ用プラグインコマンド
  * 『速度の変更』により対象と速度を指定してください。
@@ -179,7 +231,9 @@
  * また、"1~5"で一括指定となります。
  * ※コンボボックスに例があるのでご利用ください。
  * 
+ * -------------------------------------------------------------------
  * ■ＭＶ用プラグインコマンド
+ * -------------------------------------------------------------------
  * > nrp.changecharacterspeed.speed 3.5
  * 
  * 速度を3.5に変更します。
@@ -199,7 +253,9 @@
  * 
  * イベントＩＤが1～10までのイベントの速度を3.5に変更します。
  * 
+ * -------------------------------------------------------------------
  * ■利用規約
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
@@ -223,9 +279,9 @@
  * @arg Speed
  * @text 移動速度
  * @desc 変更する移動速度です。4が標準速になります。
- * 小数も指定可能です。
+ * 小数やマイナスも指定可能です。
  * @type number
- * @decimals 3
+ * @decimals 3 @min -99
  * @default 4
  * 
  * 
@@ -239,14 +295,14 @@
  * @desc プレイヤーの歩行時の移動速度です。初期値は4です。
  * 小数も指定可能です。
  * @type number
- * @decimals 3
+ * @decimals 3 @min -99
  * 
  * @param PlusSpeedDash
  * @text ダッシュ時の加算速度
  * @desc プレイヤーがダッシュ時に加算される速度です。初期値は1です。
  * 小数も指定可能です。0ならダッシュ無効化。
  * @type number
- * @decimals 3
+ * @decimals 3 @min -99
  * 
  * @param <BasicSpeedRate>
  * @text ＜基本速度＞
@@ -276,7 +332,7 @@
  * @desc 小型船の移動速度です。初期値は4です。
  * 小数も指定可能です。
  * @type number
- * @decimals 3
+ * @decimals 3 @min -99
  * 
  * @param ShipSpeed
  * @parent <Vehicles>
@@ -284,7 +340,7 @@
  * @desc 大型船の移動速度です。初期値は5です。
  * 小数も指定可能です。
  * @type number
- * @decimals 3
+ * @decimals 3 @min -99
  * 
  * @param AirShipSpeed
  * @parent <Vehicles>
@@ -292,7 +348,7 @@
  * @desc 飛行船の移動速度です。初期値は6です。
  * 小数も指定可能です。
  * @type number
- * @decimals 3
+ * @decimals 3 @min -99
  */
 (function() {
 "use strict";
@@ -472,7 +528,7 @@ Game_Event.prototype.setupPageSettings = function() {
 
     // 速度の設定があれば反映
     const speed = this.event().meta.MoveSpeed;
-    if (speed) {
+    if (speed != null) {
         this.setMoveSpeed(toNumber(speed));
     }
 };
@@ -483,17 +539,17 @@ Game_Event.prototype.setupPageSettings = function() {
 const _Game_Vehicle_initMoveSpeed = Game_Vehicle.prototype.initMoveSpeed;
 Game_Vehicle.prototype.initMoveSpeed = function() {
     // 小型船
-    if (this.isBoat() && pBoatSpeed) {
+    if (this.isBoat() && pBoatSpeed != null) {
         this.setMoveSpeed(pBoatSpeed);
         return;
 
     // 大型船
-    } else if (this.isShip() && pShipSpeed) {
+    } else if (this.isShip() && pShipSpeed != null) {
         this.setMoveSpeed(pShipSpeed);
         return;
 
     // 飛行船
-    } else if (this.isAirship() && pAirShipSpeed) {
+    } else if (this.isAirship() && pAirShipSpeed != null) {
         this.setMoveSpeed(pAirShipSpeed);
         return;
     }
