@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Set detailed settings for battleback and encounter rates.
+ * @plugindesc v1.031 Set detailed settings for battleback and encounter rates.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481820874.html
  *
@@ -151,7 +151,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 戦闘背景やエンカウント率を詳細設定。
+ * @plugindesc v1.031 戦闘背景やエンカウント率を詳細設定。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481820874.html
  *
@@ -464,7 +464,7 @@ if (Utils.RPGMAKER_NAME == "MZ") {
     Sprite_Battleback.prototype.normalBattleback1Name = function() {
         const setting = getMatchSetting($gamePlayer.x, $gamePlayer.y);
         // 条件設定が取得できた場合
-        if (setting && setting.battleback1 != undefined) {
+        if (hasBattleBack(setting)) {
             return setting.battleback1;
         }
         
@@ -478,7 +478,7 @@ if (Utils.RPGMAKER_NAME == "MZ") {
     Sprite_Battleback.prototype.normalBattleback2Name = function() {
         const setting = getMatchSetting($gamePlayer.x, $gamePlayer.y);
         // 条件設定が取得できた場合
-        if (setting && setting.battleback2 != undefined) {
+        if (hasBattleBack(setting)) {
             return setting.battleback2;
         }
         
@@ -492,7 +492,7 @@ if (Utils.RPGMAKER_NAME == "MZ") {
     Sprite_Battleback.prototype.shipBattleback1Name = function() {
         const setting = getMatchSetting($gamePlayer.x, $gamePlayer.y);
         // 条件設定が取得できた場合
-        if (setting && setting.battleback1 != undefined) {
+        if (hasBattleBack(setting)) {
             return setting.battleback1;
         }
 
@@ -506,7 +506,7 @@ if (Utils.RPGMAKER_NAME == "MZ") {
     Sprite_Battleback.prototype.shipBattleback2Name = function() {
         const setting = getMatchSetting($gamePlayer.x, $gamePlayer.y);
         // 条件設定が取得できた場合
-        if (setting && setting.battleback2 != undefined) {
+        if (hasBattleBack(setting)) {
             return setting.battleback2;
         }
 
@@ -524,7 +524,7 @@ if (Utils.RPGMAKER_NAME == "MZ") {
     Spriteset_Battle.prototype.normalBattleback1Name = function() {
         const setting = getMatchSetting($gamePlayer.x, $gamePlayer.y);
         // 条件設定が取得できた場合
-        if (setting && setting.battleback1 != undefined) {
+        if (hasBattleBack(setting)) {
             return setting.battleback1;
         }
         
@@ -538,7 +538,7 @@ if (Utils.RPGMAKER_NAME == "MZ") {
     Spriteset_Battle.prototype.normalBattleback2Name = function() {
         const setting = getMatchSetting($gamePlayer.x, $gamePlayer.y);
         // 条件設定が取得できた場合
-        if (setting && setting.battleback2 != undefined) {
+        if (hasBattleBack(setting)) {
             return setting.battleback2;
         }
         
@@ -552,7 +552,7 @@ if (Utils.RPGMAKER_NAME == "MZ") {
     Spriteset_Battle.prototype.shipBattleback1Name = function() {
         const setting = getMatchSetting($gamePlayer.x, $gamePlayer.y);
         // 条件設定が取得できた場合
-        if (setting && setting.battleback1 != undefined) {
+        if (hasBattleBack(setting)) {
             return setting.battleback1;
         }
 
@@ -566,12 +566,22 @@ if (Utils.RPGMAKER_NAME == "MZ") {
     Spriteset_Battle.prototype.shipBattleback2Name = function() {
         const setting = getMatchSetting($gamePlayer.x, $gamePlayer.y);
         // 条件設定が取得できた場合
-        if (setting && setting.battleback2 != undefined) {
+        if (hasBattleBack(setting)) {
             return setting.battleback2;
         }
 
         return _Spriteset_Battle_shipBattleback2Name.apply(this, arguments);
     };
+}
+
+/**
+ * 戦闘背景の設定が存在するかどうか？
+ */
+function hasBattleBack(setting) {
+    // 条件設定が取得できる。
+    // かつ、戦闘背景の片方が設定されている。
+    // ※両方が設定されていない場合は未設定と判断
+    return setting && (setting.battleback1 != undefined || setting.battleback2 != undefined)
 }
 
 //----------------------------------------
