@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.06 Chain skills together.
+ * @plugindesc v1.07 Chain skills together.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -245,7 +245,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.06 スキルを連結する。
+ * @plugindesc v1.07 スキルを連結する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -538,7 +538,7 @@ let mChainedSkillIds = []; // 連結先スキル
 // スキル名非表示
 let mIsNotDisplay = false;
 // 連結実行判定
-let mIsChain = false;
+let mChainBattler = null;
 // 最終対象保持用
 let mLastTargetIndex = 0;
 // 命中記憶用
@@ -587,7 +587,7 @@ BattleManager.updateAction = function() {
     }
 
     // 連結実行判定
-    mIsChain = true;
+    mChainBattler = subject;
 
     // 発動済みのオブジェクトは除外
     if (!mChainedObjects.includes(item)) {
@@ -633,7 +633,7 @@ BattleManager.updateAction = function() {
     mIsNotDisplay = false;
     mChainedObjects = [];
     mChainedSkillIds = [];
-    mIsChain = false;
+    mChainBattler = null;
 
     // ここでendActionが呼び出されることで終了処理は実行される。
     _BattleManager_updateAction.apply(this, arguments);
@@ -964,7 +964,7 @@ function isTargetSkillType(actionItem, object) {
 const _Game_BattlerBase_meetsSkillConditions = Game_BattlerBase.prototype.meetsSkillConditions;
 Game_BattlerBase.prototype.meetsSkillConditions = function(skill) {
     // 連結スキルかつ有効判定を無視するなら常に有効
-    if (mIsChain && pIgnoreSkillConditions) {
+    if (this == mChainBattler && pIgnoreSkillConditions) {
         return true;
     }
     return _Game_BattlerBase_meetsSkillConditions.apply(this, arguments);
@@ -976,7 +976,7 @@ Game_BattlerBase.prototype.meetsSkillConditions = function(skill) {
 const _Game_BattlerBase_canPaySkillCost = Game_BattlerBase.prototype.canPaySkillCost;
 Game_BattlerBase.prototype.canPaySkillCost = function(skill) {
     // 連結スキルかつ無消費なら常に有効
-    if (mIsChain && pNoMpTpCost) {
+    if (this == mChainBattler && pNoMpTpCost) {
         return true;
     }
     return _Game_BattlerBase_canPaySkillCost.apply(this, arguments);
@@ -988,7 +988,7 @@ Game_BattlerBase.prototype.canPaySkillCost = function(skill) {
 const _Game_BattlerBase_paySkillCost = Game_BattlerBase.prototype.paySkillCost;
 Game_BattlerBase.prototype.paySkillCost = function(skill) {
     // 連結スキルかつ無消費なら終了
-    if (mIsChain && pNoMpTpCost) {
+    if (this == mChainBattler && pNoMpTpCost) {
         return;
     }
     _Game_BattlerBase_paySkillCost.apply(this, arguments);
@@ -1000,7 +1000,7 @@ Game_BattlerBase.prototype.paySkillCost = function(skill) {
 const _Game_BattlerBase_isConfused = Game_BattlerBase.prototype.isConfused;
 Game_BattlerBase.prototype.isConfused = function() {
     // 連結スキル時は処理しない。
-    if (mIsChain) {
+    if (this == mChainBattler) {
         return;
     }
     return _Game_BattlerBase_isConfused.apply(this, arguments);
@@ -1079,7 +1079,7 @@ Window_BattleLog.prototype.displayAction = function(subject, item) {
 const _Window_BattleLog_performAction = Window_BattleLog.prototype.performAction;
 Window_BattleLog.prototype.performAction = function(subject, action) {
     // 連結スキルかつ開始モーション無効なら終了
-    if (mIsChain && pNoStartMotion) {
+    if (subject == mChainBattler && pNoStartMotion) {
         return;
     }
     _Window_BattleLog_performAction.apply(this, arguments);
@@ -1112,7 +1112,7 @@ const _Spriteset_Battle_isBusy = Spriteset_Battle.prototype.isBusy;
 Spriteset_Battle.prototype.isBusy = function() {
     // 連結スキル中はアニメーションのリクエストがあれば処理待ちする。
     // ※この指定がないとアニメーションが開始した瞬間にダメージ表示されてしまう。
-    if (mIsChain) {
+    if (mChainBattler) {
         if (Utils.RPGMAKER_NAME == "MV") {
             for (const battler of BattleManager.allBattleMembers()) {
                 if (battler.isAnimationRequested()) {
@@ -1136,7 +1136,7 @@ Spriteset_Battle.prototype.isBusy = function() {
 const _Sprite_Actor_stepBack = Sprite_Actor.prototype.stepBack;
 Sprite_Actor.prototype.stepBack = function() {
     // 連結スキルかつ後退禁止の場合
-    if (mIsChain && pNostepBack) {
+    if (this._battler == mChainBattler && pNostepBack) {
         return;
     }
     _Sprite_Actor_stepBack.apply(this, arguments);
@@ -1153,7 +1153,7 @@ if (pNoEnemyFlash) {
     const _Spriteset_Battle_animationBaseDelay = Spriteset_Battle.prototype.animationBaseDelay;
     Spriteset_Battle.prototype.animationBaseDelay = function() {
         // 連結スキル中はディレイ不要
-        if (mIsChain) {
+        if (mChainBattler) {
             return 0;
         }
         return _Spriteset_Battle_animationBaseDelay.apply(this, arguments);
@@ -1165,7 +1165,7 @@ if (pNoEnemyFlash) {
     const _Sprite_Enemy_startWhiten = Sprite_Enemy.prototype.startWhiten;
     Sprite_Enemy.prototype.startWhiten = function() {
         // 連結スキル中はフラッシュ不要
-        if (mIsChain) {
+        if (this._battler == mChainBattler) {
             // ０にするとフリーズするので1を設定（※原因不明……）
             this._effectDuration = 1;
             return;
