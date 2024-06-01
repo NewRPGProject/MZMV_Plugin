@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.001 Fastest execution of battle events before fade-in.
+ * @plugindesc v1.01 Fastest execution of battle events before fade-in.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499824342.html
  *
@@ -18,6 +18,13 @@
  * 
  * ※However, show messages, wait, etc. do not work
  *   because there is no stop control for event commands.
+ * 
+ * Starting from ver1.01, a battle event can be executed
+ * before the battle ends when all enemies have been killed.
+ * If additional enemies are added in the event, the battle will continue.
+ * For example, it is possible to create a scene in which the battle
+ * does not end even after all the enemies have been killed,
+ * and reinforcements appear one after another.
  * 
  * -------------------------------------------------------------------
  * [Usage]
@@ -107,11 +114,16 @@
  * @param CommonCommonEvent
  * @type common_event
  * @desc The common event always executed fastest at the start of battle. Runs later than the Troop event.
+ * 
+ * @param EnemiesDefeatedEvent
+ * @type boolean
+ * @default false
+ * @desc Allow battle events to be executed before the battle is over when the enemies are all defeated.
  */
 
 /*:ja
  * @target MZ
- * @plugindesc v1.001 バトルイベントをフェードイン前に最速実行。
+ * @plugindesc v1.01 バトルイベントをフェードイン前に最速実行。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499824342.html
  *
@@ -126,6 +138,11 @@
  * 
  * ※ただし、イベントコマンドの停止制御はしていないため、
  * 　文章の表示やウェイトなどはうまくいきません。
+ * 
+ * ver1.01より、敵を全滅させた際に戦闘が終了する前に、
+ * バトルイベントを実行できるようになりました。
+ * イベント内で敵キャラの追加を行えば、戦闘は続行されます。
+ * 例えば、敵を全滅させた際に立て続けに増援が現れるような演出が可能です。
  * 
  * -------------------------------------------------------------------
  * ■使用方法
@@ -221,6 +238,12 @@
  * @type common_event
  * @desc 戦闘開始時に常に最速実行されるコモンイベントです。
  * 敵グループのイベントより後で実行されます。
+ * 
+ * @param EnemiesDefeatedEvent
+ * @text 敵全滅時でもイベント実行
+ * @type boolean
+ * @default false
+ * @desc 敵全滅時、戦闘が終わる前にバトルイベントを実行できるようにします。
  */
 
 (function() {
@@ -263,6 +286,7 @@ const PLUGIN_NAME = "NRP_FastBattleEvent";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pAutoFastEvent = toBoolean(parameters["AutoFastEvent"]);
 const pCommonCommonEvent = toNumber(parameters["CommonCommonEvent"]);
+const pEnemiesDefeatedEvent = toBoolean(parameters["EnemiesDefeatedEvent"]);
 
 /**
  * ●引数を元に対象の配列を取得する。
@@ -493,5 +517,21 @@ function getFastBattleEvent(note) {
     return null;
 }
 
+//-----------------------------------------------------------------------------
+// BattleManager
+//-----------------------------------------------------------------------------
+
+/**
+ * ●戦闘状況の変化を更新
+ */
+const _BattleManager_updateEventMain = BattleManager.updateEventMain;
+BattleManager.updateEventMain = function() {
+    // 敵全滅時もバトルイベントを実行
+    if (pEnemiesDefeatedEvent && $gameTroop.isAllDead()) {
+        this._phase = "turnEnd";
+        $gameTroop.setupBattleEvent();
+    }
+    return _BattleManager_updateEventMain.apply(this, arguments);
+};
 
 })();
