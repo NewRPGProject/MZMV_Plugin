@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Fastest execution of battle events before fade-in.
+ * @plugindesc v1.011 Fastest execution of battle events before fade-in.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499824342.html
  *
@@ -123,7 +123,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 バトルイベントをフェードイン前に最速実行。
+ * @plugindesc v1.011 バトルイベントをフェードイン前に最速実行。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499824342.html
  *
@@ -528,8 +528,14 @@ const _BattleManager_updateEventMain = BattleManager.updateEventMain;
 BattleManager.updateEventMain = function() {
     // 敵全滅時もバトルイベントを実行
     if (pEnemiesDefeatedEvent && $gameTroop.isAllDead()) {
+        // ターン終了扱いでバトルイベントを実行
         this._phase = "turnEnd";
         $gameTroop.setupBattleEvent();
+        // バトルイベントによって敵が生存状態になった場合
+        if (!$gameTroop.isAllDead()) {
+            // ターン終了処理を実行
+            this.endTurn();
+        }
     }
     return _BattleManager_updateEventMain.apply(this, arguments);
 };
