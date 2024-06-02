@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Immediately execute commands for Movement Route.
+ * @plugindesc v1.01 Immediately execute commands for Movement Route.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484920665.html
  *
@@ -58,6 +58,10 @@
  * The author is not responsible,
  * but will deal with defects to the extent possible.
  * 
+ * @-----------------------------------------------------
+ * @ [Plugin Parameters]
+ * @-----------------------------------------------------
+ * 
  * @param MaxImmediate
  * @type number
  * @default 5
@@ -68,11 +72,17 @@
  * @default false
  * @desc This also applies when the autonomous movement type is custom.
  * But only if the movement frequency is maximum.
+ * 
+ * @param ChangeImageResetPattern
+ * @type boolean
+ * @default false
+ * @desc To initialize the pattern when the image is changed.
+ * Prevent flickering immediately after moving.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 移動ルートの設定用コマンド（画像の変更など）を即時実行。
+ * @plugindesc v1.01 移動ルートの設定用コマンド（画像の変更など）を即時実行。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484920665.html
  *
@@ -122,6 +132,10 @@
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
  * 
+ * @-----------------------------------------------------
+ * @ プラグインパラメータ
+ * @-----------------------------------------------------
+ * 
  * @param MaxImmediate
  * @text 最大同時処理数
  * @type number
@@ -134,6 +148,13 @@
  * @default false
  * @desc 自律移動タイプがカスタムの場合にも処理を適用します。
  * ただし、移動頻度が最大の場合が条件です。
+ * 
+ * @param ChangeImageResetPattern
+ * @text 画像変更でパターン初期化
+ * @type boolean
+ * @default false
+ * @desc 画像の変更時にパターンを初期化するようにします。
+ * 移動直後に画像変更した際のチラ見え防止に。
  */
 
 (function() {
@@ -158,6 +179,7 @@ const PLUGIN_NAME = "NRP_QuickMovementRoute";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pMaxImmediate = toNumber(parameters["MaxImmediate"]);
 const pApplyMoveTypeCustom = toBoolean(parameters["ApplyMoveTypeCustom"]);
+const pChangeImageResetPattern = toBoolean(parameters["ChangeImageResetPattern"]);
 
 // 自律移動カスタム用の除外判定フラグ
 let mExceptSoon = false;
@@ -260,5 +282,22 @@ function isSoonTarget(command) {
             return true;
     }
 };
+
+// 画像変更でパターン初期化
+if (pChangeImageResetPattern) {
+    /**
+     * ●画像の変更
+     */
+    const _Game_CharacterBase_setImage = Game_CharacterBase.prototype.setImage;
+    Game_CharacterBase.prototype.setImage = function(characterName, characterIndex) {
+        _Game_CharacterBase_setImage.apply(this, arguments);
+        // 移動中ではない。
+        if (this.isStopping()) {
+            // パターン初期化
+            this.resetPattern();
+            this._animationCount = 0;
+        }
+    };
+}
 
 })();
