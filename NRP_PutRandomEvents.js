@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.011 Placement automation for symbol encounters.
+ * @plugindesc v1.02 Placement automation for symbol encounters.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base TemplateEvent
  * @base EventReSpawn
@@ -231,7 +231,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.011 シンボルエンカウントの配置自動化。
+ * @plugindesc v1.02 シンボルエンカウントの配置自動化。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base TemplateEvent
  * @base EventReSpawn
@@ -890,14 +890,19 @@ function isOpenSpace(event, x, y) {
 
     // ４方向をサーチ（上右下左）
     const newCost = cost - 1;
+
     // 走査を行いながら、条件を満たしたら終了
-    if (searchGrid(event, x, y - 1, newCost, coordinates, originalArgs)) {
+    // 8:上
+    if (searchGrid(event, x, y - 1, 8, newCost, coordinates, originalArgs)) {
         return true;
-    } else if (searchGrid(event, x + 1, y, newCost, coordinates, originalArgs)) {
+    // 6:右
+    } else if (searchGrid(event, x + 1, y, 6, newCost, coordinates, originalArgs)) {
         return true;
-    } else if (searchGrid(event, x, y + 1, newCost, coordinates, originalArgs)) {
+    // 2:下
+    } else if (searchGrid(event, x, y + 1, 2, newCost, coordinates, originalArgs)) {
         return true;
-    } else if (searchGrid(event, x - 1, y, newCost, coordinates, originalArgs)) {
+    // 4:左
+    } else if (searchGrid(event, x - 1, y, 4, newCost, coordinates, originalArgs)) {
         return true;
     }
     return false;
@@ -906,14 +911,14 @@ function isOpenSpace(event, x, y) {
 /**
  * ●座標を探索する。
  */
-function searchGrid(event, x, y, cost, coordinates, originalArgs) {
+function searchGrid(event, x, y, d, cost, coordinates, originalArgs) {
     // 既に現在値以上の残コストが入っている場合
     // または-1（移動不可）の場合は終了
     if (coordinates[x][y] >= cost || coordinates[x][y] == -1) {
         return;
 
     // 移動可能の場合
-    } else if (isPassable(event, x, y)) {
+    } else if (isPassable(event, x, y, d)) {
         // 既に最大距離に達しているならＯＫ
         // ※基準とする座標から進んだ歩数で判定
         if (Math.abs(x - originalArgs.x) + Math.abs(y - originalArgs.y) >= originalArgs.cost) {
@@ -929,13 +934,17 @@ function searchGrid(event, x, y, cost, coordinates, originalArgs) {
         // まだ探索可能なら、再帰的に次の座標を検索
         const newCost = cost - 1;
         // 走査を行いながら、条件を満たしたら終了
-        if (searchGrid(event, x, y - 1, newCost, coordinates, originalArgs)) {
+        // 8:上
+        if (searchGrid(event, x, y - 1, 8, newCost, coordinates, originalArgs)) {
             return true;
-        } else if (searchGrid(event, x + 1, y, newCost, coordinates, originalArgs)) {
+        // 6:右
+        } else if (searchGrid(event, x + 1, y, 6, newCost, coordinates, originalArgs)) {
             return true;
-        } else if (searchGrid(event, x, y + 1, newCost, coordinates, originalArgs)) {
+        // 2:下
+        } else if (searchGrid(event, x, y + 1, 2, newCost, coordinates, originalArgs)) {
             return true;
-        } else if (searchGrid(event, x - 1, y, newCost, coordinates, originalArgs)) {
+        // 4:左
+        } else if (searchGrid(event, x - 1, y, 4, newCost, coordinates, originalArgs)) {
             return true;
         }
 
@@ -1087,8 +1096,8 @@ function getAutotileType(tileId) {
 /**
  * ●イベントが通行可能な地点かを確認
  */
-function isPassable(event, x, y) {
-    return event.isThrough() || event.isMapPassable(x, y);
+function isPassable(event, x, y, d) {
+    return event.isThrough() || event.isMapPassable(x, y, d);
 }
 
 /**
