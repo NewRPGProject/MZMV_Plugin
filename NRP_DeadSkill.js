@@ -56,7 +56,7 @@
  * @param SelfStatePlusTurn
  * @type boolean
  * @default false
- * @desc Self-state by dead skill has +1 continuation turn.
+ * @desc Self-state by dead skill by suicide has +1 continuation turn.
  * The timing of the automatic cancellation must be "Action End".
  */
 
@@ -113,7 +113,7 @@
  * @text 自身へのステートターン+1
  * @type boolean
  * @default false
- * @desc 戦闘不能スキルによる自己ステートは継続ターンを+1
+ * @desc 自殺による戦闘不能スキルによる自己ステートは継続ターンを+1
  * 自動解除のタイミングが『行動終了時』のものが対象です。
  */
 
