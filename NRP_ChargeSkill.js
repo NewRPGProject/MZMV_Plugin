@@ -3,8 +3,9 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.041 Create a charge skill.
+ * @plugindesc v1.042 Create a charge skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
+ * @orderBefore NRP_DynamicAnimationMZ
  * @url http://newrpg.seesaa.net/article/474413155.html
  *
  * @help Create a charge skill.
@@ -105,8 +106,9 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.041 ため技作成用の機能を提供します。
+ * @plugindesc v1.042 ため技作成用の機能を提供します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
+ * @orderBefore NRP_DynamicAnimationMZ
  * @url http://newrpg.seesaa.net/article/474413155.html
  *
  * @help ため技を作成します。
@@ -802,19 +804,41 @@ Window_BattleLog.prototype.displayAction = function(subject, item) {
 /**
  * ●アクション開始メッセージ＆演出
  */
-var _Window_BattleLog_startAction = Window_BattleLog.prototype.startAction;
+const _Window_BattleLog_startAction = Window_BattleLog.prototype.startAction;
 Window_BattleLog.prototype.startAction = function(subject, action, targets) {
-    var item = action.item();
+    const item = action.item();
     // スキルメモ欄に<NoStartAction>が設定されているなら開始演出を省略
+    // ※NRP_BattleEventEXMZ.jsでも全く同じ処理をしているが問題ない。
     if (item.meta.NoStartAction) {
-        // アニメーションとウェイトだけを残す
-        this.push('showAnimation', subject, targets.clone(), item.animationId);
-        this.push('wait');
+        // アニメーションが設定されている場合は、アニメーションとウェイトだけを残す
+        if (item.animationId) {
+            this.push('showAnimation', subject, targets.clone(), item.animationId);
+            this.push('wait');
+        }
         return;
     }
     
     // 元処理実行
     _Window_BattleLog_startAction.apply(this, arguments);
+};
+
+/**
+ * ●アクション終了処理
+ */
+const _Window_BattleLog_endAction = Window_BattleLog.prototype.endAction;
+Window_BattleLog.prototype.endAction = function(subject) {
+    const action = BattleManager._action;
+    if (action) {
+        const item = action.item();
+        // スキルメモ欄に<NoStartAction>が設定されているなら終了演出を省略
+        // ただし、アニメーションが未設定の場合のみ
+        if (item.meta.NoStartAction && !item.animationId) {
+            return;
+        }
+    }
+
+    // 元処理実行
+    _Window_BattleLog_endAction.apply(this, arguments);
 };
 
 /**

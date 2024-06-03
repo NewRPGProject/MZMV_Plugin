@@ -3,9 +3,10 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.062 Extends the functionality of battle events.
+ * @plugindesc v1.063 Extends the functionality of battle events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_ChargeSkill
+ * @orderBefore NRP_DynamicAnimationMZ
  * @orderAfter NRP_EnemyRoutineKai
  * @url http://newrpg.seesaa.net/article/477489099.html
  *
@@ -227,9 +228,10 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.062 バトルイベントの機能を拡張します。
+ * @plugindesc v1.063 バトルイベントの機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_ChargeSkill
+ * @orderBefore NRP_DynamicAnimationMZ
  * @orderAfter NRP_EnemyRoutineKai
  * @url http://newrpg.seesaa.net/article/477489099.html
  *
