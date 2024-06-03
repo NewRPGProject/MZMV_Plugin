@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.18 Change the battle system to CTB.
+ * @plugindesc v1.19 Change the battle system to CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -245,11 +245,19 @@
  * @default true
  * @desc The buf put on self has a +1 continuation turn.
  * How to deal with a problem whose effect on self quickly disappears.
+ * 
+ * @param reviveWT
+ * @parent <State&Buf>
+ * @type combo
+ * @option baseWt
+ * @option wt
+ * @desc Reset wait time at revive. Formulas allowed.
+ * baseWt:wait time for one turn, wt:wait time at dead.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.18 戦闘システムをＣＴＢへ変更します。
+ * @plugindesc v1.19 戦闘システムをＣＴＢへ変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -493,6 +501,16 @@
  * @default true
  * @desc 自分にかけた強化弱体は継続ターンを+1します。
  * 自分にかけた変化が即切れする問題への対処です。
+ * 
+ * @param reviveWT
+ * @text 蘇生時のＷＴ
+ * @parent <State&Buf>
+ * @type combo
+ * @option baseWt
+ * @option wt
+ * @desc 蘇生時に待ち時間を再設定します。数式可
+ * baseWt:１ターン分の待ち時間, wt:戦闘不能時の待ち時間
+ * 
  */
 
 (function() {
@@ -506,9 +524,14 @@ function toBoolean(str, def) {
     }
     return def;
 }
-
 function toNumber(str, def) {
     return isNaN(str) ? def : +(str || def);
+}
+function setDefault(str, def) {
+    if (str == undefined || str == "") {
+        return def;
+    }
+    return str;
 }
 
 const parameters = PluginManager.parameters("NRP_CountTimeBattle");
@@ -525,6 +548,7 @@ const pSurpriseAdvantage = toNumber(parameters["surpriseAdvantage"], 50);
 const pStartTurn = toNumber(parameters["startTurn"], 1);
 const pSelfStatePlusTurn = toBoolean(parameters["selfStatePlusTurn"], true);
 const pSelfBufPlusTurn = toBoolean(parameters["selfBufPlusTurn"], true);
+const pReviveWT = setDefault(parameters["reviveWT"]);
 
 //-----------------------------------------------------------------------------
 // Scene_Battle
@@ -1128,6 +1152,22 @@ Game_BattlerBase.prototype.isCtbAlive = function() {
         }
     }
     return false;
+};
+
+/**
+ * ●蘇生時
+ */
+const _Game_BattlerBase_revive = Game_BattlerBase.prototype.revive;
+Game_BattlerBase.prototype.revive = function() {
+    _Game_BattlerBase_revive.apply(this, arguments);
+
+    if (pReviveWT != null) {
+        // eval計算用
+        const baseWt = this.baseWt;
+        const wt = this.wt;
+        // ＷＴを再設定
+        this.wt = eval(pReviveWT);
+    }
 };
 
 //-----------------------------------------------------------------------------
