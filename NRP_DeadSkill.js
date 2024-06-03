@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Activate the skill at dead time.
+ * @plugindesc v1.02 Activate the skill at dead time.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/500606923.html
  *
@@ -52,11 +52,17 @@
  * @type boolean
  * @default true
  * @desc The skill at dead is activated before the dead direction.
+ * 
+ * @param SelfStatePlusTurn
+ * @type boolean
+ * @default false
+ * @desc Self-state by dead skill has +1 continuation turn.
+ * The timing of the automatic cancellation must be "Action End".
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 戦闘不能時にスキルを発動します。
+ * @plugindesc v1.02 戦闘不能時にスキルを発動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/500606923.html
  *
@@ -102,6 +108,13 @@
  * @type boolean
  * @default true
  * @desc 戦闘不能時のスキルを戦闘不能演出より前に発動します。
+ * 
+ * @param SelfStatePlusTurn
+ * @text 自身へのステートターン+1
+ * @type boolean
+ * @default false
+ * @desc 戦闘不能スキルによる自己ステートは継続ターンを+1
+ * 自動解除のタイミングが『行動終了時』のものが対象です。
  */
 
 (function() {
@@ -139,6 +152,7 @@ function parseStruct2(arg) {
 const PLUGIN_NAME = "NRP_DeadSkill";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pSkillBeforeCollapse = toBoolean(parameters["SkillBeforeCollapse"]);
+const pSelfStatePlusTurn = toBoolean(parameters["SelfStatePlusTurn"], false);
 
 // ----------------------------------------------------------------------------
 // 戦闘不能時にスキル発動
@@ -308,6 +322,26 @@ Game_BattlerBase.prototype.clearStates = function() {
     }
 
     _Game_BattlerBase_clearStates.apply(this, arguments);
+};
+
+/**
+ * ●ステート有効ターン初期設定
+ */
+const _Game_BattlerBase_prototype_resetStateCounts = Game_BattlerBase.prototype.resetStateCounts;
+Game_BattlerBase.prototype.resetStateCounts = function(stateId) {
+    // 元処理呼び出し
+    _Game_BattlerBase_prototype_resetStateCounts.apply(this, arguments);
+
+    // 自分を攻撃して戦闘不能スキルを発動した場合
+    // 対象者が行動者自身の場合は有効ターン＋１
+    // そうしておかないと、行動終了と同時にターン経過してしまうため。
+    if (pSelfStatePlusTurn && mDeadSkillUserList.includes(this)
+            && this == BattleManager._subject && this == mOriginalSubject) {
+        // 自動解除が『行動終了時』のステートを対象とする。
+        if ($dataStates[stateId].autoRemovalTiming == 1) {
+            this._stateTurns[stateId]++;
+        }
+    }
 };
 
 // ----------------------------------------------------------------------------
