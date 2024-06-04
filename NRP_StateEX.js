@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.07 Extend the functionality of the state in various ways.
+ * @plugindesc v1.08 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -271,6 +271,11 @@
  * @default false
  * @desc Displays a miss when the state is missed.
  * This applies to skills with a damage type of None.
+ * 
+ * @param SlipOverKill
+ * @type boolean
+ * @default false
+ * @desc For slip damage (e.g. poison), enable values that exceed the current HP.
  */
 //-----------------------------------------------------------------------------
 // Parameter
@@ -299,7 +304,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.07 ステートの機能を色々と拡張します。
+ * @plugindesc v1.08 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -557,6 +562,12 @@
  * @default false
  * @desc ステート付加が外れた際に、ミスを表示するようにします。
  * ダメージタイプが『なし』のスキルが対象です。
+ * 
+ * @param SlipOverKill
+ * @text スリップダメージ無制限
+ * @type boolean
+ * @default false
+ * @desc 毒などのスリップダメージで現在ＨＰを超える値を有効にします。
  */
 //-----------------------------------------------------------------------------
 // Parameter
@@ -625,6 +636,7 @@ const pParameterList = parseStruct2(parameters["ParameterList"]);
 const pAlwaysUpdateState = toBoolean(parameters["AlwaysUpdateState"], false);
 const pUpdateType = toNumber(parameters["UpdateType"], 0);
 const pShowStateMiss = toBoolean(parameters["ShowStateMiss"], false);
+const pSlipOverKill = toBoolean(parameters["SlipOverKill"], false);
 
 /**
  * ●効率化のため事前変換
@@ -1051,6 +1063,16 @@ Game_Battler.prototype.regenerateTp = function() {
     // ない場合は元のまま
     _Game_Battler_regenerateTp.apply(this, arguments);
 };
+
+// スリップダメージ無制限
+if (pSlipOverKill) {
+    /**
+     * 【上書】スリップダメージの最大値
+     */
+    Game_Battler.prototype.maxSlipDamage = function() {
+        return $dataSystem.optSlipDeath ? Infinity : Math.max(this.hp - 1, 0);
+    };
+}
 
 // ----------------------------------------------------------------------------
 // ステート解除時にスキル発動
