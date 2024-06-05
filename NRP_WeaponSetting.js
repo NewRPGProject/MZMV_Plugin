@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v2.033 Extends the weapon display.
+ * @plugindesc v2.04 Extends the weapon display.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/484348477.html
@@ -279,7 +279,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.033 武器の表示を拡張します。
+ * @plugindesc v2.04 武器の表示を拡張します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/484348477.html
@@ -402,7 +402,7 @@
  * 通常攻撃アニメーションの色調を変更します。
  * 0~255までの数値が有効です。
  * 赤、緑、青、強さの順で設定してください。
- * ※ＭＶアニメーションのみ有効です。
+ * ※ＭＶ形式のアニメーションのみ有効です。
  * ※敵キャラの通常攻撃アニメーションには、
  * 　NRP_EnemyAttackAnimation.jsなどのプラグインが必要です。
  * 
@@ -611,14 +611,6 @@ const pSyncActorMotion = toBoolean(parameters["SyncActorMotion"], true);
  */
 const _Sprite_Weapon_loadBitmap = Sprite_Weapon.prototype.loadBitmap;
 Sprite_Weapon.prototype.loadBitmap = function() {
-    // DynamicMotionを参照
-    const dm = this.parent.dynamicMotion;
-    // DynamicMotion側で武器の指定がある場合は処理しない。
-    if (dm && (dm.weaponId || dm.weaponType)) {
-        _Sprite_Weapon_loadBitmap.apply(this, arguments);
-        return;
-    }
-
     // 武器の持ち主を取得
     const battler = this.parent._battler;
     if (battler && battler.weapons()) {
@@ -630,14 +622,23 @@ Sprite_Weapon.prototype.loadBitmap = function() {
 
         // 武器を取得
         const dataWeapon = this.dataWeapon();
+
         // 画像の指定がある場合は読み込む
         const weaponImage = dataWeapon.meta.WeaponImage;
         if (weaponImage) {
             this.bitmap = ImageManager.loadSystem(weaponImage);
             return;
         }
+
+        // DynamicMotionが有効かつ武器タイプの指定がある場合はそちらを優先取得
+        let dynamicWeaponType = null;
+        const dm = this.parent.dynamicMotion;
+        if (dm && dm.weaponType) {
+            dynamicWeaponType = dm.weaponType;
+        }
+
         // 武器情報リストを参照
-        const weaponInfo = getWeaponInfo(dataWeapon);
+        const weaponInfo = getWeaponInfo(dataWeapon, dynamicWeaponType);
         if (weaponInfo && weaponInfo.WeaponImage) {
             this.bitmap = ImageManager.loadSystem(weaponInfo.WeaponImage);
             return;
@@ -737,6 +738,8 @@ Sprite_Weapon.prototype.setup = function(weaponImageId) {
     const blendColor = dataWeapon.meta.BlendColor;
     if (blendColor) {
         this.setBlendColor(eval(blendColor));
+    } else {
+        this.setBlendColor([0, 0, 0, 0]);
     }
     
     // 合成方法があれば設定
@@ -982,7 +985,11 @@ function setAnimationColor(sprite, color) {
 /**
  * ●武器情報を取得
  */
-function getWeaponInfo(weapon) {
+function getWeaponInfo(weapon, weaponType) {
+    // 武器タイプの直接指定がある場合はそちらを優先
+    if (weaponType) {
+        return pWeaponInfoList.find(w => w.WeaponType == weaponType);
+    }
     return pWeaponInfoList.find(w => w.WeaponType == weapon.wtypeId);
 }
 
