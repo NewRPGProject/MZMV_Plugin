@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.05 Implementation of the special skill system.
+ * @plugindesc v1.051 Implementation of the special skill system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_CountTimeBattle
  * @url https://newrpg.seesaa.net/article/489968387.html
@@ -446,7 +446,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.05 奥義システムの実装。
+ * @plugindesc v1.051 奥義システムの実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_CountTimeBattle
  * @url https://newrpg.seesaa.net/article/489968387.html
@@ -1130,11 +1130,14 @@ if (pRecoverGauge) {
  */
 const _Game_BattlerBase_canPaySkillCost = Game_BattlerBase.prototype.canPaySkillCost;
 Game_BattlerBase.prototype.canPaySkillCost = function(skill) {
-    const specialSkillType = toNumber(skill.meta.SpecialSkill);
-    if (specialSkillType) {
-        const gaugeValue = this._specialGauges[specialSkillType - 1];
-        return _Game_BattlerBase_canPaySkillCost.apply(this, arguments)
-            && gaugeValue >= this.skillSpecialGaugeCost(skill);
+    // アクターのみ対象
+    if (this.isActor()) {
+        const specialSkillType = toNumber(skill.meta.SpecialSkill);
+        if (specialSkillType) {
+            const gaugeValue = this._specialGauges[specialSkillType - 1];
+            return _Game_BattlerBase_canPaySkillCost.apply(this, arguments)
+                && gaugeValue >= this.skillSpecialGaugeCost(skill);
+        }
     }
     return _Game_BattlerBase_canPaySkillCost.apply(this, arguments);
 };
@@ -1146,11 +1149,14 @@ const _Game_BattlerBase_paySkillCost = Game_BattlerBase.prototype.paySkillCost;
 Game_BattlerBase.prototype.paySkillCost = function(skill) {
     _Game_BattlerBase_paySkillCost.apply(this, arguments);
 
-    // 奥義の場合
-    const specialSkillType = toNumber(skill.meta.SpecialSkill);
-    if (specialSkillType) {
-        // 該当のゲージを減算
-        this._specialGauges[specialSkillType - 1] -= this.skillSpecialGaugeCost(skill);
+    // アクターのみ対象
+    if (this.isActor()) {
+        // 奥義の場合
+        const specialSkillType = toNumber(skill.meta.SpecialSkill);
+        if (specialSkillType) {
+            // 該当のゲージを減算
+            this._specialGauges[specialSkillType - 1] -= this.skillSpecialGaugeCost(skill);
+        }
     }
 };
 
