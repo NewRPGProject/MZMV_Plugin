@@ -3,11 +3,11 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Removes image noise generated when the battler is moving.
+ * @plugindesc v1.01 Removes noise generated in the image.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484654081.html
  *
- * @help Removes image noise generated when the battler is moving.
+ * @help Removes noise generated in the image.
  * 
  * When you move the battler in RPG Maker MZ,
  * the image may have noises like lines.
@@ -19,16 +19,16 @@
  * 
  * This problem can be solved by switching the settings for the image.
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * [Usage]
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * Just apply it.
  * You can switch between them for each image,
  * but the default state is usually fine.
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * [Terms]
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
@@ -44,15 +44,20 @@
  * @type boolean
  * @default true
  * @desc Apply the process to the state icon image.
+ * 
+ * @param AnimationSmoothOff
+ * @type boolean
+ * @default true
+ * @desc Apply the process to the animation image (MV Style).
  */
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 バトラーの移動時に発生する画像ノイズを除去
+ * @plugindesc v1.01 画像に発生するノイズを除去
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484654081.html
  *
- * @help バトラーの移動時に発生する画像ノイズを除去します。
+ * @help 画像に発生するノイズを除去します。
  * 
  * ツクールＭＺにて、バトラーを移動させた場合、
  * 画像に線のようなノイズが入ることがあります。
@@ -64,16 +69,16 @@
  * 
  * 画像に対する設定を切り替えることによって、この問題を解決します。
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * ■使用方法
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * 適用するだけでＯＫです。
  * 画像毎に切り替えられるようになっていますが、
  * 通常は初期状態でも問題ないと思います。
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * ■利用規約
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
@@ -89,6 +94,12 @@
  * @type boolean
  * @default true
  * @desc ステートアイコン画像に処理を適用します。
+ * 
+ * @param AnimationSmoothOff
+ * @text アニメーションに適用
+ * @type boolean
+ * @default true
+ * @desc アニメーション画像（ＭＶ形式）に処理を適用します。
  */
 
 (function() {
@@ -105,8 +116,9 @@ function toBoolean(str, def) {
 
 const PLUGIN_NAME = "NRP_BitmapSmoothOff";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
-const pSvActorSmoothOff = toBoolean(parameters["SvActorSmoothOff"]);
-const pStateIconSmoothOff = toBoolean(parameters["StateIconSmoothOff"]);
+const pSvActorSmoothOff = toBoolean(parameters["SvActorSmoothOff"], true);
+const pStateIconSmoothOff = toBoolean(parameters["StateIconSmoothOff"], true);
+const pAnimationSmoothOff = toBoolean(parameters["AnimationSmoothOff"], true);
 
 if (pSvActorSmoothOff) {
     /**
@@ -130,6 +142,18 @@ if (pStateIconSmoothOff) {
     Sprite_StateIcon.prototype.loadBitmap = function() {
         _Sprite_StateIcon_loadBitmap.apply(this, arguments);
         this.bitmap.smooth = false;
+    };
+}
+
+if (pAnimationSmoothOff) {
+    /**
+     * ●アニメーションの読込
+     */
+    const _Sprite_AnimationMV_loadBitmaps = Sprite_AnimationMV.prototype.loadBitmaps;
+    Sprite_AnimationMV.prototype.loadBitmaps = function() {
+        _Sprite_AnimationMV_loadBitmaps.apply(this, arguments);
+        this._bitmap1.smooth = false;
+        this._bitmap2.smooth = false
     };
 }
 
