@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.09 Change the equipment slots at will.
+ * @plugindesc v1.10 Change the equipment slots at will.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489626316.html
  *
@@ -157,7 +157,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.09 装備スロットを自由に変更。
+ * @plugindesc v1.10 装備スロットを自由に変更。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489626316.html
  * 
@@ -415,10 +415,14 @@ const _Game_Actor_releaseUnequippableItems = Game_Actor.prototype.releaseUnequip
 Game_Actor.prototype.releaseUnequippableItems = function(forcing) {
     // この処理中のみスロット変化による装備解除を有効にする。
     // ※ただし、forcingがfalseの場合のみが対象
-    // 　trueの場合はステータス変化の参照など内部的な処理なので対象外
-    mReleaseUnequippableItems = !forcing;
+    // 　trueの場合は内部的な処理なので対象外
+    
+    // mReleaseUnequippableItems = !forcing;
+    mForcing = forcing;
+    mReleaseUnequippableItems = true;
     _Game_Actor_releaseUnequippableItems.apply(this, arguments);
     mReleaseUnequippableItems = false;
+    mForcing = false;
 };
 
 if (pDefaultEquipSlots) {
@@ -452,24 +456,6 @@ Game_Actor.prototype.equipSlots = function() {
         this._oldSlots = slots;
     }
 
-    //-----------------------------------------------------------------------
-    // ※以下、非常に難解な処理につき注意！
-    //
-    // スロット情報（slots）には[1,2,3,3,4,4]というように、
-    // 装備タイプの配列が格納されているが、
-    // この要素が[1,2,3,4,4]というように変化した時の対応が非常にややこしい。
-    //
-    // というのも、これに対応する装備情報（this.equips()）は装備品の配列だが、
-    // 空データも許容されるため、その際の装備タイプが分からない。
-    // 従って、スロット情報が変化した時、以前の装備との対応が分からなくなる。
-    //
-    // そんなわけで、前回のスロット情報（this._oldSlots）を保持＆参照することで、
-    // どうにかこうにか対応情報を復元している。
-    //-----------------------------------------------------------------------
-
-    // 装備タイプと装備（複数）をマッピング
-    const equipsMap = makeEquipsMap(this.equips(), this._oldSlots);
-
     //----------------------------------------------------
     // 特徴を元にスロットの配列を生成
     //----------------------------------------------------
@@ -496,14 +482,32 @@ Game_Actor.prototype.equipSlots = function() {
     // スロットを数値順でソート
     slots.sort((a, b) => a - b);
 
+    //-----------------------------------------------------------------------
+    // ※以下、非常に難解な処理につき注意！
+    //
+    // スロット情報（slots）には[1,2,3,3,4,4]というように、
+    // 装備タイプの配列が格納されているが、
+    // この要素が[1,2,3,4,4]というように変化した時の対応が非常にややこしい。
+    //
+    // というのも、これに対応する装備情報（this.equips()）は装備品の配列だが、
+    // 空データも許容されるため、その際の装備タイプが分からない。
+    // 従って、スロット情報が変化した時、以前の装備との対応が分からなくなる。
+    //
+    // そんなわけで、前回のスロット情報（this._oldSlots）を保持＆参照することで、
+    // どうにかこうにか対応情報を復元している。
+    //-----------------------------------------------------------------------
+
     //-------------------------------------------------------------
     // 装備解除を行う場合、
     // スロット情報に変化がないかチェックし、変化があれば装備欄を調整
     //-------------------------------------------------------------
     if (mReleaseUnequippableItems && !equalSlots(this._oldSlots, slots)) {
-        //----------------------------------------------------
-        // 装備マップとスロット配列を元に装備用オブジェクトを作成
-        //----------------------------------------------------
+        // 前回の装備タイプと装備（複数）をマッピング
+        const equipsMap = makeEquipsMap(this.equips(), this._oldSlots);
+
+        //------------------------------------------------------
+        // 装備マップとスロット配列を元に装備用オブジェクトを再構築
+        //------------------------------------------------------
         this._equips = mapToEquips(this, equipsMap, slots);
         // スロット情報の更新を記憶
         this._oldSlots = slots;
@@ -540,6 +544,7 @@ Game_Actor.prototype.forceChangeEquip = function(slotId, item) {
 
 // 装備解除判定用フラグ
 let mReleaseUnequippableItems = false;
+let mForcing = false;
 
 /**
  * ●装備タイプと装備（複数）をマッピングして返す
@@ -596,7 +601,9 @@ function mapToEquips(actor, equipsMap, slots) {
         }
 
         // 装備欄が減少した場合
-        if (equipArray.length > slotTypeCount) {
+        // ※ただし、forcingがオンの場合はプレビュー用の内部処理なので対象外。
+        //   この処理を適切にやらないと装備が増殖または消滅して大変なことに……。
+        if (!mForcing && equipArray.length > slotTypeCount) {
             // 装備を解除してパーティに戻す。
             for (let i = slotTypeCount; i < equipArray.length; i++) {
                 actor.tradeItemWithParty(null, equipArray[i]);
