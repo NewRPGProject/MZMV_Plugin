@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.011 Display parallaxes freely.
+ * @plugindesc v1.02 Display parallaxes freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488413806.html
  *
@@ -220,6 +220,12 @@
  * @desc The opacity of the image; Max 255.
  * Formula is also valid (e.g. $gameVariables.value(1))
  * 
+ * @arg Duration
+ * @type number
+ * @max 9999
+ * @desc The time it takes to complete the opacity change.
+ * Specify in 1/60 second increments.
+ * 
  * @arg Options
  * @type struct<Option>
  * 
@@ -273,6 +279,12 @@
  * @max 255
  * @desc The opacity of the image; Max 255.
  * Formula is also valid (e.g. $gameVariables.value(1))
+ * 
+ * @arg Duration
+ * @type number
+ * @max 9999
+ * @desc The time it takes to complete the opacity change.
+ * Specify in 1/60 second increments.
  * 
  * @arg Options
  * @type struct<Option>
@@ -354,7 +366,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.011 自在に遠景（近景）を表示します。
+ * @plugindesc v1.02 自在に遠景（近景）を表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488413806.html
  *
@@ -573,6 +585,13 @@
  * @desc 画像の不透明度です。0～255が有効。
  * 数式（テキスト）も有効（例：$gameVariables.value(1)）
  * 
+ * @arg Duration
+ * @text 時間
+ * @type number
+ * @max 9999
+ * @desc 不透明度を変化を完了するまでの時間です。
+ * 1/60秒単位で指定してください。
+ * 
  * @arg Options
  * @text オプション
  * @type struct<Option>
@@ -639,6 +658,13 @@
  * @max 255
  * @desc 画像の不透明度です。0～255が有効。
  * 数式（テキスト）も有効（例：$gameVariables.value(1)）
+ * 
+ * @arg Duration
+ * @text 時間
+ * @type number
+ * @max 9999
+ * @desc 不透明度を変化を完了するまでの時間です。
+ * 1/60秒単位で指定してください。
  * 
  * @arg Options
  * @text オプション
@@ -800,6 +826,7 @@ PluginManager.registerCommand(PLUGIN_NAME, "AddParallax", function(args) {
         params.parallaxY = params.parallaxX;
     }
     params.opacity = setDefault(args.Opacity, 255);
+    params.duration = toNumber(args.Duration, 0);
     params.blendMode = 0;
 
     // オプション項目の設定
@@ -854,7 +881,15 @@ function setParallaxData(parallax, params) {
     parallax.scrollY = params.scrollY;
     parallax.z = params.z;
     parallax.paramOpacity = params.opacity;
-    parallax.opacity = eval(params.opacity);
+    parallax.startOpacity = 0;
+    // 時間指定があるなら０から開始
+    if (params.duration) {
+        parallax.opacity = 0;
+    } else {
+        parallax.opacity = eval(params.opacity);
+    }
+    parallax.duration = toNumber(params.duration, 0);
+    parallax.durationCount = 0;
     parallax.blendMode = params.blendMode;
     parallax.parallaxX = params.parallaxX;
     parallax.parallaxY = params.parallaxY;
@@ -920,6 +955,7 @@ PluginManager.registerCommand(PLUGIN_NAME, "ChangeParallax", function(args) {
     params.height = eval(args.Height);
     params.z = eval(args.Z);
     params.opacity = eval(args.Opacity);
+    params.duration = toNumber(args.Duration, 0);
     params.parallaxTile = toBoolean(args.ParallaxTile);
 
     // 視差をタイルに連動
@@ -956,8 +992,12 @@ PluginManager.registerCommand(PLUGIN_NAME, "ChangeParallax", function(args) {
         parallax.mapX = changeValue(parallax.mapX, params.mapX);
         parallax.mapY = changeValue(parallax.mapY, params.mapY);
         parallax.z = changeValue(parallax.z, params.z);
-        parallax.opacity = changeValue(parallax.opacity, params.opacity);
+        // 前回の不透明度を引継
+        parallax.startOpacity = parallax.opacity;
+        parallax.opacity = parallax.opacity;
         parallax.paramOpacity = changeValue(parallax.paramOpacity, params.opacity);
+        parallax.duration = params.duration;
+        parallax.durationCount = 0;
         parallax.parallaxTile = changeValue(parallax.parallaxTile, params.parallaxTile);
 
         // 特殊な調整をする項目
@@ -1186,8 +1226,21 @@ Spriteset_Base.prototype.updateParallaxPlus = function() {
         // 遠景自体のスクロール値を加算
         parallax.origin.x += eval(parallax.scrollX);
         parallax.origin.y += eval(parallax.scrollY);
-        // 不透明度の数式反映
-        parallax.opacity = eval(parallax.paramOpacity);
+
+        // 目標とする不透明度
+        const targetOpacity = eval(parallax.paramOpacity);
+
+        // 時間指定がある場合は徐々に反映
+        if (parallax.durationCount < parallax.duration) {
+            parallax.durationCount++;
+            parallax.opacity = parallax.startOpacity * (1 - parallax.durationCount / (parallax.duration))
+                + targetOpacity * (parallax.durationCount / (parallax.duration));
+
+        // 既に時間に達した。または時間指定がない場合は即時反映
+        } else {
+            // 不透明度の数式反映
+            parallax.opacity = targetOpacity;
+        }
 
         // マップ座標の指定がある場合は補正
         parallax.setMapPosition(diffX, diffY);
