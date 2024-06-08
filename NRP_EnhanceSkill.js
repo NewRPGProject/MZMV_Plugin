@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Change the performance of the skill.
+ * @plugindesc v1.03 Change the performance of the skill.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/498025725.html
  *
@@ -83,6 +83,13 @@
  * 
  * - Note of Skills: <EnhanceElement:A>
  * - Note of Equipments: <EnhanceTargetElement:A>
+ * 
+ * <NoEnhance>
+ * Disables skill enhancement.
+ * 
+ * <NoEnhanceDamage>
+ * Only the damage enhancement of the skill is disabled.
+ * Consumption and success rate will be enhanced as normal.
  * 
  * -------------------------------------------------------------------
  * [Other Details]
@@ -179,7 +186,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 スキルの性能を変化させる。
+ * @plugindesc v1.03 スキルの性能を変化させる。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/498025725.html
  *
@@ -249,6 +256,13 @@
  * 
  * ・スキルのメモ欄に<EnhanceElement:A>を記入
  * ・装備のメモ欄に<EnhanceTargetElement:A>を記入
+ * 
+ * <NoEnhance>
+ * スキルの強化を無効にします。
+ * 
+ * <NoEnhanceDamage>
+ * スキルのダメージ強化のみを無効にします。
+ * 消費や成功率は通常通り強化されます。
  * 
  * -------------------------------------------------------------------
  * ■その他詳細
@@ -404,36 +418,6 @@ Game_Action.prototype.makeDamageValue = function(target, critical) {
     return ret;
 };
 
-// ※こちらでの実装も検討したけど、対象の耐性を参照するプラグインと競合するので保留
-// /**
-//  * ●属性計算
-//  */
-// const _Game_Action_calcElementRate = Game_Action.prototype.calcElementRate;
-// Game_Action.prototype.calcElementRate = function(target) {
-//     const ret = _Game_Action_calcElementRate.apply(this, arguments);
-
-//     // 設定がない場合は対象外
-//     if (!pEnhanceDamageRate) {
-//         return ret;
-//     }
-
-//     // 属性が通常攻撃の場合
-//     if (this.item().damage.elementId < 0) {
-//         // そのまま
-//         return ret;
-//     }
-
-//     // 属性一致の場合
-//     const object = this.subject().enhanceObjects(this.item());
-//     if (object) {
-//         // 属性強化率を計算
-//         return ret * pEnhanceDamageRate / 100;
-//     }
-
-//     // そのまま
-//     return ret;
-// };
-
 /**
  * ●命中計算
  */
@@ -487,6 +471,10 @@ Game_Action.prototype.itemEffectAddNormalState = function(target, effect) {
  * 【独自】ダメージ補正を取得
  */
 Game_Action.prototype.enhanceDamageRate = function() {
+    // ダメージ強化無効なら終了
+    if (this.item().meta.NoEnhanceDamage) {
+        return 1;
+    }
     return getEnhanceRate(this, "EnhanceDamageRate", pEnhanceDamageRate);
 };
 
@@ -633,6 +621,11 @@ Game_BattlerBase.prototype.enhanceObjects = function(item) {
         if (!pEnhanceItem) {
             return objects;
         }
+    }
+
+    // 強化無効なら終了
+    if (item.meta.NoEnhance) {
+        return objects;
     }
 
     // 属性ＩＤを配列で定義（複数属性も考慮）
