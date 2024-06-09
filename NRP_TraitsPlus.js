@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Change the traits (regular parameter and element rate) to an additive method.
+ * @plugindesc v1.03 Change the traits (regular parameter and element rate) to an additive method.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483215411.html
  *
@@ -12,9 +12,9 @@
  * While you're at it, you can also fix the specification
  * that gives priority to evasion rate over hit rate.
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * [Explanation of plugin parameters]
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * ◆RegularParameterPlus
  * In the standard, the regular parameter correction is calculated
  * by simply multiplying the settings
@@ -39,6 +39,17 @@
  * "State additive total" * "Buff"
  * 
  * It will only be added to the same category.
+ * 
+ * ◆SeparateEquipment
+ * Ensure that battler & class corrections do not affect the equipment.
+ * For example, if the class attack power is set to *200%,
+ * then under the specifications of RPG Maker MV - MZ,
+ * even the weapon's attack power will be 200%.
+ * Turning this item on will only apply corrections
+ * to Actor and Class abilities.
+ * 
+ * It is strongly recommended, especially
+ * when using parameter correction in NRP_AdditionalClasses.js.
  * 
  * ◆ElementRatePlus
  * Change the element rate to an additive method.
@@ -82,9 +93,9 @@
  * will be based on the hit rate minus the evasion rate.
  * (It is also possible to distinguish between 'attack missed' and 'evaded'.)
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * [Terms]
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
@@ -113,6 +124,12 @@
  * @type boolean
  * @default true
  * @desc Change the state's regular parameter to an additive one.
+ * 
+ * @param SeparateEquipment
+ * @parent RegularParameterPlus
+ * @type boolean
+ * @default false
+ * @desc Ensure that battler & class corrections do not affect equipment.
  * 
  * @param ElementRatePlus
  * @type boolean
@@ -163,16 +180,16 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 特徴（能力補正や属性有効度）を加算方式に変更する。
+ * @plugindesc v1.03 特徴（能力補正や属性有効度）を加算方式に変更する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483215411.html
  *
  * @help 特徴に設定する各項目の計算を加算方式に変更します。
  * ついでに、命中率より回避率が優先される仕様も修正できます。
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * ■プラグインパラメータの解説
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * ◆通常能力値を加算
  * 標準では、通常能力値の補正はアクター、職業、装備、ステートの
  * 全てに設定したものを単純に乗算して計算を行います。
@@ -195,6 +212,16 @@
  * 「アクター＆職業の加算合計」×「装備の加算合計」×「ステートの加算合計」×「能力値強化」
  * 
  * 加算するのは、あくまで同一の分類内に対してとなります。
+ * 
+ * ◆装備補正を別計算
+ * バトラー＆職業の補正が装備に影響を与えないようにします。
+ * 例えば、職業の攻撃力が*200%の場合、ツクールＭＶ～ＭＺの仕様では、
+ * 武器の攻撃力まで200%になってしまいます。
+ * この項目をオンにすると、アクターとクラスの能力に対してのみ、
+ * 補正をかけるようになります。
+ * 
+ * 特に多重職業プラグイン（NRP_AdditionalClasses.js）にて、
+ * パラメータ補正を使用する場合は強く推奨します。
  * 
  * ◆属性有効度を加算
  * 属性有効度を加算方式に変更します。
@@ -234,9 +261,9 @@
  * 命中率から回避率を引いた値で判定を行うようになります。
  * ※『攻撃を外した』か『回避された』かの区別も可能です。
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * ■利用規約
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
@@ -267,6 +294,13 @@
  * @type boolean
  * @default true
  * @desc ステートの通常能力値を加算方式に変更します。
+ * 
+ * @param SeparateEquipment
+ * @parent RegularParameterPlus
+ * @text 装備補正を別計算
+ * @type boolean
+ * @default false
+ * @desc バトラー＆職業補正が装備に影響を与えないようにします。
  * 
  * @param ElementRatePlus
  * @text 属性有効度を加算
@@ -353,6 +387,7 @@ const pRegularParameterPlus = toBoolean(parameters["RegularParameterPlus"], fals
 const pBattlerClassPlus = toBoolean(parameters["Battler&ClassPlus"], true);
 const pEquipPlus = toBoolean(parameters["EquipPlus"], true);
 const pStatePlus = toBoolean(parameters["StatePlus"], true);
+const pSeparateEquipment = toBoolean(parameters["SeparateEquipment"], false);
 const pElementRatePlus = toBoolean(parameters["ElementRatePlus"], false);
 const pElementRateMax = toNumber(parameters["ElementRateMax"]);
 const pElementRateMin = toNumber(parameters["ElementRateMin"]);
@@ -392,31 +427,50 @@ if (pRegularParameterPlus) {
     };
 
     /**
-     * ●パラメータの取得
+     * 【上書】パラメータの取得
      */
     Game_BattlerBase.prototype.param = function(paramId) {
         // 基本値
-        let value = this.paramBasePlus(paramId);
+        let value = 0;
+
+        // 装備補正を別計算する場合
+        if (pSeparateEquipment) {
+            // バトラーとクラスの基本値（装備は除外）
+            value = Math.max(0, this.paramBase(paramId));
+        } else {
+            // 装備まで含めた値
+            value = this.paramBasePlus(paramId);
+        }
+        
         // バトラー＆職業補正
         if (pBattlerClassPlus) {
             value *= this.paramPlusRateAtObjects(paramId, this.traitBattlerObjects());
         } else {
             value *= this.paramRateAtObjects(paramId, this.traitBattlerObjects());
         }
+
         // 装備補正（アクターのみ）
         if (this.equips) {
+            // 装備補正を別計算する場合
+            if (pSeparateEquipment) {
+                // 装備の値を加算
+                value += this.paramPlus(paramId);
+            }
+
             if (pEquipPlus) {
                 value *= this.paramPlusRateAtObjects(paramId, this.equips().filter(equip => equip));
             } else {
                 value *= this.paramRateAtObjects(paramId, this.equips().filter(equip => equip));
             }
         }
+
         // ステート補正
         if (pStatePlus) {
             value *= this.paramPlusRateAtObjects(paramId, this.states());
         } else {
             value *= this.paramRateAtObjects(paramId, this.states());
         }
+
         // バフ補正
         value *= this.paramBuffRate(paramId);
 
@@ -424,6 +478,19 @@ if (pRegularParameterPlus) {
         const minValue = this.paramMin(paramId);
         return Math.round(value.clamp(minValue, maxValue));
     };
+
+    // /**
+    //  * 【上書】基本パラメータの取得
+    //  */
+    // const _Game_BattlerBase_paramBasePlus = Game_BattlerBase.prototype.paramBasePlus;
+    // Game_BattlerBase.prototype.paramBasePlus = function(paramId) {
+    //     // 装備補正を別計算する場合
+    //     if (pSeparateEquipment) {
+    //         return Math.max(0, this.paramBase(paramId);
+    //     }
+    //     // return Math.max(0, this.paramBase(paramId) + this.paramPlus(paramId));
+    //     return _Game_BattlerBase_paramBasePlus.apply(this, arguments);
+    // };
 
     /**
      * 【独自】オブジェクト配列を指定して、その倍率を取得（乗算方式）
@@ -636,7 +703,6 @@ if (pFixHitFormula) {
 
             result.missed = missed;
             result.evaded = evaded;
-
 
             // 命中状況を確定
             this._isHitConfirm = true;
