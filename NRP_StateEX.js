@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.08 Extend the functionality of the state in various ways.
+ * @plugindesc v1.09 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -233,6 +233,21 @@
  * Can only be released if a state is specified.
  * 
  * -------------------------------------------------------------------
+ * [Original Parameters]
+ * -------------------------------------------------------------------
+ * You can also set your own parameters
+ * by selecting Original for the ParameterList type.
+ * 
+ * For example, suppose that the Id is set to 0, the Tag to “TestParam”,
+ * and the note field of the state is set to <TestParam:a.level>.
+ * In that case, you can refer to the value by
+ * writing “a.stateExOriginalParam(0)” in the skill calculation formula.
+ * ※Key is not used, but should be set to a value that is unique.
+ * 
+ * We envision states that reduce damage only
+ * for specific skills, for example.
+ * 
+ * -------------------------------------------------------------------
  * [Terms]
  * -------------------------------------------------------------------
  * There are no restrictions.
@@ -286,6 +301,7 @@
  * @option r:Regular-Params @value r
  * @option x:Ex-Params @value x
  * @option s:Sp-Params @value s
+ * @option o:Original @value o
  * @default r
  * @desc Parameter type.
  * 
@@ -304,7 +320,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.08 ステートの機能を色々と拡張します。
+ * @plugindesc v1.09 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -522,6 +538,19 @@
  * ステートを指定した場合のみ解除できます。
  * 
  * -------------------------------------------------------------------
+ * ■オリジナルパラメータ
+ * -------------------------------------------------------------------
+ * パラメータリストのタイプにオリジナルを選択すると、
+ * 独自のパラメータを設定することもできます。
+ * 
+ * 例えば、ＩＤに0, タグ名に"TestParam"と設定した場合、
+ * <TestParam:a.level>と設定したステートを付加すると、
+ * スキルの計算式にて「a.stateExOriginalParam(0)」とすれば値を参照できます。
+ * ※識別名は使いませんが、一意になる値を設定しておいてください。
+ * 
+ * 特定のスキルのみダメージを減らすステートなどを想定しています。
+ * 
+ * -------------------------------------------------------------------
  * ■利用規約
  * -------------------------------------------------------------------
  * 特に制約はありません。
@@ -579,6 +608,7 @@
  * @option r:通常能力値 @value r
  * @option x:追加能力値 @value x
  * @option s:特殊能力値 @value s
+ * @option o:オリジナル @value o
  * @default r
  * @desc パラメータのタイプです。
  * 
@@ -961,6 +991,23 @@ Game_BattlerBase.prototype.sparam = function(sparamId) {
 };
 
 /**
+ * 【独自】当プラグイン独自のパラメータ計算
+ */
+Game_BattlerBase.prototype.stateExOriginalParam = function(paramId) {
+    let value = 0;
+    // 各補正値があるかどうか？
+    for (const stateEx of this.statesEx()) {
+        // r:通常能力値が対象
+        const exValue = getExValue(stateEx, "o", paramId);
+        // 補正値が存在すれば加算
+        if (exValue) {
+            value += exValue;
+        }
+    }
+    return value;
+};
+
+/**
  * ●補正値を取得
  */
 function getExValue(stateEx, type, paramId) {
@@ -968,7 +1015,7 @@ function getExValue(stateEx, type, paramId) {
     for (const key in stateEx) {
         // keyを元に値を取得
         const exParam = stateEx[key];
-        // 通常能力値かつIDが一致するもの
+        // タイプとIDが一致するもの
         if (exParam.type == type && exParam.id == paramId) {
             // 補正値を返す
             return exParam.value || 0;
