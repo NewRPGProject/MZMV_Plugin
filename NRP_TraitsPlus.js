@@ -129,7 +129,7 @@
  * @parent RegularParameterPlus
  * @type boolean
  * @default false
- * @desc Ensure that battler & class corrections do not affect equipment.
+ * @desc Ensure that Actor & Class parameter corrections do not affect equipment.
  * 
  * @param ElementRatePlus
  * @type boolean
@@ -300,7 +300,7 @@
  * @text 装備補正を別計算
  * @type boolean
  * @default false
- * @desc バトラー＆職業補正が装備に影響を与えないようにします。
+ * @desc アクター＆職業のパラメータ補正が装備に影響を与えないようにします。
  * 
  * @param ElementRatePlus
  * @text 属性有効度を加算
