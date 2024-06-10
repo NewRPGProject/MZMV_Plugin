@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.053 It makes MV animations correspond to DynamicAnimationMZ.
+ * @plugindesc v1.06 It makes MV animations correspond to DynamicAnimationMZ.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -104,7 +104,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.053 ＭＶ用アニメーションをDynamicAnimationMZに対応させます。
+ * @plugindesc v1.06 ＭＶ用アニメーションをDynamicAnimationMZに対応させます。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -654,12 +654,15 @@ Sprite_AnimationMV.prototype.processTimingData = function(timing) {
 /**
  * ●対象のフラッシュ
  */
-var _Sprite_AnimationMV_startFlash = Sprite_AnimationMV.prototype.startFlash;
+const _Sprite_AnimationMV_startFlash = Sprite_AnimationMV.prototype.startFlash;
 Sprite_AnimationMV.prototype.startFlash = function(color, duration) {
     // フラッシュ制限フラグが立っているなら処理終了
     if (this.dynamicAnimation && this.dynamicAnimation.isLimitFlash) {
         return;
     }
+
+    // 終了処理を実行するフラグ
+    this._useOnEnd = true;
 
     // 元処理実行
     _Sprite_AnimationMV_startFlash.call(this, color, duration);
@@ -668,19 +671,22 @@ Sprite_AnimationMV.prototype.startFlash = function(color, duration) {
 /**
  * ●対象非表示
  */
-var _Sprite_AnimationMV_startHiding = Sprite_AnimationMV.prototype.startHiding;
+const _Sprite_AnimationMV_startHiding = Sprite_AnimationMV.prototype.startHiding;
 Sprite_AnimationMV.prototype.startHiding = function(duration) {
     // フラッシュ制限フラグが立っているなら処理終了
     if (this.dynamicAnimation && this.dynamicAnimation.isLimitFlash) {
         return;
     }
 
+    // 終了処理を実行するフラグ
+    this._useOnEnd = true;
+
     // 元処理実行
     _Sprite_AnimationMV_startHiding.call(this, duration);
 };
 
 /**
- * アニメーションの削除
+ * ●アニメーションの削除
  */
 Sprite_AnimationMV.prototype.remove = function() {
     if (this.dynamicAnimation && this.parent) {
@@ -693,26 +699,23 @@ Sprite_AnimationMV.prototype.remove = function() {
  */
 const _Sprite_AnimationMV_onEnd = Sprite_AnimationMV.prototype.onEnd;
 Sprite_AnimationMV.prototype.onEnd = function() {
-    // 最終リピートの場合のみ戻し処理を実行
-    if (this.dynamicAnimation && this.dynamicAnimation.isLastRepeat) {
-        // アニメーションの削除時に色調＆表示状態を戻す
-        this._flashDuration = 0;
-        this._screenFlashDuration = 0;
-        this._hidingDuration = 0;
-        for (const target of this._targets) {
-            target.setBlendColor([0, 0, 0, 0]);
-            target.show();
-        }
+    // フラッシュや対象消去を実行していないなら終了処理を行わない。
+    // ※チラつきの原因となるため。
+    if (!this._useOnEnd) {
         return;
     }
-
+    // DynamicAnimationから呼び出された場合
+    // 最終リピート以外は終了処理を行わない。
+    if (this.dynamicAnimation && !this.dynamicAnimation.isLastRepeat) {
+        return;
+    }
     _Sprite_AnimationMV_onEnd.apply(this, arguments);
 };
 
 /**
  * ●画面のフラッシュ
  */
-var _Sprite_AnimationMV_startScreenFlash = Sprite_AnimationMV.prototype.startScreenFlash;
+const _Sprite_AnimationMV_startScreenFlash = Sprite_AnimationMV.prototype.startScreenFlash;
 Sprite_AnimationMV.prototype.startScreenFlash = function(color, duration) {
     // フラッシュ制限フラグが立っているなら処理終了
     if (this.dynamicAnimation && this.dynamicAnimation.isLimitFlash) {
