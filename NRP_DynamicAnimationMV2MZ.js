@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.06 It makes MV animations correspond to DynamicAnimationMZ.
+ * @plugindesc v1.061 It makes MV animations correspond to DynamicAnimationMZ.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -104,7 +104,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.06 ＭＶ用アニメーションをDynamicAnimationMZに対応させます。
+ * @plugindesc v1.061 ＭＶ用アニメーションをDynamicAnimationMZに対応させます。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -702,8 +702,16 @@ Sprite_AnimationMV.prototype.onEnd = function() {
     // フラッシュや対象消去を実行していないなら終了処理を行わない。
     // ※チラつきの原因となるため。
     if (!this._useOnEnd) {
+        // ただし、DynamicAnimationの最終リピートかつlimitFlash指定時は終了処理を行う。
+        // ※途中がlimitFlashによって飛ばされている場合、他のリピートで色変更されている可能性を考慮
+        if (this.dynamicAnimation && this.dynamicAnimation.isLastRepeat
+                && this.dynamicAnimation.baseAnimation.limitFlash > 1) {
+            _Sprite_AnimationMV_onEnd.apply(this, arguments);
+            return;
+        }
         return;
     }
+
     // DynamicAnimationから呼び出された場合
     // 最終リピート以外は終了処理を行わない。
     if (this.dynamicAnimation && !this.dynamicAnimation.isLastRepeat) {
