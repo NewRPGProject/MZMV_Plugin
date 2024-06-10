@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Extend the graphics of the battler.
+ * @plugindesc v1.02 Extend the graphics of the battler.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/500642681.html
  *
@@ -33,7 +33,11 @@
  * 
  * ◆Battler's Flash Interval
  * <BattlerFlashInterval:f>
- * f:Number of frames (standard is 15)
+ * f:Number of frames (Default:90)
+ * 
+ * ◆Battler's Flash Priority
+ * <BattlerFlashPriority:p>
+ * p:Priority (Default:0)
  * 
  * ◆Battler's motion speed
  * <BattlerMotionRate:n>
@@ -41,6 +45,32 @@
  * 
  * - Example: <BattlerMotionRate:150>
  * ※This setting is valid only for actors.
+ * 
+ * -------------------------------------------------------------------
+ * [Flash Specifications]
+ * -------------------------------------------------------------------
+ * If multiple flashes are set up on the battler,
+ * the flashes will alternate from red to blue to green to red again.
+ * 
+ * However, if a priority (<BattlerFlashPriority>) is set for a flash,
+ * only the flash with the highest priority will be displayed (alternately).
+ * 
+ * Also, if the plugin parameter “PriorityByInterval” is turned on,
+ * only the flash with the shortest interval will be given priority.
+ * 
+ * -------------------------------------------------------------------
+ * [Script]
+ * -------------------------------------------------------------------
+ * You can flash battler with the following.
+ * battler.startFlash([r,g,b,a], f);
+ * r:Red g:Green b:Blue a:Strength(0..255) f:Number of frames
+ * 
+ * For example, if you want the target to flash red (30 frames)
+ * in DynamicAnimation, the following would be used.
+ * 
+ * <D-Animation>
+ * script = b.startFlash([255,0,0,255], 30);
+ * </D-Animation>
  * 
  * -------------------------------------------------------------------
  * [Terms]
@@ -59,11 +89,22 @@
  * @default 0
  * @desc Flash display method.
  * If half, at least half of the color is left.
+ * 
+ * @param FlashInterval
+ * @type number
+ * @default 90
+ * @desc Default value for flash interval.
+ * Set in 1/60 second increments.
+ * 
+ * @param PriorityByInterval
+ * @type boolean
+ * @default false
+ * @desc If multiple flash settings exist, only the one with the shortest interval is displayed.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 バトラーのグラフィックを拡張します。
+ * @plugindesc v1.02 バトラーのグラフィックを拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/500642681.html
  *
@@ -94,7 +135,11 @@
  * 
  * ◆バトラーのフラッシュ間隔
  * <BattlerFlashInterval:f>
- * f:フレーム数（標準は15）
+ * f:フレーム数（標準は90）
+ * 
+ * ◆バトラーのフラッシュ優先度
+ * <BattlerFlashPriority:p>
+ * p:優先度（初期値は0）
  * 
  * ◆バトラーのモーション速度
  * <BattlerMotionRate:n>
@@ -102,6 +147,32 @@
  * 
  * ・例：<BattlerMotionRate:150>
  * ※この設定はアクターのみ有効です。
+ * 
+ * -------------------------------------------------------------------
+ * ■フラッシュの仕様
+ * -------------------------------------------------------------------
+ * バトラーに複数のフラッシュの設定がされている場合、
+ * 赤→青→緑→赤……というように交互にフラッシュが表示されます。
+ * 
+ * ただし、フラッシュに優先度（<BattlerFlashPriority>）が設定されている場合は、
+ * 最も高い優先度のフラッシュだけが（交互に）表示されます。
+ * 
+ * また、プラグインパラメータの『間隔による優先設定』をオンにすると、
+ * 間隔が最も短いフラッシュだけが優先して表示されるようになります。
+ * 
+ * -------------------------------------------------------------------
+ * ■スクリプト
+ * -------------------------------------------------------------------
+ * 以下でバトラーをフラッシュさせられます。
+ * battler.startFlash([r,g,b,a], f);
+ * r:赤 g:緑 b:青 a:強さ(0..255) f:フレーム数
+ * 
+ * 例えば、DynamicAnimationで、
+ * 対象を赤くフラッシュ（30フレーム）させたい場合は以下のようになります。
+ * 
+ * <D-Animation>
+ * script = b.startFlash([255,0,0,255], 30);
+ * </D-Animation>
  * 
  * -------------------------------------------------------------------
  * ■利用規約
@@ -121,6 +192,19 @@
  * @default 0
  * @desc フラッシュの表示方式です。
  * 半分ならば、最低でも色を半分残します。
+ * 
+ * @param FlashInterval
+ * @text フラッシュ間隔
+ * @type number
+ * @default 90
+ * @desc フラッシュの間隔の初期値です。
+ * 1/60秒単位で設定してください。
+ * 
+ * @param PriorityByInterval
+ * @text 間隔による優先設定
+ * @type boolean
+ * @default false
+ * @desc 複数のフラッシュ設定が存在する場合、間隔が短いものだけを表示します。
  */
 
 (function() {
@@ -140,24 +224,12 @@ function toNumber(str, def) {
     }
     return isNaN(str) ? def : +(str || def);
 }
-/**
- * ●構造体（二重配列）をJSで扱えるように変換
- */
-function parseStruct2(arg) {
-    var ret = [];
-
-    if (arg) {
-        JSON.parse(arg).forEach(function(str) {
-            ret.push(JSON.parse(str));
-        });
-    }
-
-    return ret;
-}
 
 const PLUGIN_NAME = "NRP_BattlerGraphicExtend";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pFlashType = toNumber(parameters["FlashType"]);
+const pFlashInterval = toNumber(parameters["FlashInterval"], 90);
+const pPriorityByInterval = toBoolean(parameters["PriorityByInterval"], false);
 
 // ----------------------------------------------------------------------------
 // Game_BattlerBase
@@ -229,10 +301,40 @@ Game_BattlerBase.prototype.refreshTone = function() {
  * 【独自】色調（フラッシュ用）をリフレッシュ
  */
 Game_BattlerBase.prototype.refreshBlendColor = function() {
-    const flash = getMetaValue(this, "BattlerFlash")
-    this._blendColor = flash ? getArgArrayNumber(flash) : null;
-    const flashInterval = getMetaValue(this, "BattlerFlashInterval");
-    this._blendColorInterval = flashInterval || 15;
+    let battlerFlashList = [];
+    let maxPriority = 0;
+
+    const objects = getTraitObjects(this);
+    for (const object of objects) {
+        const flashValue = object.meta.BattlerFlash;
+        if (flashValue != null) {
+            // 設定値がある場合はそちらを優先
+            const interval = object.meta.BattlerFlashInterval || pFlashInterval;
+            const priority = toNumber(object.meta.BattlerFlashPriority, 0);
+            battlerFlashList.push({color: getArgArrayNumber(flashValue), interval: interval, priority: priority});
+            // 最大優先度を求める。
+            maxPriority = Math.max(maxPriority, priority);
+        }
+    }
+
+    // フラッシュデータが最低一つ設定されている場合
+    if (battlerFlashList.length > 0) {
+        // 最大優先度のデータに限定
+        battlerFlashList = battlerFlashList.filter(data => data.priority == maxPriority);
+        // 間隔による優先設定
+        if (pPriorityByInterval) {
+            // 最小間隔を求めて設定
+            let minInterval = Infinity;
+            for (const data of battlerFlashList) {
+                minInterval = Math.min(minInterval, data.interval);
+            }
+            battlerFlashList = battlerFlashList.filter(data => data.interval == minInterval);
+        }
+        this._battlerFlashList = battlerFlashList;
+    // ない場合はクリア
+    } else {
+        this._battlerFlashList = null;
+    }
 };
 
 /**
@@ -241,6 +343,14 @@ Game_BattlerBase.prototype.refreshBlendColor = function() {
 Game_BattlerBase.prototype.getTone = function() {
     return this._tone;
 };
+
+/**
+ * 【独自】フラッシュ用のリストを取得
+ */
+Game_BattlerBase.prototype.getBattlerFlashList = function() {
+    return this._battlerFlashList;
+};
+
 
 /**
  * 【独自】色調（フラッシュ用）を取得
@@ -274,6 +384,18 @@ Game_BattlerBase.prototype.isRefreshExecuted = function() {
 };
 
 // ----------------------------------------------------------------------------
+// Game_Battler
+// ----------------------------------------------------------------------------
+
+/**
+ * 【独自】フラッシュ開始
+ */
+Game_Battler.prototype.startFlash = function(color, duration) {
+    const sprite = getSprite(this);
+    sprite.startFlash(color, duration);
+};
+
+// ----------------------------------------------------------------------------
 // Sprite_Battler
 // ----------------------------------------------------------------------------
 
@@ -284,8 +406,28 @@ const _Sprite_Battler_update = Sprite_Battler.prototype.update;
 Sprite_Battler.prototype.update = function() {
     if (this._battler) {
         this.updateProperty();
+        this.updateFlash();
     }
     _Sprite_Battler_update.apply(this, arguments);
+};
+
+/**
+ * 【独自】フラッシュ開始
+ */
+Sprite_Battler.prototype.startFlash = function(color, duration) {
+    this._flashColor = color.clone();
+    this._flashDuration = duration;
+};
+
+/**
+ * 【独自】フラッシュの更新
+ */
+Sprite_Battler.prototype.updateFlash = function() {
+    if (this._flashDuration > 0) {
+        const d = this._flashDuration--;
+        this._flashColor[3] *= (d - 1) / d;
+        this.setBlendColor(this._flashColor);
+    }
 };
 
 /**
@@ -329,16 +471,16 @@ Sprite_Battler.prototype.updateBlendColor = function() {
     if (this._battler._deactivateSelect) {
         return;
     }
+
     const sprite = this.getMainSprite();
-    let color = this._battler.getBlendColor();
+    let flashList = this._battler.getBattlerFlashList();
 
-    // 色調が未設定
-    if (!color) {
+    // フラッシュが未設定
+    if (!flashList) {
         // 前回の色調が設定されている。
-        if (this._prevBlendColor) {
+        if (this._prevFlashList) {
             // 色調クリア
-            color = [0,0,0,0]
-
+            flashList = [];
         // 前回の色調が未設定。
         } else {
             // 何も処理しない。
@@ -346,25 +488,52 @@ Sprite_Battler.prototype.updateBlendColor = function() {
         }
     }
 
-    if (!color.equals(this._prevBlendColor)) {
-        this._prevBlendColor = color;
+    // フラッシュ状態が更新された時
+    if (!flashList.equals(this._prevFlashList)) {
+        this._prevFlashList = flashList;
         this._frameCount = 0;
+        this._flashListIndex = 0;
     }
+
+    // 現在のフラッシュがリストの何番目か？
+    if (!this._flashListIndex) {
+        this._flashListIndex = 0;
+    }
+
+    const flashData = flashList[this._flashListIndex];
+    
+    // 取得できない場合は一巡したのでリセット
+    if (!flashData) {
+        this._frameCount = 0;
+        this._flashListIndex = 0;
+        sprite.setBlendColor([0,0,0,0]);
+        return;
+    }
+
+    const color = flashData.color;
     const realBlendColor = color.clone();
-    const interval = this._battler.getBlendColorInterval();
+    const interval = flashData.interval;
 
     // 全部
     if (pFlashType == 1) {
-        realBlendColor[3]  = Math.floor(color[3] * (Math.sin(this._frameCount / interval) + 1) / 2);
-    // 半分（本来のBattlerGraphicExtend.jsの挙動）
+        realBlendColor[3]  = Math.floor(color[3] * (Math.sin(-Math.PI/2 + 2 * Math.PI * this._frameCount / interval) + 1) / 2);
+    // 半分（本来のBattlerGraphicExtend.jsに近い挙動）
     } else {
-        realBlendColor[3]  = color[3] / 2 + Math.floor(color[3] * (Math.sin(this._frameCount / interval) + 1) / 4);
+        realBlendColor[3]  = color[3] / 2 + Math.floor(color[3] * (Math.sin(-Math.PI/2 + 2 * Math.PI * this._frameCount / interval) + 1) / 4);
     }
 
+    // モバイル時なら8フレームに１回更新
     if (!Utils.isMobileDevice() || this._frameCount % 8 === 0) {
+        // 色調変更実行
         sprite.setBlendColor(realBlendColor);
     }
     this._frameCount++;
+
+    // １フラッシュが終わったら次へ
+    if (this._frameCount / interval > 1) {
+        this._frameCount = 0;
+        this._flashListIndex++;
+    }
 };
 
 /**
@@ -441,6 +610,28 @@ function getArgArrayNumber(text) {
     return text.split(',').map(function (value) {
         return parseInt(value);
     })
+}
+
+/**
+ * ●バトラーからスプライトを取得する。
+ */
+function getSprite(battler) {
+    const spriteset = getSpriteset();
+    if (!spriteset) {
+        return undefined;
+    }
+    
+    const sprites = spriteset.battlerSprites();
+    return sprites.find(function(sprite) {
+        return sprite._battler == battler;
+    });
+}
+
+/**
+ * ●現在の画面のSpritesetを取得する。
+ */
+function getSpriteset() {
+    return SceneManager._scene._spriteset;
 }
 
 })();
