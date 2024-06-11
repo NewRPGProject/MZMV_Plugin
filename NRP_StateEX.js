@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.09 Extend the functionality of the state in various ways.
+ * @plugindesc v1.10 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -232,6 +232,21 @@
  * It will not be released in dead state.
  * Can only be released if a state is specified.
  * 
+ * <AutoRemovalActionStart>
+ * Change Auto-removal Timing to Action Start.
+ * ※The setting on the database should be “End Action”.
+ * 
+ * <AutoRemovalCommandStart>
+ * Change Auto-removal Timing to Command Input Start.
+ * Basically, it is intended to be used in conjunction
+ * with NRP_CountTimeBattle.js.
+ * ※The setting on the database should be “End Action”.
+ * 
+ * <BattlerInvisible>
+ * Hides battlers.
+ * Can be used for jumping skills with DynamicMotion.
+ * https://newrpg.seesaa.net/article/479020531.html
+ * 
  * -------------------------------------------------------------------
  * [Original Parameters]
  * -------------------------------------------------------------------
@@ -320,7 +335,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.09 ステートの機能を色々と拡張します。
+ * @plugindesc v1.10 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -536,6 +551,20 @@
  * <IgnoreRecoverDie>
  * 戦闘不能時に解除されなくなります。
  * ステートを指定した場合のみ解除できます。
+ * 
+ * <AutoRemovalActionStart>
+ * 自動解除のタイミングを行動開始時に変更します。
+ * ※データベース上の設定は『行動終了時』にしてください。
+ * 
+ * <AutoRemovalCommandStart>
+ * 自動解除のタイミングをコマンド入力開始時に変更します。
+ * 基本的にはNRP_CountTimeBattle.jsとの併用を想定しています。
+ * ※データベース上の設定は『行動終了時』にしてください。
+ * 
+ * <BattlerInvisible>
+ * バトラーを非表示にします。
+ * DynamicMotionによるジャンプ系スキルに使えます。
+ * https://newrpg.seesaa.net/article/479020531.html
  * 
  * -------------------------------------------------------------------
  * ■オリジナルパラメータ
@@ -782,6 +811,9 @@ Game_BattlerBase.prototype.clearStates = function() {
             this._statesEx[keepState.stateId] = keepState.stateEx;
         }
     }
+
+    // 透明状態は解除
+    this._isBattlerInvisible = false;
 };
 
 /**
@@ -792,6 +824,12 @@ Game_BattlerBase.prototype.eraseState = function(stateId) {
     _Game_BattlerBase_eraseState.apply(this, arguments);
 
     delete this._statesEx[stateId];
+
+    // 透明ステートを消去した場合
+    const invisible = $dataStates[stateId].meta.BattlerInvisible;
+    if (invisible) {
+        this._isBattlerInvisible = false;
+    }
 };
 
 /**
@@ -891,6 +929,12 @@ Game_BattlerBase.prototype.addNewState = function(stateId) {
             // この時点で計算結果を代入
             stateEx[paramName].value = newValue;
         }
+    }
+
+    // 透明ステート
+    const invisible = meta.BattlerInvisible;
+    if (invisible) {
+        this._isBattlerInvisible = invisible;
     }
 
     _Game_BattlerBase_addNewState.apply(this, arguments);
@@ -1455,6 +1499,127 @@ if (pShowStateMiss) {
         }
     };
 }
+
+// ----------------------------------------------------------------------------
+// 自動解除を行動開始時に変更
+// ----------------------------------------------------------------------------
+
+/**
+ * ●行動開始時
+ */
+const _Game_Actor_performActionStart = Game_Actor.prototype.performActionStart;
+Game_Actor.prototype.performActionStart = function(action) {
+    _Game_Actor_performActionStart.apply(this, arguments);
+    this.removeStatesAutoActionStart();
+};
+
+/**
+ * ●行動開始時
+ * ※this.requestEffect("whiten");より後にステート解除したいので、
+ * 　Game_BattlerではなくGame_Enemyで処理している。
+ */
+const _Game_Enemy_performActionStart = Game_Enemy.prototype.performActionStart;
+Game_Enemy.prototype.performActionStart = function(action) {
+    _Game_Enemy_performActionStart.apply(this, arguments);
+    this.removeStatesAutoActionStart();
+};
+
+/**
+ * 【独自】行動開始時のステート消去
+ */
+Game_Battler.prototype.removeStatesAutoActionStart = function() {
+    // ＣＴＢなら１ターン以下を指定
+    // ※ターン経過の仕組みが異なるため、１ターンのズレが生じるのでその調整
+    const removeTurn = BattleManager._isCtb ? 1 : 0;
+
+    for (const state of this.states()) {
+        // 自動解除が行動開始時の場合
+        if (state.meta.AutoRemovalActionStart) {
+            if (this._stateTurns[state.id] <= removeTurn && state.autoRemovalTiming === 1) {
+                // ステート解除
+                this.removeState(state.id);
+            }
+        }
+    }
+};
+
+// ----------------------------------------------------------------------------
+// 自動解除をコマンド入力開始時に変更
+// ----------------------------------------------------------------------------
+
+/**
+ * ●コマンド入力開始
+ */
+const _BattleManager_startInput = BattleManager.startInput
+BattleManager.startInput = function() {
+    _BattleManager_startInput.apply(this, arguments);
+
+    // 行動主体が取得できない場合は無効
+    const subject = this._subject;
+    if (!subject) {
+        return;
+    }
+
+    // ＣＴＢなら１ターン以下を指定
+    // ※ターン経過の仕組みが異なるため、１ターンのズレが生じるのでその調整
+    const removeTurn = BattleManager._isCtb ? 1 : 0;
+
+    for (const state of subject.states()) {
+        // 自動解除がコマンド開始時の場合
+        if (state.meta.AutoRemovalCommandStart) {
+            if (subject._stateTurns[state.id] <= removeTurn && state.autoRemovalTiming === 1) {
+                // ステート解除
+                subject.removeState(state.id);
+            }
+        }
+    }
+};
+
+// ----------------------------------------------------------------------------
+// 透明状態
+// ----------------------------------------------------------------------------
+
+/**
+ * ●表示状態更新
+ */
+const _Sprite_Battler_updateVisibility = Sprite_Battler.prototype.updateVisibility;
+Sprite_Battler.prototype.updateVisibility = function() {
+    _Sprite_Battler_updateVisibility.apply(this, arguments);
+
+    // 透明状態を設定
+    if (this._battler._isBattlerInvisible) {
+        this.visible = false;
+    }
+};
+
+/**
+ * ●エフェクトのリクエスト
+ */
+const _Game_Battler_requestEffect = Game_Battler.prototype.requestEffect;
+Game_Battler.prototype.requestEffect = function(effectType) {
+    // 透明時は敵の行動開始時のエフェクトを禁止する。
+    // ※そうしないと一瞬表示されてしまう。
+    if (this._isBattlerInvisible && effectType == "whiten") {
+        return;
+    }
+    _Game_Battler_requestEffect.apply(this, arguments);
+};
+
+/**
+ * ●更新処理
+ */
+const _Sprite_Battler_update = Sprite_Battler.prototype.update;
+Sprite_Battler.prototype.update = function() {
+    // 透明状態の間はopacityの操作を無効化
+    // ※DynamicMotionによる設定値を保持するため。
+    if (this._battler && this._battler._isBattlerInvisible) {
+        const keepOpacity = this.opacity;
+        _Sprite_Battler_update.apply(this, arguments);
+        this.opacity = keepOpacity;
+        return;
+    }
+    _Sprite_Battler_update.apply(this, arguments);
+};
 
 // ----------------------------------------------------------------------------
 // 共通処理
