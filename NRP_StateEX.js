@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.10 Extend the functionality of the state in various ways.
+ * @plugindesc v1.101 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -335,7 +335,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.10 ステートの機能を色々と拡張します。
+ * @plugindesc v1.101 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -1587,7 +1587,7 @@ Sprite_Battler.prototype.updateVisibility = function() {
     _Sprite_Battler_updateVisibility.apply(this, arguments);
 
     // 透明状態を設定
-    if (this._battler._isBattlerInvisible) {
+    if (this._battler && this._battler._isBattlerInvisible) {
         this.visible = false;
     }
 };
