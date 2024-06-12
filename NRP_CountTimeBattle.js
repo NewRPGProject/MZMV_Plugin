@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.19 Change the battle system to CTB.
+ * @plugindesc v1.191 Change the battle system to CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -186,28 +186,28 @@
  * 
  * @param actorStartRandomWt
  * @parent <Battle Start>
- * @type number
+ * @type string
  * @default 0
  * @desc Distribute the actors' initial wait time by the numerical %.
  * Example: 20 distributes 90-110%. 0 if not specified.
  *
  * @param enemyStartRandomWt
  * @parent <Battle Start>
- * @type number
+ * @type string
  * @default 20
  * @desc Distribute the enemys' initial wait time by the numerical %.
  * Example: 20 distributes 90-110%. 0 if not specified.
  *
  * @param preemptiveAdvantage
  * @parent <Battle Start>
- * @type number
+ * @type string
  * @default 50
  * @desc Advantage to actors during a preemptive attack.
  * Speed up their turn by the % of the specified number.
  *
  * @param surpriseAdvantage
  * @parent <Battle Start>
- * @type number
+ * @type string
  * @default 50
  * @desc Advantage to enemys during a surprise attack.
  * Speed up their turn by the % of the specified number.
@@ -225,7 +225,7 @@
  *
  * @param escapePenalty
  * @parent <Escape>
- * @type number
+ * @type string
  * @default 25
  * @desc Penalty for failure to escape.
  * Delays the actor's turn by the % of the specified number.
@@ -257,7 +257,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.19 戦闘システムをＣＴＢへ変更します。
+ * @plugindesc v1.191 戦闘システムをＣＴＢへ変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -431,33 +431,33 @@
  * @param actorStartRandomWt
  * @text 味方の始動時間バラツキ
  * @parent <Battle Start>
- * @type number
+ * @type string
  * @default 0
- * @desc 味方の初期待ち時間を数値％分だけ分散させます。
+ * @desc 味方の初期待ち時間を数値％分だけ分散させます。数式可
  * 例：20ならば、90～110%に分散。指定なしは0。
  *
  * @param enemyStartRandomWt
  * @text 敵の始動時間バラツキ
  * @parent <Battle Start>
- * @type number
+ * @type string
  * @default 20
- * @desc 敵の初期待ち時間を数値％分だけ分散させます。
+ * @desc 敵の初期待ち時間を数値％分だけ分散させます。数式可
  * 例：20ならば、90～110%に分散。指定なしは20。
  *
  * @param preemptiveAdvantage
  * @text 先制時の始動時間ボーナス
  * @parent <Battle Start>
- * @type number
+ * @type string
  * @default 50
- * @desc 先制攻撃時の特典。
+ * @desc 先制攻撃時の特典。数式可
  * 指定した数値の％分だけ仲間のターンを早めます。
  *
  * @param surpriseAdvantage
  * @text 奇襲時の始動時間ボーナス
  * @parent <Battle Start>
- * @type number
+ * @type string
  * @default 50
- * @desc 奇襲時の敵特典。
+ * @desc 奇襲時の敵特典。数式可
  * 指定した数値の％分だけ敵のターンを早めます。
  *
  * @param startTurn
@@ -477,9 +477,9 @@
  * @param escapePenalty
  * @text 逃走時のペナルティ時間
  * @parent <Escape>
- * @type number
+ * @type string
  * @default 25
- * @desc 逃走失敗時のペナルティ。
+ * @desc 逃走失敗時のペナルティ。数式可
  * 指定した数値の％分だけ味方のターンを遅らせます。
  * 
  * @param <State&Buf>
@@ -510,7 +510,6 @@
  * @option wt
  * @desc 蘇生時に待ち時間を再設定します。数式可
  * baseWt:１ターン分の待ち時間, wt:戦闘不能時の待ち時間
- * 
  */
 
 (function() {
@@ -540,12 +539,12 @@ const pNumber = toNumber(parameters["number"], 9);
 const pCalcGuardCommand = toBoolean(parameters["calcGuardCommand"], true);
 const pShowActionUser = toBoolean(parameters["showActionUser"], true);
 const pShowPartyCommand = toNumber(parameters["showPartyCommand"], 0);
-const pActorStartRandomWt = toNumber(parameters["actorStartRandomWt"], 0);
-const pEnemyStartRandomWt = toNumber(parameters["enemyStartRandomWt"], 20);
-const pEscapePenalty = toNumber(parameters["escapePenalty"], 25);
-const pPreemptiveAdvantage = toNumber(parameters["preemptiveAdvantage"], 50);
-const pSurpriseAdvantage = toNumber(parameters["surpriseAdvantage"], 50);
+const pActorStartRandomWt = setDefault(parameters["actorStartRandomWt"], 0);
+const pEnemyStartRandomWt = setDefault(parameters["enemyStartRandomWt"], 20);
+const pPreemptiveAdvantage = setDefault(parameters["preemptiveAdvantage"], 50);
+const pSurpriseAdvantage = setDefault(parameters["surpriseAdvantage"], 50);
 const pStartTurn = toNumber(parameters["startTurn"], 1);
+const pEscapePenalty = setDefault(parameters["escapePenalty"], 25);
 const pSelfStatePlusTurn = toBoolean(parameters["selfStatePlusTurn"], true);
 const pSelfBufPlusTurn = toBoolean(parameters["selfBufPlusTurn"], true);
 const pReviveWT = setDefault(parameters["reviveWT"]);
@@ -1042,7 +1041,7 @@ BattleManager.setEscapePenalty = function() {
         // 失敗した当人以外のWTを加算する。
         if (battler != BattleManager._subject) {
             // 基本ＷＴ * ペナルティ% / 100
-            battler.setWt(battler.wt + parseInt(battler.baseWt * pEscapePenalty / 100));
+            battler.setWt(battler.wt + parseInt(battler.baseWt * eval(pEscapePenalty) / 100));
         }
     });
 };
@@ -1202,22 +1201,22 @@ Game_Battler.prototype.initCtbTurn = function() {
     
     // アクター
     if (this.isActor()) {
-        startRandomWt = pActorStartRandomWt;
+        startRandomWt = eval(pActorStartRandomWt);
         
         // 先制攻撃の場合はWT減算
         if (BattleManager._preemptive) {
             // - WT * 先制攻撃特典％ / 100
-            wt -= parseInt(wt * pPreemptiveAdvantage / 100);
+            wt -= parseInt(wt * eval(pPreemptiveAdvantage) / 100);
         }
         
     // 敵キャラ
     } else {
-        startRandomWt = pEnemyStartRandomWt;
+        startRandomWt = eval(pEnemyStartRandomWt);
             
         // 不意打ちの場合はWT半減
         if (BattleManager._surprise) {
             // - WT * 奇襲特典％ / 100
-            wt -= parseInt(wt * pSurpriseAdvantage / 100);
+            wt -= parseInt(wt * eval(pSurpriseAdvantage) / 100);
         }
     }
     
