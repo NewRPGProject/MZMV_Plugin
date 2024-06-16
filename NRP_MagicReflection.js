@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.011 Extend the specification of magic reflection.
+ * @plugindesc v1.02 Extend the specification of magic reflection.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_DamageTiming
  * @url http://newrpg.seesaa.net/article/483027532.html
@@ -22,7 +22,9 @@
  * For example, it is possible to perform the famous FF series trick
  * of attacking an enemy by reflecting the overall magic cast on your friends.
  * 
- * ■Note of states
+ * -------------------------------------------------------------------
+ * [Note of states]
+ * -------------------------------------------------------------------
  * If you register it in the "SettingList" of the plugin parameters,
  * you will be able to set reflections conditional on the skill type.
  * For example, you can create a state that reflects only "Special".
@@ -35,13 +37,28 @@
  * ※Do not include [].
  * ※Unlike the standard, the hit type will be ignored.
  * 
- * ■Note of skills
+ * -------------------------------------------------------------------
+ * [Note of skills]
+ * -------------------------------------------------------------------
  * You can create a skill that disables magic reflection
  * by specifying the following in the skill's note field.
  * 
  * <NoMagicRefrection>
  * 
- * ■Notice
+ * -------------------------------------------------------------------
+ * [Note of objects]
+ * -------------------------------------------------------------------
+ * The magic used by the battler will not be reflected
+ * if the following is set in the note field of
+ * each object (actor, enemy, class, equipment, state, and skill).
+ * As for skills, they are passive skills
+ * that only need to be learned to be effective.
+ * 
+ * <IgnoreMagicRefrection>
+ * 
+ * -------------------------------------------------------------------
+ * [Notice]
+ * -------------------------------------------------------------------
  * ◆About Sound effect
  * I recommend that you leave the magic reflection sound effect,
  * which can be set in "System2", to be none.
@@ -68,10 +85,14 @@
  * Please note that when combined with plug-ins such as "DynamicAnimation",
  * even the description in the note field will not be executed.
  * 
- * ■About Conflict
+ * -------------------------------------------------------------------
+ * [About Conflict]
+ * -------------------------------------------------------------------
  * This plugin should be placed below the aforementioned NRP_DamageTiming.js.
  * 
+ * -------------------------------------------------------------------
  * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
@@ -138,7 +159,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.011 魔法反射の仕様を拡張します。
+ * @plugindesc v1.02 魔法反射の仕様を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_DamageTiming
  * @url http://newrpg.seesaa.net/article/483027532.html
@@ -155,7 +176,9 @@
  * 「仲間にかけた全体魔法を敵に反射して攻撃」
  * というような芸当も可能となります。
  * 
+ * -------------------------------------------------------------------
  * ■ステートのメモ欄
+ * -------------------------------------------------------------------
  * プラグインパラメータの『設定リスト』に登録すれば、
  * スキルタイプを条件にして反射の設定が可能となります。
  * 例えば『必殺技』のみを反射するステートなどを作成可能です。
@@ -168,13 +191,26 @@
  * ※[]は含めないでください。
  * ※標準とは異なり、命中タイプは無視するようになります。
  * 
+ * -------------------------------------------------------------------
  * ■スキルのメモ欄
+ * -------------------------------------------------------------------
  * 以下をスキルのメモ欄に指定すれば、
  * 魔法反射を無効化するスキルを作成可能です。
  * 
  * <NoMagicRefrection>
  * 
+ * -------------------------------------------------------------------
+ * ■オブジェクトのメモ欄
+ * -------------------------------------------------------------------
+ * 各オブジェクト（アクター、エネミー、職業、装備、ステート、スキル）
+ * のメモ欄に以下を設定すればバトラーの使用した魔法が反射されなくなります。
+ * スキルについては覚えているだけで、発揮するパッシブスキルとなります。
+ * 
+ * <IgnoreMagicRefrection>
+ * 
+ * -------------------------------------------------------------------
  * ■注意点
+ * -------------------------------------------------------------------
  * ◆効果音について
  * システム２で設定できる魔法反射の効果音は、
  * なしにしておくことをオススメします。
@@ -200,10 +236,14 @@
  * DynamicAnimationなどのプラグインと組み合わせた場合、
  * メモ欄の記述までは実行されませんので、ご了承ください。
  * 
+ * -------------------------------------------------------------------
  * ■競合について
+ * -------------------------------------------------------------------
  * このプラグインは前述のNRP_DamageTiming.jsより下に配置してください。
  * 
+ * -------------------------------------------------------------------
  * ■利用規約
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
@@ -559,6 +599,14 @@ Game_Action.prototype.itemMrf = function(target) {
         return 0;
     }
 
+    // 反射無効の特徴を取得
+    for (const object of getTraitObjects(this.subject())) {
+        const ignoreMagicRefrection = object.meta.IgnoreMagicRefrection;
+        if (ignoreMagicRefrection) {
+            return 0;
+        }
+    }
+
     // 該当の設定が存在するかどうか？
     const setting = getMatchSetting(target._states);
     if (setting) {
@@ -742,6 +790,24 @@ if (!Spriteset_Battle.prototype.findTargetSprite) {
     Sprite_Battler.prototype.checkBattler = function(battler) {
         return this._battler === battler;
     };
+}
+
+// ----------------------------------------------------------------------------
+// 共通関数
+// ----------------------------------------------------------------------------
+
+/**
+ * ●特徴を保持するオブジェクトを取得
+ */
+function getTraitObjects(battler) {
+    // メモ欄を参照するオブジェクトを全取得
+    let traitObjects = battler.traitObjects();
+    // パッシブスキルが有効な場合は連結
+    // ※通常はアクターのみ
+    if (battler.skills) {
+        traitObjects = traitObjects.concat(battler.skills());
+    }
+    return traitObjects;
 }
 
 })();
