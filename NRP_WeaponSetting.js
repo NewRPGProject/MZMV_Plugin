@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v2.04 Extends the weapon display.
+ * @plugindesc v2.05 Extends the weapon display.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/484348477.html
@@ -117,9 +117,14 @@
  *   in the help section of Maker.
  * 
  * <BlendColor:[255,255,255,255]>
- * Changes the color tone of the weapon.
+ * Blends color into the weapon.
  * 0~255 are valid values.
  * Set in the order of Red, Green, Blue, Strength.
+ * 
+ * <ColorTone:[255,255,255,255]>
+ * Changes the color tone of the weapon.
+ * The calculation method is different from <BlendColor>.
+ * Also, values from -255~255 are valid here.
  * 
  * <BlendMode:1>
  * Change the blending method of the weapon.
@@ -133,12 +138,21 @@
  * [Note of Weapons, Actors, and Enemies]
  * -------------------------------------------------------------------
  * <AnimationColor:[255,255,255,255]>
- * Changes the color tone of the normal attack animation.
+ * Blends color into the normal attack animation.
  * 0~255 are valid values.
  * Set in the order of Red, Green, Blue, Strength.
  * ※Only the animation for MV is valid.
  * ※Plugins such as NRP_EnemyAttackAnimation.js
  *   are required for the enemy's normal attack animation.
+ * 
+ * <AnimationTone:[255,255,255,255]>
+ * Changes the color tone of the normal attack animation.
+ * The calculation method is different from <AnimationColor>.
+ * Also, values from -255~255 are valid here.
+ * 
+ * <AnimationBlendMode:1>
+ * Change the blending method of the normal attack animation.
+ * ※0:Normal, 1:Add, 2:Multiply, 3:Screen
  * 
  * -------------------------------------------------------------------
  * [Terms]
@@ -279,7 +293,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.04 武器の表示を拡張します。
+ * @plugindesc v2.05 武器の表示を拡張します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/484348477.html
@@ -385,8 +399,13 @@
  * 　ご覧ください。
  * 
  * <BlendColor:[255,255,255,255]>
- * 武器の色調を変更します。0~255までの数値が有効です。
+ * 武器に色を合成します。0~255までの数値が有効です。
  * 赤、緑、青、強さの順で設定してください。
+ * 
+ * <ColorTone:[255,255,255,255]>
+ * 武器の色調を変更します。
+ * <BlendColor>とは計算方法が異なります。
+ * また、こちらは-255~255までの数値が有効です。
  * 
  * <BlendMode:1>
  * 武器の合成方法を変更します。
@@ -399,12 +418,21 @@
  * ■武器、アクター、敵キャラのメモ欄
  * -------------------------------------------------------------------
  * <AnimationColor:[255,255,255,255]>
- * 通常攻撃アニメーションの色調を変更します。
+ * 通常攻撃アニメーションに色を合成します。
  * 0~255までの数値が有効です。
  * 赤、緑、青、強さの順で設定してください。
  * ※ＭＶ形式のアニメーションのみ有効です。
  * ※敵キャラの通常攻撃アニメーションには、
  * 　NRP_EnemyAttackAnimation.jsなどのプラグインが必要です。
+ * 
+ * <AnimationTone:[255,255,255,255]>
+ * 通常攻撃アニメーションの色調を変更します。
+ * <AnimationColor>とは計算方法が異なります。
+ * また、こちらは-255~255までの数値が有効です。
+ * 
+ * <AnimationBlendMode:1>
+ * 通常攻撃アニメーションの合成方法を変更します。
+ * 0:通常、1:加算、2:乗算、3:スクリーン
  * 
  * -------------------------------------------------------------------
  * ■利用規約
@@ -742,6 +770,14 @@ Sprite_Weapon.prototype.setup = function(weaponImageId) {
         this.setBlendColor([0, 0, 0, 0]);
     }
     
+    // トーン指定があれば設定
+    const colorTone = dataWeapon.meta.ColorTone;
+    if (colorTone) {
+        this.setColorTone(eval(colorTone));
+    } else {
+        this.setColorTone([0, 0, 0, 0]);
+    }
+
     // 合成方法があれば設定
     const blendMode = dataWeapon.meta.BlendMode;
     if (blendMode) {
@@ -951,31 +987,56 @@ function changeAnimationColor(sprite, cell, spriteAnimation) {
         if (subject.weapons) {
             // 武器を取得
             const weapon = getWeapon(subject);
-            if (weapon && weapon.meta.AnimationColor) {
-                setAnimationColor(sprite, weapon.meta.AnimationColor);
-                return;
+            if (weapon) {
+                if (setAnimationColor(sprite, weapon)) {
+                    // 設定を反映した場合は終了
+                    return;
+                }
             }
         }
 
+        let data;
         // アクターおよび敵キャラによる色変更
         if (subject.isActor()) {
-            setAnimationColor(sprite, subject.actor().meta.AnimationColor);
+            data = subject.actor();
         } else if (subject.isEnemy()) {
-            setAnimationColor(sprite, subject.enemy().meta.AnimationColor);
+            data = subject.enemy();
         }
+        setAnimationColor(sprite, data);
     }
 }
 
 /**
  * ●アニメーションを反映
  */
-function setAnimationColor(sprite, color) {
-    if (color) {
-        // 色調変更すると合成方法がクリアされるので保持＆再設定
-        const blendMode = sprite.blendMode;
-        sprite.setBlendColor(eval(color));
-        sprite.blendMode = blendMode;
+function setAnimationColor(sprite, data) {
+    const blendColor = data.meta.AnimationColor;
+    const colorTone = data.meta.AnimationTone;
+    const blendMode = data.meta.AnimationBlendMode;
+
+    // 設定がない場合は処理しない。
+    if (!blendColor && !colorTone && !blendMode) {
+        return false;
     }
+
+    // 色調変更すると合成方法がクリアされるので元の値を保持
+    const keepBlendMode = sprite.blendMode;
+
+    // 色調
+    if (blendColor) {
+        sprite.setBlendColor(eval(blendColor));
+    }
+    // 色相
+    if (colorTone) {
+        sprite.setColorTone(eval(colorTone));
+    }
+    // 合成方法
+    if (blendMode) {
+        sprite.blendMode = blendMode;
+    } else {
+        sprite.blendMode = keepBlendMode;
+    }
+    return true;
 }
 
 //-----------------------------------------------------------------------------
