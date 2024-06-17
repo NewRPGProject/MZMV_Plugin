@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.04 Create special traits.
+ * @plugindesc v1.041 Create special traits.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -119,6 +119,12 @@
  * 
  * <IgnoreInvincible>
  * 
+ * The following function can be used to determine
+ * if the battler is invincible.
+ * 
+ * a.isInvincible()
+ * ※a is battler.
+ * 
  * -------------------------------------------------------------------
  * [Terms]
  * -------------------------------------------------------------------
@@ -155,7 +161,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 特殊な特徴を実現します。
+ * @plugindesc v1.041 特殊な特徴を実現します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -263,6 +269,11 @@
  * 無敵状態を無視して命中するスキルを作成できます。
  * 
  * <IgnoreInvincible>
+ * 
+ * なお、バトラーが無敵状態かどうかは以下の関数で判定できます。
+ * 
+ * a.isInvincible()
+ * ※aはバトラー
  * 
  * -------------------------------------------------------------------
  * ■利用規約
@@ -550,6 +561,25 @@ function isTargetSkillType(actionItem, object) {
     }
     return true;
 }
+
+// ----------------------------------------------------------------------------
+// Game_Battler
+// ----------------------------------------------------------------------------
+
+/**
+ * 【独自】無敵かどうか？
+ * ※外部参照用
+ */
+Game_Battler.prototype.isInvincible = function() {
+    for (const object of getTraitObjects(this)) {
+        // 無敵ステートがあればtrue
+        const invincible = object.meta.Invincible;
+        if (invincible != null) {
+            return true;
+        }
+    }
+    return false;
+};
 
 // ----------------------------------------------------------------------------
 // ステート関連
