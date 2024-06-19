@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v2.061 Extends the weapon display.
+ * @plugindesc v2.062 Extends the weapon display.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/484348477.html
@@ -398,7 +398,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.061 武器の表示を拡張します。
+ * @plugindesc v2.062 武器の表示を拡張します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/484348477.html
@@ -1093,6 +1093,10 @@ Sprite_Weapon.prototype.setup = function(weaponImageId) {
 
     // 武器データを取得
     const dataWeapon = this.dataWeapon();
+    if (!dataWeapon) {
+        return;
+    }
+
     // 武器情報リストを参照
     const weaponInfo = getWeaponInfo(dataWeapon);
     // DynamicMotionを参照し、武器のインデックス情報を取得
@@ -1161,7 +1165,7 @@ Sprite_Weapon.prototype.dataWeapon = function() {
             // 武器データを取得
             return $dataWeapons[this._weaponId];
         // 通常時
-        } else {
+        } else if (battler.weapons()[0]) {
             // アクターから武器データを取得
             return $dataWeapons[battler.weapons()[0].id];
         }
@@ -1454,6 +1458,10 @@ function setAnimationColor(sprite, data) {
  * ●武器情報を取得
  */
 function getWeaponInfo(weapon, weaponType) {
+    if (!weapon) {
+        return null;
+    }
+
     // 武器タイプの直接指定がある場合はそちらを優先
     if (weaponType) {
         return pWeaponInfoList.find(w => w.WeaponType == weaponType);
