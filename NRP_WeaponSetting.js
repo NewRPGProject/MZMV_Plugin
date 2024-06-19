@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v2.06 Extends the weapon display.
+ * @plugindesc v2.061 Extends the weapon display.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/484348477.html
@@ -398,7 +398,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.06 武器の表示を拡張します。
+ * @plugindesc v2.061 武器の表示を拡張します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/484348477.html
@@ -1041,7 +1041,7 @@ Sprite_Weapon.prototype.updateFrameIndexDetail = function(dataWeapon, weaponInfo
     if (this._weaponImageId > 0 && indexDetail.PriorityPatterns) {
         const priorityPatterns = indexDetail.PriorityPatterns.split(",");
         // 一致する場合は前面表示
-        if (priorityPatterns.includes(String(pattern))) {
+        if (priorityPatterns.includes(String(this._pattern))) {
             // weaponSpriteを削除して、前面に移動
             this.parent.addChild(this.parent.removeChild(this));
         // それ以外は背面表示（元に戻す）
@@ -1060,6 +1060,11 @@ Sprite_Weapon.prototype.updateFrameIndexDetail = function(dataWeapon, weaponInfo
  */
 const _Sprite_Weapon_setup = Sprite_Weapon.prototype.setup;
 Sprite_Weapon.prototype.setup = function(weaponImageId) {
+    // weaponSpriteを削除して、本体より背後に移動
+    const bodyIndex = this.parent.children.indexOf(this.parent.mainSprite());
+    this.parent.addChildAt(this.parent.removeChild(this), bodyIndex - 1);
+
+    // 本来の処理（updateFrameも呼ばれるので注意）
     _Sprite_Weapon_setup.apply(this, arguments);
 
     const battler = this.parent._battler;
@@ -1110,10 +1115,6 @@ Sprite_Weapon.prototype.setup = function(weaponImageId) {
                 this._isChangeWeaponPattern = true;
             }
         }
-
-        // weaponSpriteを削除して、本体より背後に移動
-        const bodyIndex = this.parent.children.indexOf(this.parent.mainSprite());
-        this.parent.addChildAt(this.parent.removeChild(this), bodyIndex - 1);
     }
 
     // 色指定があれば設定
