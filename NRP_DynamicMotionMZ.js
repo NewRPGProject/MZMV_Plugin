@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.23 When executing skills, call motion freely.
+ * @plugindesc v1.24 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -561,7 +561,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.23 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.24 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -2040,7 +2040,12 @@ BaseMotion.prototype.getScreenY = function (b) {
 /**
  * ●非ループモーションのカウント数
  */
-BaseMotion.prototype.motionPatternCount = function () {
+BaseMotion.prototype.motionPatternCount = function (sprite) {
+    const weaponSprite = sprite._weaponSprite;
+    // NRP_WeaponSetting.jsでの設定があれば取得
+    if (weaponSprite && weaponSprite.weaponPatternCount) {
+        return weaponSprite.weaponPatternCount(this.weaponIndex, this.weaponKey);
+    }
     return 3;
 };
 
@@ -2264,7 +2269,7 @@ DynamicMotion.prototype.initialize = function (baseMotion, performer, target) {
                 || (Sprite_Actor.MOTIONS[this.motion] && !Sprite_Actor.MOTIONS[this.motion].loop))) {
         // 合計モーション時間を計算
         // ※モーション時間は３パターンを想定し、*3して計算
-        this.motionDurationTotal = nvl(this.motionDuration) * baseMotion.motionPatternCount();
+        this.motionDurationTotal = nvl(this.motionDuration) * baseMotion.motionPatternCount(spriteA);
         // 移動よりモーション時間が長い場合はそちらの時間まで確保
         this.maxDuration = Math.max(this.maxDuration, this.motionDurationTotal);
     }
@@ -2297,6 +2302,7 @@ DynamicMotion.prototype.initialize = function (baseMotion, performer, target) {
     this.weaponType = baseMotion.weaponType;
     this.weaponImage = baseMotion.weaponImage;
     this.weaponIndex = baseMotion.weaponIndex;
+    this.weaponKey = baseMotion.weaponKey;
     this.arcX = baseMotion.arcX;
     this.arcY = baseMotion.arcY;
     this.addX = baseMotion.addX;
@@ -2420,7 +2426,7 @@ DynamicMotion.prototype.getDefaultY = function (a, b, screenY) {
  * ●武器を使うかどうか？
  */
 DynamicMotion.prototype.isUseWeapon = function() {
-    return this.motion == "attack" || this.weaponId || this.weaponType || this.weaponImage  || this.weaponIndex;
+    return this.motion == "attack" || this.weaponId || this.weaponType || this.weaponImage || this.weaponIndex || this.weaponKey;
 }
 
 /**
@@ -3077,6 +3083,9 @@ Sprite_Actor.prototype.updateMotionCount = function() {
                 this._pattern = (this._pattern + 1) % 4;
             } else if (this._pattern < 2) {
                 this._pattern++;
+            // NRP_WeaponSetting.jsで制御中はredreshしない。
+            } else if (this._weaponSprite._isChangeWeaponPattern) {
+                this._pattern++;
             } else {
                 this.refreshMotion();
             }
@@ -3202,6 +3211,7 @@ Sprite_Weapon.prototype.setWeaponImage = function(weaponImage) {
 
 /**
  * 【独自】武器画像インデックスの設定
+ * ※NRP_WeaponSetting.js用
  */
 Sprite_Weapon.prototype.setWeaponIndex = function(weaponIndex) {
     this._weaponIndex = weaponIndex;
@@ -3227,6 +3237,10 @@ Sprite_Weapon.prototype.setup = function(weaponImageId) {
     if (dm) {
         this.setWeaponImage(dm.weaponImage);
         this.setWeaponIndex(dm.weaponIndex);
+        // NRP_WeaponSetting.jsの関数
+        if (this.setWeaponKey) {
+            this.setWeaponKey(dm.weaponKey);
+        }
     }
 
     // 開始モーションの指定がある場合
@@ -3266,7 +3280,14 @@ Sprite_Weapon.prototype.animationWait = function() {
 /**
  * 【上書】武器のモーションパターン
  */
+const _Sprite_Weapon_updatePattern = Sprite_Weapon.prototype.updatePattern;
 Sprite_Weapon.prototype.updatePattern = function() {
+    // NRP_WeaponSetting.jsにて動作を変更している場合は処理しない。
+    if (this._isChangeWeaponPattern) {
+        _Sprite_Weapon_updatePattern.apply(this, arguments);
+        return;
+    }
+
     // アクターのパターンに同期する。
     this._pattern = this.parent._pattern;
 

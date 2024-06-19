@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v2.05 Extends the weapon display.
+ * @plugindesc v2.06 Extends the weapon display.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/484348477.html
@@ -39,7 +39,7 @@
  * The motions that can be set here
  * are the standard ones used for normal attacks.
  * 
- * In addition, define motions for each index in "IndexList.
+ * In addition, define motions for each index in "IndexList".
  * This allows the motion to be called on the DynamicMotion side.
  * 
  * <D-Motion:attack>
@@ -65,6 +65,65 @@
  * "swing", "thrust", and "missile" motions.
  * For example, you can use the "item" motion
  * to raise a sword above the ground.
+ * 
+ * -------------------------------------------------------------------
+ * [More advanced settings (IndexList)]
+ * -------------------------------------------------------------------
+ * Depending on the IndexList settings,
+ * more complex effects are possible.
+ * This is also supposed to be used in conjunction with DynamicMotion.
+ * 
+ * ◆WeaponKey
+ * It is possible to set a unique key instead of a WeaponIndex.
+ * Utilize this function when you want
+ * to set different behavior for the same WeaponIndex.
+ * If the value is "test", it can be called as follows.
+ * 
+ * <D-Motion:attack>
+ * weaponKey = test
+ * </D-Motion>
+ * 
+ * ◆WeaponPatterns
+ * The pattern of weapons to execute.
+ * Specify them in order, separated by commas.
+ * The initial value is "0,1,2".
+ * For example, setting "2,1,0" will execute weapons in reverse order.
+ * 
+ * Furthermore, if 3 or more are specified,
+ * the next WeaponIndex is referenced.
+ * For example, if "0,1,2,3,4" is specified with 1 as the WeaponIndex,
+ * the first animation in WeaponsX.png will be played in order,
+ * and then the second animation until the second.
+ * 
+ * This allows more than four patterns of motion,
+ * which would normally be impossible.
+ * This is assumed to be combined with "Motion2" and "Motion2Patterns".
+ * 
+ * ◆PriorityPatterns
+ * Change the priority of the specified weapon pattern.
+ * In other words, it brings it to the front,
+ * just like "Above characters" in the event.
+ * 
+ * For example, if "0,2" is specified, the first
+ * and third weapon patterns will be displayed in the front.
+ * 
+ * It is only the order of the weapon pattern that is specified.
+ * If the weapon pattern is "2,1,0" and "0,1" is specified
+ * for the priority pattern, it is the "2,1" portion
+ * of the weapon pattern that is displayed in the front.
+ * Be careful not to confuse the two.
+ * 
+ * ◆MotionPatterns
+ * The motion patterns to be executed.
+ * Specify in order, separated by commas.
+ * 
+ * The same as for the weapon pattern,
+ * but specifying a value of 3 or more will invalidate the pattern.
+ * 
+ * ◆Motion2
+ * ◆Motion2Patterns
+ * Additional motions and their patterns to be executed.
+ * To be executed after the MotionPatterns above.
  * 
  * -------------------------------------------------------------------
  * [Note of Actors]
@@ -249,6 +308,7 @@
  * @param IndexList
  * @type struct<IndexDetail>[]
  * @desc Motion can be defined for each image index.
+ * Must be used in conjunction with DynamicMotion.
  */
 //-------------------------------------------------------------
 // IndexDetail
@@ -257,6 +317,30 @@
  * @param WeaponIndex
  * @type number @min 1
  * @desc Index of image (1~12).
+ * 
+ * @param WeaponKey
+ * @type string
+ * @desc Value to call the weapon pattern from DynamicMotion.
+ * Multiple identical WeaponIndexes can be handled.
+ * 
+ * @param AdjustX
+ * @type number
+ * @min -999 @max 999
+ * @desc Further adjust the X coordinate of the weapon.
+ * 
+ * @param AdjustY
+ * @min -999 @max 999
+ * @type number
+ * @desc Further adjust the Y coordinate of the weapon.
+ * 
+ * @param WeaponPatterns
+ * @type string
+ * @desc The pattern of the weapon to be executed. e.g.: 0,2,1
+ * If 3 or more are specified, the next index is referenced.
+ * 
+ * @param PriorityPatterns
+ * @type string
+ * @desc The pattern is to display the weapons in front. e.g. 0,2 would bring the first and third weapons to the front.
  * 
  * @param Motion
  * @type select
@@ -280,20 +364,41 @@
  * @option dead
  * @desc This motion corresponds to the index.
  * 
- * @param AdjustX
- * @type number
- * @min -999 @max 999
- * @desc Further adjust the X coordinate of the weapon.
+ * @param MotionPatterns
+ * @type string
+ * @desc The pattern of motion to be executed. e.g.: 0,2,1
  * 
- * @param AdjustY
- * @min -999 @max 999
- * @type number
- * @desc Further adjust the Y coordinate of the weapon.
+ * @param Motion2
+ * @type select
+ * @option thrust
+ * @option swing
+ * @option missile
+ * @option walk
+ * @option wait
+ * @option chant
+ * @option guard
+ * @option damage
+ * @option evade
+ * @option skill
+ * @option spell
+ * @option item
+ * @option escape
+ * @option victory
+ * @option dying
+ * @option abnormal
+ * @option sleep
+ * @option dead
+ * @desc Additional motions to be executed further.
+ * More than 4 patterns can be executed in total.
+ * 
+ * @param Motion2Patterns
+ * @type string
+ * @desc The pattern of Motion2 to be executed. Example: 0,2,1
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.05 武器の表示を拡張します。
+ * @plugindesc v2.06 武器の表示を拡張します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/484348477.html
@@ -350,6 +455,58 @@
  * 例えば『アイテム』のモーションを使って、剣を上に掲げるなど、
  * 発想次第で様々な演出が可能です。
  *
+ * -------------------------------------------------------------------
+ * ■さらに高度な設定（インデックスリスト）
+ * -------------------------------------------------------------------
+ * インデックスリストの設定によっては、さらに複雑な演出が可能です。
+ * こちらもDynamicMotionとの併用が前提になっています。
+ * 
+ * ◆武器のキー
+ * 武器の画像インデックスではなく特有のキーを設定することが可能です。
+ * 同一のweaponIndexでも、異なる動作を設定したい場合に活用してください。
+ * 値が「test」なら、以下のように呼び出せます。
+ * 
+ * <D-Motion:attack>
+ * weaponKey = test
+ * </D-Motion>
+ * 
+ * ◆武器パターン
+ * 実行する武器のパターンです。
+ * カンマ区切りで順番に指定してください。
+ * 初期値は「0,1,2」です。
+ * 例えば、「2,1,0」と設定すると、逆順で武器を振ります。
+ * 
+ * さらに、3以上を指定すると次の画像インデックスを参照します。
+ * 例えば、画像インデックスに1を指定した状態で「0,1,2,3,4」を指定すると、
+ * WeaponsX.pngの１つ目のアニメーションを順番に再生した上で、
+ * さらに２つ目のアニメーションを２番目まで再生します。
+ * 
+ * これにより、通常は不可能な４パターン以上の動作が可能となります。
+ * 「モーション２」「モーション２パターン」と組み合わせる想定です。
+ * 
+ * ◆優先パターン
+ * 指定した武器パターンのプライオリティを変更します。
+ * つまり、イベントにおける「通常キャラより上」と同じように前面表示します。
+ * 
+ * 例えば、「0,2」と指定した場合は１番目と３番目の武器パターンが、
+ * 前面表示されるようになります。
+ * 
+ * あくまで指定するのは武器パターンの順番です。
+ * 武器パターンが「2,1,0」で優先パターンに「0,1」を指定した場合、
+ * 前面表示されるのは、武器パターンの「2,1」の部分です。
+ * 混同しないように注意してください。
+ * 
+ * ◆モーションパターン
+ * 実行するモーションのパターンです。
+ * カンマ区切りで順番に指定してください。
+ * 
+ * 要領は武器パターンと同じですが、3以上を指定しても無効となります。
+ * 
+ * ◆モーション２
+ * ◆モーション２パターン
+ * 追加で実行されるモーションとそのパターンです。
+ * 上記のモーションパターンの後に続けて実行されます。
+ * 
  * -------------------------------------------------------------------
  * ■アクターのメモ欄
  * -------------------------------------------------------------------
@@ -539,6 +696,7 @@
  * @text インデックスリスト
  * @type struct<IndexDetail>[]
  * @desc 画像インデックス毎のモーションを定義できます。
+ * DynamicMotionとの併用が前提です。
  */
 //-------------------------------------------------------------
 // IndexDetail
@@ -548,6 +706,36 @@
  * @text 画像インデックス
  * @type number @min 1
  * @desc 画像のインデックス（1~12）です。
+ * 
+ * @param WeaponKey
+ * @text 武器のキー
+ * @type string
+ * @desc DynamicMotionから武器パターンを呼び出すための値です。
+ * 同一の画像インデックスを複数扱いたい場合に。
+ * 
+ * @param AdjustX
+ * @text 武器のＸ座標調整
+ * @type number
+ * @min -999 @max 999
+ * @desc 武器のＸ座標をさらに調整します。
+ * 
+ * @param AdjustY
+ * @text 武器のＹ座標調整
+ * @min -999 @max 999
+ * @type number
+ * @desc 武器のＹ座標をさらに調整します。
+ * 
+ * @param WeaponPatterns
+ * @text 武器パターン
+ * @type string
+ * @desc 実行する武器のパターンです。例：0,2,1
+ * 3以上を指定すると次のインデックスを参照します。
+ * 
+ * @param PriorityPatterns
+ * @text 優先パターン
+ * @type string
+ * @desc 武器を前面表示するパターンです。
+ * 例：0,2なら１番目と３番目を前面表示します。
  * 
  * @param Motion
  * @text モーション
@@ -572,17 +760,39 @@
  * @option 戦闘不能（dead） @value dead
  * @desc インデックスに対応するモーションです。
  * 
- * @param AdjustX
- * @text 武器のＸ座標調整
- * @type number
- * @min -999 @max 999
- * @desc 武器のＸ座標をさらに調整します。
+ * @param MotionPatterns
+ * @text モーションパターン
+ * @type string
+ * @desc 実行するモーションのパターンです。例：0,2,1
  * 
- * @param AdjustY
- * @text 武器のＹ座標調整
- * @min -999 @max 999
- * @type number
- * @desc 武器のＹ座標をさらに調整します。
+ * @param Motion2
+ * @text モーション２
+ * @type select
+ * @option 突き（thrust） @value thrust
+ * @option 振り（swing） @value swing
+ * @option 飛び道具（missile） @value missile
+ * @option 前進（walk） @value walk
+ * @option 通常待機（wait） @value wait
+ * @option 詠唱待機（chant） @value chant
+ * @option 防御（guard） @value guard
+ * @option ダメージ（damage） @value damage
+ * @option 回避（evade） @value evade
+ * @option 汎用スキル（skill） @value skill
+ * @option 魔法（spell） @value spell
+ * @option アイテム（item） @value item
+ * @option 逃げる（escape） @value escape
+ * @option 勝利（victory） @value victory
+ * @option 瀕死（dying） @value dying
+ * @option 状態異常（abnormal） @value abnormal
+ * @option 睡眠（sleep） @value sleep
+ * @option 戦闘不能（dead） @value dead
+ * @desc モーションの後にさらに実行するモーションです。
+ * 連結することで４パターン以上を実行できます。
+ * 
+ * @param Motion2Patterns
+ * @text モーション２パターン
+ * @type string
+ * @desc 実行するモーション２のパターンです。例：0,2,1
  */
 
 (function() {
@@ -676,16 +886,48 @@ Sprite_Weapon.prototype.loadBitmap = function() {
     _Sprite_Weapon_loadBitmap.apply(this, arguments);
 };
 
+const _Sprite_Weapon_updatePattern = Sprite_Weapon.prototype.updatePattern;
+Sprite_Weapon.prototype.updatePattern = function() {
+    // 複雑なパターン制御を行う場合
+    if (this._isChangeWeaponPattern) {
+        this._pattern++;
+        // ４つ目以降のパターン変化に対応するため、武器画像の自動非表示を行わない。
+        // if (this._pattern >= 3) {
+        //     this._weaponImageId = 0;
+        // }
+        return;
+    }
+
+    _Sprite_Weapon_updatePattern.apply(this, arguments);
+};
+
 /**
  * 【上書】フレーム更新
  */
 Sprite_Weapon.prototype.updateFrame = function() {
     if (this._weaponImageId > 0) {
+        let pattern = this._pattern;
+
+        // 武器データを取得
+        const dataWeapon = this.dataWeapon();
+        // 武器情報リストを参照
+        const weaponInfo = getWeaponInfo(dataWeapon);
+        // 武器のインデックス情報を元に更新
+        const retPattern = this.updateFrameIndexDetail(dataWeapon, weaponInfo)
+
+        // 武器画像を非表示にした場合は終了
+        if (this._weaponImageId == 0) {
+            this.setFrame(0, 0, 0, 0);
+            return;
+        }
+
+        // 戻り値のパターンがあれば更新
+        if (retPattern != null) {
+            pattern = retPattern;
+        }
+
         let index = (this._weaponImageId - 1) % 12;
 
-        // 武器を取得
-        const dataWeapon = this.dataWeapon();
-        
         // インデックスの指定がある場合（DynamicMotionで設定）
         if (this._weaponIndex) {
             index = eval(this._weaponIndex) - 1;
@@ -698,24 +940,120 @@ Sprite_Weapon.prototype.updateFrame = function() {
             const weaponIndex = dataWeapon.meta.WeaponIndex;
             if (weaponImage || weaponIndex) {
                 index = weaponIndex ? weaponIndex - 1 : 0;
-            } else {
-                // 武器情報リストを参照
-                const weaponInfo = getWeaponInfo(dataWeapon);
-                if (weaponInfo && weaponInfo.WeaponIndex) {
-                    index = weaponInfo.WeaponIndex - 1;
-                }
+            // 武器情報リストを参照
+            } else if (weaponInfo && weaponInfo.WeaponIndex) {
+                index = weaponInfo.WeaponIndex - 1;
             }
         }
 
         const w = pWeaponWidth ? eval(pWeaponWidth) : 96;
         const h = pWeaponHeight ? eval(pWeaponHeight) : 64;
-        const sx = (Math.floor(index / 6) * 3 + this._pattern) * w;
-        const sy = Math.floor(index % 6) * h;
+        let sx;
+        let sy;
+        if (pattern <= 2) {
+            sx = (Math.floor(index / 6) * 3 + pattern) * w;
+            sy = Math.floor(index % 6) * h;
+
+        // パターンが３以上の場合は次の段を参照
+        } else if (pattern > 2) {
+            const newIndex = index + Math.floor(pattern / 3);
+            const newPattern = pattern % 3;
+            sx = (Math.floor(newIndex / 6) * 3 + newPattern) * w;
+            sy = Math.floor(newIndex % 6) * h;
+        }
+        
         this.setFrame(sx, sy, w, h);
+
     } else {
         this.setFrame(0, 0, 0, 0);
     }
+
+    // 本体の動きと武器を同期する。
+    if (pSyncActorMotion) {
+        this.parent.updateFrame();
+    }
 };
+
+/**
+ * 【独自】フレーム更新内での武器パターン制御
+ */
+Sprite_Weapon.prototype.updateFrameIndexDetail = function(dataWeapon, weaponInfo) {
+    let pattern = null;
+
+    // DynamicMotionを参照し、武器のインデックス情報を取得
+    const dm = this.parent.dynamicMotion;
+
+    // 武器情報が取得できない場合は処理しない。
+    if (!dataWeapon || !weaponInfo || !dm) {
+        return;
+    }
+
+    const indexDetail = getWeaponIndexDetail(weaponInfo, dm.weaponIndex, dm.weaponKey);
+
+    // 詳細が取得できない場合は処理しない。
+    if (!indexDetail) {
+        return;
+    }
+
+    // 武器＆モーションパターンの独自制御を行う場合
+    if (this._isChangeWeaponPattern) {
+        // 武器パターンの指定があれば参照
+        if (indexDetail.WeaponPatterns) {
+            const weaponPatterns = indexDetail.WeaponPatterns.split(",");
+            pattern = eval(weaponPatterns[this._pattern]);
+            // 最大値を超えている場合は武器画像を非表示
+            if (pattern == null) {
+                this._weaponImageId = 0;
+                return;
+            }
+        }
+
+        // モーションパターンの指定があれば参照
+        if (this._weaponImageId > 0 && indexDetail.MotionPatterns) {
+            const motionPatterns = indexDetail.MotionPatterns.split(",");
+            let motionPattern = eval(motionPatterns[this._pattern]);
+
+            // 最大値を超えている場合
+            if (motionPattern == null) {
+                // モーション２の指定がある場合はそちらから取得
+                if (indexDetail.Motion2Patterns) {
+                    const motion2Patterns = indexDetail.Motion2Patterns.split(",");
+                    motionPattern = eval(motion2Patterns[this._pattern - motionPatterns.length]);
+                    // 本体のモーションを変更
+                    // ※ただし、既に反映済の場合は除く
+                    if (this.parent._motion != Sprite_Actor.MOTIONS[indexDetail.Motion2]) {
+                        this.parent.startMotion(indexDetail.Motion2);
+                    }
+
+                // それ以外
+                } else {
+                    // 最終パターンを参照
+                    motionPattern = eval(motionPatterns[motionPatterns.length - 1]);
+                }
+            }
+
+            // 本体のモーションパターンに反映
+            this.parent._pattern = motionPattern;
+        }
+    }
+
+    // 優先度の指定があれば参照
+    if (this._weaponImageId > 0 && indexDetail.PriorityPatterns) {
+        const priorityPatterns = indexDetail.PriorityPatterns.split(",");
+        // 一致する場合は前面表示
+        if (priorityPatterns.includes(String(pattern))) {
+            // weaponSpriteを削除して、前面に移動
+            this.parent.addChild(this.parent.removeChild(this));
+        // それ以外は背面表示（元に戻す）
+        } else {
+            // weaponSpriteを削除して、本体より背後に移動
+            const bodyIndex = this.parent.children.indexOf(this.parent.mainSprite());
+            this.parent.addChildAt(this.parent.removeChild(this), bodyIndex - 1);
+        }
+    }
+
+    return pattern;
+}
 
 /**
  * ●武器の設定
@@ -745,21 +1083,37 @@ Sprite_Weapon.prototype.setup = function(weaponImageId) {
         }
     }
 
+    this._isChangeWeaponPattern = false;
+    this._weaponPatternCount = null;
+
     // 武器データを取得
     const dataWeapon = this.dataWeapon();
     // 武器情報リストを参照
     const weaponInfo = getWeaponInfo(dataWeapon);
-    if (weaponInfo) {
+    // DynamicMotionを参照し、武器のインデックス情報を取得
+    const dm = this.parent.dynamicMotion;
+    if (weaponInfo && dm) {
         // 武器のインデックス情報を取得
-        const indexDetail = getWeaponIndexDetail(this.parent, weaponInfo);
+        const indexDetail = getWeaponIndexDetail(weaponInfo, dm.weaponIndex, dm.weaponKey);
         if (indexDetail) {
+            // 座標の調整
             if (indexDetail.AdjustX != null) {
                 this.x += Number(indexDetail.AdjustX);
             }
             if (indexDetail.AdjustY != null) {
                 this.y += Number(indexDetail.AdjustY);
             }
+
+            // 武器パターンおよびモーションパターンの指定がある場合
+            if (indexDetail.WeaponPatterns || indexDetail.MotionPatterns) {
+                // DynamicMotionによるアクターと武器スプライトの同期を停止する。
+                this._isChangeWeaponPattern = true;
+            }
         }
+
+        // weaponSpriteを削除して、本体より背後に移動
+        const bodyIndex = this.parent.children.indexOf(this.parent.mainSprite());
+        this.parent.addChildAt(this.parent.removeChild(this), bodyIndex - 1);
     }
 
     // 色指定があれば設定
@@ -814,25 +1168,74 @@ Sprite_Weapon.prototype.dataWeapon = function() {
     return null;
 }
 
-//-----------------------------------------------------------------------------
-// Sprite_Actor
-//-----------------------------------------------------------------------------
+/**
+ * 【独自】パターン数を取得する。
+ */
+Sprite_Weapon.prototype.weaponPatternCount = function(weaponIndex, weaponKey) {
+    // 武器データ＆武器情報リストを取得
+    const dataWeapon = this.dataWeapon();
+    const weaponInfo = getWeaponInfo(dataWeapon);
 
-if (pSyncActorMotion) {
-    /**
-     * ●描画枠を更新
-     */
-    const _Sprite_Actor_updateFrame = Sprite_Actor.prototype.updateFrame;
-    Sprite_Actor.prototype.updateFrame = function() {
-        _Sprite_Actor_updateFrame.apply(this, arguments);
-
-        // アクターの動きに武器も同期する。
-        const bitmap = this._mainSprite.bitmap;
-        if (bitmap && this._weaponSprite) {
-            this._weaponSprite.updateFrame();
+    if (weaponInfo) {
+        // 武器のインデックス情報を取得
+        const indexDetail = getWeaponIndexDetail(weaponInfo, weaponIndex, weaponKey);
+        if (indexDetail) {
+            // 武器パターンの指定がある場合
+            if (indexDetail.WeaponPatterns) {
+                // DynamicMotionで参照するパターン数
+                return indexDetail.WeaponPatterns.split(",").length;
+            }
         }
-    };
+    }
+
+    return 3;
 }
+
+/**
+ * 【独自】武器キーの設定
+ * ※DynamicMotionから設定
+ */
+Sprite_Weapon.prototype.setWeaponKey = function(weaponKey) {
+    if (!weaponKey) {
+        return;
+    }
+    this._weaponKey = weaponKey;
+
+    // 武器データ＆武器情報リストを取得
+    const dataWeapon = this.dataWeapon();
+    const weaponInfo = getWeaponInfo(dataWeapon);
+
+    // weaponIndexを設定する。
+    if (weaponInfo) {
+        const indexDetail = getWeaponIndexDetail(weaponInfo, null, weaponKey);
+        this._weaponIndex = eval(indexDetail.WeaponIndex);
+    }
+}
+
+//-----------------------------------------------------------------------------
+// Spriteset_Battle
+//-----------------------------------------------------------------------------
+
+/**
+ * ●システム画像の読込
+ */
+const _Spriteset_Battle_loadSystemImages = Spriteset_Battle.prototype.loadSystemImages;
+Spriteset_Battle.prototype.loadSystemImages = function() {
+    _Spriteset_Battle_loadSystemImages.apply(this, arguments);
+
+    // 武器画像ファイルのリストを作成（Setを使用して重複除去）
+    const weaponSet = new Set();
+    for (const weaponInfo of pWeaponInfoList) {
+        if (weaponInfo.WeaponImage) {
+            weaponSet.add(weaponInfo.WeaponImage);
+        }
+    }
+
+    // 画像を事前読込
+    for (const weaponImage of weaponSet) {
+        ImageManager.loadSystem(weaponImage);
+    }
+};
 
 //-----------------------------------------------------------------------------
 // Game_Battler
@@ -905,10 +1308,13 @@ function getAttackMotionName(battler, weapon) {
         return;
     }
 
-    // 武器のインデックス情報を取得
-    const indexDetail = getWeaponIndexDetail(spriteBattler, weaponInfo);
-    if (indexDetail) {
-        return indexDetail.Motion;
+    // DynamicMotionを参照し、武器のインデックス情報を取得
+    const dm = spriteBattler.dynamicMotion;
+    if (dm) {
+        const indexDetail = getWeaponIndexDetail(weaponInfo, dm.weaponIndex, dm.weaponKey);
+        if (indexDetail) {
+            return indexDetail.Motion;
+        }
     }
 
     // 武器毎の設定を取得
@@ -1057,13 +1463,16 @@ function getWeaponInfo(weapon, weaponType) {
 /**
  * ●武器のインデックス情報を取得
  */
-function getWeaponIndexDetail(spriteBattler, weaponInfo) {
-    // DynamicMotionを参照
-    const dm = spriteBattler.dynamicMotion;
-    // DynamicMotionでweaponIndexが指定されている場合
-    if (dm && dm.weaponIndex) {
+function getWeaponIndexDetail(weaponInfo, weaponIndex, weaponKey) {
+    // weaponKeyが指定されている場合
+    if (weaponKey) {
         const indexList = parseStruct2(weaponInfo.IndexList);
-        return indexList.find(i => i.WeaponIndex == dm.weaponIndex);
+        return indexList.find(i => i.WeaponKey == weaponKey);
+
+    // weaponIndexが指定されている場合
+    } else if (weaponIndex) {
+        const indexList = parseStruct2(weaponInfo.IndexList);
+        return indexList.find(i => i.WeaponIndex == weaponIndex);
     }
     return null;
 }
