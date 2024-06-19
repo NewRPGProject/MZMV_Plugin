@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Extend the graphics of the battler.
+ * @plugindesc v1.03 Extend the graphics of the battler.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/500642681.html
  *
@@ -100,11 +100,16 @@
  * @type boolean
  * @default false
  * @desc If multiple flash settings exist, only the one with the shortest interval is displayed.
+ * 
+ * @param NoFlashStateIcon
+ * @type boolean
+ * @default false
+ * @desc Separating the enemy's state icon from the body removes it from the flash.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 バトラーのグラフィックを拡張します。
+ * @plugindesc v1.03 バトラーのグラフィックを拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/500642681.html
  *
@@ -205,6 +210,12 @@
  * @type boolean
  * @default false
  * @desc 複数のフラッシュ設定が存在する場合、間隔が短いものだけを表示します。
+ * 
+ * @param NoFlashStateIcon
+ * @text ｽﾃｰﾄｱｲｺﾝを光らせない
+ * @type boolean
+ * @default false
+ * @desc 敵キャラのステートアイコンを本体と分離することでフラッシュの対象から外します。
  */
 
 (function() {
@@ -230,6 +241,7 @@ const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pFlashType = toNumber(parameters["FlashType"]);
 const pFlashInterval = toNumber(parameters["FlashInterval"], 90);
 const pPriorityByInterval = toBoolean(parameters["PriorityByInterval"], false);
+const pNoFlashStateIcon = toBoolean(parameters["NoFlashStateIcon"], false);
 
 // ----------------------------------------------------------------------------
 // Game_BattlerBase
@@ -575,6 +587,48 @@ Sprite_Actor.prototype.motionSpeed = function() {
 Sprite_Enemy.prototype.isNeedDeadEffect = function() {
     return !this._appeared;
 };
+
+// ----------------------------------------------------------------------------
+// 敵キャラのステートアイコンの独立
+// ----------------------------------------------------------------------------
+
+if (pNoFlashStateIcon) {
+    /**
+     * ●ステートアイコンの作成
+     */
+    const _Sprite_Enemy_createStateIconSprite = Sprite_Enemy.prototype.createStateIconSprite;
+    Sprite_Enemy.prototype.createStateIconSprite = function() {
+        _Sprite_Enemy_createStateIconSprite.apply(this, arguments);
+
+        // 新しいステートアイコンを作成する。
+        this._stateIconSprite2 = new Sprite_StateIcon();
+        // Sprite_Enemyではなく、spritesetに追加することで、
+        // 色調変更の影響を受けないようにする。
+        getSpriteset().addChild(this._stateIconSprite2);
+        // 本来のステートアイコンは非表示
+        this._stateIconSprite.visible = false;
+        this._stateIconSprite2.visible = true;
+    };
+
+    /**
+     * ●バトラー情報のセット
+     */
+    const _Sprite_Enemy_setBattler = Sprite_Enemy.prototype.setBattler;
+    Sprite_Enemy.prototype.setBattler = function(battler) {
+        _Sprite_Enemy_setBattler.apply(this, arguments);
+        this._stateIconSprite2.setup(battler);
+    };
+
+    /**
+     * ●ステート画像の更新
+     */
+    const _Sprite_Enemy_updateStateSprite = Sprite_Enemy.prototype.updateStateSprite;
+    Sprite_Enemy.prototype.updateStateSprite = function() {
+        _Sprite_Enemy_updateStateSprite.apply(this, arguments);
+        this._stateIconSprite2.x = this.x + this.parent.x;
+        this._stateIconSprite2.y = this.y + this.parent.y + this._stateIconSprite.y;
+    };
+}
 
 // ----------------------------------------------------------------------------
 // 共通関数
