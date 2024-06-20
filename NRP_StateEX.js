@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.101 Extend the functionality of the state in various ways.
+ * @plugindesc v1.11 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -335,7 +335,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.101 ステートの機能を色々と拡張します。
+ * @plugindesc v1.11 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -823,7 +823,9 @@ const _Game_BattlerBase_eraseState = Game_BattlerBase.prototype.eraseState;
 Game_BattlerBase.prototype.eraseState = function(stateId) {
     _Game_BattlerBase_eraseState.apply(this, arguments);
 
-    delete this._statesEx[stateId];
+    if (this._statesEx) {
+        delete this._statesEx[stateId];
+    }
 
     // 透明ステートを消去した場合
     const invisible = $dataStates[stateId].meta.BattlerInvisible;
@@ -885,14 +887,15 @@ Game_BattlerBase.prototype.addNewState = function(stateId) {
     
     // 旧値を取得
     let oldStateEx = {};
-    if (this._statesEx[stateId]) {
+    const tempStateEx = this.getStateEx(stateId);
+    if (tempStateEx) {
         // 値を複製
-        oldStateEx = {...this._statesEx[stateId]};
+        oldStateEx = {...tempStateEx};
     }
 
     // 追加のステートデータを定義
     this._statesEx[stateId] = {};
-    const stateEx = this._statesEx[stateId];
+    const newStateEx = this._statesEx[stateId];
 
     // 各パラメータを設定
     for (const params of PARAM_TABLE) {
@@ -925,9 +928,9 @@ Game_BattlerBase.prototype.addNewState = function(stateId) {
 
             // パラメータ名をキーにして代入
             // ※value値が共有されてしまわないように複製
-            stateEx[paramName] = {...params};
+            newStateEx[paramName] = {...params};
             // この時点で計算結果を代入
-            stateEx[paramName].value = newValue;
+            newStateEx[paramName].value = newValue;
         }
     }
 
