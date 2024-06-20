@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Extend the graphics of the battler.
+ * @plugindesc v1.031 Extend the graphics of the battler.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/500642681.html
  *
@@ -109,7 +109,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 バトラーのグラフィックを拡張します。
+ * @plugindesc v1.031 バトラーのグラフィックを拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/500642681.html
  *
@@ -593,6 +593,19 @@ Sprite_Enemy.prototype.isNeedDeadEffect = function() {
 // ----------------------------------------------------------------------------
 
 if (pNoFlashStateIcon) {
+    // spriteset保持用
+    let mSpriteset = null;
+
+    /**
+     * ●敵キャラの作成
+     */
+    const _Spriteset_Battle_createEnemies = Spriteset_Battle.prototype.createEnemies;
+    Spriteset_Battle.prototype.createEnemies = function() {
+        mSpriteset = this;
+        _Spriteset_Battle_createEnemies.apply(this, arguments);
+        mSpriteset = null;
+    };
+
     /**
      * ●ステートアイコンの作成
      */
@@ -600,14 +613,16 @@ if (pNoFlashStateIcon) {
     Sprite_Enemy.prototype.createStateIconSprite = function() {
         _Sprite_Enemy_createStateIconSprite.apply(this, arguments);
 
-        // 新しいステートアイコンを作成する。
-        this._stateIconSprite2 = new Sprite_StateIcon();
-        // Sprite_Enemyではなく、spritesetに追加することで、
-        // 色調変更の影響を受けないようにする。
-        getSpriteset().addChild(this._stateIconSprite2);
-        // 本来のステートアイコンは非表示
-        this._stateIconSprite.visible = false;
-        this._stateIconSprite2.visible = true;
+        if (mSpriteset) {
+            // 新しいステートアイコンを作成する。
+            this._stateIconSprite2 = new Sprite_StateIcon();
+            // Sprite_Enemyではなく、spritesetに追加することで、
+            // 色調変更の影響を受けないようにする。
+            mSpriteset.addChild(this._stateIconSprite2);
+            // 本来のステートアイコンは非表示
+            this._stateIconSprite.visible = false;
+            this._stateIconSprite2.visible = true;
+        }
     };
 
     /**
@@ -616,7 +631,10 @@ if (pNoFlashStateIcon) {
     const _Sprite_Enemy_setBattler = Sprite_Enemy.prototype.setBattler;
     Sprite_Enemy.prototype.setBattler = function(battler) {
         _Sprite_Enemy_setBattler.apply(this, arguments);
-        this._stateIconSprite2.setup(battler);
+
+        if (this._stateIconSprite2) {
+            this._stateIconSprite2.setup(battler);
+        }
     };
 
     /**
@@ -625,8 +643,11 @@ if (pNoFlashStateIcon) {
     const _Sprite_Enemy_updateStateSprite = Sprite_Enemy.prototype.updateStateSprite;
     Sprite_Enemy.prototype.updateStateSprite = function() {
         _Sprite_Enemy_updateStateSprite.apply(this, arguments);
-        this._stateIconSprite2.x = this.x + this.parent.x;
-        this._stateIconSprite2.y = this.y + this.parent.y + this._stateIconSprite.y;
+
+        if (this._stateIconSprite2) {
+            this._stateIconSprite2.x = this.x + this.parent.x;
+            this._stateIconSprite2.y = this.y + this.parent.y + this._stateIconSprite.y;
+        }
     };
 }
 
