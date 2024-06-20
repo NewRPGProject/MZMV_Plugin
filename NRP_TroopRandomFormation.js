@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.081 Place enemy groups automatically and randomly.
+ * @plugindesc v1.082 Place enemy groups automatically and randomly.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475049887.html
  *
@@ -169,7 +169,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.081 敵グループを自動でランダム配置します。
+ * @plugindesc v1.082 敵グループを自動でランダム配置します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475049887.html
  *
@@ -464,17 +464,21 @@ function setSinglePosition(a) {
     var startHeadY = eval(pStartHeadY);
 
     const battler = a._battler;
-    battler._screenX = eval(pSingleEnemyX);
-    battler._screenY = eval(pSingleEnemyY);
+    let screenX = eval(pSingleEnemyX);
+    let screenY = eval(pSingleEnemyY);
 
     // 画面下に突き抜けた場合は調整
-    if (battler._screenY > endY) {
-        battler._screenY = endY;
+    if (screenY > endY) {
+        screenY = endY;
     }
     // 画面上に突き抜けた場合は調整（優先）
-    if (battler._screenY - a.height < startHeadY) {
-        battler._screenY = startHeadY + a.height;
+    if (screenY - a.height < startHeadY) {
+        screenY = startHeadY + a.height;
     }
+
+    // 値が小数になることがあるので四捨五入
+    battler._screenX = Math.round(screenX);
+    battler._screenY = Math.round(screenY);
 
     // 配置更新
     a.setHome(battler.screenX(), battler.screenY());
@@ -534,10 +538,11 @@ Spriteset_Battle.prototype.setTrooRandomFormation = function() {
     for (const sprite of this._enemySprites) {
         const battler = sprite._battler;
         // 最善値で座標更新
-        battler._screenX = sprite._bestFormationX;
-        battler._screenY = sprite._bestFormationY;
+        // ※値が小数になることがあるので四捨五入
+        battler._screenX = Math.round(sprite._bestFormationX);
+        battler._screenY = Math.round(sprite._bestFormationY);
         // 比較用に右端を取得
-        battler._screenRightX = battler._screenX + sprite.width/2;
+        battler._screenRightX = Math.round(battler._screenX + sprite.width/2);
         // 配置更新
         sprite.setHome(battler.screenX(), battler.screenY());
     }
