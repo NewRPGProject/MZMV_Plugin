@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Change the performance of the skill.
+ * @plugindesc v1.04 Change the performance of the skill.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/498025725.html
  *
@@ -154,6 +154,15 @@
  * @desc Changes the enhancement formula to additive.
  * If off, multiplication is used.
  * 
+ * @param RoundingStyle
+ * @type select
+ * @option 0:Roung @value 0
+ * @option 1:Round Down @value 1
+ * @option 2:Round Up @value 2
+ * @default 0
+ * @desc This is a rounding method for post-enhancement values.
+ * Damage, MP Cost, and TP Cost are covered.
+ * 
  * @param <DefaultEnhance>
  * @desc Initial value at the time of enhancement.
  * 
@@ -186,7 +195,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 スキルの性能を変化させる。
+ * @plugindesc v1.04 スキルの性能を変化させる。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/498025725.html
  *
@@ -324,6 +333,16 @@
  * @desc 強化の計算式を加算方式に変更します。
  * オフの場合は乗算方式が使用されます。
  * 
+ * @param RoundingStyle
+ * @text 丸め方式
+ * @type select
+ * @option 0:四捨五入 @value 0
+ * @option 1:切り捨て @value 1
+ * @option 2:切り上げ @value 2
+ * @default 0
+ * @desc 強化後の値の丸め方式です。
+ * ダメージ、消費ＭＰ、消費ＴＰが対象です。
+ * 
  * @param <DefaultEnhance>
  * @text ＜強化の初期値＞
  * @desc 強化時の初期値です。
@@ -383,6 +402,7 @@ const pEnhanceSkillType = textToArray(parameters["EnhanceSkillType"]);
 const pEnhanceItem = toBoolean(parameters["EnhanceItem"], false);
 const pOverlaySettings = toNumber(parameters["OverlaySettings"], 0);
 const pUsePlusStyle = toBoolean(parameters["UsePlusStyle"], false);
+const pRoundingStyle = toNumber(parameters["RoundingStyle"], 0);
 const pEnhanceDamageRate = toNumber(parameters["EnhanceDamageRate"]);
 const pEnhanceMpCostRate = toNumber(parameters["EnhanceMpCostRate"]);
 const pEnhanceTpCostRate = toNumber(parameters["EnhanceTpCostRate"]);
@@ -406,13 +426,11 @@ Game_Action.prototype.makeDamageValue = function(target, critical) {
 
     // 強化有の場合
     const rate = this.enhanceDamageRate();
-    if (rate != 1) {
+    if (rate != 1 && rate != null) {
         // 属性強化率を計算
-        if (rate != null) {
-            ret *= rate;
-        }
-        // 四捨五入
-        ret = Math.round(ret);
+        ret *= rate;
+        // 丸める
+        ret = roundingValue(ret);
     }
 
     return ret;
@@ -427,11 +445,9 @@ Game_Action.prototype.itemHit = function(/*target*/) {
 
     const rate = this.enhanceSuccessRate();
     // 強化有の場合
-    if (rate != 1) {
+    if (rate != 1 && rate != null) {
         // 成功率を計算
-        if (rate != null) {
-            ret *= rate;
-        }
+        ret *= rate;
     }
 
     return ret;
@@ -574,8 +590,10 @@ Game_BattlerBase.prototype.skillMpCost = function(skill) {
         // 消費ＭＰを補正
         if (rate != null) {
             newSkill.mpCost *= rate;
+            // 丸める
+            newSkill.mpCost = roundingValue(newSkill.mpCost);
         }
-        // 元の処理を呼び出し（切捨も実行される。）
+        // 元の処理を呼び出す
         return _Game_BattlerBase_skillMpCost.call(this, newSkill);
     }
 
@@ -598,9 +616,9 @@ Game_BattlerBase.prototype.skillTpCost = function(skill) {
         // 消費ＴＰを補正
         if (rate != null) {
             newSkill.tpCost *= rate;
+            // 丸める
+            newSkill.tpCost = roundingValue(newSkill.tpCost);
         }
-        // ＭＰと異なり切捨処理がないので、ここで実行する。
-        newSkill.tpCost = Math.floor(newSkill.tpCost);
         // 元の処理を呼び出し
         return _Game_BattlerBase_skillTpCost.call(this, newSkill);
     }
@@ -766,6 +784,21 @@ function getRate(object, metaValue, defaultValue) {
     }
     // それ以外はnull
     return null;
+}
+
+/**
+ * ●値を丸める。
+ */
+function roundingValue(value) {
+    // 1:切り捨て
+    if (pRoundingStyle == 1) {
+        return Math.floor(value);
+    // 2:切り上げ
+    } else if (pRoundingStyle == 2) {
+        return Math.ceil(value);
+    }
+    // 四捨五入
+    return Math.round(value);
 }
 
 /**
