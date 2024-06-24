@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.04 Extend the effect of the skill.
+ * @plugindesc v1.05 Extend the effect of the skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -12,8 +12,9 @@
  * 
  * - High critical rate skills.
  * - Skills that have a success rate greater than 100.
- * - Skills that add states at random
- * - Skills that change elements or scope depending on conditions
+ * - Skills that add states at random.
+ * - Skills that change elements or scope depending on conditions.
+ * - Skills that consume all MP.
  * 
  * -------------------------------------------------------------------
  * [Note (skill, item)]
@@ -87,8 +88,32 @@
  * <RecoverTp:a.mat>
  * 
  * ◆Damage To User
- * <SelfDamage:a.mmp / 10>
+ * <SelfDamage:a.mhp / 10>
  * It damages the user for 1/10 of the maximum HP.
+ * 
+ * ◆Change Mp Cost
+ * <ChangeMpCost:100>
+ * Changes the MP cost to the specified value.
+ * 
+ * Example: Consume all MP.
+ * <ChangeMpCost:a.mp>
+ * 
+ * Note that the Mp Cost Rate will be ignored.
+ * If you wish to include it,
+ * please incorporate Mp Cost Rate (mcr) into the formula.
+ * Example: <ChangeMpCost:a.mp * a.mcr>
+ * 
+ * If you want to use the MP before consumption in the damage formula,
+ * you can refer to it below.
+ * a.startMp()
+ * 
+ * ◆Change Tp Cost
+ * <ChangeTpCost:100>
+ * Changes the TP cost to the specified value.
+ * 
+ * If you want to use the MP before consumption in the damage formula,
+ * you can refer to it below.
+ * a.startTp()
  * 
  * -------------------------------------------------------------------
  * ■Formula Variables
@@ -119,7 +144,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 スキルの効果を拡張します。
+ * @plugindesc v1.05 スキルの効果を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -130,6 +155,7 @@
  * ・成功率が１００を超えるスキル
  * ・ランダムでステートを付加するスキル
  * ・条件によって属性や範囲が変化するスキル
+ * ・全てのＭＰを消費するスキル
  * 
  * -------------------------------------------------------------------
  * ■スキル、アイテムのメモ欄
@@ -201,6 +227,27 @@
  * ◆自身にダメージ
  * <SelfDamage:a.mhp / 10>
  * 自身に最大ＨＰの1/10のダメージを与えます。
+ * 
+ * ◆消費ＭＰを変更
+ * <ChangeMpCost:100>
+ * 消費ＭＰを指定した値へ変更します。
+ * 
+ * 例：全ＭＰを消費
+ * <ChangeMpCost:a.mp>
+ * 
+ * なお、ＭＰ消費率は無視されるようになります。
+ * もし、含みたい場合は数式にＭＰ消費率（mcr）を組み込んでください。
+ * 例：<ChangeMpCost:a.mp * a.mcr>
+ * 
+ * ダメージ計算式に消費前のＭＰを使用したい場合は以下で参照できます。
+ * a.startMp()
+ * 
+ * ◆消費ＴＰを変更
+ * <ChangeTpCost:100>
+ * 消費ＴＰを指定した値へ変更します。
+ * 
+ * ダメージ計算式に消費前のＴＰを使用したい場合は以下で参照できます。
+ * a.startTp()
  * 
  * -------------------------------------------------------------------
  * ■数式用の変数
@@ -536,6 +583,54 @@ Game_Action.prototype.evalDamageFormula = function(target) {
     }
 
     return _Game_Action_evalDamageFormula.apply(this, arguments);
+};
+
+// ----------------------------------------------------------------------------
+// Game_BattlerBase
+// ----------------------------------------------------------------------------
+
+/**
+ * ●消費ＭＰ
+ */
+const _Game_BattlerBase_skillMpCost = Game_BattlerBase.prototype.skillMpCost;
+Game_BattlerBase.prototype.skillMpCost = function(skill) {
+    this._startMp = this.mp;
+
+    const changeMpCost = skill.meta.ChangeMpCost
+    if (changeMpCost != null) {
+        const a = this;
+        return Math.floor(eval(changeMpCost));
+    }
+    return _Game_BattlerBase_skillMpCost.apply(this, arguments);
+};
+
+/**
+ * ●消費ＴＰ
+ */
+const _Game_BattlerBase_skillTpCost = Game_BattlerBase.prototype.skillTpCost;
+Game_BattlerBase.prototype.skillTpCost = function(skill) {
+    this._startTp = this.tp;
+
+    const changeTpCost = skill.meta.ChangeTpCost;
+    if (changeTpCost != null) {
+        const a = this;
+        return Math.floor(eval(changeTpCost));
+    }
+    return _Game_BattlerBase_skillTpCost.apply(this, arguments);
+};
+
+/**
+ * 【独自】スキル使用前のＭＰ
+ */
+Game_BattlerBase.prototype.startMp = function() {
+    return this._startMp;
+};
+
+/**
+ * 【独自】スキル使用前のＴＰ
+ */
+Game_BattlerBase.prototype.startTp = function() {
+    return this._startTp;
 };
 
 })();
