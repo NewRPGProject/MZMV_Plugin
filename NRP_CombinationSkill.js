@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.38 Creates a combination skill.
+ * @plugindesc v1.381 Creates a combination skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/474570191.html
  * 
@@ -164,7 +164,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.38 合体技を実現します。
+ * @plugindesc v1.381 合体技を実現します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/474570191.html
  *
@@ -745,6 +745,8 @@ function releaseCombination(item, subject) {
     if (reactionState == undefined) {
         reactionState = pReactionState;
     }
+    // 数式反映
+    reactionState = eval(reactionState);
     
     // 参加者毎にループ
     for (var member of getCombinationMembers(item, subject)) {
