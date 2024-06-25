@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.11 Extend the functionality of the state in various ways.
+ * @plugindesc v1.12 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -306,6 +306,11 @@
  * @type boolean
  * @default false
  * @desc For slip damage (e.g. poison), enable values that exceed the current HP.
+ * 
+ * @param QuickStateEndSkill
+ * @type boolean
+ * @default true
+ * @desc Perform skills triggered by <StateEndSkill> with speed as the limit. Adjustment for CTB.
  */
 //-----------------------------------------------------------------------------
 // Parameter
@@ -335,7 +340,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.11 ステートの機能を色々と拡張します。
+ * @plugindesc v1.12 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -626,6 +631,12 @@
  * @type boolean
  * @default false
  * @desc 毒などのスリップダメージで現在ＨＰを超える値を有効にします。
+ * 
+ * @param QuickStateEndSkill
+ * @text 終了時スキルを即時化
+ * @type boolean
+ * @default true
+ * @desc <StateEndSkill>によって発動するスキルを速度補正を限界にして実行します。ＣＴＢ用の調整です。
  */
 //-----------------------------------------------------------------------------
 // Parameter
@@ -696,6 +707,7 @@ const pAlwaysUpdateState = toBoolean(parameters["AlwaysUpdateState"], false);
 const pUpdateType = toNumber(parameters["UpdateType"], 0);
 const pShowStateMiss = toBoolean(parameters["ShowStateMiss"], false);
 const pSlipOverKill = toBoolean(parameters["SlipOverKill"], false);
+const pQuickStateEndSkill = toBoolean(parameters["QuickStateEndSkill"], true);
 
 /**
  * ●効率化のため事前変換
@@ -1240,6 +1252,20 @@ function goStateSkill(subject, skillId) {
     
     return true;
 }
+
+/**
+ * ●速度補正の計算
+ */
+const _Game_Battler_makeSpeed = Game_Battler.prototype.makeSpeed;
+Game_Battler.prototype.makeSpeed = function() {
+    // ステート終了時のスキルなら速度補正は無限として計算
+    // ※さもないとＣＴＢにおいて、二回分の行動時間を消費してしまう。
+    if (pQuickStateEndSkill && mEndStateSkillId) {
+        this._speed = Infinity;
+        return;
+    }
+    _Game_Battler_makeSpeed.apply(this, arguments);
+};
 
 /**
  * ●行動終了時
