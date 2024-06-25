@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v2.03 The order of actions is displayed on the battle screen.
+ * @plugindesc v2.04 The order of actions is displayed on the battle screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -78,6 +78,30 @@
  * This is useful when you want to create an effect
  * that covers the entire screen.
  * 
+ * -------------------------------------------------------------------
+ * [Note (State)]
+ * -------------------------------------------------------------------
+ * You can change the color of the symbol image in a state
+ * by specifying the following in the note field of the state
+ * Intended for applications
+ * such as visualization of action constraint states.
+ * ※However, "useSprite" must be turned on.
+ * 
+ * For states whose "Auto-removal Timing" is "Action End",
+ * the timing of the end of the state is also taken into account.
+ * ※"Turn End" is not supported.
+ * 
+ * <CtbBlendColor:[255,255,255,255]>
+ * Blends color into the symbol image.
+ * 0~255 are valid values.
+ * Set in the order of Red, Green, Blue, Strength.
+ * 
+ * <CtbColorTone:[255,255,255,255]>
+ * Changes the color tone of the symbol image.
+ * The calculation method is different from <CtbBlendColor>.
+ * Also, values from -255~255 are valid here.
+ * 
+ * -------------------------------------------------------------------
  * For more information, please see below.
  * http://newrpg.seesaa.net/article/472840225.html
  * 
@@ -410,7 +434,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.03 行動順序を戦闘画面へ表示します。
+ * @plugindesc v2.04 行動順序を戦闘画面へ表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -477,6 +501,28 @@
  * スキル（アイテム）発動時、行動順序ウィンドウを一時的に隠します。
  * 画面全体にかかるような演出を行いたい場合など。
  *
+ * -------------------------------------------------------------------
+ * ■メモ欄（ステート）
+ * -------------------------------------------------------------------
+ * ステートのメモ欄に以下を指定すれば、
+ * そのステート中のシンボル画像の色を変更できます。
+ * 行動停止系ステートの視覚化などの用途を想定しています。
+ * ※ただし、『スプライト表示』がオンである必要があります。
+ * 
+ * 自動解除のタイミングが『行動終了時』のステートについては、
+ * ステートが終了するタイミングも考慮して表示します。
+ * ※『ターン終了時』については対応していません。
+ * 
+ * <CtbBlendColor:[255,255,255,255]>
+ * 画像に色を合成します。0~255までの数値が有効です。
+ * 赤、緑、青、強さの順で設定してください。
+ * 
+ * <CtbColorTone:[255,255,255,255]>
+ * 画像の色調を変更します。
+ * <CtbBlendColor>とは計算方法が異なります。
+ * また、こちらは-255~255までの数値が有効です。
+ * 
+ * -------------------------------------------------------------------
  * その他、細かい仕様については、以下をご覧ください。
  * http://newrpg.seesaa.net/article/472840225.html
  * 
@@ -1850,10 +1896,9 @@ Window_BattleCtb.prototype.drawSymbolCommon = function(drawArgs, index) {
         sprite.scale.y = drawArgs.zoom * adjustZoom;
         // Ｚ座標には適当に大きな数字を設定
         sprite.z = 10001;
-        // 選択時の色変更
-        if (battler._selected) {
-            sprite.setBlendColor([255, 255, 255, 128]);
-        }
+
+        // シンボルの色調変更
+        this.setSymbolSpriteColor(sprite, battler, index);
 
         // 画面表示に追加
         spriteset._visualTurnSprites.push(sprite);
@@ -1911,6 +1956,51 @@ Window_BattleCtb.prototype.drawSymbolCommon = function(drawArgs, index) {
 
     // 敵の表示用識別子を描画
     this.drawEnemyVisualId(battler, sprite, drawArgs, index);
+}
+
+/**
+ * ●CTB用のシンボル色調変更
+ */
+Window_BattleCtb.prototype.setSymbolSpriteColor = function(sprite, battler, index) {
+    // ステートを確認
+    for (const state of battler.states()) {
+        const ctbColorTone = state.meta.CtbColorTone;
+        const ctbBlendColor = state.meta.CtbBlendColor;
+        // 色変更対象のステートが存在する場合
+        if (ctbColorTone || ctbBlendColor) {
+            // 自動解除が『行動終了時』のステートの場合
+            if (state.autoRemovalTiming == 1) {
+                // 現在の表示バトラーがリスト上で何番目の行動かを確認
+                let battlerCount = 0;
+                for (let i = 0; i <= index; i++) {
+                    // バトラーが一致した場合はカウント
+                    if (battler == BattleManager._actionBattlers[i]) {
+                        battlerCount++;
+                    }
+                }
+
+                // 継続ターン数が過ぎる場合は終了
+                const stateTurn = battler._stateTurns[state.id];
+                if (stateTurn < battlerCount) {
+                    break;
+                }
+            }
+            // 色調変更（ColorTone）
+            if (ctbColorTone) {
+                sprite.setColorTone(eval(ctbColorTone));
+            }
+            // 色調変更（BlendColor
+            if (ctbBlendColor) {
+                sprite.setBlendColor(eval(ctbBlendColor));
+            }
+            break;
+        }
+    }
+
+    // 選択時の色変更
+    if (battler._selected) {
+        sprite.setBlendColor([255, 255, 255, 128]);
+    }
 }
 
 /**
