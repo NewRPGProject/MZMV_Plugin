@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Automatically adds the state.
+ * @plugindesc v1.001 Automatically adds the state.
  * @orderAfter NRP_StateEX
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/500375292.html
@@ -59,7 +59,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 自動でステートを付加する。
+ * @plugindesc v1.001 自動でステートを付加する。
  * @orderAfter NRP_StateEX
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/500375292.html
@@ -226,7 +226,9 @@ Game_BattlerBase.prototype.updateAutoStates = function() {
         
         // 対象のステートが存在する場合
         const equipStates = makeArray(object.meta.AutoState);
-        for (const stateId of equipStates) {
+        for (let stateId of equipStates) {
+            // 文字列形式なので数値変換
+            stateId = Number(stateId);
             autoStateIds.push(stateId);
 
             // ステートが有効な場合は追加
