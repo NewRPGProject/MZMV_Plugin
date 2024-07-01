@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.001 Automatically adds the state.
+ * @plugindesc v1.01 Automatically adds the state.
  * @orderAfter NRP_StateEX
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/500375292.html
@@ -55,11 +55,17 @@
  * @-----------------------------------------------------
  * @ [Plugin Parameters]
  * @-----------------------------------------------------
+ * 
+ * @param AutoStateOnlyBattle
+ * @type boolean
+ * @default false
+ * @desc Limit the effect of auto state to during battle.
+ * It will no longer be reflected in the status display.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.001 自動でステートを付加する。
+ * @plugindesc v1.01 自動でステートを付加する。
  * @orderAfter NRP_StateEX
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/500375292.html
@@ -107,6 +113,13 @@
  * @-----------------------------------------------------
  * @ プラグインパラメータ
  * @-----------------------------------------------------
+ * 
+ * @param AutoStateOnlyBattle
+ * @text 自動ステートを戦闘に限定
+ * @type boolean
+ * @default false
+ * @desc 自動ステートの効果を戦闘時に限定します。
+ * ステータス表示にも反映されなくなります。
  */
 (function() {
 "use strict";
@@ -146,6 +159,7 @@ function setDefault(str, def) {
 
 const PLUGIN_NAME = "NRP_AutoState";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
+const pAutoStateOnlyBattle = toBoolean(parameters["AutoStateOnlyBattle"], false);
 
 /**
  * ●引数を元に配列を取得する。
@@ -215,7 +229,10 @@ Game_BattlerBase.prototype.updateAutoStates = function() {
     }
 
     // ステートチェック用の配列
-    const autoStateIds = []
+    const autoStateIds = [];
+
+    // eval用
+    const a = this;
 
     // オブジェクト毎にループ
     for (const object of traitObjects) {
@@ -228,7 +245,7 @@ Game_BattlerBase.prototype.updateAutoStates = function() {
         const equipStates = makeArray(object.meta.AutoState);
         for (let stateId of equipStates) {
             // 文字列形式なので数値変換
-            stateId = Number(stateId);
+            stateId = eval(stateId);
             autoStateIds.push(stateId);
 
             // ステートが有効な場合は追加
@@ -259,6 +276,12 @@ Game_BattlerBase.prototype.updateAutoStates = function() {
 const _Game_BattlerBase_clearStates = Game_BattlerBase.prototype.clearStates;
 Game_BattlerBase.prototype.clearStates = function() {
     _Game_BattlerBase_clearStates.apply(this, arguments);
+
+    // 戦闘時以外は無効の場合
+    if (pAutoStateOnlyBattle && !$gameParty.inBattle()) {
+        return;
+    }
+
     // 自動ステートの更新
     this.updateAutoStates();
 };
@@ -273,6 +296,12 @@ Game_BattlerBase.prototype.clearStates = function() {
 const _Game_Battler_refresh = Game_Battler.prototype.refresh;
 Game_Battler.prototype.refresh = function() {
     _Game_Battler_refresh.apply(this, arguments);
+
+    // 戦闘時以外は無効の場合
+    if (pAutoStateOnlyBattle && !$gameParty.inBattle()) {
+        return;
+    }
+
     // 自動ステートの更新
     this.updateAutoStates();
 };
@@ -315,6 +344,12 @@ Game_Battler.prototype.onBattleStart = function(advantageous) {
         }
     }
 
+    // 戦闘時以外は無効の場合
+    if (pAutoStateOnlyBattle) {
+        // このタイミングで自動ステートの更新
+        this.updateAutoStates();
+    }
+    
     _Game_Battler_onBattleStart.apply(this, arguments);
 };
 
