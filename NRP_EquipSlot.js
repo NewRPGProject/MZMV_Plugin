@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.10 Change the equipment slots at will.
+ * @plugindesc v1.11 Change the equipment slots at will.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489626316.html
  *
@@ -153,11 +153,16 @@
  * @type boolean
  * @default false
  * @desc Disables the ability to equip multiple pieces of equipment with the same armor type.
+ * 
+ * @param ArmorUnique
+ * @type boolean
+ * @default false
+ * @desc Disables the ability to equip multiple pieces of the same armor.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.10 装備スロットを自由に変更。
+ * @plugindesc v1.11 装備スロットを自由に変更。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489626316.html
  * 
@@ -296,6 +301,12 @@
  * @type boolean
  * @default false
  * @desc 防具タイプが同じ装備を複数装備できなくします。
+ * 
+ * @param ArmorUnique
+ * @text 同一防具の装備禁止
+ * @type boolean
+ * @default false
+ * @desc 同じ防具を複数装備できなくします。
  */
 
 (function() {
@@ -343,6 +354,7 @@ const pDualWieldPosition = toNumber(parameters["DualWieldPosition"], 2);
 const pPagingEquipmentType = parameters["PagingEquipmentType"];
 const pStatusShowSlots = parseStruct1(parameters["StatusShowSlots"]);
 const pArmorTypeUnique = toBoolean(parameters["ArmorTypeUnique"], false);
+const pArmorUnique = toBoolean(parameters["ArmorUnique"], false);
 
 //-----------------------------------------------------------------------------
 // Game_Actor
@@ -729,6 +741,25 @@ Window_EquipItem.prototype.isEnabled = function(item) {
  * 【独自】装備制限に引っかかるか？
  */
 Game_BattlerBase.prototype.isEquipUnique = function(item, slotId) {
+    // 同一防具の装備禁止
+    if (pArmorUnique && DataManager.isArmor(item)) {
+        // アクターの装備チェック
+        for (let tempSlotId = 0; tempSlotId < this.equips().length; tempSlotId++) {
+            // 選択中のスロットについては除外
+            if (tempSlotId == slotId) {
+                continue;
+            }
+            const equip = this.equips()[tempSlotId];
+            // 装備が有効な場合
+            if (equip) {
+                // 同一の装備が存在すれば装備不可
+                if (item == equip) {
+                    return true;
+                }
+            }
+        }
+    }
+
     // 対象の装備の系統指定
     const equipUnique = item.meta.EquipUnique;
 
