@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.021 Add an auto-battle command.
+ * @plugindesc v1.03 Add an auto-battle command.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/498941158.html
  *
@@ -59,6 +59,37 @@
  * @default false
  * @desc If only the normal attack is on, only the first enemy is targeted.
  * 
+ * @param ShortcutKey
+ * @type select
+ * @option shift
+ * @option menu
+ * @option pageup
+ * @option pagedown
+ * @option control
+ * @option tab
+ * @desc Shortcut key to execute auto-battle.
+ * 
+ * @param ReleaseSameKey
+ * @parent ShortcutKey
+ * @type boolean
+ * @default true
+ * @desc The same key as the shortcut key will cancel the auto-battle.
+ * 
+ * @param StartSound
+ * @type file
+ * @dir audio/se
+ * @desc This is the sound effect played at the start of auto-battle.
+ * 
+ * @param CancelSound
+ * @type file
+ * @dir audio/se
+ * @desc Sound effect to be played when auto-battle is canceled.
+ * If blank, the system cancel sound is played.
+ * 
+ * @param AutoBattleSwitch
+ * @type switch
+ * @desc This switch is turned on during the execution of auto-battle.
+ * 
  * @param <TurnBased>
  * @desc This item is for turn-base only.
  * 
@@ -71,7 +102,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.021 自動戦闘コマンドを追加します。
+ * @plugindesc v1.03 自動戦闘コマンドを追加します。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/498941158.html
  *
@@ -127,6 +158,42 @@
  * @default false
  * @desc 通常攻撃のみがオンの場合、先頭の敵のみを対象とします。
  * 
+ * @param ShortcutKey
+ * @text ショートカットキー
+ * @type select
+ * @option shift
+ * @option menu
+ * @option pageup
+ * @option pagedown
+ * @option control
+ * @option tab
+ * @desc 自動戦闘を実行するショートカットキーです。
+ * 
+ * @param ReleaseSameKey
+ * @text 同じキーで解除
+ * @parent ShortcutKey
+ * @type boolean
+ * @default true
+ * @desc ショートカットキーと同じキーで自動戦闘を解除します。
+ * 
+ * @param StartSound
+ * @text 実行時の効果音
+ * @type file
+ * @dir audio/se
+ * @desc 自動戦闘実行時に鳴らす効果音です。
+ * 
+ * @param CancelSound
+ * @text キャンセル時の効果音
+ * @type file
+ * @dir audio/se
+ * @desc 自動戦闘キャンセル時に鳴らす効果音です。
+ * 空白の場合はシステムのキャンセル音を鳴らします。
+ * 
+ * @param AutoBattleSwitch
+ * @text 自動戦闘時のスイッチ
+ * @type switch
+ * @desc 自動戦闘実行中にオンとなるスイッチです。
+ * 
  * @param <TurnBased>
  * @text ＜ターン制＞
  * @desc ターン制専用の項目です。
@@ -169,6 +236,11 @@ const pPartyCommandPosition = toNumber(parameters["PartyCommandPosition"]);
 const pActorCommandPosition = toNumber(parameters["ActorCommandPosition"]);
 const pNormalAttackOnly = toBoolean(parameters["NormalAttackOnly"], false);
 const pTargetFrontOnly = toBoolean(parameters["TargetFrontOnly"], false);
+const pShortcutKey = parameters["ShortcutKey"].toLowerCase();
+const pReleaseSameKey = toBoolean(parameters["ReleaseSameKey"], true);
+const pStartSound = parameters["StartSound"];
+const pCancelSound = parameters["CancelSound"];
+const pAutoBattleSwitch = toNumber(parameters["AutoBattleSwitch"]);
 const pOnly1Turn = toBoolean(parameters["Only1Turn"], false);
 
 const SYMBOL_NAME = "autoBattle";
@@ -203,6 +275,11 @@ Scene_Battle.prototype.createActorCommandWindow = function() {
  * 【独自】自動戦闘コマンド
  */
 Scene_Battle.prototype.commandAutoBattle = function() {
+    // 実行時の効果音
+    if (pStartSound) {
+        AudioManager.playSe({"name":pStartSound, "volume":90, "pitch":100, "pan":0})
+    }
+    // 自動戦闘実行
     BattleManager.setAutoBattleMode(true);
     this.changeInputWindow();
     // パーティコマンドの選択は解除
@@ -239,39 +316,79 @@ Scene_Battle.prototype.startActorCommandSelection = function() {
     _Scene_Battle_startActorCommandSelection.apply(this, arguments);
 };
 
+let mUseShortcutKey = false;
+
 /**
  * ●更新
  */
 const _Scene_Battle_update = Scene_Battle.prototype.update;
 Scene_Battle.prototype.update = function() {
+    // ショートカットキーを押した場合
+    // 押しっぱなしの場合は一度キーを離すまでキャンセルを禁止する。
+    // ※そうしないと即時キャンセルされてしまう。
+    if (mUseShortcutKey) {
+        if (Input.isPressed(pShortcutKey)) {
+            _Scene_Battle_update.apply(this, arguments);
+            return;
+        } else {
+            // キーを離した。
+            mUseShortcutKey = false;
+        }
+    }
+
     // 自動戦闘中の場合、かつキャンセル押下時
     // タッチ操作でも右クリックまたは長押しで解除
-    if (BattleManager.isAutoBattleMode()
-            && (Input.isPressed("cancel") || TouchInput.isCancelled() || TouchInput.isLongPressed())) {
-        // 自動戦闘解除
-        BattleManager.setAutoBattleMode(false);
-        // キャンセルの効果音
-        // ※１ターンのみ実行の場合は効果音不要
-        if (!pOnly1Turn) {
-            SoundManager.playCancel();
+    if (BattleManager.isAutoBattleMode()) {
+        if (Input.isPressed("cancel")
+                || (pReleaseSameKey && inputShortcutKey())
+                || TouchInput.isCancelled()
+                || TouchInput.isLongPressed()) {
+            // 自動戦闘解除
+            BattleManager.setAutoBattleMode(false);
+            // キャンセルの効果音
+            // ※１ターンのみ実行の場合は効果音不要
+            if (!pOnly1Turn) {
+                if (pCancelSound) {
+                    AudioManager.playSe({"name":pCancelSound, "volume":90, "pitch":100, "pan":0})
+                } else {
+                    SoundManager.playCancel();
+                }
+            }
         }
+    
+    // ショートカットキー
+    } else if ((this._partyCommandWindow.active || this._actorCommandWindow.active) && inputShortcutKey()) {
+        // 自動戦闘実行
+        this.commandAutoBattle();
+        // ショートカットキーを押した
+        mUseShortcutKey = true;
     }
 
     _Scene_Battle_update.apply(this, arguments);
 };
+
+/**
+ * ●ショートカットキーの判定
+ */
+function inputShortcutKey() {
+    if (pShortcutKey && Input.isPressed(pShortcutKey)) {
+        return true;
+    }
+    return false;
+}
 
 // ----------------------------------------------------------------------------
 // BattleManager
 // ----------------------------------------------------------------------------
 
 /**
- * ●戦闘開始
+ * ●戦闘終了
  */
-const _BattleManager_startBattle = BattleManager.startBattle;
-BattleManager.startBattle = function() {
+const _BattleManager_endBattle = BattleManager.endBattle;
+BattleManager.endBattle = function(result) {
     // 自動戦闘解除
     this.setAutoBattleMode(false);
-    _BattleManager_startBattle.apply(this, arguments);
+    _BattleManager_endBattle.apply(this, arguments);
 };
 
 /**
@@ -318,6 +435,11 @@ BattleManager.setAutoBattleActions = function() {
  */
 BattleManager.setAutoBattleMode = function(mode) {
     this._autoBattleMode = mode;
+
+    // スイッチを反映
+    if (pAutoBattleSwitch) {
+        $gameSwitches.setValue(pAutoBattleSwitch, mode);
+    }
 };
 
 /**
