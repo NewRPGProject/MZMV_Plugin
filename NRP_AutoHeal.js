@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 It enables the "Auto Heal" command.
+ * @plugindesc v1.011 It enables the "Auto Heal" command.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/480069638.html
  * 
@@ -301,7 +301,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 自動回復コマンド（まんたん）を実現
+ * @plugindesc v1.011 自動回復コマンド（まんたん）を実現
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/480069638.html
  *
@@ -1520,6 +1520,16 @@ function failureMessage(message) {
  * ※メッセージウィンドウを閉じた時の処理
  */
 if (pMessageType) {
+    /**
+     * メソッドが未定義の場合は事前に定義
+     * ※これをしておかないと以後の親側への追記が反映されない。
+     */
+    if (Scene_Menu.prototype.update == Scene_MenuBase.prototype.update) {
+        Scene_Menu.prototype.update = function() {
+            return Scene_MenuBase.prototype.update.apply(this, arguments);
+        }
+    }
+
     /**
      * ●メニューの場合
      */
