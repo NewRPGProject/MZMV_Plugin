@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV
- * @plugindesc v1.15 Call DynamicAnimation on the map.
+ * @plugindesc v1.153 Call DynamicAnimation on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimation
  * @url http://newrpg.seesaa.net/article/477639171.html
@@ -158,7 +158,7 @@
 
 /*:ja
  * @target MV
- * @plugindesc v1.15 DynamicAnimationをマップ上から起動します。
+ * @plugindesc v1.153 DynamicAnimationをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimation
  * @url http://newrpg.seesaa.net/article/477639171.html
@@ -1450,10 +1450,11 @@ Sprite_Character.prototype.startDynamicAnimation = function(dynamicAnimation) {
         // スプライト情報が書き換わっている場合があるので、
         // 再びキャラクターに紐づくスプライトを取り直す。
         // ※迂遠だが、やらないとメニューを開閉した後でエラーになる模様。
-        dynamicAnimation.targetsSprite = dynamicAnimation.targetsSprite.map(function(sprite) {
-            return getSprite(sprite._character);
-        });
-    
+        dynamicAnimation.targetsSprite =
+            dynamicAnimation.targetsSprite.map(sprite => getSprite(sprite._character));
+        // 有効なデータに限定
+        dynamicAnimation.targetsSprite = dynamicAnimation.targetsSprite.filter(sprite => sprite);
+
         const spriteset = getSpriteset();
         spriteset.createDynamicAnimation([this._character], animation, dynamicAnimation);
     }
@@ -1814,7 +1815,8 @@ SceneManager.changeScene = function() {
             // 場所移動時
             if ($gamePlayer.isTransferring()) {
                 // 同一マップの場合はアニメーション状態を保持
-                if ($gamePlayer.newMapId() == $gameMap.mapId()) {
+                // ※ただし、リロード時は除外
+                if ($gamePlayer.newMapId() == $gameMap.mapId() && !$gamePlayer._needsMapReload) {
                     this._scene._spriteset.saveAnimationTempData();
                 // マップが変化した場合は保存データクリア
                 } else {
@@ -2365,7 +2367,9 @@ Sprite_Battler.prototype.startDynamicAnimation = function(mirror, delay, dynamic
             if (battler.dynamicDurations[skillId]) {
                 dynamicDuration = battler.dynamicDurations[skillId];
                 // 開始タイミングの指定がある場合は調整
-                dynamicDuration -= mapAnimation.startTiming * pCalculationRate;
+                if (mapAnimation.startTiming) {
+                    dynamicDuration -= mapAnimation.startTiming * pCalculationRate;
+                }
             }
             let waitDuration = 0;
             if (dynamicAnimation.waitDuration) {
