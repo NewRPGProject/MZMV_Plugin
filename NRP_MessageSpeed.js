@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Changes the message speed.
+ * @plugindesc v1.04 Changes the message speed.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/485101364.html
  *
@@ -88,7 +88,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 メッセージ速度を変更します。
+ * @plugindesc v1.04 メッセージ速度を変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/485101364.html
  *
@@ -265,8 +265,15 @@ Window_Message.prototype.updateMessage = function() {
  */
 const _Window_Message_shouldBreakHere = Window_Message.prototype.shouldBreakHere;
 Window_Message.prototype.shouldBreakHere = function(textState) {
+    // 行瞬間表示の場合は停止しない。
+    // ※ただし、ウェイト時は除く
+    if (!this.isWaiting() && this._lineShowFast) {
+        return false;
+    }
+
     // １文字出力したので減算
     mMessageCount--;
+
     // 追加の出力文字が存在する場合
     if (mMessageCount >= 1 && this.canBreakHere(textState)) {
         // ウェイト命令がある場合は停止
