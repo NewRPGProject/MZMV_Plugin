@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.011 It enables the "Auto Heal" command.
+ * @plugindesc v1.02 It enables the "Auto Heal" command.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/480069638.html
  * 
@@ -11,7 +11,9 @@
  * When you run it from the menu screen, etc.,
  * your party members will automatically use the skill to heal.
  * 
- * ■Main Specifications
+ * -------------------------------------------------------------------
+ * [Main Specifications]
+ * -------------------------------------------------------------------
  * - The "Auto Heal" command can be added to the menu.
  * - It is also possible to call it from a plug-in command.
  * - Can also cure registered states.
@@ -25,25 +27,33 @@
  * - You can choose how the message is displayed.
  * - You can choose whether or not to include reserve members.
  * 
- * ■Usage
+ * -------------------------------------------------------------------
+ * [Usage]
+ * -------------------------------------------------------------------
  * Turning on this plugin will add "Auto Heal" command
  * to the menu commands.
  * It is also possible to call it from the plugin command
  * without displaying it in the menu.
  * You can also make finer adjustments than the plugin parameters.
  * 
- * ■Note of Skills
+ * -------------------------------------------------------------------
+ * [Note of Skills]
+ * -------------------------------------------------------------------
  * <ExceptAutoHeal>
  * Excludes the specified skill from "Auto Heal".
  * 
- * ■Plugin Command (MZ)
+ * -------------------------------------------------------------------
+ * [Plugin Command (MZ)]
+ * -------------------------------------------------------------------
  * You can execute "Auto Heal" from the event.
  * "TargetHpRate", "SuccessSwitch",
  * and "FailureSwitch" can be specified.
  * The details are the same as for the plugin parameters,
  * so we will skip them.
  * 
- * ■Plugin Command (MV)
+ * -------------------------------------------------------------------
+ * [Plugin Command (MV)]
+ * -------------------------------------------------------------------
  * > nrp.autoHeal.start
  * You can execute "Auto Heal" from the event.
  * You can also specify options by specifying the following in advance.
@@ -68,7 +78,9 @@
  * nrp.autoHeal.failureSwitch 2
  * nrp.autoHeal.start
  * 
- * ■About Displaying Messages
+ * -------------------------------------------------------------------
+ * [About Displaying Messages]
+ * -------------------------------------------------------------------
  * When "Auto Heal" is performed, the result is displayed as a message.
  * However, according to the RPG Maker specifications,
  * it is not possible to display messages on the menu screen.
@@ -80,7 +92,9 @@
  * Also, only when closing the menu, the common event can be called.
  * Please use this function for performance.
  * 
- * ■Algorithm Of "Auto Heal"
+ * -------------------------------------------------------------------
+ * [Algorithm Of "Auto Heal"]
+ * -------------------------------------------------------------------
  * 1. Find the target with the lowest percentage of HP.
  * 2. Determine the user of the healing skill according to the settings.
  * 3. Find the most efficient skill for the target.
@@ -90,7 +104,9 @@
  *    The process ends when no one's HP is reduced
  *    or no one can use the skill.
  * 
- * ■Other Detailed Specifications
+ * -------------------------------------------------------------------
+ * [Other Detailed Specifications]
+ * -------------------------------------------------------------------
  * - Only skills with the type "HP Recover" are targeted for healing.
  * 
  * - Also, the calculation of the efficiency is done by a formula.
@@ -120,12 +136,18 @@
  * For more information, please see below.
  * http://newrpg.seesaa.net/article/480069638.html
  * 
+ * -------------------------------------------------------------------
  * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
  * The author is not responsible,
  * but will deal with defects to the extent possible.
+ * 
+ * @------------------------------------------------------------------
+ * @ Plugin Parameters
+ * @------------------------------------------------------------------
  * 
  * @param <Menu Command>
  * @desc This item is used to display the "Auto Heal" menu command.
@@ -215,6 +237,12 @@
  * @desc Sets the message display method.
  * The message in case of failure is the same in both cases.
  * 
+ * @param MessageShowFast
+ * @parent <Message>
+ * @type boolean
+ * @default true
+ * @desc Instant message for skill usage and results.
+ * 
  * @param MessageBackgroundType
  * @parent <Message>
  * @type select
@@ -280,7 +308,10 @@
  * @type switch
  * @desc A switch that turns on when failed.
  * 
- **************************************
+ * @------------------------------------------------------------------
+ * @ Plugin Commands
+ * @------------------------------------------------------------------
+ * 
  * @command CallAutoHeal
  * @desc Execute "Auto Heal".
  * 
@@ -301,7 +332,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.011 自動回復コマンド（まんたん）を実現
+ * @plugindesc v1.02 自動回復コマンド（まんたん）を実現
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/480069638.html
  *
@@ -310,7 +341,9 @@
  * メニュー画面などから実行すると、
  * パーティメンバーがスキルを自動的に使用して回復してくれます。
  * 
+ * -------------------------------------------------------------------
  * ■主な仕様
+ * -------------------------------------------------------------------
  * ・メニューに自動回復コマンドを追加。
  * ・また、プラグインコマンドからの呼び出しも可能。
  * ・登録したステートも自動で治療。
@@ -323,23 +356,31 @@
  * ・メッセージの表示方法を選択可。
  * ・控えメンバーを対象に含めるかを選択可。
  * 
+ * -------------------------------------------------------------------
  * ■使用方法
+ * -------------------------------------------------------------------
  * プラグインをオンにすれば、
  * メニューコマンドに自動回復コマンドが追加されます。
  * メニューに表示せず、プラグインコマンドから呼び出すことも可能です。
  * また、プラグインパラメータより細かい調整が可能です。
  * 
+ * -------------------------------------------------------------------
  * ■メモ欄（スキル）
+ * -------------------------------------------------------------------
  * <ExceptAutoHeal>
  * 指定したスキルを自動回復の使用対象から除きます。
  * 
+ * -------------------------------------------------------------------
  * ■プラグインコマンド（ＭＺ）
+ * -------------------------------------------------------------------
  * イベント上から自動回復を実行できます。
  * 『対象とするＨＰ％』『成功時のスイッチ』『失敗時のスイッチ』
  * を指定可能です。
  * 内容はプラグインパラメータと同一のため割愛します。
  * 
+ * -------------------------------------------------------------------
  * ■プラグインコマンド（ＭＶ）
+ * -------------------------------------------------------------------
  * > nrp.autoHeal.start
  * 自動回復を実行します。
  * また、以下を事前に指定すればオプションも指定可能です。
@@ -361,7 +402,9 @@
  * nrp.autoHeal.failureSwitch 2
  * nrp.autoHeal.start
  * 
+ * -------------------------------------------------------------------
  * ■メッセージの表示について
+ * -------------------------------------------------------------------
  * 自動回復を行った際、結果をメッセージで表示します。
  * ただし、本来ツクールの仕様ではメニュー画面でのメッセージ表示はできません。
  * 色々と無理矢理なので、競合などの問題が発生する可能性もあります。
@@ -371,7 +414,9 @@
  * また、メニューを閉じる場合のみ、コモンイベントの呼出も可能です。
  * 演出などにご利用ください。
  * 
+ * -------------------------------------------------------------------
  * ■自動回復のアルゴリズム
+ * -------------------------------------------------------------------
  * １．最もＨＰの割合が減っている対象者を求める。
  * ２．設定に従って、回復スキルの使用者を確定。
  * ３．対象者に対して、最も効率の良いスキルを求める。
@@ -380,7 +425,9 @@
  * ５．上記を繰り返し。
  * 　　誰もＨＰが減っていないか、誰もスキルを使用できなくなれば終了。
  * 
+ * -------------------------------------------------------------------
  * ■その他、細かい仕様
+ * -------------------------------------------------------------------
  * ・回復の対象はタイプが『ＨＰ回復』のスキルのみです。
  * 
  * ・また、効果の計算は計算式で行います。
@@ -405,10 +452,16 @@
  * その他、詳細は以下をご覧ください。
  * http://newrpg.seesaa.net/article/480069638.html
  * 
+ * -------------------------------------------------------------------
  * ■利用規約
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
+ * 
+ * @-----------------------------------------------------
+ * @ プラグインパラメータ
+ * @-----------------------------------------------------
  * 
  * @param <Menu Command>
  * @text ＜メニューコマンド関連＞
@@ -514,6 +567,13 @@
  * @desc メッセージの表示方式を設定します。
  * なお、失敗時のメッセージはいずれも同じです。
  * 
+ * @param MessageShowFast
+ * @text メッセージの瞬間表示
+ * @parent <Message>
+ * @type boolean
+ * @default true
+ * @desc スキルの使用状況、結果を表示する際のメッセージを瞬間表示します。
+ * 
  * @param MessageBackgroundType
  * @parent <Message>
  * @text ウィンドウ背景
@@ -591,7 +651,10 @@
  * @type switch
  * @desc 失敗時、オンにするスイッチです。
  * 
- **************************************
+ * @------------------------------------------------------------------
+ * @ プラグインコマンド
+ * @------------------------------------------------------------------
+ * 
  * @command CallAutoHeal
  * @text 自動回復の呼び出し
  * @desc 自動回復を実行します。
@@ -633,14 +696,13 @@ function parseStruct1(arg) {
 function toNumber(str, def) {
     return isNaN(str) ? def : +(str || def);
 }
-function toBoolean(val, def) {
-    if (val == "") {
-        return def;
-        
-    } else if (typeof val === "boolean") {
-        return val;
+function toBoolean(str, def) {
+    if (str === true || str === "true") {
+        return true;
+    } else if (str === false || str === "false") {
+        return false;
     }
-    return val.toLowerCase() == "true";
+    return def;
 }
 function setDefault(str, def) {
     return str ? str : def;
@@ -661,6 +723,7 @@ const pUseReserveMembers = toBoolean(parameters["UseReserveMembers"], false);
 const pTargetReserveMembers = toBoolean(parameters["TargetReserveMembers"], false);
 
 const pMessageType = toNumber(parameters["MessageType"], 0);
+const pMessageShowFast = toBoolean(parameters["MessageShowFast"], true);
 const pMessageBackgroundType = toNumber(parameters["MessageBackgroundType"], 0);
 const pMessageSuccess = parameters["MessageSuccess"];
 const pMessageUnnecessary = parameters["MessageUnnecessary"];
@@ -696,7 +759,7 @@ PluginManager.registerCommand(PLUGIN_NAME, "CallAutoHeal", function(args) {
     params.failureSwitch = failureSwitch;
 
     // 自動回復の実行
-    startAutoHeal(params);
+    $gameParty.startAutoHeal(params);
 });
 
 //----------------------------------------
@@ -729,7 +792,7 @@ Game_Interpreter.prototype.pluginCommand = function(command, args) {
         plFailureSwitch = undefined;
 
         // 自動回復の実行
-        startAutoHeal(params);
+        $gameParty.startAutoHeal(params);
 
     // 対象者条件
     } else if (lowerCommand === "nrp.autoheal.targethprate") {
@@ -798,7 +861,7 @@ Scene_Menu.prototype.createCommandWindow = function() {
  */
 Scene_Menu.prototype.commandAutoHeal = function() {
     const params = [];
-    startAutoHeal(params);
+    $gameParty.startAutoHeal(params);
 };
 
 //-----------------------------------------------------------------------------
@@ -811,9 +874,9 @@ const resultMessages = [];
 let m_bigWindowFlg = false;
 
 /**
- * ●自動回復の開始
+ * 【独自】自動回復の開始
  */
-function startAutoHeal(params) {
+Game_Party.prototype.startAutoHeal = function(params) {
     let targetHpRate = params.targetHpRate;
     let successSwitch = params.successSwitch;
     let failureSwitch = params.failureSwitch;
@@ -934,7 +997,7 @@ function startAutoHeal(params) {
     successEffect(successSwitch);
     // 回復成功メッセージ
     successMessage(pMessageSuccess);
-}
+};
 
 /**
  * ●回復成功時の演出
@@ -1459,7 +1522,13 @@ function successMessage(message) {
         } else if (pMessageType == 2 || pMessageType == 3) {
             // 一行ずつ出力
             for (const msg of resultMessages) {
-                $gameMessage.add("\\>" + msg);
+                if (pMessageShowFast) {
+                    // 高速表示
+                    $gameMessage.add("\\>" + msg);
+                } else {
+                    // 通常表示
+                    $gameMessage.add(msg);
+                }
             }
 
             // ウィンドウサイズを拡大するフラグ
