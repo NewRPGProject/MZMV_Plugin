@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.152 Call DynamicAnimationMZ on the map.
+ * @plugindesc v1.153 Call DynamicAnimationMZ on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -12,8 +12,8 @@
  *
  * @help Call DynamicAnimationMZ on the map.
  * 
- * It's very heavy when you show a lot of animations in MZ format.
- * I recommend you to use MV format animation.
+ * It's heavy when you show a lot of animations in MZ format.
+ * If anything, we recommend an animation in the form of MV.
  * 
  * For more information, please see below.
  * http://newrpg.seesaa.net/article/477639171.html
@@ -285,7 +285,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.152 DynamicAnimationMZをマップ上から起動します。
+ * @plugindesc v1.153 DynamicAnimationMZをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -294,8 +294,8 @@
  *
  * @help DynamicAnimationMZをマップ上から起動します。
  * 
- * ＭＺ形式のアニメを大量表示すると非常に重いので、
- * ＭＶ形式のアニメの使用を強く推奨します。
+ * ＭＺ形式のアニメを大量表示すると重いので、
+ * どちらかというと、ＭＶ形式のアニメを推奨します。
  *
  * 詳細は以下をご覧ください。
  * http://newrpg.seesaa.net/article/477639171.html
@@ -2650,7 +2650,9 @@ Sprite_Battler.prototype.startDynamicAnimation = function(mirror, delay, dynamic
             if (battler.dynamicDurations[skillId]) {
                 dynamicDuration = battler.dynamicDurations[skillId];
                 // 開始タイミングの指定がある場合は調整
-                dynamicDuration -= mapAnimation.startTiming * pCalculationRate;
+                if (mapAnimation.startTiming) {
+                    dynamicDuration -= mapAnimation.startTiming * pCalculationRate;
+                }
             }
             let waitDuration = 0;
             if (dynamicAnimation.waitDuration) {
