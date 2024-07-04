@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.082 Place enemy groups automatically and randomly.
+ * @plugindesc v1.09 Place enemy groups automatically and randomly.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475049887.html
  *
@@ -15,7 +15,9 @@
  * By default, if the group name starts with a '#',
  * it will be subject to automatic placement.
  * 
+ * -------------------------------------------------------------------
  * [Specification of automatic placement]
+ * -------------------------------------------------------------------
  * 1. Enemies will be randomly placed within the specified range.
  * 2. Examine the coordinates on a grid-by-grid basis,
  *    and if the appropriate spacing can be secured, finalize the placement.
@@ -28,12 +30,18 @@
  * For more information, please see below.
  * http://newrpg.seesaa.net/article/475049887.html
  * 
+ * -------------------------------------------------------------------
  * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
  * The author is not responsible,
  * but we will respond to defects as far as possible.
+ * 
+ * @------------------------------------------------------------------
+ * @ Plugin Parameters
+ * @------------------------------------------------------------------
  * 
  * @param <Valid Condition>
  * 
@@ -94,6 +102,12 @@
  * @default 32
  * @desc The unit of coordinates for automatic placement.
  * 0 -> 32 -> 64... and so on.
+ * 
+ * @param addFloat
+ * @parent <Formation Range>
+ * @type boolean
+ * @default true
+ * @desc Include the float value by NRP_ShadowAndLevitate.js in the height of the enemy character.
  * 
  * @param <Enemy Sort>
  * 
@@ -169,7 +183,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.082 敵グループを自動でランダム配置します。
+ * @plugindesc v1.09 敵グループを自動でランダム配置します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475049887.html
  *
@@ -179,7 +193,9 @@
  * 
  * 初期状態ではグループ名が『#』から始まる場合に自動配置の対象とします。
  * 
+ * -------------------------------------------------------------------
  * ■自動配置の仕様
+ * -------------------------------------------------------------------
  * ・指定した範囲内に対して、ランダムで敵を配置。
  * ・グリッド単位で座標を検査し、適切な間隔を確保できれば配置確定。
  * ・確保できなければ何度も繰り返して、最もマシな配置を選び出す。
@@ -191,10 +207,16 @@
  * 詳細は以下をご覧ください。
  * http://newrpg.seesaa.net/article/475049887.html
  * 
+ * -------------------------------------------------------------------
  * ■利用規約
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
+ * 
+ * @------------------------------------------------------------------
+ * @ プラグインパラメータ
+ * @------------------------------------------------------------------
  * 
  * @param <Valid Condition>
  * @text ＜適用条件＞
@@ -260,6 +282,13 @@
  * @default 32
  * @desc 自動配置する座標の単位です。
  * 0 -> 32 -> 64...というように配置されます。
+ * 
+ * @param addFloat
+ * @text 浮遊分を加算
+ * @parent <Formation Range>
+ * @type boolean
+ * @default true
+ * @desc NRP_ShadowAndLevitate.jsによる浮遊値を敵キャラの高さに含めます。
  * 
  * @param <Enemy Sort>
  * @text ＜敵の並び順＞
@@ -352,33 +381,43 @@
 function toNumber(str, def) {
     return isNaN(str) ? def : +(str || def);
 }
+function toBoolean(str, def) {
+    if (str === true || str === "true") {
+        return true;
+    } else if (str === false || str === "false") {
+        return false;
+    }
+    return def;
+}
 function setDefault(str, def) {
     return str ? str : def;
 }
 
-var parameters = PluginManager.parameters("NRP_TroopRandomFormation");
+const parameters = PluginManager.parameters("NRP_TroopRandomFormation");
 // ＜適用条件＞
-var pCondition = parameters["condition"];
-var pExclusionCondition = parameters["exclusionCondition"];
+const pCondition = parameters["condition"];
+const pExclusionCondition = parameters["exclusionCondition"];
 // ＜配置範囲＞
-var pStartX = setDefault(parameters["startX"], 0);
-var pEndX = parameters["endX"];
-var pStartHeadY = setDefault(parameters["startHeadY"], 0);
-var pStartFootY = setDefault(parameters["startFootY"], 250);
-var pEndY = parameters["endY"];
-var pGridSize = toNumber(parameters["gridSize"], 1);
+const pStartX = setDefault(parameters["startX"], 0);
+const pEndX = parameters["endX"];
+const pStartHeadY = setDefault(parameters["startHeadY"], 0);
+const pStartFootY = setDefault(parameters["startFootY"], 250);
+const pEndY = parameters["endY"];
+const pGridSize = toNumber(parameters["gridSize"], 1);
+const pAddFloat = toBoolean(parameters["addFloat"], true);
+
 // ＜敵の並び順＞
-var pSameRowBorder = toNumber(parameters["sameRowBorder"], 50);
-var pSortBaseX = toNumber(parameters["sortBaseX"], 1);
+const pSameRowBorder = toNumber(parameters["sameRowBorder"], 50);
+const pSortBaseX = toNumber(parameters["sortBaseX"], 1);
 // ＜敵が一体の場合＞
-var pSingleEnemyPosition = toNumber(parameters["singleEnemyPosition"], 1);
-var pSingleEnemyX = setDefault(parameters["singleEnemyX"], "(startX + endX) / 2");
-var pSingleEnemyY = setDefault(parameters["singleEnemyY"], "(startY + endY) / 2 + a.height/2");
+const pSingleEnemyPosition = toNumber(parameters["singleEnemyPosition"], 1);
+const pSingleEnemyX = setDefault(parameters["singleEnemyX"], "(startX + endX) / 2");
+const pSingleEnemyY = setDefault(parameters["singleEnemyY"], "(startY + endY) / 2 + a.height/2");
 // ＜演算方法＞
-var pAlgorithmType = toNumber(parameters["algorithmType"], 0);
-var pMaxTryNoForEnemy = toNumber(parameters["maxTryNoForEnemy"], 50);
-var pMaxTryNoForTroop = toNumber(parameters["maxTryNoForTroop"], 50);
-var pDistanceBorder = setDefault(parameters["distanceBorder"], 0);
+const pAlgorithmType = toNumber(parameters["algorithmType"], 0);
+const pMaxTryNoForEnemy = toNumber(parameters["maxTryNoForEnemy"], 50);
+const pMaxTryNoForTroop = toNumber(parameters["maxTryNoForTroop"], 50);
+const pDistanceBorder = setDefault(parameters["distanceBorder"], 0);
 
 /**
  * ●戦闘開始
@@ -708,11 +747,27 @@ function compareSprite(a, b) {
  * ※外部プラグインとの連携を考慮し、あえてEnemyではなくBattlerに実装。
  */
 Sprite_Battler.prototype.makeAutoPosition = function(bestDistance) {
+    let height = this.height;
+
+    // 高さにNRP_ShadowAndLevitate.jsの浮遊情報を反映する場合
+    if (pAddFloat) {
+        // アクター、敵、それぞれのmeta情報を取得
+        let meta;
+        const battler = this._battler
+        if (battler.isActor()) {
+            meta = battler.actor().meta;
+        } else {
+            meta = battler.enemy().meta;
+        }
+        const floatHeight = getFloatHeight(this, meta);
+        height += floatHeight;
+    }
+
     // 配置範囲を取得（Ｘ座標は中央が基準、Ｙ座標は足元が基準）
     const startX = eval(pStartX) + this.width/2;
     const endX = eval(pEndX) - this.width/2;
     // 頭上と足元を基準に大きなほうを取得
-    const startY = Math.max(eval(pStartHeadY) + this.height, eval(pStartFootY));
+    const startY = Math.max(eval(pStartHeadY) + height, eval(pStartFootY));
     const endY = eval(pEndY);
 
     // 配置できるグリッド数を計算
@@ -1024,5 +1079,66 @@ function getBattlerSprite(battler) {
     // 一致があれば返す
     return sprites.find(s => s._battler == battler);
 }
+
+//-----------------------------------------------------------------------------
+// NRP_ShadowAndLevitate.jsとの連携
+//-----------------------------------------------------------------------------
+
+const levitateParameters = PluginManager.parameters("NRP_ShadowAndLevitate");
+const pActorFloatHeight = setDefault(levitateParameters["ActorFloatHeight"], "24");
+const pEnemyFloatHeight = setDefault(levitateParameters["EnemyFloatHeight"], "48");
+
+/**
+ * ●浮遊する高さを取得
+ */
+function getFloatHeight(sprite, meta) {
+    /**
+     * NRP_ShadowAndLevitate.jsが登録されていない場合
+     */
+    if (!PluginManager._scripts.some(scriptName => scriptName == "NRP_ShadowAndLevitate")) {
+        // 0を返して終了
+        return 0;
+    }
+
+    const a = getMainSprite(sprite);
+    const isActor = isUseActorSetting(sprite);
+    let floatHeight = meta.BattlerFloat;
+
+    // バトラーが浮遊ステートを保持しているなら優先設定
+    for (const state of sprite._battler.states()) {
+        if (state.meta.BattlerFloat) {
+            floatHeight = eval(state.meta.BattlerFloat);
+            break;
+        }
+    }
+
+    if (isActor && floatHeight === true && pActorFloatHeight) {
+        return eval(pActorFloatHeight);
+    } else if (!isActor && floatHeight === true && pEnemyFloatHeight) {
+        return eval(pEnemyFloatHeight);
+    } else if (floatHeight != undefined) {
+        return eval(floatHeight);
+    }
+    return 0;
+}
+
+/**
+ * ●アクター側の設定を使用するかどうか？
+ */
+function isUseActorSetting(sprite) {
+    return sprite._battler.isActor();
+}
+
+/**
+ * ●本体スプライトを取得
+ */
+function getMainSprite(sprite) {
+    // MVの場合
+    if (Utils.RPGMAKER_NAME == "MV") {
+        return sprite._effectTarget;
+    }
+    // MZの場合
+    return sprite.mainSprite();
+};
 
 })();
