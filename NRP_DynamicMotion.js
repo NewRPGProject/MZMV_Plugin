@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.28 When executing skills, call motion freely.
+ * @plugindesc v1.29 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help When executing skills(items), call motion freely.
@@ -555,7 +555,7 @@
  */
 
 /*:ja
- * @plugindesc v1.28 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.29 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在にモーションを呼び出します。
@@ -2359,6 +2359,16 @@ Game_Battler.prototype.initMembers = function() {
     // モーション情報の追加
     this._motions = [];
 };
+
+/*
+ * Game_Actor側の関数が未定義の場合は事前に定義
+ * ※これをしておかないと以後のGame_Battler側への追記が反映されない。
+ */
+if (Game_Actor.prototype.onBattleEnd == Game_Battler.prototype.onBattleEnd) {
+    Game_Actor.prototype.onBattleEnd = function() {
+        return Game_Battler.prototype.onBattleEnd.apply(this, arguments);
+    }
+}
 
 /**
  * ●戦闘終了時

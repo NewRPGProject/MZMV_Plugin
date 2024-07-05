@@ -3,7 +3,7 @@
 //=============================================================================
 
 /*:
- * @plugindesc v1.28 Automate & super-enhance battle animations.
+ * @plugindesc v1.29 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  *
  * @help Call battle animations freely from skills (items).
@@ -488,7 +488,7 @@
  */
 
 /*:ja
- * @plugindesc v1.28 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.29 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  *
  * @help スキル（アイテム）から自在に戦闘アニメーションを呼び出します。
@@ -4081,6 +4081,16 @@ if (pReferenceBattler == 1) {
 
         return _Game_Enemy_index.apply(this, arguments);
     };
+}
+
+/*
+ * Game_Actor側の関数が未定義の場合は事前に定義
+ * ※これをしておかないと以後のGame_Battler側への追記が反映されない。
+ */
+if (Game_Actor.prototype.onBattleEnd == Game_Battler.prototype.onBattleEnd) {
+    Game_Actor.prototype.onBattleEnd = function() {
+        return Game_Battler.prototype.onBattleEnd.apply(this, arguments);
+    }
 }
 
 /**

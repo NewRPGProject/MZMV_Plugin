@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.24 When executing skills, call motion freely.
+ * @plugindesc v1.25 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -561,7 +561,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.24 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.25 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -2441,10 +2441,20 @@ Game_Battler.prototype.initMembers = function() {
     this._motions = [];
 };
 
+/*
+ * Game_Actor側の関数が未定義の場合は事前に定義
+ * ※これをしておかないと以後のGame_Battler側への追記が反映されない。
+ */
+if (Game_Actor.prototype.onBattleEnd == Game_Battler.prototype.onBattleEnd) {
+    Game_Actor.prototype.onBattleEnd = function() {
+        return Game_Battler.prototype.onBattleEnd.apply(this, arguments);
+    }
+}
+
 /**
  * ●戦闘終了時
  */
-var _Game_Actor_onBattleEnd = Game_Actor.prototype.onBattleEnd;
+const _Game_Actor_onBattleEnd = Game_Actor.prototype.onBattleEnd;
 Game_Actor.prototype.onBattleEnd = function() {
     _Game_Actor_onBattleEnd.apply(this, arguments);
 
