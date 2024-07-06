@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Set up various motions in side-view battle.
+ * @plugindesc v1.03 Set up various motions in side-view battle.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/475560242.html
@@ -20,16 +20,30 @@
  * The default value for each of the MVs is 12 This means 12/60 seconds.
  * Normally 3 patterns = 1 motion, so that's 36/60 seconds.
  * 
- * <Notes>
+ * -------------------------------------------------------------------
+ * [Notes]
+ * -------------------------------------------------------------------
  * This plugin should be placed above NRP_DynamicMotion.
  * Otherwise, it is recommended to place it near the top.
  * 
- * <Terms>
+ * Starting from ver1.03, it is possible to set "none" for motion.
+ * For example, you can disable the motion when executing a skill.
+ * Do not accidentally select "none"
+ * when resetting to the default setting.
+ * In that case, use the Delete key to leave it blank.
+ * 
+ * -------------------------------------------------------------------
+ * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
  * The author is not responsible,
  * but we will respond to defects as far as possible.
+ * 
+ * @-----------------------------------------------------
+ * @ Plugin Parameters
+ * @-----------------------------------------------------
  * 
  * @param <MotionTime>
  * 
@@ -154,6 +168,7 @@
  * @param inputtingMotion
  * @parent <DefaultMotion>
  * @type select
+ * @option none
  * @option walk
  * @option wait
  * @option chant
@@ -178,6 +193,7 @@
  * @param actingMotion
  * @parent <DefaultMotion>
  * @type select
+ * @option none
  * @option walk
  * @option wait
  * @option chant
@@ -202,6 +218,7 @@
  * @param undecidedMotion
  * @parent <DefaultMotion>
  * @type select
+ * @option none
  * @option walk
  * @option wait
  * @option chant
@@ -226,6 +243,7 @@
  * @param waitMotion
  * @parent <DefaultMotion>
  * @type select
+ * @option none
  * @option walk
  * @option wait
  * @option chant
@@ -250,6 +268,7 @@
  * @param chantMotion
  * @parent <DefaultMotion>
  * @type select
+ * @option none
  * @option walk
  * @option wait
  * @option chant
@@ -273,6 +292,7 @@
  * @param guardMotion
  * @parent <DefaultMotion>
  * @type select
+ * @option none
  * @option walk
  * @option wait
  * @option chant
@@ -296,6 +316,7 @@
  * @param damageMotion
  * @parent <DefaultMotion>
  * @type select
+ * @option none
  * @option walk
  * @option wait
  * @option chant
@@ -319,6 +340,7 @@
  * @param evadeMotion
  * @parent <DefaultMotion>
  * @type select
+ * @option none
  * @option walk
  * @option wait
  * @option chant
@@ -342,6 +364,7 @@
  * @param skillMotion
  * @parent <DefaultMotion>
  * @type select
+ * @option none
  * @option walk
  * @option wait
  * @option chant
@@ -365,6 +388,7 @@
  * @param spellMotion
  * @parent <DefaultMotion>
  * @type select
+ * @option none
  * @option walk
  * @option wait
  * @option chant
@@ -388,6 +412,7 @@
  * @param itemMotion
  * @parent <DefaultMotion>
  * @type select
+ * @option none
  * @option walk
  * @option wait
  * @option chant
@@ -411,6 +436,7 @@
  * @param escapeMotion
  * @parent <DefaultMotion>
  * @type select
+ * @option none
  * @option walk
  * @option wait
  * @option chant
@@ -434,6 +460,7 @@
  * @param victoryMotion
  * @parent <DefaultMotion>
  * @type select
+ * @option none
  * @option walk
  * @option wait
  * @option chant
@@ -457,6 +484,7 @@
  * @param dyingMotion
  * @parent <DefaultMotion>
  * @type select
+ * @option none
  * @option walk
  * @option wait
  * @option chant
@@ -480,6 +508,7 @@
  * @param abnormalMotion
  * @parent <DefaultMotion>
  * @type select
+ * @option none
  * @option walk
  * @option wait
  * @option chant
@@ -503,6 +532,7 @@
  * @param sleepMotion
  * @parent <DefaultMotion>
  * @type select
+ * @option none
  * @option walk
  * @option wait
  * @option chant
@@ -526,6 +556,7 @@
  * @param deadMotion
  * @parent <DefaultMotion>
  * @type select
+ * @option none
  * @option walk
  * @option wait
  * @option chant
@@ -549,7 +580,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 サイドビュー戦闘における各種モーション設定を行います。
+ * @plugindesc v1.03 サイドビュー戦闘における各種モーション設定を行います。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/475560242.html
@@ -567,14 +598,27 @@
  * これは12/60秒を意味します。
  * 通常は３パターン＝１モーションとなるので、36/60秒となります。
  * 
- * 【注意点】
+ * -------------------------------------------------------------------
+ * ■注意点
+ * -------------------------------------------------------------------
  * このプラグインはNRP_DynamicMotionよりも上に配置してください。
  * それ以外の場合も、基本的には上側への配置を推奨します。
  * 
- * 【利用規約】
+ * ver1.03より、モーションに「なし」を設定できるようになりました。
+ * 例えば、スキルを実行する時のモーションを無効にできます。
+ * 初期設定に戻す場合に誤って「なし」を選ばないでください。
+ * その場合はDeleteキーで空白にしてください。
+ * 
+ * -------------------------------------------------------------------
+ * ■利用規約
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
+ * 
+ * @-----------------------------------------------------
+ * @ Plugin Parameters
+ * @-----------------------------------------------------
  * 
  * @param <MotionTime>
  * @text ＜各種モーション時間＞
@@ -724,6 +768,7 @@
  * @text 入力時のモーション
  * @parent <DefaultMotion>
  * @type select
+ * @option なし @value none
  * @option 前進（walk） @value walk
  * @option 通常待機（wait） @value wait
  * @option 詠唱待機（chant） @value chant
@@ -749,6 +794,7 @@
  * @text アクション中のモーション
  * @parent <DefaultMotion>
  * @type select
+ * @option なし @value none
  * @option 前進（walk） @value walk
  * @option 通常待機（wait） @value wait
  * @option 詠唱待機（chant） @value chant
@@ -774,6 +820,7 @@
  * @text 行動確定前のモーション
  * @parent <DefaultMotion>
  * @type select
+ * @option なし @value none
  * @option 前進（walk） @value walk
  * @option 通常待機（wait） @value wait
  * @option 詠唱待機（chant） @value chant
@@ -799,6 +846,7 @@
  * @text 待機のモーション
  * @parent <DefaultMotion>
  * @type select
+ * @option なし @value none
  * @option 前進（walk） @value walk
  * @option 通常待機（wait） @value wait
  * @option 詠唱待機（chant） @value chant
@@ -824,6 +872,7 @@
  * @text 詠唱待機のモーション
  * @parent <DefaultMotion>
  * @type select
+ * @option なし @value none
  * @option 前進（walk） @value walk
  * @option 通常待機（wait） @value wait
  * @option 詠唱待機（chant） @value chant
@@ -849,6 +898,7 @@
  * @text 防御のモーション
  * @parent <DefaultMotion>
  * @type select
+ * @option なし @value none
  * @option 前進（walk） @value walk
  * @option 通常待機（wait） @value wait
  * @option 詠唱待機（chant） @value chant
@@ -874,6 +924,7 @@
  * @text ダメージのモーション
  * @parent <DefaultMotion>
  * @type select
+ * @option なし @value none
  * @option 前進（walk） @value walk
  * @option 通常待機（wait） @value wait
  * @option 詠唱待機（chant） @value chant
@@ -899,6 +950,7 @@
  * @text 回避のモーション
  * @parent <DefaultMotion>
  * @type select
+ * @option なし @value none
  * @option 前進（walk） @value walk
  * @option 通常待機（wait） @value wait
  * @option 詠唱待機（chant） @value chant
@@ -924,6 +976,7 @@
  * @text 汎用スキルのモーション
  * @parent <DefaultMotion>
  * @type select
+ * @option なし @value none
  * @option 前進（walk） @value walk
  * @option 通常待機（wait） @value wait
  * @option 詠唱待機（chant） @value chant
@@ -949,6 +1002,7 @@
  * @text 魔法のモーション
  * @parent <DefaultMotion>
  * @type select
+ * @option なし @value none
  * @option 前進（walk） @value walk
  * @option 通常待機（wait） @value wait
  * @option 詠唱待機（chant） @value chant
@@ -974,6 +1028,7 @@
  * @text アイテムのモーション
  * @parent <DefaultMotion>
  * @type select
+ * @option なし @value none
  * @option 前進（walk） @value walk
  * @option 通常待機（wait） @value wait
  * @option 詠唱待機（chant） @value chant
@@ -999,6 +1054,7 @@
  * @text 逃げるのモーション
  * @parent <DefaultMotion>
  * @type select
+ * @option なし @value none
  * @option 前進（walk） @value walk
  * @option 通常待機（wait） @value wait
  * @option 詠唱待機（chant） @value chant
@@ -1024,6 +1080,7 @@
  * @text 勝利のモーション
  * @parent <DefaultMotion>
  * @type select
+ * @option なし @value none
  * @option 前進（walk） @value walk
  * @option 通常待機（wait） @value wait
  * @option 詠唱待機（chant） @value chant
@@ -1049,6 +1106,7 @@
  * @text 瀕死のモーション
  * @parent <DefaultMotion>
  * @type select
+ * @option なし @value none
  * @option 前進（walk） @value walk
  * @option 通常待機（wait） @value wait
  * @option 詠唱待機（chant） @value chant
@@ -1074,6 +1132,7 @@
  * @text 状態異常のモーション
  * @parent <DefaultMotion>
  * @type select
+ * @option なし @value none
  * @option 前進（walk） @value walk
  * @option 通常待機（wait） @value wait
  * @option 詠唱待機（chant） @value chant
@@ -1099,6 +1158,7 @@
  * @text 睡眠のモーション
  * @parent <DefaultMotion>
  * @type select
+ * @option なし @value none
  * @option 前進（walk） @value walk
  * @option 通常待機（wait） @value wait
  * @option 詠唱待機（chant） @value chant
@@ -1124,6 +1184,7 @@
  * @text 戦闘不能のモーション
  * @parent <DefaultMotion>
  * @type select
+ * @option なし @value none
  * @option 前進（walk） @value walk
  * @option 通常待機（wait） @value wait
  * @option 詠唱待機（chant） @value chant
@@ -1312,75 +1373,76 @@ Sprite_Actor.prototype.refreshMotion = function() {
 
         const stateMotion = actor.stateMotionIndex();
 
+        let motionName = null;
+
         // 入力時
         if (actor.isInputting()) {
             if (pInputtingMotion) {
-                this.startMotion(pInputtingMotion);
-                return;
+                motionName = pInputtingMotion;
             }
 
         // アクション中
         } else if (actor.isActing()) {
             if (pActingMotion) {
-                this.startMotion(pActingMotion);
-                return;
+                motionName = pActingMotion;
             }
 
         // 戦闘不能
         } else if (stateMotion === 3) {
             if (pDeadMotion) {
-                this.startMotion(pDeadMotion);
-                return;
+                motionName = pDeadMotion;
             }
 
         // 睡眠
         } else if (stateMotion === 2) {
             if (pSleepMotion) {
-                this.startMotion(pSleepMotion);
-                return;
+                motionName = pSleepMotion;
             }
 
         // 詠唱待機
         } else if (actor.isChanting()) {
             if (pChantMotion) {
-                this.startMotion(pChantMotion);
-                return;
+                motionName = pChantMotion;
             }
 
         // 防御
         } else if (actor.isGuard() || actor.isGuardWaiting()) {
             if (pGuardMotion) {
-                this.startMotion(pGuardMotion);
-                return;
+                motionName = pGuardMotion;
             }
 
         // 状態異常
         } else if (stateMotion === 1) {
             if (pAbnormalMotion) {
-                this.startMotion(pAbnormalMotion);
-                return;
+                motionName = pAbnormalMotion;
             }
 
         // 瀕死
         } else if (actor.isDying()) {
             if (pDyingMotion) {
-                this.startMotion(pDyingMotion);
-                return;
+                motionName = pDyingMotion;
             }
 
         // 行動確定前
         } else if (actor.isUndecided()) {
             if (pUndecidedMotion) {
-                this.startMotion(pUndecidedMotion);
-                return;
+                motionName = pUndecidedMotion;
             }
 
         // 待機
         } else {
             if (pWaitMotion) {
-                this.startMotion(pWaitMotion);
+                motionName = pWaitMotion;
+            }
+        }
+
+        if (motionName) {
+            // なしの場合は終了
+            if (motionName == "none") {
                 return;
             }
+            this.startMotion(motionName);
+            return;
         }
     }
 
@@ -1392,28 +1454,29 @@ Sprite_Actor.prototype.refreshMotion = function() {
  */
 const _Game_Actor_performAction = Game_Actor.prototype.performAction;
 Game_Actor.prototype.performAction = function(action) {
+    let motionName = null;
+
     // 防御
     if (action.isGuard() && pGuardMotion) {
-        Game_Battler.prototype.performAction.call(this, action);
-        this.requestMotion(pGuardMotion);
-        return;
-
+        motionName = pGuardMotion;
     // 魔法
     } else if (action.isMagicSkill() && pSpellMotion) {
-        Game_Battler.prototype.performAction.call(this, action);
-        this.requestMotion(pSpellMotion);
-        return;
-
+        motionName = pSpellMotion;
     // スキル
     } else if (action.isSkill() && pSkillMotion) {
-        Game_Battler.prototype.performAction.call(this, action);
-        this.requestMotion(pSkillMotion);
-        return;
-
+        motionName = pSkillMotion;
     // アイテム
     } else if (action.isItem() && pItemMotion) {
+        motionName = pItemMotion;
+    }
+
+    if (motionName) {
         Game_Battler.prototype.performAction.call(this, action);
-        this.requestMotion(pItemMotion);
+        // なしの場合は終了
+        if (motionName == "none") {
+            return;
+        }
+        this.requestMotion(motionName);
         return;
     }
 
@@ -1427,6 +1490,12 @@ const _Game_Actor_performDamage = Game_Actor.prototype.performDamage;
 Game_Actor.prototype.performDamage = function() {
     if (this.isSpriteVisible() && pDamageMotion) {
         Game_Battler.prototype.performDamage.call(this);
+
+        // なしの場合は終了
+        if (pDamageMotion == "none") {
+            SoundManager.playActorDamage();
+            return;
+        }
         this.requestMotion(pDamageMotion);
         SoundManager.playActorDamage();
         return;
@@ -1441,11 +1510,19 @@ Game_Actor.prototype.performDamage = function() {
 if (pEvadeMotion) {
     Game_Actor.prototype.performEvasion = function() {
         Game_Battler.prototype.performEvasion.call(this);
+        // なしの場合は終了
+        if (pEvadeMotion == "none") {
+            return;
+        }
         this.requestMotion(pEvadeMotion);
     };
 
     Game_Actor.prototype.performMagicEvasion = function() {
         Game_Battler.prototype.performMagicEvasion.call(this);
+        // なしの場合は終了
+        if (pEvadeMotion == "none") {
+            return;
+        }
         this.requestMotion(pEvadeMotion);
     };
 }
@@ -1456,6 +1533,10 @@ if (pEvadeMotion) {
 if (pEscapeMotion) {
     Game_Actor.prototype.performEscape = function() {
         if (this.canMove()) {
+            // なしの場合は終了
+            if (pEscapeMotion == "none") {
+                return;
+            }
             this.requestMotion(pEscapeMotion);
         }
     };
@@ -1467,6 +1548,10 @@ if (pEscapeMotion) {
 if (pVictoryMotion) {
     Game_Actor.prototype.performVictory = function() {
         if (this.canMove()) {
+            // なしの場合は終了
+            if (pVictoryMotion == "none") {
+                return;
+            }
             this.requestMotion(pVictoryMotion);
         }
     };
