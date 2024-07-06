@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.063 Extends the functionality of battle events.
+ * @plugindesc v1.07 Extends the functionality of battle events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_ChargeSkill
  * @orderBefore NRP_DynamicAnimationMZ
@@ -193,6 +193,14 @@
  * @desc "Force Action" will also determine if the MP is running out, etc.
  * The default value is true; the original behavior of MZ is false.
  * 
+ * @param actionAtFailure
+ * @parent forceValid
+ * @type select
+ * @option None @value 0
+ * @option Normal Attack @value 1
+ * @default 0
+ * @desc This action is taken when force action fail due to silence or lack of MP.
+ * 
  * @param forceValidFlexible
  * @parent forceValid
  * @type boolean
@@ -228,7 +236,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.063 バトルイベントの機能を拡張します。
+ * @plugindesc v1.07 バトルイベントの機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_ChargeSkill
  * @orderBefore NRP_DynamicAnimationMZ
@@ -425,6 +433,15 @@
  * @desc 戦闘行動の強制時もMP切れや行動異常による使用判定を行います。
  * 初期値はtrue。MZの元の挙動はfalseです。
  * 
+ * @param actionAtFailure
+ * @parent forceValid
+ * @text 失敗時の行動
+ * @type select
+ * @option 何もしない @value 0
+ * @option 通常攻撃 @value 1
+ * @default 0
+ * @desc 沈黙やＭＰ不足などで強制行動に失敗した時の行動です。
+ * 
  * @param forceValidFlexible
  * @parent forceValid
  * @text スキル使用判定の影響軽減
@@ -469,6 +486,12 @@ var a;
 (function() {
 "use strict";
 
+function toNumber(str, def) {
+    if (str == undefined || str == "") {
+        return def;
+    }
+    return isNaN(str) ? def : +(str || def);
+}
 function toBoolean(val, def) {
     // 空白なら初期値を返す
     if (val === "" || val === undefined) {
@@ -486,6 +509,7 @@ const PLUGIN_NAME = "NRP_BattleEventEXMZ";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 
 const pForceValid = toBoolean(parameters["forceValid"], true);
+const pActionAtFailure = toNumber(parameters["actionAtFailure"], 0);
 const pForceValidFlexible = toBoolean(parameters["forceValidFlexible"], true);
 const pAIsSubject = toBoolean(parameters["aIsSubject"], true);
 const pAdjustCommonEventActionEnd = toBoolean(parameters["adjustCommonEventActionEnd"], true);
@@ -726,6 +750,17 @@ BattleManager.startAction = function() {
         }
         // 実行不能なら終了
         if (!action.isForceValid()) {
+            // 失敗時の行動が1:通常攻撃の場合
+            if (pActionAtFailure == 1) {
+                // 通常攻撃が可能なら、そちらを実行
+                if (subject.canUse($dataSkills[subject.attackSkillId()])) {
+                    action.setAttack();
+                    // 元処理実行
+                    _BattleManager_startAction.apply(this);
+                    return;
+                }
+            }
+
             // ターン終了時に戦闘行動の強制が行われた場合
             // ここでphaseを進めないと戻し処理が行われない模様
             this._phase = "action";
@@ -788,7 +823,7 @@ BattleManager.isForceEX = function() {
 };
 
 /**
- * ●【独自関数】戦闘行動の強制専用の有効判定
+ * ●【独自】戦闘行動の強制専用の有効判定
  * ※元のisValid()と異なり、強制時でも使用判定を行う。
  */
 Game_Action.prototype.isForceValid = function() {
