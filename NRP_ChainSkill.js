@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.07 Chain skills together.
+ * @plugindesc v1.08 Chain skills together.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -245,7 +245,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.07 スキルを連結する。
+ * @plugindesc v1.08 スキルを連結する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -532,6 +532,8 @@ const pNoEnemyFlash = toBoolean(parameters["NoEnemyFlash"], true);
 
 // 元のアクション
 let mOriginalAction = null;
+// 元の対象
+let mOriginalTargets = null;
 // 発動済スキル
 let mChainedObjects = []; // 連結元スキル
 let mChainedSkillIds = []; // 連結先スキル
@@ -545,6 +547,8 @@ let mLastTargetIndex = 0;
 let mKeepHit = null;
 // 速度記憶用
 let mOriginalSpeed = null;
+// 混乱用の対象保持
+let mConfusedTarget = null;
 
 // ----------------------------------------------------------------------------
 // BattleManager
@@ -630,13 +634,25 @@ BattleManager.updateAction = function() {
 
     // 変数初期化
     mOriginalAction = null;
+    mOriginalTargets = null;
     mIsNotDisplay = false;
     mChainedObjects = [];
     mChainedSkillIds = [];
     mChainBattler = null;
+    mConfusedTarget = null;
 
     // ここでendActionが呼び出されることで終了処理は実行される。
     _BattleManager_updateAction.apply(this, arguments);
+};
+
+/**
+ * ●アクション開始
+ */
+const _BattleManager_startAction = BattleManager.startAction;
+BattleManager.startAction = function() {
+    _BattleManager_startAction.apply(this, arguments);
+    // 本来の対象を保持
+    mOriginalTargets = {...this._targets};
 };
 
 /**
@@ -734,10 +750,15 @@ function goChainSkill(object, passiveFlg) {
     subject.chainForceAction(chainSkillId, target.index());
     // 生成したアクションを再取得
     const newAction = subject.currentAction();
+
     // NRP_PartyAttack.jsとの連携
     // ※対象サイドが反転されているなら引き継ぎ。
     if (mOriginalAction.isReverseTargetSide && mOriginalAction.isReverseTargetSide()) {
         newAction.setReverseTargetSide();
+    // 混乱系ステートで仲間を狙った場合
+    } else if (mOriginalAction.isForOpponent()
+            && target.isActor() == subject.isActor()) {
+        mConfusedTarget = target;
     }
 
     BattleManager.forceAction(subject);
@@ -808,41 +829,11 @@ function getChainSkillId(object, target) {
  * ●本来の対象を取得
  */
 function getOriginalTarget() {
-    const actionItem = mOriginalAction.item();
-
-    // NRP_SkillRangeEX.jsとの連携用
-    const rangeEx = actionItem.meta.RangeEx;
-    if (rangeEx && BattleManager._mainTarget) {
-        // 主対象を再取得する。
-        return BattleManager._mainTarget;
+    let target = mOriginalTargets[0];
+    // 範囲が全体かつランダムの場合は対象補正
+    if (mOriginalAction.isForAll() && pAdjustAllRangeTarget == "random") {
+        target = mOriginalTargets[Math.randomInt(mOriginalTargets.length)];
     }
-
-    // 対象を取得
-    let targetUnitMembers;
-    let target;
-
-    // 対象が敵側
-    if (mOriginalAction.isForOpponent()) {
-        targetUnitMembers = mOriginalAction.opponentsUnit().members();
-    // 対象が味方側
-    } else {
-        targetUnitMembers = mOriginalAction.friendsUnit().members();
-    }
-
-    target = targetUnitMembers.find(t => t.index() == mLastTargetIndex);
-
-    // 範囲が全体の場合は対象補正
-    if (mOriginalAction.isForAll()) {
-        // 先頭を取得
-        if (pAdjustAllRangeTarget == "top") {
-            target = targetUnitMembers[0];
-
-        // ランダムで取得
-        } else if (pAdjustAllRangeTarget == "random") {
-            target = targetUnitMembers[Math.randomInt(targetUnitMembers.length)];
-        }
-    }
-
     return target
 }
 
@@ -1043,6 +1034,29 @@ Game_Action.prototype.apply = function(target) {
 
     // 命中状況を記憶
     mKeepHit = target.result().isHit();
+};
+
+/**
+ * ●対象の作成
+ */
+const _Game_Action_makeTargets = Game_Action.prototype.makeTargets;
+Game_Action.prototype.makeTargets = function() {
+    // 混乱時の対象設定
+    if (mConfusedTarget) {
+        return [mConfusedTarget];
+    }
+    return _Game_Action_makeTargets.apply(this, arguments);
+    // const targets = [];
+    // if (!this._forcing && this.subject().isConfused()) {
+    //     targets.push(this.confusionTarget());
+    // } else if (this.isForEveryone()) {
+    //     targets.push(...this.targetsForEveryone());
+    // } else if (this.isForOpponent()) {
+    //     targets.push(...this.targetsForOpponents());
+    // } else if (this.isForFriend()) {
+    //     targets.push(...this.targetsForFriends());
+    // }
+    // return this.repeatTargets(targets);
 };
 
 // ----------------------------------------------------------------------------
