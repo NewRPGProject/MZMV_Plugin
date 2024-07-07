@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Customize the shop scene.
+ * @plugindesc v1.02 Customize the shop scene.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/498469379.html
  *
@@ -186,11 +186,11 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 店画面をカスタマイズします。
+ * @plugindesc v1.02 ショップ画面をカスタマイズします。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/498469379.html
  *
- * @help 店画面を以下のようにカスタマイズします。
+ * @help ショップ画面を以下のようにカスタマイズします。
  * 
  * ・装備品の各種パラメータを表示
  * ・アクターを表示して装備状況を表示
@@ -398,7 +398,7 @@
 function Sprite_ShopCustomizeActor() {
     this.initialize(...arguments);
 }
-Sprite_ShopCustomizeActor.prototype = Object.create(Sprite.prototype);
+Sprite_ShopCustomizeActor.prototype = Object.create(Sprite_Character.prototype);
 Sprite_ShopCustomizeActor.prototype.constructor = Sprite_ShopCustomizeActor;
 
 (function() {
@@ -1030,10 +1030,6 @@ Sprite_ShopCustomizeActor.prototype.initMembers = function() {
     this._character = null;
 };
 
-Sprite_ShopCustomizeActor.prototype.setCharacter = function(character) {
-    this._character = character;
-};
-
 Sprite_ShopCustomizeActor.prototype.setActor = function(actor) {
     this._actor = actor;
 };
@@ -1067,44 +1063,12 @@ Sprite_ShopCustomizeActor.prototype.isImageChanged = function() {
     );
 };
 
-Sprite_ShopCustomizeActor.prototype.setCharacterBitmap = function() {
-    Sprite_Character.prototype.setCharacterBitmap.call(this);
-};
-
-Sprite_ShopCustomizeActor.prototype.updateFrame = function() {
-    Sprite_Character.prototype.updateFrame.call(this);
-};
-
 Sprite_ShopCustomizeActor.prototype.updateCharacterFrame = function() {
     const pw = this.patternWidth();
     const ph = this.patternHeight();
     const sx = (this.characterBlockX() + this.characterPatternX()) * pw;
     const sy = (this.characterBlockY() + this.characterPatternY()) * ph;
     this.setFrame(sx, sy, pw, ph);
-};
-
-Sprite_ShopCustomizeActor.prototype.characterBlockX = function() {
-    return Sprite_Character.prototype.characterBlockX.call(this);
-};
-
-Sprite_ShopCustomizeActor.prototype.characterBlockY = function() {
-    return Sprite_Character.prototype.characterBlockY.call(this);
-};
-
-Sprite_ShopCustomizeActor.prototype.characterPatternX = function() {
-    return Sprite_Character.prototype.characterPatternX.call(this);
-};
-
-Sprite_ShopCustomizeActor.prototype.characterPatternY = function() {
-    return Sprite_Character.prototype.characterPatternY.call(this);
-};
-
-Sprite_ShopCustomizeActor.prototype.patternWidth = function() {
-    return Sprite_Character.prototype.patternWidth.call(this);
-};
-
-Sprite_ShopCustomizeActor.prototype.patternHeight = function() {
-    return Sprite_Character.prototype.patternHeight.call(this);
 };
 
 //-----------------------------------------------------------------------------
