@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.08 Chain skills together.
+ * @plugindesc v1.081 Chain skills together.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -245,7 +245,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.08 スキルを連結する。
+ * @plugindesc v1.081 スキルを連結する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -541,8 +541,8 @@ let mChainedSkillIds = []; // 連結先スキル
 let mIsNotDisplay = false;
 // 連結実行判定
 let mChainBattler = null;
-// 最終対象保持用
-let mLastTargetIndex = 0;
+// // 最終対象保持用
+// let mLastTargetIndex = 0;
 // 命中記憶用
 let mKeepHit = null;
 // 速度記憶用
@@ -585,8 +585,6 @@ BattleManager.updateAction = function() {
     // 大元のアクションを保持
     if (!mOriginalAction) {
         mOriginalAction = this._action;
-        // 対象も保持（連結スキルによって対象変更される場合があるため）
-        mLastTargetIndex = subject._lastTargetIndex;
         mOriginalSpeed = subject.speed();
     }
 
@@ -651,8 +649,11 @@ BattleManager.updateAction = function() {
 const _BattleManager_startAction = BattleManager.startAction;
 BattleManager.startAction = function() {
     _BattleManager_startAction.apply(this, arguments);
-    // 本来の対象を保持
-    mOriginalTargets = {...this._targets};
+
+    // 最初の対象を保持（連結スキルによって対象変更される場合があるため）
+    if (!mOriginalAction) {
+        mOriginalTargets = {...this._targets};
+    }
 };
 
 /**
