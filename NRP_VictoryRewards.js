@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.04 Customize the display after a battle victory.
+ * @plugindesc v1.041 Customize the display after a battle victory.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499138292.html
  *
@@ -157,18 +157,18 @@
  * 
  * @param AdjustMessageX
  * @parent <Message>
- * @type number
+ * @type number @min -999 @max 999
  * @desc Adjust the X coordinate of the message.
  * 
  * @param AdjustMessageY
  * @parent <Message>
- * @type number
+ * @type number @min -999 @max 999
  * @desc Adjust the Y coordinate of the message.
  * 
  * @param MessageFitWidth
  * @parent <Message>
  * @type boolean
- * @default true
+ * @default false
  * @desc Automatically shrinks the message to fit the width of the window.
  * 
  * @param <Actor>
@@ -228,7 +228,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.04 戦闘勝利時の表示をカスタマイズします。
+ * @plugindesc v1.041 戦闘勝利時の表示をカスタマイズします。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499138292.html
  *
@@ -396,20 +396,20 @@
  * @param AdjustMessageX
  * @text メッセージＸ座標調整
  * @parent <Message>
- * @type number
+ * @type number @min -999 @max 999
  * @desc メッセージのＸ座標を調整します。
  * 
  * @param AdjustMessageY
  * @text メッセージＹ座標調整
  * @parent <Message>
- * @type number
+ * @type number @min -999 @max 999
  * @desc メッセージのＹ座標を調整します。
  * 
  * @param MessageFitWidth
  * @text 横幅を自動で縮小
  * @parent <Message>
  * @type boolean
- * @default true
+ * @default false
  * @desc ウィンドウの横幅に合わせて自動でメッセージを縮小します。
  * 
  * @param <Actor>
@@ -1034,7 +1034,7 @@ if (pMessageFitWidth) {
             // ウィンドウの横幅と比較し、縮小率を求める。
             const maxWidth = this.innerWidth - this.padding;
             if (textWidth > maxWidth) {
-console.log(textWidth + " > " + maxWidth + " : " + mLineText);
+// console.log(textWidth + " > " + maxWidth + " : " + mLineText);
                 mTextScale = maxWidth / textWidth;
             }
         }
