@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Realize changes in the target side (such as friendly fire).
+ * @plugindesc v1.021 Realize changes in the target side (such as friendly fire).
  * @orderAfter NRP_BattleTargetCursor
  * @orderBefore NRP_VisualTurn
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
@@ -133,7 +133,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 対象サイドの変更（パーティアタックなど）を実現します。
+ * @plugindesc v1.021 対象サイドの変更（パーティアタックなど）を実現します。
  * @orderAfter NRP_BattleTargetCursor
  * @orderBefore NRP_VisualTurn
  * @author 砂川赳 (http://newrpg.seesaa.net/)
@@ -919,7 +919,8 @@ function selectEnemyEX(window) {
     // NRP_SkillRangeEX連携時（mainTargetAllIfを想定）
     } else if (existMainTargetAllIf(action)) {
         // メインターゲットを選択し、白点滅状態に
-        window._index = BattleManager._mainTarget.index();
+        window._index = window._enemies.indexOf(BattleManager._mainTarget);
+
         if (window.refreshCursor) {
             window.refreshCursor();
         }
@@ -969,7 +970,8 @@ function selectActorEX(window) {
     // NRP_SkillRangeEX連携時（mainTargetAllIfを想定）
     } else if (existMainTargetAllIf(action)) {
         // メインターゲットを選択し、白点滅状態に
-        window._index = BattleManager._mainTarget.index();
+        window._index = $gameParty.battleMembers().indexOf(BattleManager._mainTarget);
+
         if (window.refreshCursor) {
             window.refreshCursor();
         }
