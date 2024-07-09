@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Added parameter display and direction at level-up.
+ * @plugindesc v1.02 Added parameter display and direction at level-up.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @orderAfter NRP_VictoryRewards
  * @url https://newrpg.seesaa.net/article/499197962.html
@@ -132,7 +132,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 レベルアップ時にパラメータ表示や演出を追加
+ * @plugindesc v1.02 レベルアップ時にパラメータ表示や演出を追加
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @orderAfter NRP_VictoryRewards
  * @url https://newrpg.seesaa.net/article/499197962.html
@@ -432,7 +432,9 @@ Window_Message.prototype.processEscapeCharacter = function(code, textState) {
         // DynamicAnimationの指定がある場合は呼び出し
         if (pDynamicSkill) {
             const actor = $gameActors.actor(actorId);
-            callDynamic(actor, pDynamicSkill);
+            if (actor.isBattleMember()) {
+                callDynamic(actor, pDynamicSkill);
+            }
         }
         // 効果音
         if (pLevelUpSe) {
@@ -515,7 +517,9 @@ if (typeof AdditionalClass !== "undefined") {
             // DynamicAnimationの指定がある場合は呼び出し
             if (pAC_DynamicSkill) {
                 const actor = $gameActors.actor(actorId);
-                callDynamic(actor, pAC_DynamicSkill);
+                if (actor.isBattleMember()) {
+                    callDynamic(actor, pAC_DynamicSkill);
+                }
             }
             // 効果音
             if (pAC_LevelUpSe) {
