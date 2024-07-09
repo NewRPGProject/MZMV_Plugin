@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.25 When executing skills, call motion freely.
+ * @plugindesc v1.251 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -561,7 +561,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.25 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.251 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -3611,21 +3611,17 @@ Sprite.prototype.updateDynamicPosition = function() {
 /**
  * ●アクターのアクション開始
  */
-var _Game_Actor_performAction = Game_Actor.prototype.performAction;
+const _Game_Actor_performAction = Game_Actor.prototype.performAction;
 Game_Actor.prototype.performAction = function(action) {
     // 開始モーションの有無
-    if (pSetStartMotion) {
-        // やや冗長だけど競合を減らすため、
-        // Game_Battler.prototype.performActionを呼び出す。
+    // 1:常に無
+    if (pSetStartMotion == 1) {
         Game_Battler.prototype.performAction.call(this, action);
-
-        // 1:常に無
-        if (pSetStartMotion == 1) {
-            return;
-        // 2:モーション指定時のみ無
-        } else if (pSetStartMotion == 2 && action.isDynamicMotion()) {
-            return;
-        }
+        return;
+    // 2:モーション指定時のみ無
+    } else if (pSetStartMotion == 2 && action.isDynamicMotion()) {
+        Game_Battler.prototype.performAction.call(this, action);
+        return;
     }
 
     // 元処理実行
