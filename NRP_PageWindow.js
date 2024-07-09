@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.06 The windows can be page-turned left and right.
+ * @plugindesc v1.07 The windows can be page-turned left and right.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475347742.html
  *
@@ -175,7 +175,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.06 各種ウィンドウを左右でページ切替できるようにします。
+ * @plugindesc v1.07 各種ウィンドウを左右でページ切替できるようにします。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475347742.html
  *
@@ -606,7 +606,7 @@ Window_Selectable.prototype.existPage = function() {
  */
 var _Window_Selectable_cursorDown = Window_Selectable.prototype.cursorDown;
 Window_Selectable.prototype.cursorDown = function(wrap) {
-    wrap = isWrap(wrap);
+    wrap = this.isPageWrap(wrap);
 
     // ページ処理対象外の場合
     if (!this.isUsePage()) {
@@ -649,7 +649,7 @@ Window_Selectable.prototype.cursorDown = function(wrap) {
  */
 var _Window_Selectable_cursorUp = Window_Selectable.prototype.cursorUp;
 Window_Selectable.prototype.cursorUp = function(wrap) {
-    wrap = isWrap(wrap);
+    wrap = this.isPageWrap(wrap);
 
     // ページ処理対象外の場合
     if (!this.isUsePage()) {
@@ -692,7 +692,7 @@ Window_Selectable.prototype.cursorUp = function(wrap) {
  */
 var _Window_Selectable_cursorRight = Window_Selectable.prototype.cursorRight;
 Window_Selectable.prototype.cursorRight = function(wrap) {
-    wrap = isWrap(wrap);
+    wrap = this.isPageWrap(wrap);
     
     // ページ処理対象外の場合
     if (!this.isUsePage()) {
@@ -760,7 +760,7 @@ Window_Selectable.prototype.cursorRight = function(wrap) {
  */
 var _Window_Selectable_cursorLeft = Window_Selectable.prototype.cursorLeft;
 Window_Selectable.prototype.cursorLeft = function(wrap) {
-    wrap = isWrap(wrap);
+    wrap = this.isPageWrap(wrap);
 
     // ページ処理対象外の場合
     if (!this.isUsePage()) {
@@ -953,14 +953,14 @@ Window_Selectable.prototype.cursorPageup = function() {
 // };
 
 /**
- * ●端で止まるかどうか？
+ * 【独自】端で止まるかどうか？
  */
-function isWrap(wrap) {
+Window_Selectable.prototype.isPageWrap = function(wrap) {
     if (pNoStopCursor) {
         return true;
     }
     return wrap;
-}
+};
 
 /**
  * ●ページ切替矢印更新
@@ -981,6 +981,34 @@ Window_Selectable.prototype.updateArrows = function() {
     this.rightPageArrowVisible = true;
     this.downArrowVisible = false;
     this.upArrowVisible = false;
+};
+
+/**
+ * ●ＯＫ時
+ */
+const _Window_Selectable_callOkHandler = Window_Selectable.prototype.callOkHandler;
+Window_Selectable.prototype.callOkHandler = function() {
+    // スクロール状態をクリア
+    this._scrollX = 0;
+    this._scrollY = 0;
+    this._scrollBaseX = 0;
+    this._scrollBaseY = 0;
+    this.clearScrollStatus();
+    _Window_Selectable_callOkHandler.apply(this, arguments);
+};
+
+/**
+ * ●キャンセル時
+ */
+const _Window_Selectable_callCancelHandler = Window_Selectable.prototype.callCancelHandler;
+Window_Selectable.prototype.callCancelHandler = function() {
+    // スクロール状態をクリア
+    this._scrollX = 0;
+    this._scrollY = 0;
+    this._scrollBaseX = 0;
+    this._scrollBaseY = 0;
+    this.clearScrollStatus();
+    _Window_Selectable_callCancelHandler.apply(this, arguments);
 };
 
 // ----------------------------------------------------------------------------
@@ -1012,16 +1040,16 @@ Window.prototype._createAllParts = function() {
 /**
  * ●ページ切替矢印配置
  */
-var _Window__refreshArrows = Window.prototype._refreshArrows;
+const _Window__refreshArrows = Window.prototype._refreshArrows;
 Window.prototype._refreshArrows = function() {
     _Window__refreshArrows.apply(this, arguments);
 
-    var w = this._width;
-    var h = this._height;
-    var p = 24;
-    var q = p/2;
-    var sx = 96+p;
-    var sy = 0+p;
+    const w = this._width;
+    const h = this._height;
+    const p = 24;
+    const q = p / 2;
+    const sx = 96 + p;
+    const sy = 0 + p;
 
     var cursorLeftW = 12;
     var cursorLeftH = 24;
