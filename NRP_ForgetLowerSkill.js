@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Forget lower level skills when learning higher level skills.
+ * @plugindesc v1.01 Forget lower level skills when learning higher level skills.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_AdditionalClasses
  * @url http://newrpg.seesaa.net/article/483693029.html
@@ -12,63 +12,105 @@
  * Also, the message when learning a skill will be changed.
  * This will make it act like a skill that ranks up.
  * 
- * ------------------------------------------
- * ■Usage
- * ------------------------------------------
+ * -------------------------------------------------------------------
+ * [Usage]
+ * -------------------------------------------------------------------
  * In the note field of the skill to be treated
  * as a higher-level skill, specify the following.
- * Delete the skill with the ID specified in the ?. 
+ * When a skill is learned, the skill of the ID specified
+ * in ? will be automatically deleted.
  * 
  * <ForgetSkill:?>
  * 
  * Also, the message at the time of learning will be changed.
  * 
+ * -------------------------------------------------------------------
+ * [Extra Feature]
+ * -------------------------------------------------------------------
+ * After applying this plugin, you will be able to use icons
+ * in the skill acquisition text in the database terms.
+ * %2 will be the icon number。
+ * 
+ * "%1 learns \i[%2]%2!"
+ * 
+ * Specify as above.
+ * 
+ * The same applies to rank-up messages.
+ * "\i[%3]%1 has been enhanced to \i[%4]%2!"
+ * Specify as above.
+ * 
+ * -------------------------------------------------------------------
  * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
  * The author is not responsible,
  * but will deal with defects to the extent possible.
  * 
+ * @-----------------------------------------------------
+ * @ [Plugin Parameters]
+ * @-----------------------------------------------------
+ * 
  * @param RankUpMessage
  * @type string
  * @default %1 has been enhanced to %2!
- * @desc This is the message when you rank up a skill.
- * %1 is the skill you forget, %2 is the skill you learn.
+ * @desc This is the message when you rank up a skill. %1: Forget Skill, %2: Learn SKill, %3: Icon No(F), %3: Icon No(L)
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 上位スキル習得時に下位スキルを消去。
+ * @plugindesc v1.01 上位スキル習得時に下位スキルを消去。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_AdditionalClasses
  * @url http://newrpg.seesaa.net/article/483693029.html
  *
  * @help 上位スキル習得時に下位スキルを消去します。
- * また、スキル習得時のメッセージを変更します。
- * これにより、ランクアップするスキルのような演出を行います。
+ * また、スキル習得時のメッセージを変更することで、
+ * ランクアップするスキルのような演出が可能です。
+ * スキルの数を無闇に増やしたくない――なんて場合に便利です。
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * ■使用方法
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * 上位スキルとして扱うスキルのメモ欄に、以下を指定してください。
- * ?に指定したＩＤのスキルを削除します。
+ * スキルの習得時、?に指定したＩＤのスキルを自動で削除します。
  * 
  * <ForgetSkill:?>
  * 
  * また、習得時のメッセージも変更されます。
  * 
+ * -------------------------------------------------------------------
+ * ■おまけ機能
+ * -------------------------------------------------------------------
+ * 当プラグインを適用すると、データベースの用語にある
+ * スキル習得のテキストにアイコンを使用できるようになります。
+ * %2がアイコン番号となります。
+ * 
+ * 「\i[%2]%1を覚えた！」
+ * 
+ * というように指定してください。
+ * 
+ * ランクアップメッセージについても同様です。
+ * 「\i[%3]%1が\i[%4]%2へと強化された！」
+ * というようになります。
+ * 
+ * -------------------------------------------------------------------
  * ■利用規約
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
  * 
+ * @-----------------------------------------------------
+ * @ プラグインパラメータ
+ * @-----------------------------------------------------
+ * 
  * @param RankUpMessage
- * @text ランクアップ文章
+ * @text ランクアップメッセージ
  * @type string
  * @default %1が%2へと強化された！
- * @desc ランクアップ時のメッセージです。
- * %1が忘れるスキル、%2が覚えるスキルです。
+ * @desc ランクアップ時のメッセージです。%1:忘れるスキル, %2:覚えるスキル, %3:アイコンNo(忘), %4:アイコンNo(覚) 
  */
 (function() {
 "use strict";
@@ -166,11 +208,14 @@ function displayObtainSkills(actor, newSkills) {
         const forgetSkillId = toNumber(skill.meta.ForgetSkill);
         // 忘れたスキルが一致した場合、ランクアップメッセージを表示
         if (forgetSkillId && forgetSkillIds.includes(forgetSkillId)) {
-            $gameMessage.add(pRankUpMessage.format($dataSkills[forgetSkillId].name, skill.name));
+            const forgetSkill = $dataSkills[forgetSkillId];
+            // %1:忘れるスキル, %2:覚えるスキル, %3:忘れるスキルのアイコン番号, %4:覚えるスキルのアイコン番号
+            $gameMessage.add(pRankUpMessage.format(forgetSkill.name, skill.name, forgetSkill.iconIndex ,skill.iconIndex));
             continue;
         }
 
-        $gameMessage.add(TextManager.obtainSkill.format(skill.name));
+        // 通常のメッセージ（おまけ機能で%2にアイコン番号を追加）
+        $gameMessage.add(TextManager.obtainSkill.format(skill.name, skill.iconIndex));
     }
 }
 
