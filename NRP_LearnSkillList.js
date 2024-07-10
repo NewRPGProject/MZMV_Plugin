@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.05 A list-style skill learning system.
+ * @plugindesc v1.06 A list-style skill learning system.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -448,7 +448,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.05 リスト形式のスキル習得システム。
+ * @plugindesc v1.06 リスト形式のスキル習得システム。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -954,6 +954,42 @@
  * @desc スキルを表示する条件となるスクリプトです。
  * 例：a.isLearnedSkill(1) && a.isLearnedSkill(2)
  */
+
+//-----------------------------------------------------------------------------
+// Scene_LearnSkillList
+//
+// スキルシステムシーン用クラス
+
+function Scene_LearnSkillList() {
+    this.initialize(...arguments);
+}
+Scene_LearnSkillList.prototype = Object.create(Scene_MenuBase.prototype);
+Scene_LearnSkillList.prototype.constructor = Scene_LearnSkillList;
+
+//-----------------------------------------------------------------------------
+// Window_LearnSkillList
+//
+// 習得スキルウィンドウクラス
+
+function Window_LearnSkillList() {
+    this.initialize(...arguments);
+}
+
+Window_LearnSkillList.prototype = Object.create(Window_Selectable.prototype);
+Window_LearnSkillList.prototype.constructor = Window_LearnSkillList;
+
+//-----------------------------------------------------------------------------
+// Window_LearnSkillConfirm
+//
+// 習得確認用のウィンドウ
+
+function Window_LearnSkillConfirm() {
+    this.initialize(...arguments);
+}
+
+Window_LearnSkillConfirm.prototype = Object.create(Window_Command.prototype);
+Window_LearnSkillConfirm.prototype.constructor = Window_LearnSkillConfirm;
+
 (function() {
 "use strict";
 
@@ -1276,13 +1312,6 @@ Scene_LearnSkillSelectActor.prototype.onActorOk = function() {
 //
 // スキルシステムシーン用クラス
 
-function Scene_LearnSkillList() {
-    this.initialize(...arguments);
-}
-
-Scene_LearnSkillList.prototype = Object.create(Scene_MenuBase.prototype);
-Scene_LearnSkillList.prototype.constructor = Scene_LearnSkillList;
-
 Scene_LearnSkillList.prototype.initialize = function() {
     Scene_MenuBase.prototype.initialize.call(this);
     Scene_Message.prototype.initialize.call(this);
@@ -1508,13 +1537,6 @@ Scene_LearnSkillList.prototype.updateActor = function() {
 //
 // 習得スキルウィンドウクラス
 
-function Window_LearnSkillList() {
-    this.initialize(...arguments);
-}
-
-Window_LearnSkillList.prototype = Object.create(Window_Selectable.prototype);
-Window_LearnSkillList.prototype.constructor = Window_LearnSkillList;
-
 /**
  * ●初期化
  */
@@ -1706,6 +1728,7 @@ Window_LearnSkillList.prototype.drawItem = function(index) {
     if (learnSkillData) {
         const costWidth = this.costWidth();
         const rect = this.itemLineRect(index);
+        this.resetTextColor();
         this.changePaintOpacity(this.isEnabled(learnSkillData));
         this.drawItemName(learnSkillData, rect.x, rect.y, rect.width - costWidth);
         this.drawSkillCost(learnSkillData, rect.x, rect.y, rect.width);
@@ -1755,7 +1778,6 @@ Window_LearnSkillList.prototype.drawItemName = function(learnSkillData, x, y, wi
     const iconY = y + (this.lineHeight() - ImageManager.iconHeight) / 2;
     const textMargin = ImageManager.iconWidth + 4;
     const itemWidth = Math.max(0, width - textMargin);
-    this.resetTextColor();
 
     let skillName = dataSkill.name;
 
@@ -1914,13 +1936,6 @@ Window_LearnSkillActor.prototype.paramY = function(index) {
 //
 // 習得確認用のウィンドウ
 
-function Window_LearnSkillConfirm() {
-    this.initialize(...arguments);
-}
-
-Window_LearnSkillConfirm.prototype = Object.create(Window_Command.prototype);
-Window_LearnSkillConfirm.prototype.constructor = Window_LearnSkillConfirm;
-
 Window_LearnSkillConfirm.prototype.initialize = function(rect) {
     // Window_Selectable.prototype.initialize.call(this, rect);
     Window_Command.prototype.initialize.call(this, rect);
@@ -2013,9 +2028,8 @@ Window_LearnSkillConfirm.prototype.drawItem = function(index) {
     this.drawText(this.commandName(index), rect.x, rect.y, rect.width, align);
 };
 
-const _Window_LearnSkillConfirm_itemRect = Window_LearnSkillConfirm.prototype.itemRect;
 Window_LearnSkillConfirm.prototype.itemRect = function(index) {
-    const rect = _Window_LearnSkillConfirm_itemRect.apply(this, arguments);
+    const rect = Window_Selectable.prototype.itemRect.apply(this, arguments);
 
     const lineCount = pConfirmMessage.split("\n").length;
     rect.y += lineCount * this.lineHeight() + this.itemPadding() * 4;
