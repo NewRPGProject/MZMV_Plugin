@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 A list-style skill learning system reservation functionality.
+ * @plugindesc v1.001 A list-style skill learning system reservation functionality.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @base NRP_LearnSkillList
  * @orderAfter NRP_LearnSkillList
@@ -206,7 +206,7 @@ Would you like to cancel?
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 リスト形式のスキル習得システムの予約機能。
+ * @plugindesc v1.001 リスト形式のスキル習得システムの予約機能。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @base NRP_LearnSkillList
  * @orderAfter NRP_LearnSkillList
@@ -1061,8 +1061,9 @@ Game_Actor.prototype.changeSkillPoint = function(changePoint) {
                     $gameMessage.newPage();
                 }
 
-                const dataSkill = $dataSkills[this._reserveSkillId];
-                $gameMessage.add(pNormalLearnText.format(this.name(), dataSkill.name, dataSkill.iconIndex));
+                // 独自の習得メッセージを追加で表示する。
+                this.displayLearnSkillReserve(this._reserveSkillId, pNormalLearnText);
+
                 // ウィンドウ背景の設定
                 $gameMessage.setBackground(pNormalLearnTextBackground);
             }
@@ -1105,14 +1106,27 @@ Game_Actor.prototype.displayLevelUp = function(newSkills) {
         _Game_Actor_displayLevelUp.apply(this, arguments);
 
         // 独自の習得メッセージを追加で表示する。
-        const dataSkill = $dataSkills[mDisplayLearnSkillId];
-        $gameMessage.add(pLevelUpLearnText.format(this.name(), dataSkill.name, dataSkill.iconIndex));
+        this.displayLearnSkillReserve(mDisplayLearnSkillId, pLevelUpLearnText);
 
         mDisplayLearnSkillId = null;
         return;
     }
 
     _Game_Actor_displayLevelUp.apply(this, arguments);
+};
+
+/**
+ * 【独自】予約スキルの習得を表示
+ */
+Game_Actor.prototype.displayLearnSkillReserve = function(skillId, learnText) {
+    const dataSkill = $dataSkills[skillId];
+
+    // %1:アクター名, %2:取得するスキル名, %3:アイコン番号
+    const learnTextFormat = learnText.format(this.name(), dataSkill.name, dataSkill.iconIndex);
+    // \nによる改行に対応するため一行ずつ出力
+    for (const line of learnTextFormat.split("\\n")) {
+        $gameMessage.add(line);
+    }
 };
 
 /**
