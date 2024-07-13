@@ -3,10 +3,10 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.041 Create special traits.
+ * @plugindesc v1.05 Create special traits.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
- * @url http://newrpg.seesaa.net/article/488957733.html
+ * @url https://newrpg.seesaa.net/article/488957733.html
  *
  * @help Create special traits.
  * 
@@ -70,6 +70,14 @@
  * 
  * ◆e.g.: Performs a flush when the damage multiplier is 1.5 or greater.
  * <InflictedDamageScript:1.5 <= rate ? $gameScreen.startFlash([255,255,255,128], 10) : null>
+ * 
+ * <WeakEffectCondition:[Script]>
+ * Based on the specified script condition,
+ * it will be judged as a weakness in NRP_DamageEffect.js.
+ * Use with <InflictedDamageRate>.
+ * 
+ * ◆e.g.: Treat it as a weak when the damage multiplier is 1.5 or greater.
+ * <WeakEffectCondition:1.5 <= rate>
  * 
  * -------------------------------------------------------------------
  * [Change of state's duration in turns]
@@ -161,10 +169,10 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.041 特殊な特徴を実現します。
+ * @plugindesc v1.05 特殊な特徴を実現します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
- * @url http://newrpg.seesaa.net/article/488957733.html
+ * @url https://newrpg.seesaa.net/article/488957733.html
  *
  * @help 特殊な特徴を実現します。
  * 
@@ -225,6 +233,14 @@
  * 
  * ◆例：ダメージ倍率が１．５以上の場合にフラッシュを実行します。
  * <InflictedDamageScript:1.5 <= rate ? $gameScreen.startFlash([255,255,255,128], 10) : null>
+ * 
+ * <WeakEffectCondition:[Script]>
+ * 指定したスクリプト条件を元に、
+ * NRP_DamageEffect.jsにおける弱点として判定するようになります。
+ * <InflictedDamageRate>とセットで使用してください。
+ * 
+ * ◆例：ダメージ倍率が１．５以上の場合に弱点として扱います。
+ * <WeakEffectCondition:1.5 <= rate>
  * 
  * -------------------------------------------------------------------
  * ■ステート継続ターンの変更
@@ -433,6 +449,7 @@ Game_Action.prototype.applyVariance = function(damage, variance) {
 
     const subject = this.subject();
     const target = mTarget;
+    const result = target.result();
 
     // eval計算用
     const a = subject;
@@ -441,13 +458,20 @@ Game_Action.prototype.applyVariance = function(damage, variance) {
     // 行動主体の与ダメージ倍率の計算
     for (const object of getTraitObjects(subject)) {
         const inflictedDamageRate = object.meta.InflictedDamageRate;
-        if (inflictedDamageRate != null && isValidDamageRate(this.item(), object)) {
+        if (inflictedDamageRate != null && this.isValidChangeDamageRate(object)) {
             const rate = eval(inflictedDamageRate);
 
             // スクリプトを実行
             const inflictedDamageScript = object.meta.InflictedDamageScript;
             if (inflictedDamageScript) {
                 eval(inflictedDamageScript);
+            }
+
+            // 弱点として判定できるなら設定
+            // ※NRP_DamageEffect.jsとの連携
+            const metaWeakEffectCondition = object.meta.WeakEffectCondition;
+            if (metaWeakEffectCondition && eval(metaWeakEffectCondition)) {
+                result.isDamageWeak = true;
             }
 
             value *= rate;
@@ -458,7 +482,7 @@ Game_Action.prototype.applyVariance = function(damage, variance) {
     if (target) {
         for (const object of getTraitObjects(target)) {
             const receivedDamageRate = object.meta.ReceivedDamageRate;
-            if (receivedDamageRate != null && isValidDamageRate(this.item(), object)) {
+            if (receivedDamageRate != null && this.isValidChangeDamageRate(object)) {
                 value *= eval(receivedDamageRate);
             }
         }
@@ -468,9 +492,11 @@ Game_Action.prototype.applyVariance = function(damage, variance) {
 };
 
 /**
- * ●ダメージ倍率の変更が有効かどうかの判定
+ * 【独自】ダメージ倍率の変更が有効かどうかの判定
  */
-function isValidDamageRate(actionItem, object) {
+Game_Action.prototype.isValidChangeDamageRate = function(object) {
+    const actionItem = this.item();
+
     // 有効なダメージタイプでなければ終了
     if (!isTargetDamageType(actionItem, object)) {
         return false;
@@ -483,7 +509,7 @@ function isValidDamageRate(actionItem, object) {
     }
     // ここまで到達すれば有効
     return true;
-}
+};
 
 /**
  * ●有効なダメージタイプかどうか？

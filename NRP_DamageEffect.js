@@ -4,30 +4,66 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.031 Change the effect of damage handling.
+ * @plugindesc v1.04 Change the effect of damage handling.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
- * @url http://newrpg.seesaa.net/article/475586753.html
+ * @url https://newrpg.seesaa.net/article/475586753.html
  *
  * @help Change the effect of damage handling.
  * 
+ * -------------------------------------------------------------------
  * [What you can do]
+ * -------------------------------------------------------------------
  * 1. enable/disable enemy & actor blinking effects.
  * 2. Play an animation during critical or weak.
- * 3. change the position of the damage popup.
+ * 3. Change color and size of damage number during critical or weak.
+ * 4. change the position of the damage popup.
  * 
  * Effective from ver1.02, a staging for resistance has been added.
  * Initially, "Resist1" is assumed to be halved
  * and "Resist2" is assumed to be disabled.
  * 
- * For more information, please see below.
- * http://newrpg.seesaa.net/article/475586753.html
+ * -------------------------------------------------------------------
+ * [Additional Weak Conditions]
+ * -------------------------------------------------------------------
+ * In addition to the elements, it is possible to determine weaknesses.
  * 
+ * ◆Note of Skill
+ * Fill in the following in the note for the skill.
+ * Weakness direction will be performed when the conditions are met.
+ * 
+ * <WeakCondition: [Condition]>
+ * 
+ * e.g.: if the state is number 100, it is judged as a weakness.
+ * <WeakCondition:b.isStateAffected(100)>
+ * 
+ * However, it does not affect the damage formula of the skill.
+ * 
+ * ◆Damage Formula
+ * When using <WeakCondition>,
+ * the following functions can be incorporated into the formula.
+ * 
+ * $weakRate(a, b, [Rate])
+ * 
+ * e.g.: Damage doubled when <WeakCondition> conditions are met.
+ * (a.atk * 4 - b.def * 2) * $weakRate(a, b, 2)
+ * 
+ * ◆Cooperation with NRP_TraitsEX.js
+ * If you work with NRP_TraitsEX.js,
+ * you can also set up weak effects for weapons and other items.
+ * https://newrpg.seesaa.net/article/488957733.html
+ * 
+ * -------------------------------------------------------------------
  * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
  * The author is not responsible,
  * but we will respond to defects as far as possible.
+ * 
+ * @-----------------------------------------------------
+ * @ Plugin Parameters
+ * @-----------------------------------------------------
  * 
  * @param <Blink>
  * 
@@ -62,9 +98,21 @@
  * @param criticalBlinkOff
  * @parent <Critical>
  * @type boolean
- * @defalt false
+ * @default false
  * @desc When critical, the target will not blink.
  * If you want to leave the effect to animation only.
+ * 
+ * @param criticalDamageColor
+ * @parent <Critical>
+ * @type string
+ * @desc The color of the damage value on a critical hit.
+ * e.g.:[255,255,255,255] (Red, Green, Blue, Strength)
+ * 
+ * @param criticalDamageScale
+ * @parent <Critical>
+ * @type number @decimals 2
+ * @desc The size of the damage value on a critical hit.
+ * Please set it by a multiplier based on 1.00.
  * 
  * @param <Weak>
  * 
@@ -77,7 +125,7 @@
  * @param weakBlinkOff
  * @parent <Weak>
  * @type boolean
- * @defalt false
+ * @default false
  * @desc When weak, the target will not blink.
  * If you want to leave the effect to animation only.
  * 
@@ -87,6 +135,18 @@
  * @default 150 <= action.calcElementRate(target) * 100
  * @desc The condition for staging weaknesses.
  * The initial value must be 150% effective or higher.
+ * 
+ * @param weakDamageColor
+ * @parent <Weak>
+ * @type string
+ * @desc The color of the damage value at the weak.
+ * e.g.:[255,255,255,255] (Red, Green, Blue, Strength)
+ * 
+ * @param weakDamageScale
+ * @parent <Weak>
+ * @type number @decimals 2
+ * @desc The size of the damage value at the weak.
+ * Please set it by a multiplier based on 1.00.
  * 
  * @param <Resist1>
  * 
@@ -99,7 +159,7 @@
  * @param resistBlinkOff1
  * @parent <Resist1>
  * @type boolean
- * @defalt false
+ * @default false
  * @desc When resist, the target will not blink.
  * If you want to leave the effect to animation only.
  * 
@@ -109,6 +169,18 @@
  * @default 50 >= action.calcElementRate(target) * 100
  * @desc The condition for staging resistance.
  * The default value is less than 50% validity.
+ * 
+ * @param resistDamageColor1
+ * @parent <Resist1>
+ * @type string
+ * @desc The color of the damage value at the time of resist.
+ * e.g.:[255,255,255,255] (Red, Green, Blue, Strength)
+ * 
+ * @param resistDamageScale1
+ * @parent <Resist1>
+ * @type number @decimals 2
+ * @desc The size of the damage value when resist.
+ * Please set it by a multiplier based on 1.00.
  * 
  * @param <Resist2>
  * 
@@ -121,7 +193,7 @@
  * @param resistBlinkOff2
  * @parent <Resist2>
  * @type boolean
- * @defalt false
+ * @default false
  * @desc When resist, the target will not blink.
  * If you want to leave the effect to animation only.
  * 
@@ -131,6 +203,18 @@
  * @default 0 == action.calcElementRate(target) * 100
  * @desc The condition for staging resistance.
  * The initial value is conditional on 0% validity.
+ * 
+ * @param resistDamageColor2
+ * @parent <Resist2>
+ * @type string
+ * @desc The color of the damage value at the time of resist.
+ * e.g.:[255,255,255,255] (Red, Green, Blue, Strength)
+ * 
+ * @param resistDamageScale2
+ * @parent <Resist2>
+ * @type number @decimals 2
+ * @desc The size of the damage value when resist.
+ * Please set it by a multiplier based on 1.00.
  * 
  * @param <Critical & Weak>
  * 
@@ -173,28 +257,62 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.031 ダメージ処理の演出を変更します。
+ * @plugindesc v1.04 ダメージ処理の演出を変更します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
- * @url http://newrpg.seesaa.net/article/475586753.html
+ * @url https://newrpg.seesaa.net/article/475586753.html
  *
  * @help ダメージ処理の演出を変更します。
- * 
+ *
+ * -------------------------------------------------------------------
  * ■できること
+ * -------------------------------------------------------------------
  * ・敵味方の点滅演出の有効・無効化
- * ・クリティカルや弱点時にアニメーションで演出
+ * ・会心や弱点時にアニメーションで演出
+ * ・会心や弱点時にダメージの文字色やサイズを変更
  * ・ダメージポップアップの表示位置を変更
  * 
  * ver1.02より、耐性時の演出を追加しました。
  * 初期状態では耐性演出１は半減、
  * 耐性演出２は無効を想定しています。
  * 
- * 詳細は以下をご覧ください。
- * http://newrpg.seesaa.net/article/475586753.html
+ * -------------------------------------------------------------------
+ * ■追加の弱点判定
+ * -------------------------------------------------------------------
+ * 属性以外にも弱点の判定を行うことができます。
  * 
+ * ◆スキルのメモ欄
+ * スキルのメモ欄に以下を記入すると、
+ * 指定した条件の場合に弱点演出を行います。
+ * 
+ * <WeakCondition:条件>
+ * 
+ * 例：ステート100番ならば、弱点として判定
+ * <WeakCondition:b.isStateAffected(100)>
+ * 
+ * ただし、スキルのダメージ計算式には影響しません。
+ * 
+ * ◆ダメージ計算式
+ * <WeakCondition>を使う場合、以下の式を計算式に組み込むと便利です。
+ * 
+ * $weakRate(a, b, 倍率)
+ * 
+ * 例：<WeakCondition>の条件を満たした場合にダメージ２倍
+ * (a.atk * 4 - b.def * 2) * $weakRate(a, b, 2)
+ * 
+ * ◆NRP_TraitsEX.jsとの連携
+ * NRP_TraitsEX.jsとの連携によって、弱点演出を行う武器なども設定できます。
+ * https://newrpg.seesaa.net/article/488957733.html
+ * 
+ * -------------------------------------------------------------------
  * ■利用規約
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
+ * 
+ * @-----------------------------------------------------
+ * @ プラグインパラメータ
+ * @-----------------------------------------------------
  * 
  * @param <Blink>
  * @text ＜点滅演出＞
@@ -223,22 +341,36 @@
  * @desc 点滅時間です。初期値は20です。
  * 
  * @param <Critical>
- * @text ＜クリティカル演出＞
+ * @text ＜会心演出＞
  * 
  * @param criticalAnimation
- * @text クリティカル時のアニメ
+ * @text 会心時のアニメ
  * @parent <Critical>
  * @type animation
- * @desc クリティカル時、対象に再生するアニメーションです。
+ * @desc 会心時、対象に再生するアニメーションです。
  * 数式可（テキスト）。例：target.isEnemy() ? 1 : 2
  * 
  * @param criticalBlinkOff
- * @text クリティカル時の点滅オフ
+ * @text 会心時の点滅オフ
  * @parent <Critical>
  * @type boolean
- * @defalt false
- * @desc クリティカル時、対象を点滅させません。
+ * @default false
+ * @desc 会心時、対象を点滅させません。
  * アニメーションのみに演出を任せたい場合。
+ * 
+ * @param criticalDamageColor
+ * @text 会心時の文字色
+ * @parent <Critical>
+ * @type string
+ * @desc 会心時のダメージ数値の色です。
+ * 例：[255,255,255,255]（赤、緑、青、強さ）
+ * 
+ * @param criticalDamageScale
+ * @text 会心時の文字倍率
+ * @parent <Critical>
+ * @type number @decimals 2
+ * @desc 会心時のダメージ数値の大きさです。
+ * 1.00を基準に倍率で設定してください。
  * 
  * @param <Weak>
  * @text ＜弱点演出＞
@@ -254,7 +386,7 @@
  * @text 弱点時の点滅オフ
  * @parent <Weak>
  * @type boolean
- * @defalt false
+ * @default false
  * @desc 弱点時、対象を点滅させません。
  * アニメーションのみに演出を任せたい場合。
  * 
@@ -265,6 +397,20 @@
  * @default 150 <= action.calcElementRate(target) * 100
  * @desc 弱点演出を行う条件です。
  * 初期値は有効度150%以上が条件です。
+ * 
+ * @param weakDamageColor
+ * @text 弱点時の文字色
+ * @parent <Weak>
+ * @type string
+ * @desc 弱点時のダメージの文字色です。
+ * 例：[255,255,255,255]（赤、緑、青、強さ）
+ * 
+ * @param weakDamageScale
+ * @text 弱点時の文字倍率
+ * @parent <Weak>
+ * @type number @decimals 2
+ * @desc 弱点時のダメージ文字の大きさです。
+ * 1.00を基準に倍率で設定してください。
  * 
  * @param <Resist1>
  * @text ＜耐性演出１＞
@@ -280,7 +426,7 @@
  * @text 耐性時の点滅オフ１
  * @parent <Resist1>
  * @type boolean
- * @defalt false
+ * @default false
  * @desc 耐性時、対象を点滅させません。
  * アニメーションのみに演出を任せたい場合。
  * 
@@ -291,6 +437,20 @@
  * @default 50 >= action.calcElementRate(target) * 100
  * @desc 耐性演出を行う条件です。
  * 初期値は有効度50%以下が条件です。
+ * 
+ * @param resistDamageColor1
+ * @text 耐性時の文字色１
+ * @parent <Resist1>
+ * @type string
+ * @desc 耐性時のダメージの文字色です。
+ * 例：[255,255,255,255]（赤、緑、青、強さ）
+ * 
+ * @param resistDamageScale1
+ * @text 耐性時の文字倍率１
+ * @parent <Resist1>
+ * @type number @decimals 2
+ * @desc 耐性時のダメージ文字の大きさです。
+ * 1.00を基準に倍率で設定してください。
  * 
  * @param <Resist2>
  * @text ＜耐性演出２＞
@@ -306,7 +466,7 @@
  * @text 耐性時の点滅オフ２
  * @parent <Resist2>
  * @type boolean
- * @defalt false
+ * @default false
  * @desc 耐性時、対象を点滅させません。
  * アニメーションのみに演出を任せたい場合。
  * 
@@ -318,18 +478,32 @@
  * @desc 耐性演出を行う条件です。
  * 初期値は有効度0%が条件です。
  * 
+ * @param resistDamageColor2
+ * @text 耐性時の文字色２
+ * @parent <Resist2>
+ * @type string
+ * @desc 耐性時のダメージの文字色です。
+ * 例：[255,255,255,255]（赤、緑、青、強さ）
+ * 
+ * @param resistDamageScale2
+ * @text 耐性時の文字倍率２
+ * @parent <Resist2>
+ * @type number @decimals 2
+ * @desc 耐性時のダメージ文字の大きさです。
+ * 1.00を基準に倍率で設定してください。
+ * 
  * @param <Critical & Weak>
- * @text ＜クリティカル／弱点共通＞
+ * @text ＜会心／弱点共通＞
  * 
  * @param effectPrioritity
- * @text クリティカル弱点優先度
+ * @text 会心弱点優先度
  * @parent <Critical & Weak>
  * @type select
- * @option クリティカル優先 @value critical
+ * @option 会心優先 @value critical
  * @option 弱点優先 @value weak
  * @option 両方表示 @value both
  * @default critical
- * @desc クリティカル／弱点演出の優先度です。
+ * @desc 会心／弱点演出の優先度です。
  * 同時に発生した場合にどちらを優先するか。
  * 
  * @param <Damage Position>
@@ -364,6 +538,22 @@
  * 数式使用可。初期値は0です。
  */
 
+/**
+ * ●弱点によるダメージ倍率
+ * ※a, bはeval参照用
+ */
+function $weakRate(a, b, rate) {
+    const action = BattleManager._action;
+    if (!action) {
+        return 1;
+    }
+    // 弱点の場合
+    if (eval(action.item().meta.WeakCondition)) {
+        return rate;
+    }
+    return 1;
+}
+
 (function() {
 "use strict";
 
@@ -385,22 +575,30 @@ const parameters = PluginManager.parameters("NRP_DamageEffect");
 const pEnemyBlink = toBoolean(parameters["enemyBlink"], true);
 const pActorBlink = toBoolean(parameters["actorBlink"], false);
 const pBlinkDuration = toNumber(parameters["blinkDuration"]);
-// クリティカル
+// 会心
 const pCriticalAnimation = parameters["criticalAnimation"];
 const pCriticalBlinkOff = toBoolean(parameters["criticalBlinkOff"], false);
+const pCriticalDamageColor = setDefault(parameters["criticalDamageColor"]);
+const pCriticalDamageScale = toNumber(parameters["criticalDamageScale"]);
 // 弱点
 const pWeakAnimation = parameters["weakAnimation"];
 const pWeakBlinkOff = toBoolean(parameters["weakBlinkOff"], false);
 const pWeakCondition = parameters["weakCondition"];
+const pWeakDamageColor = setDefault(parameters["weakDamageColor"]);
+const pWeakDamageScale = toNumber(parameters["weakDamageScale"]);
 // 耐性１
 const pResistAnimation1 = parameters["resistAnimation1"];
 const pResistBlinkOff1 = toBoolean(parameters["resistBlinkOff1"], false);
 const pResistCondition1 = parameters["resistCondition1"];
+const pResistDamageColor1 = setDefault(parameters["resistDamageColor1"]);
+const pResistDamageScale1 = toNumber(parameters["resistDamageScale1"]);
 // 耐性２
 const pResistAnimation2 = parameters["resistAnimation2"];
 const pResistBlinkOff2 = toBoolean(parameters["resistBlinkOff2"], false);
 const pResistCondition2 = parameters["resistCondition2"];
-// クリティカル／弱点
+const pResistDamageColor2 = setDefault(parameters["resistDamageColor2"]);
+const pResistDamageScale2 = toNumber(parameters["resistDamageScale2"]);
+// 会心／弱点
 const pEffectPrioritity = setDefault(parameters["effectPrioritity"], "critical");
 // ダメージ位置
 const pEnemyDamageOffsetX = setDefault(parameters["enemyDamageOffsetX"]);
@@ -423,7 +621,7 @@ Game_Enemy.prototype.performDamage = function() {
     if (!pEnemyBlink) {
         noBlink = true;
     }
-    // クリティカル or 弱点 or 耐性の演出対象
+    // 会心 or 弱点 or 耐性の演出対象
     if (isEffectTarget(this)) {
         // 通常のダメージ効果音をオフ
         noDamageSound = true;
@@ -492,7 +690,7 @@ Sprite_Actor.prototype.update = function() {
  */
 var _Game_Actor_performDamage = Game_Actor.prototype.performDamage;
 Game_Actor.prototype.performDamage = function() {
-    // クリティカル or 弱点 or 耐性の演出対象
+    // 会心 or 弱点 or 耐性の演出対象
     if (isEffectTarget(this)) {
         // 通常のダメージ効果音をオフ
         noDamageSound = true;
@@ -602,7 +800,7 @@ Game_Battler.prototype.requestEffect = function(effectType) {
         if (noBlink) {
             return;
 
-        // クリティカルかつ点滅無効なら処理しない
+        // 会心かつ点滅無効なら処理しない
         } else if (isCriticalEffect(this) && pCriticalBlinkOff) {
             return;
 
@@ -610,12 +808,12 @@ Game_Battler.prototype.requestEffect = function(effectType) {
         } else if (isWeakEffect(this) && pWeakBlinkOff) {
             return;
 
-        // 耐性１かつ点滅無効なら処理しない
-        } else if (isResistEffect1(this) && pResistBlinkOff1) {
-            return;
-
         // 耐性２かつ点滅無効なら処理しない
         } else if (isResistEffect2(this) && pResistBlinkOff2) {
+            return;
+
+        // 耐性１かつ点滅無効なら処理しない
+        } else if (isResistEffect1(this) && pResistBlinkOff1) {
             return;
         }
     }
@@ -636,21 +834,21 @@ Game_Action.prototype.calcElementRate = function(target) {
 };
 
 /***********************************************************
- * ■クリティカル演出
+ * ■会心演出
  ***********************************************************/
 /**
- * ●クリティカル演出
+ * ●会心演出
  */
 var _Window_BattleLog_displayCritical = Window_BattleLog.prototype.displayCritical;
 Window_BattleLog.prototype.displayCritical = function(target) {
-    const isCriticalFlg = isCriticalEffect(target); // クリティカル判定
+    const isCriticalFlg = isCriticalEffect(target); // 会心判定
     const isWeakFlg = isWeakEffect(target);         // 弱点判定
     const isResistFlg1 = isResistEffect1(target);   // 耐性判定１
     const isResistFlg2 = isResistEffect2(target);   // 耐性判定２
 
-    // クリティカルと弱点（耐性）が同時発生した場合
+    // 会心と弱点（耐性）が同時発生した場合
     if (isCriticalFlg && (isWeakFlg || isResistFlg1 || isResistFlg2)) {
-        // クリティカル優先
+        // 会心優先
         if (pEffectPrioritity == "critical") {
             callAnimation(target, eval(pCriticalAnimation), this);
             // 処理終了
@@ -676,7 +874,7 @@ Window_BattleLog.prototype.displayCritical = function(target) {
         }
     }
 
-    // それ以外はクリティカルと弱点を別々に処理
+    // それ以外は会心と弱点を別々に処理
     if (isCriticalFlg) {
         callAnimation(target, eval(pCriticalAnimation), this);
     }
@@ -698,7 +896,7 @@ Window_BattleLog.prototype.displayCritical = function(target) {
  * ●演出対象とするかどうか？
  */
 function isEffectTarget(target) {
-    // クリティカル or 弱点 or 耐性の演出対象
+    // 会心 or 弱点 or 耐性の演出対象
     if (isCriticalEffect(target)
             || isWeakEffect(target)
             || isResistEffect1(target)
@@ -709,13 +907,13 @@ function isEffectTarget(target) {
 }
 
 /**
- * ●クリティカル演出を行うかどうか？
+ * ●会心演出を行うかどうか？
  */
 function isCriticalEffect(target) {
     // eval参照用
     const action = BattleManager._action;
 
-    // クリティカルかつアニメーションが設定されている
+    // 会心かつアニメーションが設定されている
     if (target.result().critical && pCriticalAnimation) {
         return true;
     }
@@ -907,5 +1105,141 @@ if (pActorDamageOffsetY != undefined) {
         return offset ? Number(offset) : 0;
     };
 }
+
+/***********************************************************
+ * ■ダメージ表示変更
+ ***********************************************************/
+
+// 会心の場合
+let mIsDamageCritical = false;
+// 弱点の場合
+// ※NRP_TraitsEX.jsからも設定される。
+let mIsDamageWeak = false;
+// 耐性１の場合
+let misDamageResist1 = false;
+// 耐性２の場合
+let misDamageResist2 = false;
+
+/**
+ * ●アクション結果の反映
+ */
+const _Game_Action_apply2 = Game_Action.prototype.apply;
+Game_Action.prototype.apply = function(target) {
+    _Game_Action_apply2.apply(this, arguments);
+
+    const action = this; // eval参照用
+    const result = target.result();
+
+    if (result.isHit()) {
+        // 弱点表示
+        if (pWeakDamageColor || pWeakDamageScale) {
+            if (eval(pWeakCondition)) {
+                result.isDamageWeak = true;
+            }
+
+            const a = action.subject();
+            const b = target;
+
+            // スキル毎の弱点判定
+            const metaWeakCondition = this.item().meta.WeakCondition;
+            if (metaWeakCondition && eval(metaWeakCondition)) {
+                result.isDamageWeak = true;
+            }
+        }
+
+        // 耐性１表示
+        if (pResistDamageColor1 || pResistDamageScale1) {
+            if (eval(pResistCondition1)) {
+                result.isDamageResist1 = true;
+            }
+        }
+
+        // 耐性２表示
+        if (pResistDamageColor2 || pResistDamageScale2) {
+            if (eval(pResistCondition2)) {
+                result.isDamageResist2 = true;
+            }
+        }
+    }
+};
+
+/**
+ * ●結果の初期化
+ */
+const _Game_ActionResult_clear = Game_ActionResult.prototype.clear;
+Game_ActionResult.prototype.clear = function() {
+    _Game_ActionResult_clear.apply(this, arguments);
+
+    // 弱点、耐性判定用の変数
+    this.isDamageWeak = false;
+    this.isDamageResist1 = false;
+    this.isDamageResist2 = false;
+};
+
+/**
+ * ●ダメージのセットアップ
+ */
+const _Sprite_Damage_setup = Sprite_Damage.prototype.setup;
+Sprite_Damage.prototype.setup = function(target) {
+    const result = target.result();
+
+    mIsDamageCritical = result.critical;
+    mIsDamageWeak = result.isDamageWeak;
+    misDamageResist1 = result.isDamageResist1;
+    misDamageResist2 = result.isDamageResist2;
+    _Sprite_Damage_setup.apply(this, arguments);
+    mIsDamageCritical = false;
+    mIsDamageWeak = false;
+    misDamageResist1 = false;
+    misDamageResist2 = false;
+};
+
+/**
+ * ●ダメージ数字の作成
+ */
+const _Sprite_Damage_createDigits = Sprite_Damage.prototype.createDigits;
+Sprite_Damage.prototype.createDigits = function(value) {
+    _Sprite_Damage_createDigits.apply(this, arguments);
+
+    // 会心時
+    if (mIsDamageCritical) {
+        if (pCriticalDamageColor) {
+            this.setBlendColor(eval(pCriticalDamageColor));
+        }
+        if (pCriticalDamageScale) {
+            this.scale.x = pCriticalDamageScale;
+            this.scale.y = pCriticalDamageScale;
+        }
+    }
+
+    // 弱点時
+    if (mIsDamageWeak) {
+        if (pWeakDamageColor) {
+            this.setBlendColor(eval(pWeakDamageColor));
+        }
+        if (pWeakDamageScale) {
+            this.scale.x = pWeakDamageScale;
+            this.scale.y = pWeakDamageScale;
+        }
+    // 耐性２時
+    } else if (misDamageResist2) {
+        if (pResistDamageColor2) {
+            this.setBlendColor(eval(pResistDamageColor2));
+        }
+        if (pResistDamageScale2) {
+            this.scale.x = pResistDamageScale2;
+            this.scale.y = pResistDamageScale2;
+        }
+    // 耐性１時
+    } else if (misDamageResist1) {
+        if (pResistDamageColor1) {
+            this.setBlendColor(eval(pResistDamageColor1));
+        }
+        if (pResistDamageScale1) {
+            this.scale.x = pResistDamageScale1;
+            this.scale.y = pResistDamageScale1;
+        }
+    }
+};
 
 })();
