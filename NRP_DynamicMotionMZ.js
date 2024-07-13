@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.251 When executing skills, call motion freely.
+ * @plugindesc v1.252 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -561,7 +561,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.251 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.252 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -4218,6 +4218,9 @@ Sprite.prototype.hasSvMotion = function() {
 // 　不死身設定だけがこちらの担当のままになっています。
 //-------------------------------------------------------------
 
+// 不死身モードの判定フラグ
+let mImmortalMode = false;
+
 /**
  * ●ダメージ更新処理など
  */
@@ -4226,6 +4229,7 @@ BattleManager.invokeAction = function(subject, target) {
     // 不死身設定の場合、対象を不死身化
     if (this._action && this._action.existDynamicSetting("Immortal")) {
         target.addState(pImmortalState);
+        mImmortalMode = true;
     }
 
     _BattleManager_invokeAction.apply(this, arguments);
@@ -4236,32 +4240,35 @@ BattleManager.invokeAction = function(subject, target) {
  */
 const _BattleManager_endAction = BattleManager.endAction;
 BattleManager.endAction = function() {
-    // 不死身設定の場合、全員の不死身化解除
-    if (this._action && this._action.existDynamicSetting("Immortal")) {
-        for (const battler of this.allBattleMembers()) {
-            // 不死身状態なら解除
-            if (battler.isStateAffected(pImmortalState)) {
+    // 不死身設定が使用されている場合
+    if (mImmortalMode && pImmortalState) {
+        const immortalBattlers = this.allBattleMembers().filter(m => m.isStateAffected(pImmortalState));
+        if (immortalBattlers.length > 0) {
+            for (const battler of immortalBattlers) {
+                // 不死身を解除
                 battler.removeState(pImmortalState);
                 // 既に死んでいる場合は演出実行
                 if (battler.isStateAffected(battler.deathStateId())) {
                     this._logWindow.displayAddedStates(battler);
                 }
             }
-        }
 
-        // ステータス表示を更新するため、スプライトを取得
-        // ※ＨＰの色表示などを正しく更新させるため
-        const additionalSprites = SceneManager._scene._statusWindow._additionalSprites;
-        // 保有する属性名でループ
-        for (const statusName in additionalSprites) {
-            // 属性名を元に各スプライトを取得
-            const statusSprite = additionalSprites[statusName];
-            // redraw関数を持っている場合（Sprite_Gaugeを想定）のみ再描画
-            if (statusSprite.redraw) {
-                statusSprite.redraw();
+            // ステータス表示を更新するため、スプライトを取得
+            // ※ＨＰの色表示などを正しく更新させるため
+            const additionalSprites = SceneManager._scene._statusWindow._additionalSprites;
+            // 保有する属性名でループ
+            for (const statusName in additionalSprites) {
+                // 属性名を元に各スプライトを取得
+                const statusSprite = additionalSprites[statusName];
+                // redraw関数を持っている場合（Sprite_Gaugeを想定）のみ再描画
+                if (statusSprite.redraw) {
+                    statusSprite.redraw();
+                }
             }
         }
     }
+
+    mImmortalMode = false;
 
     _BattleManager_endAction.apply(this, arguments);
 };
