@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Create counter skill.
+ * @plugindesc v1.031 Create counter skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_ChainSkill
  * @url https://newrpg.seesaa.net/article/500432213.html
@@ -217,7 +217,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 反撃スキルを作成する。
+ * @plugindesc v1.031 反撃スキルを作成する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_ChainSkill
  * @url https://newrpg.seesaa.net/article/500432213.html
@@ -592,7 +592,8 @@ BattleManager.updateAction = function() {
     }
 
     // 行動主体が行動異常＆戦闘不能時は終了
-    if (counterSubject.isCounterRestricted() || counterSubject.isDead()) {
+    // 演出時の不死身ステート用にＨＰ０でも終了
+    if (counterSubject.isCounterRestricted() || counterSubject.isDead() || counterSubject.hp == 0) {
         return;
     }
 

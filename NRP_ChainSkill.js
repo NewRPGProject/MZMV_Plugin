@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.081 Chain skills together.
+ * @plugindesc v1.082 Chain skills together.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -245,7 +245,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.081 スキルを連結する。
+ * @plugindesc v1.082 スキルを連結する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -682,6 +682,11 @@ function goChainSkill(object, passiveFlg) {
     const subject = BattleManager._subject;
     const target = getOriginalTarget();
 
+    // 対象が取得できなければ中断
+    if (!target) {
+        return false;
+    }
+
     // eval参照用
     const a = subject;
     const b = target;
@@ -830,6 +835,9 @@ function getChainSkillId(object, target) {
  * ●本来の対象を取得
  */
 function getOriginalTarget() {
+    if (!mOriginalTargets) {
+        return null;
+    }
     let target = mOriginalTargets[0];
     // 範囲が全体かつランダムの場合は対象補正
     if (mOriginalAction.isForAll() && pAdjustAllRangeTarget == "random") {
