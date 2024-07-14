@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Set up various motions in side-view battle.
+ * @plugindesc v1.04 Set up various motions in side-view battle.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/475560242.html
@@ -576,11 +576,19 @@
  * @option sleep
  * @option dead
  * @desc The motion of the dead.
+ * 
+ * @param <Other>
+ * 
+ * @param escapePriority
+ * @parent <Other>
+ * @type boolean
+ * @default false
+ * @desc Priority is given to the escape motion even when the action is restricted.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 サイドビュー戦闘における各種モーション設定を行います。
+ * @plugindesc v1.04 サイドビュー戦闘における各種モーション設定を行います。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/475560242.html
@@ -1205,6 +1213,16 @@
  * @option 戦闘不能（dead） @value dead
  * @desc 戦闘不能のモーション名です。
  * 初期値は戦闘不能（dead）です。
+ * 
+ * @param <Other>
+ * @text ＜その他＞
+ * 
+ * @param escapePriority
+ * @text 逃走モーション優先
+ * @parent <Other>
+ * @type boolean
+ * @default false
+ * @desc 行動異常時でも逃走モーションを優先して実行します。
  */
 (function() {
 "use strict";
@@ -1212,49 +1230,58 @@
 function toNumber(str, def) {
     return isNaN(str) ? def : +(str || def);
 }
+function toBoolean(str, def) {
+    if (str === true || str === "true") {
+        return true;
+    } else if (str === false || str === "false") {
+        return false;
+    }
+    return def;
+}
 
-var parameters = PluginManager.parameters("NRP_MotionSetting");
+const parameters = PluginManager.parameters("NRP_MotionSetting");
 
-var pDefaultTime = toNumber(parameters["defaultTime"]);
-var pWalk = parameters["walk"];
-var pWait = parameters["wait"];
-var pChant = parameters["chant"];
-var pGuard = parameters["guard"];
-var pDamage = parameters["damage"];
-var pEvade = parameters["evade"];
-var pThrust = parameters["thrust"];
-var pSwing = parameters["swing"];
-var pMissile = parameters["missile"];
-var pSkill = parameters["skill"];
-var pSpell = parameters["spell"];
-var pItem = parameters["item"];
-var pEscape = parameters["escape"];
-var pVictory = parameters["victory"];
-var pDying = parameters["dying"];
-var pAbnormal = parameters["abnormal"];
-var pSleep = parameters["sleep"];
-var pDead = parameters["dead"];
+const pDefaultTime = toNumber(parameters["defaultTime"]);
+const pWalk = parameters["walk"];
+const pWait = parameters["wait"];
+const pChant = parameters["chant"];
+const pGuard = parameters["guard"];
+const pDamage = parameters["damage"];
+const pEvade = parameters["evade"];
+const pThrust = parameters["thrust"];
+const pSwing = parameters["swing"];
+const pMissile = parameters["missile"];
+const pSkill = parameters["skill"];
+const pSpell = parameters["spell"];
+const pItem = parameters["item"];
+const pEscape = parameters["escape"];
+const pVictory = parameters["victory"];
+const pDying = parameters["dying"];
+const pAbnormal = parameters["abnormal"];
+const pSleep = parameters["sleep"];
+const pDead = parameters["dead"];
 
-var pStepForward = toNumber(parameters["stepForward"], 12);
-var pStepBack = toNumber(parameters["stepBack"], 12);
+const pStepForward = toNumber(parameters["stepForward"], 12);
+const pStepBack = toNumber(parameters["stepBack"], 12);
 
-var pInputtingMotion = parameters["inputtingMotion"];
-var pActingMotion = parameters["actingMotion"];
-var pUndecidedMotion = parameters["undecidedMotion"];
-var pWaitMotion = parameters["waitMotion"];
-var pDeadMotion = parameters["deadMotion"];
-var pSleepMotion = parameters["sleepMotion"];
-var pAbnormalMotion = parameters["abnormalMotion"];
-var pDyingMotion = parameters["dyingMotion"];
-var pChantMotion = parameters["chantMotion"];
-var pGuardMotion = parameters["guardMotion"];
-var pSpellMotion = parameters["spellMotion"];
-var pSkillMotion = parameters["skillMotion"];
-var pItemMotion = parameters["itemMotion"];
-var pDamageMotion = parameters["damageMotion"];
-var pEvadeMotion = parameters["evadeMotion"];
-var pEscapeMotion = parameters["escapeMotion"];
-var pVictoryMotion = parameters["victoryMotion"];
+const pInputtingMotion = parameters["inputtingMotion"];
+const pActingMotion = parameters["actingMotion"];
+const pUndecidedMotion = parameters["undecidedMotion"];
+const pWaitMotion = parameters["waitMotion"];
+const pDeadMotion = parameters["deadMotion"];
+const pSleepMotion = parameters["sleepMotion"];
+const pAbnormalMotion = parameters["abnormalMotion"];
+const pDyingMotion = parameters["dyingMotion"];
+const pChantMotion = parameters["chantMotion"];
+const pGuardMotion = parameters["guardMotion"];
+const pSpellMotion = parameters["spellMotion"];
+const pSkillMotion = parameters["skillMotion"];
+const pItemMotion = parameters["itemMotion"];
+const pDamageMotion = parameters["damageMotion"];
+const pEvadeMotion = parameters["evadeMotion"];
+const pEscapeMotion = parameters["escapeMotion"];
+const pVictoryMotion = parameters["victoryMotion"];
+const pEscapePriority = toBoolean(parameters["escapePriority"], false);
 
 if (pStepForward) {
     /**
@@ -1554,6 +1581,21 @@ if (pVictoryMotion) {
             }
             this.requestMotion(pVictoryMotion);
         }
+    };
+}
+
+if (pEscapePriority) {
+    /**
+     * ●逃走時の演出
+     */
+    const _Game_Actor_performEscape = Game_Actor.prototype.performEscape;
+    Game_Actor.prototype.performEscape = function() {
+        // 逃走時は行動異常でもモーション変更
+        this.requestMotion("escape");
+
+        // この中でもthis.requestMotion("escape");が呼び出されるが、
+        // 競合を意識してあえてそのままにする。
+        _Game_Actor_performEscape.apply(this, arguments);
     };
 }
 
