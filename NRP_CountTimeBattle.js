@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.191 Change the battle system to CTB.
+ * @plugindesc v1.20 Change the battle system to CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -23,7 +23,7 @@
  * -------------------------------------------------------------------
  * If the state "Auto-removal Timing" is "Action End",
  * the effect will expire at the individual's turn.
- * In the case of "Turn End," the effect
+ * In the case of "Turn End", the effect
  * is determined in everyone's turn.
  * Basically, "Action End" is easier to use.
  *
@@ -130,6 +130,7 @@
  * - BattleManager.updateTurnEnd
  * - BattleManager.getNextSubject
  * - BattleManager.processEscape
+ * - Game_Party.prototype.requestMotionRefresh
  * - Game_Battler.prototype.onAllActionsEnd
  * - Game_Battler.prototype.performActionEnd()
  * - Game_Enemy.prototype.meetsTurnCondition
@@ -172,6 +173,12 @@
  * @type boolean
  * @default true
  * @desc When selecting an action, the current actor is displayed at the top.
+ * 
+ * @param notPartyMotionRefresh
+ * @parent <Basic>
+ * @type boolean
+ * @default true
+ * @desc Don't do motion updates for party. The process for turn-based systems, so it should not be necessary for CTB.
  * 
  * @param <Battle Start>
  *
@@ -257,7 +264,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.191 戦闘システムをＣＴＢへ変更します。
+ * @plugindesc v1.20 戦闘システムをＣＴＢへ変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -368,6 +375,7 @@
  * ・BattleManager.updateTurnEnd
  * ・BattleManager.getNextSubject
  * ・BattleManager.processEscape
+ * ・Game_Party.prototype.requestMotionRefresh
  * ・Game_Battler.prototype.onAllActionsEnd
  * ・Game_Battler.prototype.performActionEnd()
  * ・Game_Enemy.prototype.meetsTurnCondition
@@ -413,6 +421,14 @@
  * @type boolean
  * @default true
  * @desc 行動選択時、先頭に現在の行動者を表示します。
+ * 
+ * @param notPartyMotionRefresh
+ * @text 不要なモーション更新削除
+ * @parent <Basic>
+ * @type boolean
+ * @default true
+ * @desc 行動選択時、全員のモーション更新をやらないようにします。
+ * ターン制用の処理なのでＣＴＢでは不要なはず……。
  *
  * @param <Battle Start>
  * @text ＜戦闘開始関連＞
@@ -538,6 +554,7 @@ const parameters = PluginManager.parameters("NRP_CountTimeBattle");
 const pNumber = toNumber(parameters["number"], 9);
 const pCalcGuardCommand = toBoolean(parameters["calcGuardCommand"], true);
 const pShowActionUser = toBoolean(parameters["showActionUser"], true);
+const pNotPartyMotionRefresh = toBoolean(parameters["notPartyMotionRefresh"], true);
 const pShowPartyCommand = toNumber(parameters["showPartyCommand"], 0);
 const pActorStartRandomWt = setDefault(parameters["actorStartRandomWt"], 0);
 const pEnemyStartRandomWt = setDefault(parameters["enemyStartRandomWt"], 20);
@@ -1299,6 +1316,50 @@ Game_Battler.prototype.getAddWt = function() {
     }
     return addWt;
 };
+
+//-----------------------------------------------------------------------------
+// Game_Party
+//-----------------------------------------------------------------------------
+
+if (pNotPartyMotionRefresh) {
+    /**
+     * 【上書】パーティ全員のモーションリフレッシュ
+     */
+    Game_Party.prototype.requestMotionRefresh = function() {
+        for (const actor of this.members()) {
+            const sprite = getSprite(actor);
+            const motion = sprite._motion;
+            // モーションの指定がない。
+            // またはループモーションが設定されている場合のみリフレッシュ
+            // ※ダメージや回避などのモーションが途中で終わってしまうため。
+            if (!motion || motion.loop) {
+                actor.requestMotionRefresh();
+            }
+        }
+    };
+}
+
+/**
+ * ●バトラーからスプライトを取得する。
+ */
+function getSprite(battler) {
+    const spriteset = getSpriteset();
+    if (!spriteset) {
+        return undefined;
+    }
+    
+    const sprites = spriteset.battlerSprites();
+    return sprites.find(function(sprite) {
+        return sprite._battler == battler;
+    });
+}
+
+/**
+ * ●現在の画面のSpritesetを取得する。
+ */
+function getSpriteset() {
+    return SceneManager._scene._spriteset;
+}
 
 //-----------------------------------------------------------------------------
 // Sprite_Actor
