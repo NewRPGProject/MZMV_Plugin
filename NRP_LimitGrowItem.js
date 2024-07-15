@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Set limits on grow items.
+ * @plugindesc v1.01 Set limits on grow items.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/498340928.html
  *
@@ -66,7 +66,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 成長アイテムに限界値を設定する。
+ * @plugindesc v1.01 成長アイテムに限界値を設定する。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/498340928.html
  *
@@ -178,7 +178,7 @@ function isLimit(target, effect) {
         // 成長後の値を取得
         const newValue = value + Math.floor(effect.value1);
         // 成長後の値が限界値を超えてしまう場合は終了
-        if (newValue > limitParam.LimitNumber) {
+        if (limitParam.LimitNumber && newValue > limitParam.LimitNumber) {
             return true;
         }
     }
