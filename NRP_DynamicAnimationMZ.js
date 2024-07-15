@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.21 Automate & super-enhance battle animations.
+ * @plugindesc v1.211 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -531,7 +531,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.21 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.211 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -1199,11 +1199,11 @@ function setDefault(str, def) {
     return str ? str : def;
 }
 
-var parameters = PluginManager.parameters("NRP_DynamicAnimationMZ");
-var pTemplateList = parseStruct2(parameters["templateList"]);
-var pShortTagName = parameters["shortTagName"];
-var pReferenceBattler = 1; // 1固定に変更
-var pCalculationRate = toNumber(parameters["calculationRate"], 4);
+const parameters = PluginManager.parameters("NRP_DynamicAnimationMZ");
+const pTemplateList = parseStruct2(parameters["templateList"]);
+const pShortTagName = parameters["shortTagName"];
+const pReferenceBattler = 1; // 1固定に変更
+const pCalculationRate = toNumber(parameters["calculationRate"], 4);
 // アニメーション位置
 var pScreenX = setDefault(parameters["screenX"], "($gameSystem.isSideView() ? Graphics.boxWidth / 4 + 48 : Graphics.boxWidth / 2)");
 var pScreenY = setDefault(parameters["screenY"], "($gameSystem.isSideView() ? Graphics.boxHeight / 3 + 24 : Graphics.boxHeight / 2)");
@@ -2941,7 +2941,7 @@ DynamicAnimation.prototype.evaluate = function (spriteAnimation) {
 
         // 途中から開始する場合
         if (mapAnimation.startTiming) {
-            const startDuration = mapAnimation.startTiming * baseAnimation.basicRate;
+            const startDuration = mapAnimation.startTiming * pCalculationRate;
 
             // 通常開始タイミング（targetDelay）が、途中開始タイミング（startDuration）以内の場合
             if (this.targetDelay < startDuration) {

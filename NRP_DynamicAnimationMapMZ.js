@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.153 Call DynamicAnimationMZ on the map.
+ * @plugindesc v1.16 Call DynamicAnimationMZ on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -285,7 +285,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.153 DynamicAnimationMZをマップ上から起動します。
+ * @plugindesc v1.16 DynamicAnimationMZをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -1781,14 +1781,15 @@ Game_Interpreter.prototype.setDynamicDuration = function(dynamicAction) {
             waitDuration -= 3;
         }
     }
-    // より長いほうを採用
-    dynamicDuration = Math.max(waitDuration, dynamicDuration);
+
     // 起動時のタイミング調整がある場合、実行時間も短縮
     // ※関数が存在する場合実行。
     //   現状はDynamicAnimationのみが対象
     if (dynamicAction.getStartTiming) {
-        dynamicDuration -= dynamicAction.getStartTiming();
+        waitDuration -= dynamicAction.getStartTiming();
     }
+    // 二つを比較し、より長いほうを採用
+    dynamicDuration = Math.max(waitDuration, dynamicDuration);
 
     this.dynamicDuration = dynamicDuration;
 };
@@ -1804,6 +1805,7 @@ Sprite_Character.prototype.setDynamicAutoDuration = function(dynamicAction) {
     if (this._character.dynamicDuration) {
         dynamicDuration = this._character.dynamicDuration;
     }
+
     // 新しく設定されるDynamicAnimationの実行時間を取得
     let waitDuration = 0;
     if (dynamicAction.waitDuration) {
@@ -1813,14 +1815,15 @@ Sprite_Character.prototype.setDynamicAutoDuration = function(dynamicAction) {
             waitDuration -= 1;
         }
     }
-    // 二つを比較し、より長いほうを採用
-    dynamicDuration = Math.max(waitDuration, dynamicDuration);
+
     // 起動時のタイミング調整がある場合、実行時間も短縮
     // ※関数が存在する場合実行。
     //   現状はDynamicAnimationのみが対象
     if (dynamicAction.getStartTiming) {
-        dynamicDuration -= dynamicAction.getStartTiming();
+        waitDuration -= dynamicAction.getStartTiming();
     }
+    // 二つを比較し、より長いほうを採用
+    dynamicDuration = Math.max(waitDuration, dynamicDuration);
 
     this._character.dynamicDuration = dynamicDuration;
 }
@@ -2564,7 +2567,6 @@ Sprite_Battler.prototype.update = function() {
             const targets = [battler];
             const action = makeAction(skillId);
             const mapAnimation = makeMapAnimationStateAndBattler(battler, skillId, action);
-
             // DynamicAnimation開始
             battler.showDynamicAnimation(targets, action, mapAnimation);
         }
@@ -2646,17 +2648,25 @@ Sprite_Battler.prototype.startDynamicAnimation = function(mirror, delay, dynamic
             const battler = this._battler;
             // 実行時間を設定
             let dynamicDuration = 0;
-            // スキルＩＤ単位で保有する実行時間
+            // スキルＩＤ単位で保有する現在の実行時間
             if (battler.dynamicDurations[skillId]) {
                 dynamicDuration = battler.dynamicDurations[skillId];
-                // 開始タイミングの指定がある場合は調整
-                if (mapAnimation.startTiming) {
-                    dynamicDuration -= mapAnimation.startTiming * pCalculationRate;
-                }
             }
+            // 開始するDynamicAnimationの実行時間
             let waitDuration = 0;
             if (dynamicAnimation.waitDuration) {
                 waitDuration = dynamicAnimation.waitDuration;
+                // 開始タイミングの指定がある場合は調整
+                if (mapAnimation.startTiming) {
+                    waitDuration -= mapAnimation.startTiming * pCalculationRate;
+                    // なぜかズレるので８フレーム分調整
+                    // ※根拠不明
+                    waitDuration += 8;
+                }
+                // 切れ目をなくす場合、1フレーム短縮
+                if (pCloseAnimationGap) {
+                    waitDuration -= 1;
+                }
             }
             // より長いほうを採用
             battler.dynamicDurations[skillId] = Math.max(waitDuration, dynamicDuration);
