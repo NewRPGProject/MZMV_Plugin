@@ -31,6 +31,7 @@
  * and the window size is retained.
  * 
  * Common event invocation is supported from ver1.01.
+ * Up to two common events can be set.
  * It can be a debug-only function.
  * 
  * Keys for which plugin parameters
@@ -285,6 +286,7 @@
  * ウィンドウサイズも保持されるメリットがあります。
  * 
  * ver1.01よりコモンイベントの呼び出しに対応しました。
+ * ２つまでコモンイベントを設定できます。
  * デバッグ専用の機能にすることもできます。
  * 
  * プラグインパラメータを設定しなかった箇所は元のままになります。
