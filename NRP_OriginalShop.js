@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Create a store using your original currency.
+ * @plugindesc v1.01 Create a store using your original currency.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/498394064.html
  *
@@ -102,7 +102,7 @@
  * @param Suffix
  * @parent <Message>
  * @type string
- * @default 個
+ * @default
  * @desc String to be displayed after the original currency.
  * Icon (\i[?]) is also valid.
  * 
@@ -177,7 +177,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 独自通貨を使用した店を作成します。
+ * @plugindesc v1.01 独自通貨を使用した店を作成します。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/498394064.html
  *
@@ -561,8 +561,8 @@ Window_Gold.prototype.refresh = function() {
     const prefix = pPrefix;
     const suffix = pSuffix;
     const value = this.value();
-    let prefixWidth = this.textWidth(prefix);
-    const suffixWidth = this.textWidth(suffix);
+    let prefixWidth = prefix ? this.textWidth(prefix) : 0;
+    const suffixWidth = suffix ? this.textWidth(suffix) : 0;
 
     if (prefix) {
         this.changeTextColor(ColorManager.systemColor());
