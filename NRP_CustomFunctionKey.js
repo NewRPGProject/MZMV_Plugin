@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Customize function key functions.
+ * @plugindesc v1.011 Customize function key functions.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/503167830.html
  *
@@ -259,7 +259,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 ファンクションキーの機能をカスタマイズ。
+ * @plugindesc v1.011 ファンクションキーの機能をカスタマイズ。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/503167830.html
  *
@@ -643,14 +643,14 @@ function callFunction(key) {
         Graphics._switchStretchMode();
     } else if (key == "FullScreen") {
         Graphics._switchFullScreen();
-    } else if (key == "CommonEvent1") {
+    } else if (key == "CommonEvent1" && !$gameMap.isEventRunning()) {
         // テスト時限定かつ本番なら中止
         if (pCommon1Debug && !$gameTemp.isPlaytest()) {
             return;
         }
         callCommonEvent(pCommonEvent1);
 
-    } else if (key == "CommonEvent2") {
+    } else if (key == "CommonEvent2" && !$gameMap.isEventRunning()) {
         // テスト時限定かつ本番なら中止
         if (pCommon2Debug && !$gameTemp.isPlaytest()) {
             return;
