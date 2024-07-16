@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.06 A list-style skill learning system.
+ * @plugindesc v1.07 A list-style skill learning system.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -448,7 +448,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.06 リスト形式のスキル習得システム。
+ * @plugindesc v1.07 リスト形式のスキル習得システム。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -1423,7 +1423,12 @@ Scene_LearnSkillList.prototype.confirmLearnOk = function() {
     // スキルを習得
     const dataSkill = this._confirmWindow.dataSkill();
     const item = this._confirmWindow.item();
-    this.actor().learnSkill(dataSkill.id);
+    const actor = this.actor();
+    actor.learnSkill(dataSkill.id);
+
+    // リフレッシュして装備状況を更新
+    // ※NRP_EquipSlot.jsによる装備スロットの追加などを想定
+    actor.refresh();
 
     // スキルポイントを減算
     if (item.SkillPoint) {
