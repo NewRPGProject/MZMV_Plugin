@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Customize Optimize function.
+ * @plugindesc v1.001 Customize Optimize function.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489626316.html
  *
@@ -118,7 +118,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 最強装備機能をカスタマイズ
+ * @plugindesc v1.001 最強装備機能をカスタマイズ
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489626316.html
  *
@@ -440,7 +440,7 @@ if (pSlotActorSwitch) {
             this.refreshActor();
             // 引き続きスロットウィンドウをアクティブにする。
             this._slotWindow.activate();
-            this._slotWindow.select(0);
+            // this._slotWindow.select(0);
             this._commandWindow.deactivate();
             return;
         }
@@ -537,9 +537,9 @@ Game_Actor.prototype.optimizeTargetEquipments = function(equipmentTypes) {
 
 if (pHideOptimizeArea) {
     /*
-    * メソッドが未定義の場合は事前に定義
-    * ※これをしておかないと以後の親クラスへの追記が反映されない。
-    */
+     * メソッドが未定義の場合は事前に定義
+     * ※これをしておかないと以後の親クラスへの追記が反映されない。
+     */
     if (Window_EquipSlot.prototype.processHandling == Window_Selectable.prototype.processHandling) {
         Window_EquipSlot.prototype.processHandling = function() {
             return Window_Selectable.prototype.processHandling.apply(this, arguments);
