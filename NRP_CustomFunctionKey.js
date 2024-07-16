@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Customize function key functions.
+ * @plugindesc v1.01 Customize function key functions.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/503167830.html
  *
@@ -29,6 +29,9 @@
  * You can also set other functions such as "Return to Title Scene".
  * The operation is faster than normal reloading,
  * and the window size is retained.
+ * 
+ * Common event invocation is supported from ver1.01.
+ * It can be a debug-only function.
  * 
  * Keys for which plugin parameters
  * were not set will be left as they were.
@@ -57,6 +60,8 @@
  * @option FPS
  * @option Debug
  * @option DevTools
+ * @option CommonEvent1
+ * @option CommonEvent2
  * @desc This function is called up when the F1 key is pressed.
  * 
  * @param F2
@@ -70,6 +75,8 @@
  * @option FPS
  * @option Debug
  * @option DevTools
+ * @option CommonEvent1
+ * @option CommonEvent2
  * @desc This function is called up when the F2 key is pressed.
  * 
  * @param F3
@@ -83,6 +90,8 @@
  * @option FPS
  * @option Debug
  * @option DevTools
+ * @option CommonEvent1
+ * @option CommonEvent2
  * @desc This function is called up when the F3 key is pressed.
  * 
  * @param F4
@@ -96,6 +105,8 @@
  * @option FPS
  * @option Debug
  * @option DevTools
+ * @option CommonEvent1
+ * @option CommonEvent2
  * @desc This function is called up when the F4 key is pressed.
  * 
  * @param F5
@@ -109,6 +120,8 @@
  * @option FPS
  * @option Debug
  * @option DevTools
+ * @option CommonEvent1
+ * @option CommonEvent2
  * @desc This function is called up when the F5 key is pressed.
  * 
  * @param F6
@@ -122,6 +135,8 @@
  * @option FPS
  * @option Debug
  * @option DevTools
+ * @option CommonEvent1
+ * @option CommonEvent2
  * @desc This function is called up when the F6 key is pressed.
  * 
  * @param F7
@@ -135,6 +150,8 @@
  * @option FPS
  * @option Debug
  * @option DevTools
+ * @option CommonEvent1
+ * @option CommonEvent2
  * @desc This function is called up when the F7 key is pressed.
  * 
  * @param F8
@@ -148,6 +165,8 @@
  * @option FPS
  * @option Debug
  * @option DevTools
+ * @option CommonEvent1
+ * @option CommonEvent2
  * @desc This function is called up when the F8 key is pressed.
  * 
  * @param F9
@@ -161,6 +180,8 @@
  * @option FPS
  * @option Debug
  * @option DevTools
+ * @option CommonEvent1
+ * @option CommonEvent2
  * @desc This function is called up when the F9 key is pressed.
  * 
  * @param F10
@@ -174,6 +195,8 @@
  * @option FPS
  * @option Debug
  * @option DevTools
+ * @option CommonEvent1
+ * @option CommonEvent2
  * @desc This function is called up when the F10 key is pressed.
  * 
  * @param F11
@@ -187,6 +210,8 @@
  * @option FPS
  * @option Debug
  * @option DevTools
+ * @option CommonEvent1
+ * @option CommonEvent2
  * @desc This function is called up when the F11 key is pressed.
  * 
  * @param F12
@@ -200,12 +225,40 @@
  * @option FPS
  * @option Debug
  * @option DevTools
+ * @option CommonEvent1
+ * @option CommonEvent2
  * @desc This function is called up when the F12 key is pressed.
+ * 
+ * @param <CommonEvent>
+ * 
+ * @param CommonEvent1
+ * @parent <CommonEvent>
+ * @type common_event
+ * @desc The number of the CommonEvent1 to call.
+ * Associate with a function key.
+ * 
+ * @param Common1Debug
+ * @parent CommonEvent1
+ * @type boolean
+ * @default false
+ * @desc Make CommonEvent1 a debug-only function.
+ * 
+ * @param CommonEvent2
+ * @parent <CommonEvent>
+ * @type common_event
+ * @desc The number of the CommonEvent2 to call.
+ * Associate with a function key.
+ * 
+ * @param Common2Debug
+ * @parent CommonEvent2
+ * @type boolean
+ * @default false
+ * @desc Make CommonEvent2 a debug-only function.
  */
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 ファンクションキーの機能をカスタマイズ。
+ * @plugindesc v1.01 ファンクションキーの機能をカスタマイズ。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/503167830.html
  *
@@ -230,6 +283,9 @@
  * また、その他に『タイトル画面へ戻る』機能も設定できます。
  * 通常のリロードよりも動作が速く、
  * ウィンドウサイズも保持されるメリットがあります。
+ * 
+ * ver1.01よりコモンイベントの呼び出しに対応しました。
+ * デバッグ専用の機能にすることもできます。
  * 
  * プラグインパラメータを設定しなかった箇所は元のままになります。
  * 
@@ -256,6 +312,8 @@
  * @option ＦＰＳ表示 @value FPS
  * @option デバッグ @value Debug
  * @option 開発者ツール @value DevTools
+ * @option コモンイベント１ @value CommonEvent1
+ * @option コモンイベント２ @value CommonEvent2
  * @desc Ｆ１キーを押した時に呼び出す機能です。
  * 
  * @param F2
@@ -270,6 +328,8 @@
  * @option ＦＰＳ表示 @value FPS
  * @option デバッグ @value Debug
  * @option 開発者ツール @value DevTools
+ * @option コモンイベント１ @value CommonEvent1
+ * @option コモンイベント２ @value CommonEvent2
  * @desc Ｆ２キーを押した時に呼び出す機能です。
  * 
  * @param F3
@@ -284,6 +344,8 @@
  * @option ＦＰＳ表示 @value FPS
  * @option デバッグ @value Debug
  * @option 開発者ツール @value DevTools
+ * @option コモンイベント１ @value CommonEvent1
+ * @option コモンイベント２ @value CommonEvent2
  * @desc Ｆ３キーを押した時に呼び出す機能です。
  * 
  * @param F4
@@ -298,6 +360,8 @@
  * @option ＦＰＳ表示 @value FPS
  * @option デバッグ @value Debug
  * @option 開発者ツール @value DevTools
+ * @option コモンイベント１ @value CommonEvent1
+ * @option コモンイベント２ @value CommonEvent2
  * @desc Ｆ４キーを押した時に呼び出す機能です。
  * 
  * @param F5
@@ -312,6 +376,8 @@
  * @option ＦＰＳ表示 @value FPS
  * @option デバッグ @value Debug
  * @option 開発者ツール @value DevTools
+ * @option コモンイベント１ @value CommonEvent1
+ * @option コモンイベント２ @value CommonEvent2
  * @desc Ｆ５キーを押した時に呼び出す機能です。
  * 
  * @param F6
@@ -326,6 +392,8 @@
  * @option ＦＰＳ表示 @value FPS
  * @option デバッグ @value Debug
  * @option 開発者ツール @value DevTools
+ * @option コモンイベント１ @value CommonEvent1
+ * @option コモンイベント２ @value CommonEvent2
  * @desc Ｆ６キーを押した時に呼び出す機能です。
  * 
  * @param F7
@@ -340,6 +408,8 @@
  * @option ＦＰＳ表示 @value FPS
  * @option デバッグ @value Debug
  * @option 開発者ツール @value DevTools
+ * @option コモンイベント１ @value CommonEvent1
+ * @option コモンイベント２ @value CommonEvent2
  * @desc Ｆ７キーを押した時に呼び出す機能です。
  * 
  * @param F8
@@ -354,6 +424,8 @@
  * @option ＦＰＳ表示 @value FPS
  * @option デバッグ @value Debug
  * @option 開発者ツール @value DevTools
+ * @option コモンイベント１ @value CommonEvent1
+ * @option コモンイベント２ @value CommonEvent2
  * @desc Ｆ８キーを押した時に呼び出す機能です。
  * 
  * @param F9
@@ -368,6 +440,8 @@
  * @option ＦＰＳ表示 @value FPS
  * @option デバッグ @value Debug
  * @option 開発者ツール @value DevTools
+ * @option コモンイベント１ @value CommonEvent1
+ * @option コモンイベント２ @value CommonEvent2
  * @desc Ｆ９キーを押した時に呼び出す機能です。
  * 
  * @param F10
@@ -382,6 +456,8 @@
  * @option ＦＰＳ表示 @value FPS
  * @option デバッグ @value Debug
  * @option 開発者ツール @value DevTools
+ * @option コモンイベント１ @value CommonEvent1
+ * @option コモンイベント２ @value CommonEvent2
  * @desc Ｆ１０キーを押した時に呼び出す機能です。
  * 
  * @param F11
@@ -396,6 +472,8 @@
  * @option ＦＰＳ表示 @value FPS
  * @option デバッグ @value Debug
  * @option 開発者ツール @value DevTools
+ * @option コモンイベント１ @value CommonEvent1
+ * @option コモンイベント２ @value CommonEvent2
  * @desc Ｆ１１キーを押した時に呼び出す機能です。
  * 
  * @param F12
@@ -410,7 +488,40 @@
  * @option ＦＰＳ表示 @value FPS
  * @option デバッグ @value Debug
  * @option 開発者ツール @value DevTools
+ * @option コモンイベント１ @value CommonEvent1
+ * @option コモンイベント２ @value CommonEvent2
  * @desc Ｆ１２キーを押した時に呼び出す機能です。
+ * 
+ * @param <CommonEvent>
+ * @text ＜コモンイベント＞
+ * 
+ * @param CommonEvent1
+ * @parent <CommonEvent>
+ * @text コモンイベント１
+ * @type common_event
+ * @desc 呼び出すコモンイベント１の番号です。
+ * ファンクションキーと紐づけてください。
+ * 
+ * @param Common1Debug
+ * @parent CommonEvent1
+ * @text コモン１をデバッグ用に
+ * @type boolean
+ * @default false
+ * @desc コモンイベント１をデバッグ専用の機能にします。
+ * 
+ * @param CommonEvent2
+ * @parent <CommonEvent>
+ * @text コモンイベント２
+ * @type common_event
+ * @desc 呼び出すコモンイベント２の番号です。
+ * ファンクションキーと紐づけてください。
+ * 
+ * @param Common2Debug
+ * @parent CommonEvent2
+ * @text コモン２をデバッグ用に
+ * @type boolean
+ * @default false
+ * @desc コモンイベント２をデバッグ専用の機能にします。
  */
 
 (function() {
@@ -451,6 +562,10 @@ const pF9 = setDefault(parameters["F9"]);
 const pF10 = setDefault(parameters["F10"]);
 const pF11 = setDefault(parameters["F11"]);
 const pF12 = setDefault(parameters["F12"]);
+const pCommonEvent1 = toNumber(parameters["CommonEvent1"]);
+const pCommon1Debug = toBoolean(parameters["Common1Debug"], false);
+const pCommonEvent2 = toNumber(parameters["CommonEvent2"]);
+const pCommon2Debug = toBoolean(parameters["Common2Debug"], false);
 
 //-----------------------------------------------------------------------------
 // SceneManager
@@ -526,7 +641,28 @@ function callFunction(key) {
         Graphics._switchStretchMode();
     } else if (key == "FullScreen") {
         Graphics._switchFullScreen();
+    } else if (key == "CommonEvent1") {
+        // テスト時限定かつ本番なら中止
+        if (pCommon1Debug && !$gameTemp.isPlaytest()) {
+            return;
+        }
+        callCommonEvent(pCommonEvent1);
+
+    } else if (key == "CommonEvent2") {
+        // テスト時限定かつ本番なら中止
+        if (pCommon2Debug && !$gameTemp.isPlaytest()) {
+            return;
+        }
+        callCommonEvent(pCommonEvent2);
     }
+}
+
+/**
+ * ●コモンイベントの呼び出し共通処理
+ */
+function callCommonEvent(commonEventId) {
+    $gameTemp.reserveCommonEvent(commonEventId);
+    $gameMap._interpreter.setupReservedCommonEvent();
 }
 
 //-----------------------------------------------------------------------------
