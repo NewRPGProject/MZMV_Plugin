@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.07 A list-style skill learning system.
+ * @plugindesc v1.08 A list-style skill learning system.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -444,11 +444,19 @@
  * @type string
  * @desc This script is the condition for displaying skill.
  * e.g: a.isLearnedSkill(1) && a.isLearnedSkill(2)
+ * 
+ * @param <DisabledCondition>
+ * 
+ * @param DisabledScript
+ * @parent <DisabledCondition>
+ * @type string
+ * @desc The condition that prohibits the learning of skills.
+ * e.g: !a.isLearnedSkill(1) || !a.isLearnedSkill(2)
  */
 
 /*:ja
  * @target MZ
- * @plugindesc v1.07 リスト形式のスキル習得システム。
+ * @plugindesc v1.08 リスト形式のスキル習得システム。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -953,6 +961,17 @@
  * @type string
  * @desc スキルを表示する条件となるスクリプトです。
  * 例：a.isLearnedSkill(1) && a.isLearnedSkill(2)
+ * 
+ * @param <DisabledCondition>
+ * @text ＜禁止条件＞
+ * 
+ * @param DisabledScript
+ * @parent <DisabledCondition>
+ * @text スクリプト
+ * @type string
+ * @desc スキルの習得を禁止する条件となるスクリプトです。
+ * 例：!a.isLearnedSkill(1) || !a.isLearnedSkill(2)
+ * 
  */
 
 //-----------------------------------------------------------------------------
@@ -1315,6 +1334,12 @@ Scene_LearnSkillSelectActor.prototype.onActorOk = function() {
 Scene_LearnSkillList.prototype.initialize = function() {
     Scene_MenuBase.prototype.initialize.call(this);
     Scene_Message.prototype.initialize.call(this);
+
+    // 顔グラの事前読込
+    // ※メニューを経由しなかった場合は読み込めていないケースがあるため
+    for (const actor of $gameParty.members()) {
+        ImageManager.loadFace(actor.faceName());
+    }
 };
 
 /**
@@ -1491,7 +1516,7 @@ Scene_LearnSkillList.prototype.refreshActor = function() {
  * ●地点の選択開始
  */
 Scene_LearnSkillList.prototype.onSkillListStart = function() {
-    // 地点選択ウィンドウの表示＆フォーカス
+    // スキルリストウィンドウの表示＆フォーカス
     this._skillListWindow.show();
     this._skillListWindow.activate();
     this._skillListWindow.refresh();
@@ -1640,15 +1665,30 @@ Window_LearnSkillList.prototype.isDisplaySkillData = function(skillData) {
         return true;
     }
     
-    // スキルを習得できるかどうか？
-    return this.isMatchSkillData(skillData);
+    // スキルを表示できるかどうか？
+    return this.isMatchDisplaySkillData(skillData);
 }
 
 /**
- * ●スキルを習得条件を満たしているかどうか？
+ * ●スキルの習得条件を満たしているかどうか？
  * ※ポイントは除く
  */
 Window_LearnSkillList.prototype.isMatchSkillData = function(skillData) {
+    // 表示条件を満たしていない場合は不可
+    if (!this.isMatchDisplaySkillData(skillData)) {
+        return false;
+    // 禁止条件に該当する場合は不可
+    } else if (this.isLearningDisabled(skillData)) {
+        return false;
+    }
+    return true;
+}
+
+/**
+ * ●スキルの表示条件を満たしているかどうか？
+ * ※ポイントは除く
+ */
+Window_LearnSkillList.prototype.isMatchDisplaySkillData = function(skillData) {
     // eval参照用
     const a = this._actor;
 
@@ -1665,7 +1705,19 @@ Window_LearnSkillList.prototype.isMatchSkillData = function(skillData) {
     } else if (skillData.Script && !eval(skillData.Script)) {
         return false;
     }
+
     return true;
+}
+
+/**
+ * ●スキルの習得禁止
+ */
+Window_LearnSkillList.prototype.isLearningDisabled = function(skillData) {
+    const a = this._actor;
+    if (skillData.DisabledScript) {
+        return eval(skillData.DisabledScript);
+    }
+    return false;
 }
 
 /**
@@ -1780,6 +1832,10 @@ Window_LearnSkillList.prototype.isEnabled = function(item) {
 Window_LearnSkillList.prototype.drawItemName = function(learnSkillData, x, y, width) {
     const skillId = Number(learnSkillData.Skill);
     const dataSkill = $dataSkills[skillId];
+    if (!dataSkill) {
+        return;
+    }
+
     const iconY = y + (this.lineHeight() - ImageManager.iconHeight) / 2;
     const textMargin = ImageManager.iconWidth + 4;
     const itemWidth = Math.max(0, width - textMargin);
