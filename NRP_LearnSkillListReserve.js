@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.001 A list-style skill learning system reservation functionality.
+ * @plugindesc v1.01 A list-style skill learning system reservation functionality.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @base NRP_LearnSkillList
  * @orderAfter NRP_LearnSkillList
@@ -206,7 +206,7 @@ Would you like to cancel?
 
 /*:ja
  * @target MZ
- * @plugindesc v1.001 リスト形式のスキル習得システムの予約機能。
+ * @plugindesc v1.01 リスト形式のスキル習得システムの予約機能。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @base NRP_LearnSkillList
  * @orderAfter NRP_LearnSkillList
@@ -520,16 +520,25 @@ PluginManager.registerCommand(PLUGIN_NAME, "CallReserveSkillScene", function(arg
         if ($gameMessage.hasText()) {
             // 一旦、強制呼び出しフラグをオンにしてメッセージ終了後に呼び出し
             mForceCallFlg = true;
+            // メッセージの表示待ちを行う。
+            this.setWaitMode("message");
 
         // それ以外は普通に呼び出し
         } else {
-            // アクターをセット
-            $gameParty.setMenuActor($gameActors.actor(mReserveSkillActorId));
-            // スキル習得画面呼び出し
-            SceneManager.push(Scene_LearnSkillList);
+            callLearnSkillList(mReserveSkillActorId);
         }
     }
 });
+
+/**
+ * ●習得画面の呼び出し
+ */
+function callLearnSkillList(actorId) {
+    // アクターをセット
+    $gameParty.setMenuActor($gameActors.actor(actorId));
+    // スキル習得画面呼び出し
+    SceneManager.push(Scene_LearnSkillList);
+}
 
 //-----------------------------------------------------------------------------
 // Scene_LearnSkillList
@@ -695,15 +704,14 @@ Scene_LearnSkillList.prototype.terminate = function() {
  */
 const _Scene_Map_start = Scene_Map.prototype.start;
 Scene_Map.prototype.start = function() {
-    // 予約スキルを習得した場合はスキル周到画面呼び出し
+    // 予約スキルを習得した場合はスキル習得画面呼び出し
     if (mReserveSkillActorId) {
-        // アクターをセット
-        $gameParty.setMenuActor($gameActors.actor(mReserveSkillActorId));
         // 一瞬マップが表示されてしまうため黒くする。
         this._fadeOpacity = 255;
         this.updateColorFilter();
+        
         // スキル習得画面呼び出し
-        SceneManager.push(Scene_LearnSkillList);
+        callLearnSkillList(mReserveSkillActorId);
         return;
     }
 
@@ -1158,10 +1166,8 @@ Game_Interpreter.prototype.terminate = function() {
     if (mReserveSkillActorId
             && $gameMap._interpreter == this
             && !$gameMessage.hasText()) {
-        // アクターをセット
-        $gameParty.setMenuActor($gameActors.actor(mReserveSkillActorId));
         // スキル習得画面呼び出し
-        SceneManager.push(Scene_LearnSkillList);
+        callLearnSkillList(mReserveSkillActorId);
     }
 };
 
@@ -1179,10 +1185,8 @@ Window_Message.prototype.terminateMessage = function() {
     // 強制呼び出しフラグがオンの場合
     if (mForceCallFlg) {
         mForceCallFlg = false;
-        // アクターをセット
-        $gameParty.setMenuActor($gameActors.actor(mReserveSkillActorId));
         // スキル習得画面呼び出し
-        SceneManager.push(Scene_LearnSkillList);
+        callLearnSkillList(mReserveSkillActorId);
     }
 };
 
@@ -1201,10 +1205,8 @@ Window_Message.prototype.checkToNotClose = function() {
     // この時点でもisClosingならば、メッセージ終了と判断
     // さらにイベントが終了していることを確認する。
     if (mReserveSkillActorId && this.isClosing() && !$gameMap._interpreter.isRunning()) {
-        // アクターをセット
-        $gameParty.setMenuActor($gameActors.actor(mReserveSkillActorId));
         // スキル習得画面呼び出し
-        SceneManager.push(Scene_LearnSkillList);
+        callLearnSkillList(mReserveSkillActorId);
     }
 };
 
