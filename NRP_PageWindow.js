@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.07 The windows can be page-turned left and right.
+ * @plugindesc v1.071 The windows can be page-turned left and right.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475347742.html
  *
@@ -175,7 +175,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.07 各種ウィンドウを左右でページ切替できるようにします。
+ * @plugindesc v1.071 各種ウィンドウを左右でページ切替できるようにします。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475347742.html
  *
@@ -983,32 +983,51 @@ Window_Selectable.prototype.updateArrows = function() {
     this.upArrowVisible = false;
 };
 
-/**
- * ●ＯＫ時
+/*
+ * Window_Selectableの関数が未定義の場合は事前に定義
+ * ※これをしておかないと以後の親側への追記が反映されない。
  */
-const _Window_Selectable_callOkHandler = Window_Selectable.prototype.callOkHandler;
-Window_Selectable.prototype.callOkHandler = function() {
+if (Window_Selectable.prototype.close == Window_Base.prototype.close) {
+    Window_Selectable.prototype.close = function() {
+        return Window_Base.prototype.close.apply(this, arguments);
+    }
+}
+if (Window_Selectable.prototype.hide == Window_Base.prototype.hide) {
+    Window_Selectable.prototype.hide = function() {
+        return Window_Base.prototype.hide.apply(this, arguments);
+    }
+}
+
+/**
+ * ●ウィンドウを閉じる
+ */
+const _Window_Selectable_close = Window_Selectable.prototype.close;
+Window_Selectable.prototype.close = function() {
     // スクロール状態をクリア
-    this._scrollX = 0;
-    this._scrollY = 0;
-    this._scrollBaseX = 0;
-    this._scrollBaseY = 0;
-    this.clearScrollStatus();
-    _Window_Selectable_callOkHandler.apply(this, arguments);
+    if (this.isUsePage()) {
+        this._scrollX = 0;
+        this._scrollY = 0;
+        this._scrollBaseX = 0;
+        this._scrollBaseY = 0;
+        this.clearScrollStatus();
+    }
+    _Window_Selectable_close.apply(this, arguments);
 };
 
 /**
- * ●キャンセル時
+ * ●ウィンドウを消す
  */
-const _Window_Selectable_callCancelHandler = Window_Selectable.prototype.callCancelHandler;
-Window_Selectable.prototype.callCancelHandler = function() {
+const _Window_Selectable_hide = Window_Selectable.prototype.hide;
+Window_Selectable.prototype.hide = function() {
     // スクロール状態をクリア
-    this._scrollX = 0;
-    this._scrollY = 0;
-    this._scrollBaseX = 0;
-    this._scrollBaseY = 0;
-    this.clearScrollStatus();
-    _Window_Selectable_callCancelHandler.apply(this, arguments);
+    if (this.isUsePage()) {
+        this._scrollX = 0;
+        this._scrollY = 0;
+        this._scrollBaseX = 0;
+        this._scrollBaseY = 0;
+        this.clearScrollStatus();
+    }
+    _Window_Selectable_hide.apply(this, arguments);
 };
 
 // ----------------------------------------------------------------------------
