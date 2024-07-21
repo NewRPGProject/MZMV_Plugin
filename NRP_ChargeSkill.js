@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.042 Create a charge skill.
+ * @plugindesc v1.05 Create a charge skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicAnimationMZ
  * @url http://newrpg.seesaa.net/article/474413155.html
@@ -102,11 +102,16 @@
  * @type boolean
  * @default true
  * @desc Adjust the timing of the charge state so that it is added after the animation.
+ * 
+ * @param limitActionTimes
+ * @type boolean
+ * @default true
+ * @desc When a charge skill is activated, the time of action is limited to one time.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.042 ため技作成用の機能を提供します。
+ * @plugindesc v1.05 ため技作成用の機能を提供します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_DynamicAnimationMZ
  * @url http://newrpg.seesaa.net/article/474413155.html
@@ -171,13 +176,19 @@
  * @type boolean
  * @default false
  * @desc ため技の開始時、一部ターン経過処理を無視します。
- * ステート＆能力変化のターン経過、毒のダメージ効果などが対象。
+ * ステート＆能力変化のターン経過、毒のダメージなどが対象。
  * 
  * @param adjustStateTiming
  * @text ステート付加のタイミング調整
  * @type boolean
  * @default true
  * @desc ため状態用ステートを付加するタイミングが、アニメーションの後になるように調整します。
+ * 
+ * @param limitActionTimes
+ * @text 行動回数の制限
+ * @type boolean
+ * @default true
+ * @desc ため技発動時は行動回数を１回に制限します。
  */
 
 (function() {
@@ -193,6 +204,7 @@ function toBoolean(str) {
 const parameters = PluginManager.parameters("NRP_ChargeSkill");
 const pChargeTurnException = toBoolean(parameters["chargeTurnException"]);
 const pAdjustStateTiming = toBoolean(parameters["adjustStateTiming"], false);
+const pLimitActionTimes = toBoolean(parameters["limitActionTimes"], true);
 
 /**
  * ●ため技情報を保有する構造体
@@ -635,6 +647,21 @@ Game_Battler.prototype.makeSpeed = function() {
 };
 
 /**
+ * ●行動回数の設定
+ */
+const _Game_Battler_makeActionTimes = Game_Battler.prototype.makeActionTimes;
+Game_Battler.prototype.makeActionTimes = function() {
+    // ため技発動時は１回行動に設定
+    if (pLimitActionTimes) {
+        const chargeSkill = getChargeSkill(this);
+        if (chargeSkill) {
+            return 1;
+        }
+    }
+    return _Game_Battler_makeActionTimes.apply(this, arguments);
+};
+
+/**
  * ●即時発動かどうか？
  */
 function isNoCharge(action, chargeSpeedRate) {
@@ -808,7 +835,8 @@ const _Window_BattleLog_startAction = Window_BattleLog.prototype.startAction;
 Window_BattleLog.prototype.startAction = function(subject, action, targets) {
     const item = action.item();
     // スキルメモ欄に<NoStartAction>が設定されているなら開始演出を省略
-    // ※NRP_BattleEventEXMZ.jsでも全く同じ処理をしているが問題ない。
+    // ※NRP_BattleEventEXMZ.jsでも同様の処理をしているが、
+    //   優先順位の関係で基本的にこちらだけが実行される。
     if (item.meta.NoStartAction) {
         // アニメーションが設定されている場合は、アニメーションとウェイトだけを残す
         if (item.animationId) {
