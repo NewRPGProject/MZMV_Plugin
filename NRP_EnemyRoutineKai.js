@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.082 Improve the enemy's action routine.
+ * @plugindesc v1.083 Improve the enemy's action routine.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/473218336.html
  *
@@ -137,7 +137,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.082 敵行動ルーチンを改善します。
+ * @plugindesc v1.083 敵行動ルーチンを改善します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/473218336.html
  *
@@ -512,7 +512,6 @@ BattleManager.processTurn = function() {
 
 /**
  * ●アクション生成
- * ※Game_Enemy.prototype.makeActionTimesをオーバライド
  */
 const _Game_Enemy_makeActions = Game_Enemy.prototype.makeActions;
 Game_Enemy.prototype.makeActions = function() {
@@ -524,8 +523,17 @@ Game_Enemy.prototype.makeActions = function() {
 };
 
 /**
+ * メソッドが未定義の場合は事前に定義
+ * ※これをしておかないと以後の親クラスへの追記が反映されない。
+ **/
+if (Game_Enemy.prototype.makeActionTimes == Game_Battler.prototype.makeActionTimes) {
+    Game_Enemy.prototype.makeActionTimes = function() {
+        return Game_Battler.prototype.makeActionTimes.apply(this, arguments);
+    }
+}
+
+/**
  * ●行動回数計算
- * ※Game_Battler.prototype.makeActionTimesをオーバライド
  */
 const _Game_Enemy_makeActionTimes = Game_Enemy.prototype.makeActionTimes;
 Game_Enemy.prototype.makeActionTimes = function() {
