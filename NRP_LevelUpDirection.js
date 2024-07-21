@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Added parameter display and direction at level-up.
+ * @plugindesc v1.021 Added parameter display and direction at level-up.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @orderAfter NRP_VictoryRewards
  * @url https://newrpg.seesaa.net/article/499197962.html
@@ -132,7 +132,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 レベルアップ時にパラメータ表示や演出を追加
+ * @plugindesc v1.021 レベルアップ時にパラメータ表示や演出を追加
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @orderAfter NRP_VictoryRewards
  * @url https://newrpg.seesaa.net/article/499197962.html
@@ -482,6 +482,9 @@ if (typeof AdditionalClass !== "undefined") {
 
         // レベルアップメッセージがない場合はどうしようもないので終了
         if (!pLvUpMessage) {
+            return;
+        // 設定が一つもない場合は終了
+        } else if (!pAC_DynamicSkill && !pAC_LevelUpSe && !pAC_LevelUpMe) {
             return;
         }
 
