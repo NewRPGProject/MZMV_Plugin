@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.05 Extend the effect of the skill.
+ * @plugindesc v1.051 Extend the effect of the skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -144,7 +144,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.05 スキルの効果を拡張します。
+ * @plugindesc v1.051 スキルの効果を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -407,7 +407,7 @@ Game_Action.prototype.apply = function(target) {
     // ＴＰ回復
     const recoverTp = this.item().meta.RecoverTp;
     if (recoverTp) {
-        target.gainTp(eval(recoverTp));
+        target.gainTp(Math.round(eval(recoverTp)));
         this.makeSuccess(target);
     }
 
@@ -417,6 +417,10 @@ Game_Action.prototype.apply = function(target) {
         return;
     }
     const stateId = eval(addState);
+    // 計算結果が０ならば終了
+    if (!stateId) {
+        return;
+    }
 
     // AddStateRateの値を100で割ってから計算。
     let chance = this.item().meta.AddStateRate ? this.item().meta.AddStateRate : 100;
