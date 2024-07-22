@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Change the traits (regular parameter and element rate) to an additive method.
+ * @plugindesc v1.04 Change the traits (regular parameter and element rate) to an additive method.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483215411.html
  *
@@ -94,6 +94,19 @@
  * (It is also possible to distinguish between 'attack missed' and 'evaded'.)
  * 
  * -------------------------------------------------------------------
+ * [Note of Skill]
+ * -------------------------------------------------------------------
+ * ◆Setting Element Rate Limits
+ * You can change the element rate limit for each skill.
+ * For example, you can create an Element Skill that is not disabled.
+ * 
+ * <ElementRateMax:2.0>
+ * Set the maximum element rate to 2x.
+ * 
+ * <ElementRateMin:0.5>
+ * Set the minimum element rate to 0.5x.
+ * 
+ * -------------------------------------------------------------------
  * [Terms]
  * -------------------------------------------------------------------
  * There are no restrictions.
@@ -180,7 +193,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 特徴（能力補正や属性有効度）を加算方式に変更する。
+ * @plugindesc v1.04 特徴（能力補正や属性有効度）を加算方式に変更する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483215411.html
  *
@@ -260,6 +273,19 @@
  * このパラメータをオンにすると、
  * 命中率から回避率を引いた値で判定を行うようになります。
  * ※『攻撃を外した』か『回避された』かの区別も可能です。
+ * 
+ * -------------------------------------------------------------------
+ * ■スキルのメモ欄
+ * -------------------------------------------------------------------
+ * ◆属性有効度の限界設定
+ * スキル毎に属性有効度の限界値を変更することができます。
+ * 例えば、無効化されない属性技のようなものを作成できます。
+ * 
+ * <ElementRateMax:2.0>
+ * 属性有効度の最大値を２倍に設定します。
+ * 
+ * <ElementRateMin:0.5>
+ * 属性有効度の最小値を０．５倍に設定します。
  * 
  * -------------------------------------------------------------------
  * ■利用規約
@@ -588,6 +614,40 @@ if (pElementRatePlus) {
         return rate;
     };
 }
+
+/**
+ * ●対象の属性有効度
+ */
+const _Game_BattlerBase_elementRate = Game_BattlerBase.prototype.elementRate;
+Game_BattlerBase.prototype.elementRate = function(elementId) {
+    const ret = _Game_BattlerBase_elementRate.apply(this, arguments);
+
+    // アクションが取得できる場合
+    // ※戦闘時以外に呼び出された場合は処理しない。
+    if (BattleManager._action && BattleManager._action.item()) {
+        const a = BattleManager._subject;
+        const b = this;
+        const item = BattleManager._action.item();
+
+        const elementRateMax = eval(item.meta.ElementRateMax);
+        if (elementRateMax != null) {
+            // 最大値を越えた場合
+            if (ret > elementRateMax) {
+                return elementRateMax;
+            }
+        }
+
+        const elementRateMin = eval(item.meta.ElementRateMin);
+        if (elementRateMin != null) {
+            // 最小値を下回った場合
+            if (ret < elementRateMin) {
+                return elementRateMin;
+            }
+        }
+    }
+
+    return ret;
+};
 
 //----------------------------------------
 // ステート有効度を変更
