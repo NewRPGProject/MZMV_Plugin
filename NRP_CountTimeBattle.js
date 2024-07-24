@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.20 Change the battle system to CTB.
+ * @plugindesc v1.201 Change the battle system to CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -50,7 +50,7 @@
  * You can change the target's waiting time
  * by entering the following in the note field of the state.
  * A value of 100 is the waiting time for one turn of the target.
- * Negative values are also possible.
+ * Formulas and negative values are also valid.
  * 
  * ◆<SetWt:[Number]>
  * Change the target waiting time.
@@ -264,7 +264,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.20 戦闘システムをＣＴＢへ変更します。
+ * @plugindesc v1.201 戦闘システムをＣＴＢへ変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -306,7 +306,8 @@
  * ■ステートのメモ欄
  * -------------------------------------------------------------------
  * ステートのメモ欄に以下を記入することで、対象の待ち時間を変更できます。
- * 数値は100で対象の１ターン分の待ち時間となります。マイナス値も可能です。
+ * 数値は100で対象の１ターン分の待ち時間となります。
+ * 数式やマイナス値も有効です。
  * 
  * ◆<SetWt:[数値]>
  * 対象の待ち時間を変更します。
@@ -1130,16 +1131,22 @@ Game_BattlerBase.prototype.overwriteBuffTurns = function(paramId, turns) {
  */
 const _Game_BattlerBase_prototype_addNewState = Game_BattlerBase.prototype.addNewState;
 Game_BattlerBase.prototype.addNewState = function(stateId) {
+    // eval参照用
+    const a = BattleManager._subject;
+    const b = this;
+
     /*
      * WT設定値を元にWTを変化
      */
     // <SetWt:number>があれば、その値(%)を設定
     if ($dataStates[stateId].meta.SetWt) {
-        this.setWt(this.baseWt * $dataStates[stateId].meta.SetWt / 100);
+        const wtRate = eval($dataStates[stateId].meta.SetWt) / 100;
+        this.setWt(this.baseWt * wtRate);
     
     // <AddWt:number>があれば、その値(%)を加算
     } else if ($dataStates[stateId].meta.AddWt) {
-        this.setWt(this.wt + this.baseWt * $dataStates[stateId].meta.AddWt / 100);
+        const addWtRate = eval($dataStates[stateId].meta.AddWt) / 100;
+        this.setWt(this.wt + this.baseWt * addWtRate);
     }
     
     // 元の処理
