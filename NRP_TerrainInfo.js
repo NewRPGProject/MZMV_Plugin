@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.031 Set detailed settings for battleback and encounter rates.
+ * @plugindesc v1.04 Set detailed settings for battleback and encounter rates.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/481820874.html
  *
@@ -26,7 +26,9 @@
  * In some cases, this may be a nuisance.
  * It is possible to change these specifications.
  * 
- * ■Usage
+ * -------------------------------------------------------------------
+ * [Usage]
+ * -------------------------------------------------------------------
  * Enter the condition, encounter rate, and battlebacks
  * in the plugin parameter SettingList.
  * You can set the registered Id in the note field of the tileset.
@@ -42,7 +44,9 @@
  * The content is tailored to Maker's default fields,
  * so please refer to it.
  * 
- * ■Detailed specifications
+ * -------------------------------------------------------------------
+ * [Detailed specifications]
+ * -------------------------------------------------------------------
  * Tile IDs and auto tile types are determined in order from the top layer.
  * Tiles on layers with no settings will be ignored.
  * 
@@ -54,12 +58,18 @@
  * 
  * The layer 2 forest encounter rate (200%) will be enabled.
  * 
+ * -------------------------------------------------------------------
  * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
  * The author is not responsible,
  * but will deal with defects to the extent possible.
+ * 
+ * @-----------------------------------------------------
+ * @ Plugin Parameters
+ * @-----------------------------------------------------
  * 
  * @param BushEncounterRate
  * @type number
@@ -126,6 +136,12 @@
  * @option airship
  * @desc The type of vehicle to be covered.
  * 
+ * @param Script
+ * @parent <Condition>
+ * @type string
+ * @desc Target Script Conditions.
+ * e.g.: $gameSwitches.value(1)
+ * 
  * @param <Contents>
  * 
  * @param EncounterRate
@@ -151,7 +167,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.031 戦闘背景やエンカウント率を詳細設定。
+ * @plugindesc v1.04 戦闘背景やエンカウント率を詳細設定。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/481820874.html
  *
@@ -175,7 +191,9 @@
  * 場合によっては、ありがた迷惑になりかねません。
  * これらの仕様を変更することも可能です。
  * 
+ * -------------------------------------------------------------------
  * ■使用方法
+ * -------------------------------------------------------------------
  * プラグインパラメータの設定リストに、
  * 条件、エンカウント率、戦闘背景を入力してください。
  * 登録した『設定ＩＤ』をタイルセットのメモ欄に設定すればＯＫです。
@@ -190,7 +208,9 @@
  * ツクールのデフォルトのフィールドに合わせた内容になっているので、
  * 参考にしてください。
  * 
+ * -------------------------------------------------------------------
  * ■細かい仕様
+ * -------------------------------------------------------------------
  * タイルＩＤやオートタイルタイプは、上のレイヤーから順番に判定されます。
  * 設定がないレイヤーのタイルは無視される仕様です。
  * 
@@ -202,10 +222,16 @@
  * 
  * レイヤー２の森のエンカウント率（２００％）が有効になります。
  * 
+ * -------------------------------------------------------------------
  * ■利用規約
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
+ * 
+ * @-----------------------------------------------------
+ * @ プラグインパラメータ
+ * @-----------------------------------------------------
  * 
  * @param BushEncounterRate
  * @text 茂みのエンカウント率
@@ -287,6 +313,13 @@
  * @option 大型船 @value ship
  * @option 飛行船 @value airship
  * @desc 対象とする乗物のタイプを指定します。
+ * 
+ * @param Script
+ * @text スクリプト
+ * @parent <Condition>
+ * @type string
+ * @desc 対象とするスクリプト条件です。
+ * 例：$gameSwitches.value(1)
  * 
  * @param <Contents>
  * @text ＜内容＞
@@ -411,6 +444,7 @@ for (const setting of pSettingList) {
     setting.autotileTypes = makeArray(setting.AutotileType);
     setting.tileIds = makeArray(setting.TileId);
     setting.vehicleType = setDefault(setting.VehicleType);
+    setting.script = setDefault(setting.Script);
     setting.encounterRate = toNumber(setting.EncounterRate);
     setting.battleback1 = setDefault(setting.Battleback1);
     setting.battleback2 = setDefault(setting.Battleback2);
@@ -763,6 +797,14 @@ function getMatchSetting(x, y) {
         if (setting.vehicleType) {
             // 乗物タイプが不一致なら次へ
             if (setting.vehicleType != $gamePlayer._vehicleType) {
+                continue;
+            }
+        }
+
+        // スクリプト条件の一致を確認
+        if (setting.script) {
+            // スクリプト条件が不一致なら次へ
+            if (!eval(setting.script)) {
                 continue;
             }
         }
