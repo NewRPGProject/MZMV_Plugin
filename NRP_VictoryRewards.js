@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.043 Customize the display after a battle victory.
+ * @plugindesc v1.042 Customize the display after a battle victory.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499138292.html
  *
@@ -227,7 +227,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.043 戦闘勝利時の表示をカスタマイズします。
+ * @plugindesc v1.042 戦闘勝利時の表示をカスタマイズします。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499138292.html
  *
