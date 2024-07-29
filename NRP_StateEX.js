@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.12 Extend the functionality of the state in various ways.
+ * @plugindesc v1.131 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -340,7 +340,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.12 ステートの機能を色々と拡張します。
+ * @plugindesc v1.131 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -1425,7 +1425,7 @@ BattleManager.makeRewards = function() {
 };
 
 /**
- * ●全滅判定ステートかどうか？
+ * 【独自】全滅判定ステートかどうか？
  */
 Game_BattlerBase.prototype.isDefeatState = function() {
     if (this.isDead()) {
@@ -1448,7 +1448,7 @@ Game_Unit.prototype.isAllDead = function() {
     }
 
     // 全員が全滅ステートの対象なら全滅として判定
-    if (this.aliveMembers().every(m => m.isDefeatState())) {
+    if (this.surviveMembers().length == 0) {
         return true;
     }
     return false;
@@ -1464,6 +1464,13 @@ Game_Unit.prototype.deadMembers = function() {
         return this.members().filter(member => member.isDefeatState());
     }
     return _Game_Unit_deadMembers.apply(this, arguments);
+};
+
+/**
+ * 【独自】全滅対象ではないメンバー
+ */
+Game_Unit.prototype.surviveMembers = function() {
+    return this.aliveMembers().filter(member => !member.isDefeatState());
 };
 
 // ----------------------------------------------------------------------------
