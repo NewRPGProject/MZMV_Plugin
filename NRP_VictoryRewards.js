@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.041 Customize the display after a battle victory.
+ * @plugindesc v1.043 Customize the display after a battle victory.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499138292.html
  *
@@ -62,7 +62,6 @@
  * @desc This is a common event that is executed at the start of the victory screen.
  * 
  * @param EndCommmonEvent
- * @text 終了時のコモンイベント
  * @type common_event
  * @desc This is a common event that is executed at the end of the victory screen.
  * 
@@ -228,7 +227,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.041 戦闘勝利時の表示をカスタマイズします。
+ * @plugindesc v1.043 戦闘勝利時の表示をカスタマイズします。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499138292.html
  *
@@ -540,6 +539,22 @@ const pAC_DisplayStyle = setDefault(parameters["AC_DisplayStyle"], "input");
 let mIsRewardsMessage = false;
 // 初期化処理利用
 let mIsRewardsMessageInit = false;
+
+// ----------------------------------------------------------------------------
+// Scene_Title
+// ----------------------------------------------------------------------------
+
+/**
+ * ●初期化処理
+ */
+const _Scene_Title_initialize = Scene_Title.prototype.initialize;
+Scene_Title.prototype.initialize = function() {
+    _Scene_Title_initialize.apply(this, arguments);
+
+    // 処理の途中でタイトルに戻られるとバグるので、ここでもクリア
+    mIsRewardsMessage = false;
+    mIsRewardsMessageInit = false;
+};
 
 // ----------------------------------------------------------------------------
 // BattleManager
