@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.04 Implemented a party change screen.
+ * @plugindesc v1.05 Implemented a party change screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/500297653.html
  *
@@ -158,7 +158,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.04 パーティ編成画面を実装。
+ * @plugindesc v1.05 パーティ編成画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/500297653.html
  *
@@ -452,8 +452,12 @@ Scene_ChangeParty.prototype.commandFormation = function() {
     this._statusWindow.activate();
     this._statusWindow.setHandler("ok", this.onFormationOk.bind(this));
     this._statusWindow.setHandler("cancel", this.onFormationCancel.bind(this));
+    this._statusWindow.setHandler("left", this.toBenchActor.bind(this));
+    this._statusWindow.setHandler("right", this.toBenchActor.bind(this));
     this._benchWindow.setHandler("ok", this.onFormationBenchOk.bind(this));
     this._benchWindow.setHandler("cancel", this.onFormationBenchCancel.bind(this));
+    this._benchWindow.setHandler("left", this.toBattleActor.bind(this));
+    this._benchWindow.setHandler("right", this.toBattleActor.bind(this));
 };
 
 /**
@@ -633,10 +637,6 @@ Scene_ChangeParty.prototype.toBenchActor = function() {
 
     this._statusWindow.deactivate();
     this._benchWindow.activate();
-
-    // 入力をクリア
-    // ※これをやらないとtoBattleActorが連続で呼ばれてしまう。
-    Input.clear();
 };
 
 /**
@@ -653,10 +653,6 @@ Scene_ChangeParty.prototype.toBattleActor = function() {
 
     this._benchWindow.deactivate();
     this._statusWindow.activate();
-
-    // 入力をクリア
-    // ※これをやらないとtoBenchActorが連続で呼ばれてしまう。
-    Input.clear();
 };
 
 /**
@@ -753,12 +749,40 @@ Window_ChangeParty.prototype.actor = function(index) {
     return $gameParty.members()[index];
 };
 
-Window_ChangeParty.prototype.cursorLeft = function(wrap) {
-    SceneManager._scene.toBenchActor();
+/**
+ * ●入力制御
+ */
+Window_ChangeParty.prototype.processHandling = function() {
+    // 左右の入力でSceneに処理を渡す。
+    if (this.isOpenAndActive()) {
+        if (this.isHandled("left") && Input.isTriggered("left")) {
+            return this.processLeft();
+        }
+        if (this.isHandled("right") && Input.isTriggered("right")) {
+            return this.processRight();
+        }
+    }
+    Window_Selectable.prototype.processHandling.call(this);
 };
 
-Window_ChangeParty.prototype.cursorRight = function(wrap) {
-    SceneManager._scene.toBenchActor();
+/**
+ * ●左制御
+ */
+Window_ChangeParty.prototype.processLeft = function() {
+    this.playCursorSound();
+    this.updateInputData();
+    this.deactivate();
+    this.callHandler("left");
+};
+
+/**
+ * ●右制御
+ */
+Window_ChangeParty.prototype.processRight = function() {
+    this.playCursorSound();
+    this.updateInputData();
+    this.deactivate();
+    this.callHandler("right");
 };
 
 /**
@@ -907,12 +931,40 @@ Window_ChangePartyBench.prototype.actor = function(index) {
     return benchMembers[index];
 };
 
-Window_ChangePartyBench.prototype.cursorLeft = function(wrap) {
-    SceneManager._scene.toBattleActor();
+/**
+ * ●入力制御
+ */
+Window_ChangePartyBench.prototype.processHandling = function() {
+    // 左右の入力でSceneに処理を渡す。
+    if (this.isOpenAndActive()) {
+        if (this.isHandled("left") && Input.isTriggered("left")) {
+            return this.processLeft();
+        }
+        if (this.isHandled("right") && Input.isTriggered("right")) {
+            return this.processRight();
+        }
+    }
+    Window_Selectable.prototype.processHandling.call(this);
 };
 
-Window_ChangePartyBench.prototype.cursorRight = function(wrap) {
-    SceneManager._scene.toBattleActor();
+/**
+ * ●左制御
+ */
+Window_ChangePartyBench.prototype.processLeft = function() {
+    this.playCursorSound();
+    this.updateInputData();
+    this.deactivate();
+    this.callHandler("left");
+};
+
+/**
+ * ●右制御
+ */
+Window_ChangePartyBench.prototype.processRight = function() {
+    this.playCursorSound();
+    this.updateInputData();
+    this.deactivate();
+    this.callHandler("right");
 };
 
 /**
