@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.011 Customize function key functions.
+ * @plugindesc v1.02 Customize function key functions.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/503167830.html
  *
@@ -259,7 +259,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.011 ファンクションキーの機能をカスタマイズ。
+ * @plugindesc v1.02 ファンクションキーの機能をカスタマイズ。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/503167830.html
  *
@@ -681,6 +681,23 @@ Scene_Map.prototype.updateCallDebug = function() {
         return;
     }
     _Scene_Map_updateCallDebug.apply(this, arguments);
+};
+
+// ----------------------------------------------------------------------------
+// Scene_Title
+// ----------------------------------------------------------------------------
+
+/**
+ * ●初期化処理
+ */
+const _Scene_Title_initialize = Scene_Title.prototype.initialize;
+Scene_Title.prototype.initialize = function() {
+    _Scene_Title_initialize.apply(this, arguments);
+
+    // キャプチャが画面に残ってしまう場合があるので、ここでクリア
+    if (SceneManager._backgroundBitmap) {
+        SceneManager._backgroundBitmap.destroy();
+    }
 };
 
 //-----------------------------------------------------------------------------
