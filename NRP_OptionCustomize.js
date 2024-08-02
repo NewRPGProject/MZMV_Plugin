@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Customize the display of the options scene.
+ * @plugindesc v1.001 Customize the display of the options scene.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/502777639.html
  *
@@ -66,7 +66,7 @@
  * @desc The background of the options window.
  * 
  * @param VolumeOffset
- * @type number @min 1 @max 100
+ * @type number @min 1 @max 100 @decimals 2
  * @desc The amount by which the volume item is to be increased or decreased at one time. Default is 20.
  * 
  * @param MagnifiedVolume
@@ -88,7 +88,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 オプション画面の表示をカスタマイズ
+ * @plugindesc v1.001 オプション画面の表示をカスタマイズ
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/502777639.html
  *
@@ -155,7 +155,7 @@
  * 
  * @param VolumeOffset
  * @text 音量の増減量
- * @type number @min 1 @max 100
+ * @type number @min 1 @max 100 @decimals 2
  * @desc 音量項目を一度に増減させる量です。デフォルトは20です。
  * 
  * @param MagnifiedVolume
