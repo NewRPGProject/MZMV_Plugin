@@ -54,6 +54,13 @@
  * Works with the DynamicAnimation&Motion plugins.
  * Appears with the direction specified for the x numbered skill.
  * 
+ * <CallEnemyCtbWt:[Number]>
+ * ※For use with NRP_CountTimeBattle.js
+ * Change the wait time before the first action
+ * to the specified value (100 is standard).
+ * For example, <CallEnemyCtbWt:0> will act immediately.
+ * If <CallEnemyCtbWt:50>, it will start acting in 1/2 turn.
+ * 
  * -------------------------------------------------------------------
  * [Note of Enemies]
  * -------------------------------------------------------------------
@@ -73,13 +80,6 @@
  * when an enemy character calls an enemy.
  * The ID must not be specified in the skill that calls the enemy.
  * Multiple designations are also supported.
- * 
- * <CallEnemyCtbWt:[Number]>
- * ※For use with NRP_CountTimeBattle.js
- * Change the wait time before the first action
- * to the specified value (100 is standard).
- * For example, <CallEnemyCtbWt:0> will act immediately.
- * If <CallEnemyCtbWt:50>, it will start acting in 1/2 turn.
  * 
  * -------------------------------------------------------------------
  * [Sample of DynamicMotion]
@@ -224,6 +224,12 @@
  * DynamicAnimation&Motionプラグインと連携し、
  * x番のスキルに指定された演出で登場します。
  * 
+ * <CallEnemyCtbWt:[数値]>
+ * ※NRP_CountTimeBattle.jsとの連携用
+ * 登場時の待ち時間を指定した値（100が標準）に変更します。
+ * 例えば、<CallEnemyCtbWt:0>なら即時行動します。
+ * <CallEnemyCtbWt:50>ならば、１／２ターンで行動開始します。
+ * 
  * -------------------------------------------------------------------
  * ■敵キャラのメモ欄
  * -------------------------------------------------------------------
@@ -241,12 +247,6 @@
  * 該当の敵キャラが仲間を呼んだ場合に呼び出される敵のＩＤです。
  * 仲間を呼ぶスキルにＩＤの指定がないことが条件です。
  * 複数指定も可能です。
- * 
- * <CallEnemyCtbWt:[数値]>
- * ※NRP_CountTimeBattle.jsとの連携用
- * 登場時の待ち時間を指定した値（100が標準）に変更します。
- * 例えば、<CallEnemyCtbWt:0>なら即時行動します。
- * <CallEnemyCtbWt:50>ならば、１／２ターンで行動開始します。
  * 
  * -------------------------------------------------------------------
  * ■DynamicMotionによる演出の例
