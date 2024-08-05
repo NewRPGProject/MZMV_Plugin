@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v2.063 Extends the weapon display.
+ * @plugindesc v2.064 Extends the weapon display.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/484348477.html
@@ -398,7 +398,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.063 武器の表示を拡張します。
+ * @plugindesc v2.064 武器の表示を拡張します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/484348477.html
@@ -1380,6 +1380,12 @@ Sprite_AnimationMV.prototype.updateCellSprite = function(sprite, cell) {
  * ●セルの色調変更
  */
 function changeAnimationColor(sprite, cell, spriteAnimation) {
+    // 戦闘中以外は対象外
+    // ※戦闘終了後もBattleManager._subjectは残るので事故防止
+    if (!$gameParty.inBattle()) {
+        return;
+    }
+
     // 現在の行動主体を取得
     const subject = BattleManager._subject;
     const pattern = cell[0];
