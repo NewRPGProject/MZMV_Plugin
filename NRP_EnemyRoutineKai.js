@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.083 Improve the enemy's action routine.
+ * @plugindesc v1.09 Improve the enemy's action routine.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/473218336.html
  *
@@ -18,7 +18,9 @@
  * - Do not heal, cure, or revive if there is no valid target.
  * - If there is only one, the substitution skill is not used.
  * 
+ * -------------------------------------------------------------------
  * [Individual Settings]
+ * -------------------------------------------------------------------
  * You can also make individual settings
  * by entering the following in the note of the enemy.
  * 
@@ -34,7 +36,9 @@
  * - Watch for state resistance?    : <RoutineWatchResist:[true or false]>
  * ※The [] is not required. If incorrectly included, it will not work.
  * 
+ * -------------------------------------------------------------------
  * [Notes]
+ * -------------------------------------------------------------------
  * - Only recovery type skills can be targeted for recovery control.
  * - Effects such as state are only determined by "none" type skills.
  * - Skills that belong to the HP damage/drain type
@@ -46,7 +50,9 @@
  * - In the case of "Force Action", if the target is "Random",
  *   the control will also be performed.
  * 
+ * -------------------------------------------------------------------
  * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
@@ -137,7 +143,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.083 敵行動ルーチンを改善します。
+ * @plugindesc v1.09 敵行動ルーチンを改善します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/473218336.html
  *
@@ -151,7 +157,9 @@
  * ・有効な対象が存在しない場合、回復や治療、蘇生を行わない。
  * ・一人しかいない場合、身代わりスキルを使用しない。
  * 
+ * -------------------------------------------------------------------
  * ■個別設定
+ * -------------------------------------------------------------------
  * 敵キャラのメモ欄に以下を記入すれば個別設定も可能です。
  * 
  * ・行動直前の再設定を行うか？     ：<RoutineReset:[true or false]>
@@ -166,7 +174,9 @@
  * ・ステート耐性を見るか？         ：<RoutineWatchResist:[true or false]>
  * ※[]は不要です。誤って含めると動きません。
  * 
+ * -------------------------------------------------------------------
  * ■注意点
+ * -------------------------------------------------------------------
  * ・回復時の対象制御はタイプが回復系のスキルのみ行います。
  * ・ステートなど使用効果の有効判定は、タイプが『なし』のスキルのみ行います。
  * ・タイプがＨＰダメージ・吸収に該当するスキルは使用効果に依らず制御しません。
@@ -174,7 +184,9 @@
  * ・また、行動再選択時に速度補正技を選ぶこともありません。
  * ・『戦闘行動の強制』を使用した場合も、対象がランダムだと制御が行われます。
  * 
+ * -------------------------------------------------------------------
  * ■利用規約
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
@@ -457,17 +469,15 @@ BattleManager.startInput = function() {
 };
 
 /**
- * ●ターン開始
+ * ●ＴＰＢのアクション生成
  */
-var _BattleManager_startTurn = BattleManager.startTurn;
-BattleManager.startTurn = function() {
-    _BattleManager_startTurn.apply(this, arguments);
-
+const _Game_Battler_makeTpbActions = Game_Battler.prototype.makeTpbActions;
+Game_Battler.prototype.makeTpbActions = function() {
     // TPBではstartInputを通らないためこちらでクリア
-    if (Utils.RPGMAKER_NAME == "MZ" && this.isTpb()) {
-        // 行動確定前にフラグ初期化
-        clearFirstActionDone();
-    }
+    // 行動確定前にフラグ初期化
+    clearFirstActionDone();
+
+    _Game_Battler_makeTpbActions.apply(this, arguments);
 };
 
 /**
