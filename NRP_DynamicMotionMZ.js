@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.252 When executing skills, call motion freely.
+ * @plugindesc v1.253 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -561,7 +561,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.252 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.253 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -2637,6 +2637,7 @@ Sprite.prototype.startDynamicMotion = function(dynamicMotion) {
     motion._referenceTarget = b;
     const repeat = dm.repeat;
     const r = dm.r;
+    motion._r = r;
     const position = dm.position;
     const screenX = dm.screenX;
     const screenY = dm.screenY;
@@ -3358,10 +3359,10 @@ Sprite_Battler.prototype.updateMove = function() {
  * ※当プラグインの描画更新系もここで行う
  */
 Sprite.prototype.updateDynamicMove = function() {
-    var motion = this._setDynamicMotion;
+    const motion = this._setDynamicMotion;
 
     if (motion && this._movementDuration > 0) {
-        const dm = this.dynamicMotion;
+        const dm = motion;
         const t = this.getDynamicMotionTime(); // 現在の経過時間
         const et = this.getDynamicMotionEndTime(); // 終了時間
 
@@ -3372,6 +3373,7 @@ Sprite.prototype.updateDynamicMove = function() {
         var screenY = motion._screenY;
         var defaultX = motion._defaultX;
         var defaultY = motion._defaultY;
+        const r = motion._r;
         const sx = motion._sx;
         const sy = motion._sy;
         const ex = motion._ex;
