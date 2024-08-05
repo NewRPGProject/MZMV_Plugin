@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Implement the "Call Enemy" function.
+ * @plugindesc v1.04 Implement the "Call Enemy" function.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_TroopRandomFormation
  * @url http://newrpg.seesaa.net/article/485838070.html
@@ -73,6 +73,13 @@
  * when an enemy character calls an enemy.
  * The ID must not be specified in the skill that calls the enemy.
  * Multiple designations are also supported.
+ * 
+ * <CallEnemyCtbWt:[Number]>
+ * ※For use with NRP_CountTimeBattle.js
+ * Change the wait time before the first action
+ * to the specified value (100 is standard).
+ * For example, <CallEnemyCtbWt:0> will act immediately.
+ * If <CallEnemyCtbWt:50>, it will start acting in 1/2 turn.
  * 
  * -------------------------------------------------------------------
  * [Sample of DynamicMotion]
@@ -169,7 +176,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 敵キャラの『仲間を呼ぶ』を実装します。
+ * @plugindesc v1.04 敵キャラの『仲間を呼ぶ』を実装します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_TroopRandomFormation
  * @url http://newrpg.seesaa.net/article/485838070.html
@@ -234,6 +241,12 @@
  * 該当の敵キャラが仲間を呼んだ場合に呼び出される敵のＩＤです。
  * 仲間を呼ぶスキルにＩＤの指定がないことが条件です。
  * 複数指定も可能です。
+ * 
+ * <CallEnemyCtbWt:[数値]>
+ * ※NRP_CountTimeBattle.jsとの連携用
+ * 登場時の待ち時間を指定した値（100が標準）に変更します。
+ * 例えば、<CallEnemyCtbWt:0>なら即時行動します。
+ * <CallEnemyCtbWt:50>ならば、１／２ターンで行動開始します。
  * 
  * -------------------------------------------------------------------
  * ■DynamicMotionによる演出の例
@@ -694,6 +707,32 @@ Window_BattleLog.prototype.displayFailure = function(target) {
     }
 
     _Window_BattleLog_displayFailure.apply(this, arguments);
+};
+
+//-----------------------------------------------------------------------------
+// Game_Battler
+//-----------------------------------------------------------------------------
+
+/**
+ * ●ＣＴＢターンの初期化
+ * ※NRP_CountTimeBattle.jsの関数
+ */
+const _Game_Battler_initCtbTurn = Game_Battler.prototype.initCtbTurn;
+Game_Battler.prototype.initCtbTurn = function() {
+    _Game_Battler_initCtbTurn.apply(this, arguments);
+
+    // 仲間を呼ぶスキルの場合
+    if (BattleManager.isCallEnemySkill()) {
+        const action = BattleManager._action;
+        if (action) {
+            // 初期ＷＴの設定があれば反映
+            const metaCallEnemyCtbWt = action.item().meta.CallEnemyCtbWt;
+            if (metaCallEnemyCtbWt != null) {
+                const wtRate = eval(metaCallEnemyCtbWt);
+                this.setWt(this.baseWt * wtRate / 100);
+            }
+        }
+    }
 };
 
 //-----------------------------------------------------------------------------
