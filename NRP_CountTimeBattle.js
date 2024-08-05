@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.201 Change the battle system to CTB.
+ * @plugindesc v1.21 Change the battle system to CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -99,6 +99,18 @@
  * at the start of the turn (at the start of input).
  * This is useful for guard and other situations
  * where you want the effect to expire at the start of input.
+ * 
+ * -------------------------------------------------------------------
+ * [Note (actor, enemy, class, equipment, state, skill, item)]
+ * -------------------------------------------------------------------
+ * In the note of the object that holds the trait,
+ * please include the following.
+ * For skills, this is a passive skill
+ * 
+ * <StartWt:[Number]>
+ * Change the waiting time at the start of battle to the specified value.
+ * For example, if <StartWt:0>, the action is taken immediately.
+ * If <StartWt:200>, the start of action is delayed by one turn.
  * 
  * -------------------------------------------------------------------
  * [Continuous action skill]
@@ -264,7 +276,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.201 戦闘システムをＣＴＢへ変更します。
+ * @plugindesc v1.21 戦闘システムをＣＴＢへ変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -346,6 +358,17 @@
  * 自動解除のタイミングが行動終了時のステートに対して、
  * ターン開始時（入力開始時）にステートの自動解除を発生させます。
  * 防御など入力開始時に効果を切れさせたい場合に有効です。
+ * 
+ * -------------------------------------------------------------------
+ * ■アクター、エネミー、職業、装備、ステート、スキルのメモ欄
+ * -------------------------------------------------------------------
+ * 特徴を保有するオブジェクトのメモ欄に以下を記載してください。
+ * スキルについては覚えているだけで、機能するパッシブスキルとなります。
+ * 
+ * <StartWt:[数値]>
+ * 戦闘開始時の待ち時間を指定した値に変更します。
+ * 例えば、<StartWt:0>なら即時行動します。
+ * <StartWt:200>ならば、１ターン分行動開始が遅れます。
  * 
  * -------------------------------------------------------------------
  * ■連続行動技
@@ -1244,6 +1267,25 @@ Game_Battler.prototype.initCtbTurn = function() {
         }
     }
     
+    // 初期ＷＴ<StartWt>の設定がある場合
+    // ＷＴの合計を求める。
+    let startWtSum = 0;
+
+    const traitObjects = getTraitObjects(this);
+    for (const object of traitObjects) {
+        const startWtMeta = object.meta.StartWt;
+        if (startWtMeta != null) {
+            startWtSum += eval(startWtMeta) - 100;
+        }
+    }
+
+    // 0以外なら設定があったと判断
+    if (startWtSum != 0) {
+        wt = Math.max(0, wt * (100 + startWtSum) / 100);
+        this.setWt(wt);
+        return;
+    }
+
     // 初期ＷＴを分散値に従って設定する。
     // 例：分散値が20の場合
     // 100 - (20 / 2) + [0～20未満の乱数] → 90～110未満の乱数を作成
@@ -1449,6 +1491,9 @@ Game_Action.prototype.applyItemEffect = function(target, effect) {
     if (target.agi != beforeAgi) {
         // 敏捷性が変化したので、WTも変化させる。
         target.setWt(parseInt(target.wt / (target.agi / beforeAgi)));
+        // スピードも更新
+        // ※これをやらないと自身へステートを付加した際に反映されない。
+        target.makeSpeed();
     }
 }
 
@@ -1628,6 +1673,24 @@ if (Utils.RPGMAKER_NAME == "MZ") {
         // 追加できない場合はそのまま
         _Game_Party_addActor.apply(this, arguments);
     };
+}
+
+// ----------------------------------------------------------------------------
+// 共通関数
+// ----------------------------------------------------------------------------
+
+/**
+ * ●特徴を保持するオブジェクトを取得
+ */
+function getTraitObjects(battler) {
+    // メモ欄を参照するオブジェクトを全取得
+    let traitObjects = battler.traitObjects();
+    // パッシブスキルが有効な場合は連結
+    // ※通常はアクターのみ
+    if (battler.skills) {
+        traitObjects = traitObjects.concat(battler.skills());
+    }
+    return traitObjects;
 }
 
 })();
