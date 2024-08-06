@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.08 Implemented a class change screen for multiple classes.
+ * @plugindesc v1.09 Implemented a class change screen for multiple classes.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -455,7 +455,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.08 多重職業用の転職画面を実装。
+ * @plugindesc v1.09 多重職業用の転職画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -1899,6 +1899,7 @@ Windows_ClassSlot.prototype.refresh = function() {
  */
 Windows_ClassSlot.prototype.refreshOneLine = function() {
     this.contents.clear();
+    this._isOneLineMode = true;
 
     // 項目を一行だけ表示
     const index = this.index();
@@ -1919,6 +1920,14 @@ Windows_ClassSlot.prototype.refreshOneLine = function() {
     // カーソル表示
     const rect = this.itemRect(0);
     this.setCursorRect(rect.x, rect.y, rect.width, rect.height);
+    this._isOneLineMode = false;
+};
+
+/**
+ * ●一行表示かどうか？
+ */
+Windows_ClassSlot.prototype.isOneLineMode = function() {
+    return this._isOneLineMode;
 };
 
 /**
@@ -2808,7 +2817,11 @@ Windows_ClassInfo.prototype.drawSkill = function(x, y, i, skillId) {
 
         // マスクする場合
         if (pShowUnlearnedSkills == "mask") {
-            skillName = "？？？？？";
+            // 他のアクターが習得していない
+            if (!$gameParty.members().some(m => m.isLearnedSkill(skillId))) {
+                // マスク表示を行う
+                skillName = "？？？？？";
+            }
         }
     }
     
