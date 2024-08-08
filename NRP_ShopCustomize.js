@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.02 Customize the shop scene.
+ * @plugindesc v1.03 Customize the shop scene.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/498469379.html
  *
@@ -135,6 +135,12 @@
  * @default 0
  * @desc Adjust the Y coordinate of the equipment symbol.
  * 
+ * @param EquipSymbolFontSize
+ * @parent <EquipSymbol>
+ * @type number @max 999
+ * @default 20
+ * @desc Sets the font size of the equipment symbol.
+ * 
  * @param EquipSymbolEquip
  * @parent <EquipSymbol>
  * @type string
@@ -156,8 +162,8 @@
  * @param EquipSymbolEqual
  * @parent <EquipSymbol>
  * @type string
- * @default -
- * @desc The equipment symbol when there is no change in status. Default:-
+ * @default =
+ * @desc The equipment symbol when there is no change in status. Default:=
  * 
  * @param EquipSymbolEquipColor
  * @parent <EquipSymbol>
@@ -182,11 +188,36 @@
  * @type number
  * @default 0
  * @desc The system color of the equipment symbol when there is no status change.
+ * 
+ * @param DisplayDifference
+ * @parent <EquipSymbol>
+ * @type boolean
+ * @default false
+ * @desc Numeric display of parameter differences.
+ * ActorInterval must be larger to fit.
+ * 
+ * @param DiffAdjustX
+ * @parent DisplayDifference
+ * @type number @min -999 @max 999
+ * @default 0
+ * @desc Adjusts the X coordinate of the difference value.
+ * 
+ * @param DiffAdjustY
+ * @parent DisplayDifference
+ * @type number @min -999 @max 999
+ * @default 0
+ * @desc Adjusts the Y coordinate of the difference value.
+ * 
+ * @param DiffFontSize
+ * @parent DisplayDifference
+ * @type number @max 999
+ * @default 20
+ * @desc Sets the font size for difference values.
  */
 
 /*:ja
  * @target MZ
- * @plugindesc v1.02 ショップ画面をカスタマイズします。
+ * @plugindesc v1.03 ショップ画面をカスタマイズします。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/498469379.html
  *
@@ -334,12 +365,19 @@
  * @default 0
  * @desc 装備記号のＹ座標を調整します。
  * 
+ * @param EquipSymbolFontSize
+ * @parent <EquipSymbol>
+ * @text 装備記号フォントサイズ
+ * @type number @max 999
+ * @default 20
+ * @desc 装備記号のフォントサイズを設定します。
+ * 
  * @param EquipSymbolEquip
  * @parent <EquipSymbol>
  * @text 装備記号（装備中）
  * @type string
- * @default E
- * @desc 装備中の装備記号です。初期値E
+ * @default Ｅ
+ * @desc 装備中の装備記号です。初期値Ｅ
  * 
  * @param EquipSymbolUp
  * @parent <EquipSymbol>
@@ -359,8 +397,8 @@
  * @parent <EquipSymbol>
  * @text 装備記号（等しい）
  * @type string
- * @default -
- * @desc 能力変化なし時の装備記号です。初期値-
+ * @default ＝
+ * @desc 能力変化なし時の装備記号です。初期値＝
  * 
  * @param EquipSymbolEquipColor
  * @parent <EquipSymbol>
@@ -393,6 +431,35 @@
  * @default 0
  * @desc 能力変化なし時の装備記号の色です。
  * システムカラーで指定してください。
+ * 
+ * @param DisplayDifference
+ * @parent <EquipSymbol>
+ * @text 差分を表示
+ * @type boolean
+ * @default false
+ * @desc パラメータの差分を数値表示します。
+ * アクター同士の間隔を大きめにしないと収まりません。
+ * 
+ * @param DiffAdjustX
+ * @parent DisplayDifference
+ * @text 差分Ｘ座標調整
+ * @type number @min -999 @max 999
+ * @default 0
+ * @desc 差分数値のＸ座標を調整します。
+ * 
+ * @param DiffAdjustY
+ * @parent DisplayDifference
+ * @text 差分Ｙ座標調整
+ * @type number @min -999 @max 999
+ * @default 0
+ * @desc 差分数値のＹ座標を調整します。
+ * 
+ * @param DiffFontSize
+ * @parent DisplayDifference
+ * @text 差分フォントサイズ
+ * @type number @max 999
+ * @default 20
+ * @desc 差分数値のフォントサイズを設定します。
  */
 
 function Sprite_ShopCustomizeActor() {
@@ -455,6 +522,7 @@ const pCompareParameters = setDefault(parameters["CompareParameters"]);
 const pNotCompareEquipTypes = setDefault(parameters["NotCompareEquipTypes"]);
 const pEquipSymbolAdjustX = toNumber(parameters["EquipSymbolAdjustX"], 0);
 const pEquipSymbolAdjustY = toNumber(parameters["EquipSymbolAdjustY"], 0);
+const pEquipSymbolFontSize = toNumber(parameters["EquipSymbolFontSize"], 20);
 const pEquipSymbolEquip = setDefault(parameters["EquipSymbolEquip"]);
 const pEquipSymbolUp = setDefault(parameters["EquipSymbolUp"]);
 const pEquipSymbolDown = setDefault(parameters["EquipSymbolDown"]);
@@ -463,6 +531,10 @@ const pEquipSymbolEquipColor = toNumber(parameters["EquipSymbolEquipColor"], 0);
 const pEquipSymbolUpColor = toNumber(parameters["EquipSymbolUpColor"], 0);
 const pEquipSymbolDownColor = toNumber(parameters["EquipSymbolDownColor"], 0);
 const pEquipSymbolEqualColor = toNumber(parameters["EquipSymbolEqualColor"], 0);
+const pDisplayDifference = toBoolean(parameters["DisplayDifference"], false);
+const pDiffAdjustX = toNumber(parameters["DiffAdjustX"], 0);
+const pDiffAdjustY = toNumber(parameters["DiffAdjustY"], 0);
+const pDiffFontSize = toNumber(parameters["DiffFontSize"], 20);
 
 // 下表示の場合は強制で横方向を全体化
 if (pActorWindowPositionV == "lower") {
@@ -678,16 +750,6 @@ if (pDisplayActorWindow) {
     };
 }
 
-// const _Scene_Shop_update = Scene_Shop.prototype.update;
-// Scene_Shop.prototype.update = function() {
-//     _Scene_Shop_update.apply(this, arguments);
-
-//     if (this._shopActorWindow) {
-//         this._shopActorWindow.createActorSprites();
-//         this._shopActorWindow.refresh();
-//     }
-// };
-
 //-----------------------------------------------------------------------------
 // 【独自】Window_ShopActor（アクター用ウィンドウ）
 //-----------------------------------------------------------------------------
@@ -742,11 +804,20 @@ Window_ShopActor.prototype.refresh = function() {
         actorSprite.setItem(this._item);
 
         // アクターの装備状況を表示
-        let equipSprite = this._equipStateSprites[i];
+        const equipSprite = this._equipStateSprites[i];
         equipSprite.x = x + 20 + pEquipSymbolAdjustX;
         equipSprite.y = y - 24 + pEquipSymbolAdjustY;
         equipSprite.bitmap.clear();
-        equipSprite.bitmap.fontSize = 20;
+        equipSprite.bitmap.fontFace = $gameSystem.mainFontFace();
+        equipSprite.bitmap.fontSize = pEquipSymbolFontSize;
+
+        // アクターの差分数値を表示
+        const diffSprite = this._equipDiffSprites[i];
+        diffSprite.x = x + 20 + 6 + pDiffAdjustX;
+        diffSprite.y = y - 48 + pDiffAdjustY;
+        diffSprite.bitmap.clear();
+        diffSprite.bitmap.fontFace = $gameSystem.numberFontFace();
+        diffSprite.bitmap.fontSize = pDiffFontSize;
 
         // 間隔を加算
         x += interval;
@@ -795,6 +866,14 @@ Window_ShopActor.prototype.refresh = function() {
                     symbol = pEquipSymbolEqual;
                     color = pEquipSymbolEqualColor;
                 }
+
+                // 差分数値を表示
+                if (pDisplayDifference) {
+                    const diff = Math.abs(currentSum - newSum);
+                    if (diff > 0) {
+                        diffSprite.bitmap.drawText(diff, 0, 0, 72, 24, "left");
+                    }
+                }
             }
 
             equipSprite.bitmap.textColor = ColorManager.textColor(color);
@@ -829,6 +908,7 @@ function calcParamsSum(item) {
 Window_ShopActor.prototype.createActorSprites = function() {
     this._actorSprites = [];
     this._equipStateSprites = [];
+    this._equipDiffSprites = [];
 
     let members;
 
@@ -860,6 +940,12 @@ Window_ShopActor.prototype.createActorSprites = function() {
         equipStateSprite.bitmap = new Bitmap(24, 24);
         this._equipStateSprites.push(equipStateSprite);
         this.addChild(equipStateSprite);
+
+        // 差分表示用のスプライトを作成
+        const equipDiffSprites = new Sprite();
+        equipDiffSprites.bitmap = new Bitmap(72, 24);
+        this._equipDiffSprites.push(equipDiffSprites);
+        this.addChild(equipDiffSprites);
     }
 };
 
