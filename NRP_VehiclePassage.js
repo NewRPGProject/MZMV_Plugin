@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Extends the passage & get on/off decision for vehicles.
+ * @plugindesc v1.03 Extends the passage & get on/off decision for vehicles.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482385836.html
  *
@@ -82,6 +82,16 @@
  * @min 0 @max 999
  * @desc The altitude of the airship.
  * Default is 48.
+ * 
+ * @param AirshipSameAsCharacters
+ * @type boolean
+ * @default false
+ * @desc Change the priority type of the airship to normal.
+ * 
+ * @param ConsiderTileEvent
+ * @type boolean
+ * @default true
+ * @desc If a tile event is placed, it is determined by the tile ID of the event.
  */
 /*~struct~Setting:
  * @param SettingId
@@ -139,7 +149,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 乗物の通行＆乗降判定を拡張します。
+ * @plugindesc v1.03 乗物の通行＆乗降判定を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/482385836.html
  *
@@ -223,6 +233,12 @@
  * @type boolean
  * @default false
  * @desc 飛行船のプライオリティタイプを『通常キャラと同じ』に変更します。
+ * 
+ * @param ConsiderTileEvent
+ * @text タイルイベントを考慮
+ * @type boolean
+ * @default true
+ * @desc タイルイベントが配置されている場合、そのイベントのタイルＩＤで判定します。
  */
 /*~struct~Setting:ja
  * @param SettingId
@@ -378,6 +394,7 @@ const pShipNoGetOff = toBoolean(parameters["ShipNoGetOff"], false);
 const pAirshipNoGetOff = toBoolean(parameters["AirshipNoGetOff"], false);
 const pAirshipAltitude = toNumber(parameters["AirshipAltitude"]);
 const pAirshipSameAsCharacters = toBoolean(parameters["AirshipSameAsCharacters"], false);
+const pConsiderTileEvent = toBoolean(parameters["ConsiderTileEvent"], true);
 
 /**
  * ●通行リストを使用できる形式に設定
@@ -778,8 +795,14 @@ function getMatchSetting(x, y) {
         if  (setting.tileIds && setting.tileIds.length > 0) {
             // 未取得ならタイルＩＤを取得
             if (tileId === undefined) {
-                const layerNo = getStepLayer(x, y);
-                tileId = $gameMap.tileId(x, y, layerNo);
+                const tiles = $gameMap.tileEventsXy(x, y).map(event => event.tileId());
+                // タイルイベントが存在する場合は優先取得
+                if (pConsiderTileEvent && tiles && tiles.length > 0) {
+                    tileId = tiles[0];
+                } else {
+                    const layerNo = getStepLayer(x, y);
+                    tileId = $gameMap.tileId(x, y, layerNo);
+                }
             }
 
             noMatch = setting.tileIds.every(function(id) {
