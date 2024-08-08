@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.021 Add the original vehicles.
+ * @plugindesc v1.03 Add the original vehicles.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_VehiclePassage
  * @url http://newrpg.seesaa.net/article/482502348.html
@@ -207,10 +207,18 @@
  * @type struct<BGM>
  * @desc Information about the background music played during boarding.
  * 
+ * @-----------------------------------------------------
+ * @ Plugin Parameters
+ * @-----------------------------------------------------
  * 
  * @param VehicleList
  * @type struct<Vehicle>[]
  * @desc This is a list of original vehicles.
+ * 
+ * @param ConsiderTileEvent
+ * @type boolean
+ * @default true
+ * @desc If a tile event is placed, it is determined by the tile ID of the event.
  */
 
 /*~struct~Vehicle:
@@ -389,7 +397,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.021 オリジナルの乗物を追加します。
+ * @plugindesc v1.03 オリジナルの乗物を追加します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_VehiclePassage
  * @url http://newrpg.seesaa.net/article/482502348.html
@@ -623,11 +631,20 @@
  * @default true
  * @desc 乗物から降りる際、前進せずにその場で降ります。
  * 
+ * @-----------------------------------------------------
+ * @ プラグインパラメータ
+ * @-----------------------------------------------------
  * 
  * @param VehicleList
  * @text 乗物リスト
  * @type struct<Vehicle>[]
  * @desc オリジナルの乗物一覧です。
+ * 
+ * @param ConsiderTileEvent
+ * @text タイルイベントを考慮
+ * @type boolean
+ * @default true
+ * @desc タイルイベントが配置されている場合、そのイベントのタイルＩＤで判定します。
  */
 
 /*~struct~Vehicle:ja
@@ -985,6 +1002,7 @@ function convertBgm(param) {
 const PLUGIN_NAME = "NRP_OriginalVehicle";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pVehicleList = parseStruct2(parameters["VehicleList"]);
+const pConsiderTileEvent = toBoolean(parameters["ConsiderTileEvent"], true);
 
 /**
  * ●効率化のため事前変換
@@ -2197,8 +2215,14 @@ function getMatchSetting(x, y, passageList) {
         if  (setting.tileIds && setting.tileIds.length > 0) {
             // 未取得ならタイルＩＤを取得
             if (tileId === undefined) {
-                const layerNo = getStepLayer(x, y);
-                tileId = $gameMap.tileId(x, y, layerNo);
+                const tiles = $gameMap.tileEventsXy(x, y).map(event => event.tileId());
+                // タイルイベントが存在する場合は優先取得
+                if (pConsiderTileEvent && tiles && tiles.length > 0) {
+                    tileId = tiles[0];
+                } else {
+                    const layerNo = getStepLayer(x, y);
+                    tileId = $gameMap.tileId(x, y, layerNo);
+                }
             }
 
             noMatch = setting.tileIds.every(function(id) {
