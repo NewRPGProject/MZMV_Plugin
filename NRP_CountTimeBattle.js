@@ -277,7 +277,7 @@
  * @parent <State&Buf>
  * @type boolean
  * @default true
- * @desc Predicts and displays changes in the order in which skills change.
+ * @desc If the order of action changes depending on the skill, it is predicted and displayed.
  * 
  * @param predictionCertain
  * @parent predictionSkillOrder
@@ -569,7 +569,7 @@
  * @parent <State&Buf>
  * @type boolean
  * @default true
- * @desc スキルによって変化する順序の変更を予測し表示します。
+ * @desc スキルによって変化する順序を予測し表示します。
  * 
  * @param predictionCertain
  * @text 必中のみ予測
