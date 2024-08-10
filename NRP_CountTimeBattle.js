@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.21 Change the battle system to CTB.
+ * @plugindesc v1.22 Change the battle system to CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -272,11 +272,24 @@
  * @option wt
  * @desc Reset wait time at revive. Formulas allowed.
  * baseWt:wait time for one turn, wt:wait time at dead.
+ * 
+ * @param predictionSkillOrder
+ * @parent <State&Buf>
+ * @type boolean
+ * @default true
+ * @desc Predicts and displays changes in the order in which skills change.
+ * 
+ * @param predictionCertain
+ * @parent predictionSkillOrder
+ * @type boolean
+ * @default true
+ * @desc Only skills with a hit type of certain are subject to prediction.
+ * If off, everything is enabled.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.21 戦闘システムをＣＴＢへ変更します。
+ * @plugindesc v1.22 戦闘システムをＣＴＢへ変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -550,6 +563,21 @@
  * @option wt
  * @desc 蘇生時に待ち時間を再設定します。数式可
  * baseWt:１ターン分の待ち時間, wt:戦闘不能時の待ち時間
+ * 
+ * @param predictionSkillOrder
+ * @text スキルの順序変化を予測
+ * @parent <State&Buf>
+ * @type boolean
+ * @default true
+ * @desc スキルによって変化する順序の変更を予測し表示します。
+ * 
+ * @param predictionCertain
+ * @text 必中のみ予測
+ * @parent predictionSkillOrder
+ * @type boolean
+ * @default true
+ * @desc 命中タイプが必中のスキルのみ予測の対象とします。
+ * オフの場合は全て対象とします。
  */
 
 (function() {
@@ -589,6 +617,8 @@ const pEscapePenalty = setDefault(parameters["escapePenalty"], 25);
 const pSelfStatePlusTurn = toBoolean(parameters["selfStatePlusTurn"], true);
 const pSelfBufPlusTurn = toBoolean(parameters["selfBufPlusTurn"], true);
 const pReviveWT = setDefault(parameters["reviveWT"]);
+const pPredictionSkillOrder = toBoolean(parameters["predictionSkillOrder"], true);
+const pPredictionCertain = toBoolean(parameters["predictionCertain"], true);
 
 //-----------------------------------------------------------------------------
 // Scene_Battle
@@ -867,7 +897,30 @@ BattleManager.makeActionOrders = function() {
  * 【独自】行動者の速度補正を考慮した上で、行動順序を再計算する。（予測用）
  */
 BattleManager.reMakeActionOrders = function() {
-    const subject = BattleManager._subject;
+    const subject = this._subject;
+    if (!subject) {
+        return;
+    }
+
+    // 予測を行うかどうか？
+    const usePrediction = this.isUsePrediction();
+    // 選択中の対象を取得
+    let targets = null;
+    if (usePrediction) {
+        targets = this.allBattleMembers().filter(m => m.isSelected());
+    }
+
+    // 予測用にＷＴ、ステート、能力変化を設定する。
+    if (usePrediction) {
+        for (const target of targets) {
+            target._tmpWt = target.wt;
+            target._tmpStates = JsonEx.makeDeepCopy(target._states);
+            target._tmpBuffs = JsonEx.makeDeepCopy(target._buffs);
+        }
+        // スキルによる対象のＷＴ変化を反映する。
+        this.changeTargetsWtState(targets);
+    }
+
     // 行動者のWTを一時的に保持
     const tmpWt = subject.wt;
     // 速度補正を元にWTを一時的に書き換える。
@@ -880,10 +933,128 @@ BattleManager.reMakeActionOrders = function() {
         mAddActionUser = true;
     }
     // 行動順序再計算
-    BattleManager.makeActionOrders();
+    this.makeActionOrders();
     mAddActionUser = false;
     // ＷＴを元に戻す。
     subject.setWt(tmpWt);
+
+    // 予測用のＷＴを戻す。
+    if (usePrediction) {
+        for (const target of targets) {
+            target.wt = target._tmpWt;
+            target._states = target._tmpStates;
+            target._buffs = target._tmpBuffs;
+            // クリア
+            delete target._tmpWt;
+            delete target._tmpStates;
+            delete target._tmpBuffs;
+        }
+    }
+}
+
+/**
+ * 【独自】予測を行うかどうか？
+ */
+BattleManager.isUsePrediction = function() {
+    // スキルの順序変化を予測しないならfalse
+    if (!pPredictionSkillOrder) {
+        return false;
+    // 入力時でないならfalse
+    } else if (!this.isInputting()) {
+        return false;
+    }
+
+    // スキルが取得できるならfalse
+    const action = this.inputtingAction();
+    if (!action || !action.item()) {
+        return false;
+    // 範囲がランダムならfalse
+    } else if (action.isForRandom()) {
+        return false;
+    // 必中のみの場合、入力中のスキルが必中でなければ対象外
+    } else if (pPredictionCertain && !action.isCertainHit()) {
+        return false;
+    }
+
+    // 予測を行う
+    return true;
+}
+
+/**
+ * 【独自】スキルによる対象のＷＴ変化を反映する。（予測用）
+ */
+BattleManager.changeTargetsWtState = function(targets) {
+    // 入力中のスキルを取得
+    const action = this.inputtingAction();
+    if (!action) {
+        return;
+    }
+    const skill = action.item();
+    if (!skill) {
+        return;
+    }
+
+    // 対象毎にループ
+    for (const target of targets) {
+        // 効果前の敏捷性を保持
+        const beforeAgi = target.agi;
+
+        // スキルに紐づくステートを取得
+        for (const effect of skill.effects) {
+            if (!effect.dataId) {
+                continue;
+            }
+
+            // ステート付加
+            if (effect.code == Game_Action.EFFECT_ADD_STATE) {
+                // 既にステートにかかっていない場合
+                if (!target.isStateAffected(effect.dataId)) {
+                    // ステートによるＷＴ変動を反映
+                    target.changeWtState(effect.dataId);
+                    // ※addStateは余計な処理が走るのでやらない。
+                    target._states.push(effect.dataId);
+                }
+
+            // ステート解除
+            } else if (effect.code == Game_Action.EFFECT_REMOVE_STATE) {
+                target._states.remove(effect.dataId);
+
+            // バフ付加
+            } else if (effect.code == Game_Action.EFFECT_ADD_BUFF) {
+                // バフが最大に達していない。
+                if (!target.isMaxBuffAffected(effect.dataId)) {
+                    target._buffs[effect.dataId]++;
+                    target._buffs[effect.dataId] = 2;
+                }
+
+            // デバフ付加
+            } else if (effect.code == Game_Action.EFFECT_ADD_DEBUFF) {
+                // デバフが最大に達していない。
+                if (!target.isMaxDebuffAffected(effect.dataId)) {
+                    target._buffs[effect.dataId]--;
+                }
+
+            // バフ解除
+            } else if (effect.code == Game_Action.EFFECT_REMOVE_BUFF) {
+                // バフにかかっている。
+                if (target.isBuffAffected(effect.dataId)) {
+                    target._buffs[effect.dataId] = 0;
+                }
+
+            // デバフ解除
+            } else if (effect.code == Game_Action.EFFECT_REMOVE_DEBUFF) {
+                // デバフにかかっている。
+                if (target.isDebuffAffected(effect.dataId)) {
+                    target._buffs[effect.dataId] = 0;
+                }
+            }
+        }
+
+        // 敏捷性が変化した場合はWTも変化させる。
+        if (target.agi != beforeAgi) {
+            target.setWt(parseInt(target.wt / (target.agi / beforeAgi)));
+        }
+    }
 }
 
 /**
@@ -974,7 +1145,7 @@ BattleManager.endTurn = function() {
 
     // 行動者の現在WTに加算WTを加算する。
     subject.setWt(subject.wt + subject.getAddWt());
-    
+
     // AddWt == 0 の場合は連続行動なのでターン経過なしとする。
     if (subject.getAddWt() > 0) {
         // 個別のターン終了処理
@@ -1154,6 +1325,17 @@ Game_BattlerBase.prototype.overwriteBuffTurns = function(paramId, turns) {
  */
 const _Game_BattlerBase_prototype_addNewState = Game_BattlerBase.prototype.addNewState;
 Game_BattlerBase.prototype.addNewState = function(stateId) {
+    // ステートによるＷＴ変動
+    this.changeWtState(stateId);
+    
+    // 元の処理
+    _Game_BattlerBase_prototype_addNewState.apply(this, arguments);
+};
+
+/**
+ * 【独自】ステートによるＷＴ変動
+ */
+Game_BattlerBase.prototype.changeWtState = function(stateId) {
     // eval参照用
     const a = BattleManager._subject;
     const b = this;
@@ -1171,9 +1353,6 @@ Game_BattlerBase.prototype.addNewState = function(stateId) {
         const addWtRate = eval($dataStates[stateId].meta.AddWt) / 100;
         this.setWt(this.wt + this.baseWt * addWtRate);
     }
-    
-    // 元の処理
-    _Game_BattlerBase_prototype_addNewState.apply(this, arguments);
 };
 
 /**
@@ -1377,6 +1556,9 @@ if (pNotPartyMotionRefresh) {
     Game_Party.prototype.requestMotionRefresh = function() {
         for (const actor of this.members()) {
             const sprite = getSprite(actor);
+            if (!sprite) {
+                return;
+            }
             const motion = sprite._motion;
             // モーションの指定がない。
             // またはループモーションが設定されている場合のみリフレッシュ
@@ -1468,7 +1650,6 @@ Game_Action.prototype.speed = function() {
     if (speed < 1) {
         speed = 1;
     }
-
     return speed;
 };
 
@@ -1493,7 +1674,7 @@ Game_Action.prototype.applyItemEffect = function(target, effect) {
         target.setWt(parseInt(target.wt / (target.agi / beforeAgi)));
         // スピードも更新
         // ※これをやらないと自身へステートを付加した際に反映されない。
-        target.makeSpeed();
+        target._speed = this.speed();
     }
 }
 
@@ -1534,13 +1715,13 @@ Window_BattleLog.prototype.startTurn = function() {
 //-----------------------------------------------------------------------------
 
 /**
- * ●味方の選択時
+ * ●アクターの選択変更時
  */
-const _Window_BattleActor_prototype_show = Window_BattleActor.prototype.show;
-Window_BattleActor.prototype.show = function(index) {
-    _Window_BattleActor_prototype_show.apply(this, arguments);
-    
-    // 対象選択時、行動予測のために行動順序再計算
+const _Window_BattleActor_select = Window_BattleActor.prototype.select;
+Window_BattleActor.prototype.select = function(index) {
+    _Window_BattleActor_select.apply(this, arguments);
+
+    // 対象変更時、行動予測のために行動順序再計算
     BattleManager.reMakeActionOrders();
 };
 
@@ -1549,13 +1730,13 @@ Window_BattleActor.prototype.show = function(index) {
 //-----------------------------------------------------------------------------
 
 /**
- * ●敵の選択時
+ * ●敵の選択変更時
  */
-const _Window_BattleEnemy_show = Window_BattleEnemy.prototype.show;
-Window_BattleEnemy.prototype.show = function() {
-    _Window_BattleEnemy_show.apply(this, arguments);
-    
-    // 対象選択時、行動予測のために行動順序再計算
+const _Window_BattleEnemy_select = Window_BattleEnemy.prototype.select;
+Window_BattleEnemy.prototype.select = function(index) {
+    _Window_BattleEnemy_select.apply(this, arguments);
+
+    // 対象変更時、行動予測のために行動順序再計算
     BattleManager.reMakeActionOrders();
 };
 
