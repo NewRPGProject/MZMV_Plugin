@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.02 Implemented a system of recovery after action.
+ * @plugindesc v1.021 Implemented a system of recovery after action.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @orderAfter NRP_CountTimeBattle
  * @url https://newrpg.seesaa.net/article/498761194.html
@@ -62,6 +62,11 @@
  * @-----------------------------------------------------
  * @ [Plugin Parameters]
  * @-----------------------------------------------------
+ * 
+ * @param ApplyEnemy
+ * @type boolean
+ * @default false
+ * @desc Apply the recovery setting to enemy characters as well.
  * 
  * @param <HPRecover>
  * @desc HP recovery-related settings.
@@ -196,7 +201,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.02 行動後に回復するシステムを実装。
+ * @plugindesc v1.021 行動後に回復するシステムを実装。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @orderAfter NRP_CountTimeBattle
  * @url https://newrpg.seesaa.net/article/498761194.html
@@ -249,6 +254,12 @@
  * @-----------------------------------------------------
  * @ プラグインパラメータ
  * @-----------------------------------------------------
+ * 
+ * @param ApplyEnemy
+ * @text 敵キャラにも適用
+ * @type boolean
+ * @default false
+ * @desc 敵キャラにも回復設定を適用します。
  * 
  * @param <HPRecover>
  * @text ＜ＨＰ回復関連＞
@@ -429,6 +440,7 @@ function setDefault(str, def) {
 
 const PLUGIN_NAME = "NRP_RecoverAfterAction";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
+const pApplyEnemy = toBoolean(parameters["ApplyEnemy"], false);
 const pBasicHpRecover = setDefault(parameters["BasicHpRecover"], 0);
 const pHpRecoverSkillType = textToArray(parameters["HpRecoverSkillType"]);
 const pHpRecoverUseItem = toBoolean(parameters["HpRecoverUseItem"], false);
@@ -458,6 +470,12 @@ const pNumberWidth = toNumber(parameters["NumberWidth"], 30);
  */
 const _BattleManager_endAction = BattleManager.endAction;
 BattleManager.endAction = function() {
+    // 敵キャラは無効の場合
+    if (!pApplyEnemy && this._subject.isEnemy()) {
+        _BattleManager_endAction.apply(this, arguments);
+        return;
+    }
+
     if (this._subject.numActions() === 0) {
         // 行動後回復を実行
         this._subject.recoverAfterActionHp();
