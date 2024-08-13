@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.031 Create counter skill.
+ * @plugindesc v1.032 Create counter skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_ChainSkill
  * @url https://newrpg.seesaa.net/article/500432213.html
@@ -217,7 +217,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.031 反撃スキルを作成する。
+ * @plugindesc v1.032 反撃スキルを作成する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_ChainSkill
  * @url https://newrpg.seesaa.net/article/500432213.html
@@ -865,14 +865,14 @@ Game_Action.prototype.apply = function(target) {
                 // -1して追加の反撃回数に変換
                 const addCount = count - 1;
                 // 反撃リストへ通常攻撃を登録
-                this.applyCounter(null, target, addCount);
+                this.applyCounter(null, target, addCount, true);
             }
 
         // 通常時
         } else {
             if (Math.random() < this.itemCnt(target)) {
                 // 反撃リストへ通常攻撃を登録
-                this.applyCounter(null, target, 0);
+                this.applyCounter(null, target, 0, true);
             }
         }
     }
@@ -897,7 +897,7 @@ Game_Action.prototype.apply = function(target) {
 /**
  * 【独自】オブジェクト毎の反撃判定
  */
-Game_Action.prototype.applyCounter = function(object, target, addCount) {
+Game_Action.prototype.applyCounter = function(object, target, addCount, isDefaultCounter) {
     const metaCounterSkill = object ? object.meta.CounterSkill : null;
 
     // eval判定用
@@ -909,6 +909,9 @@ Game_Action.prototype.applyCounter = function(object, target, addCount) {
     // スキルが取得できない場合は通常攻撃を設定
     if (skillId == null || skillId === true) {
         skillId = target.attackSkillId();
+    // ID=0の場合は終了
+    } else if (skillId == 0) {
+        return;
     }
 
     // 命中判定
@@ -950,8 +953,16 @@ Game_Action.prototype.applyCounter = function(object, target, addCount) {
     // 反撃グループを取得
     const counterGroup = checkMeta(null, actionItem, "CounterGroup");
 
+    // 通常の反撃処理の場合のみ反撃グループの初期設定を有効とする。
+    let defaultCounterGroup = null;
+    let defaultCounterGroupNG = null;
+    if (isDefaultCounter) {
+        defaultCounterGroup = pDefaultCounterGroup;
+        defaultCounterGroupNG = pDefaultCounterGroupNG;
+    }
+
     // 反撃有効グループが存在する場合
-    const counterGroupInclude = checkMeta(pDefaultCounterGroup, object, "CounterGroupInclude");
+    const counterGroupInclude = checkMeta(defaultCounterGroup, object, "CounterGroupInclude");
     if (counterGroupInclude) {
         // グループ名が一致しなかった場合は次へ
         if (counterGroupInclude != counterGroup) {
@@ -960,7 +971,7 @@ Game_Action.prototype.applyCounter = function(object, target, addCount) {
     }
 
     // 反撃無効グループが存在する場合
-    const counterGroupExcept = checkMeta(pDefaultCounterGroupNG, object, "CounterGroupExcept");
+    const counterGroupExcept = checkMeta(defaultCounterGroupNG, object, "CounterGroupExcept");
     if (counterGroupExcept) {
         // グループ名が一致した場合は次へ
         if (counterGroupExcept == counterGroup) {
@@ -992,11 +1003,20 @@ function resistCounter(target, subject, skillId, object, addCount) {
     // 対象死亡時に停止するかどうか？
     const abortDeath = checkMeta(pAbortTargetDeath, object, "CounterAbortDeath");
 
+    // 確認用のAction
+    const dummyAction = new Game_Action(target, false);
+    dummyAction.setSkill(skillId);
+
     // 反撃データの構造体を作成
     const counterData = {};
     // 行動主体と対象を反転
     counterData.subject = target;
-    counterData.target = subject;
+    // 範囲が使用者の場合は自分に
+    if (dummyAction.isForUser()) {
+        counterData.target = target;
+    } else {
+        counterData.target = subject;
+    }
     counterData.skillId = skillId;
     counterData.abortDeath = abortDeath;
     counterData.addCount = addCount; // 追加カウント
