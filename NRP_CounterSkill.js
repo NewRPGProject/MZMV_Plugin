@@ -23,6 +23,12 @@
  * If the number is omitted (<CounterSkill>),
  * it will counterattack with a normal attack.
  * 
+ * When combined with formulas,
+ * it is possible to make them fight back with complex conditions.
+ * For example, <CounterSkill:a.hpRate() <= 0.5 ? 1 : 0>
+ * then it will counterattack with a normal attack
+ * only when HP is below 50%.
+ * 
  * <CounterRate:50>
  * 50% chance of activating the counter skill.
  * 100% if omitted.
@@ -234,6 +240,10 @@
  * <CounterSkill:100>
  * スキル１００番を反撃として実行するようになります。
  * 数値を省略（<CounterSkill>）した場合は通常攻撃で反撃します。
+ * 
+ * 数式と組み合わせれば、複雑な条件で反撃させることも可能です。
+ * 例えば、<CounterSkill:a.hpRate() <= 0.5 ? 1 : 0>
+ * ならば、ＨＰが５０％以下の時のみ通常攻撃で反撃します。
  * 
  * <CounterRate:50>
  * 反撃スキルを５０％の確率で発動します。
