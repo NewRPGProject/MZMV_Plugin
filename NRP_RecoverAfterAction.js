@@ -3,8 +3,9 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Implemented a system of recovery after action.
+ * @plugindesc v1.02 Implemented a system of recovery after action.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
+ * @orderAfter NRP_CountTimeBattle
  * @url https://newrpg.seesaa.net/article/498761194.html
  *
  * @help Implement a system in which HP, MP, and TP
@@ -195,8 +196,9 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 行動後に回復するシステムを実装。
+ * @plugindesc v1.02 行動後に回復するシステムを実装。
  * @author 砂川赳（https://newrpg.seesaa.net/）
+ * @orderAfter NRP_CountTimeBattle
  * @url https://newrpg.seesaa.net/article/498761194.html
  *
  * @help 行動後にＨＰ、ＭＰ、ＴＰが回復するシステムを実装します。
@@ -448,22 +450,38 @@ const pHorizontalPosition = setDefault(parameters["HorizontalPosition"]);
 const pNumberWidth = toNumber(parameters["NumberWidth"], 30);
 
 // ----------------------------------------------------------------------------
+// BattleManager
+// ----------------------------------------------------------------------------
+
+/**
+ * ●行動終了時
+ */
+const _BattleManager_endAction = BattleManager.endAction;
+BattleManager.endAction = function() {
+    if (this._subject.numActions() === 0) {
+        // 行動後回復を実行
+        this._subject.recoverAfterActionHp();
+        this._subject.recoverAfterActionMp();
+        this._subject.recoverAfterActionTp();
+    }
+
+    _BattleManager_endAction.apply(this, arguments);
+};
+
+// ----------------------------------------------------------------------------
 // Game_Battler
 // ----------------------------------------------------------------------------
 
 /**
- * ●ＨＰ再生
+ * 【独自】行動後ＨＰ回復
  */
-const _Game_Battler_regenerateHp = Game_Battler.prototype.regenerateHp;
-Game_Battler.prototype.regenerateHp = function() {
-    _Game_Battler_regenerateHp.apply(this, arguments);
-
+Game_Battler.prototype.recoverAfterActionHp = function() {
     if (!BattleManager._action) {
         return;
     }
 
     const item = BattleManager._action.item();
-    const value = this.recoverAfterActionHp(item);
+    const value = this.recoverAfterActionHpValue(item);
     if (value) {
         if (pDisplayHpRecover) {
             this.gainHp(value);
@@ -474,18 +492,15 @@ Game_Battler.prototype.regenerateHp = function() {
 };
 
 /**
- * ●ＭＰ再生
+ * 【独自】行動後ＭＰ回復
  */
-const _Game_Battler_regenerateMp = Game_Battler.prototype.regenerateMp;
-Game_Battler.prototype.regenerateMp = function() {
-    _Game_Battler_regenerateMp.apply(this, arguments);
-
+Game_Battler.prototype.recoverAfterActionMp = function() {
     if (!BattleManager._action) {
         return;
     }
 
     const item = BattleManager._action.item();
-    const value = this.recoverAfterActionMp(item);
+    const value = this.recoverAfterActionMpValue(item);
     if (value) {
         if (pDisplayMpRecover) {
             this.gainMp(value);
@@ -496,18 +511,15 @@ Game_Battler.prototype.regenerateMp = function() {
 };
 
 /**
- * ●ＴＰ再生
+ * 【独自】行動後ＴＰ回復
  */
-const _Game_Battler_regenerateTp = Game_Battler.prototype.regenerateTp;
-Game_Battler.prototype.regenerateTp = function() {
-    _Game_Battler_regenerateTp.apply(this, arguments);
-
+Game_Battler.prototype.recoverAfterActionTp = function() {
     if (!BattleManager._action) {
         return;
     }
 
     const item = BattleManager._action.item();
-    const value = this.recoverAfterActionTp(item);
+    const value = this.recoverAfterActionTpValue(item);
     if (value) {
         if (pDisplayTpRecover) {
             this.gainTp(value);
@@ -520,7 +532,7 @@ Game_Battler.prototype.regenerateTp = function() {
 /**
  * 【独自】行動後のＨＰ回復量
  */
-Game_Battler.prototype.recoverAfterActionHp = function(item) {
+Game_Battler.prototype.recoverAfterActionHpValue = function(item) {
     // 回復を行うかの判定
     if (!isRecoverHp(item)) {
         return 0;
@@ -553,7 +565,7 @@ Game_Battler.prototype.recoverAfterActionHp = function(item) {
 /**
  * 【独自】行動後のＭＰ回復量
  */
-Game_Battler.prototype.recoverAfterActionMp = function(item) {
+Game_Battler.prototype.recoverAfterActionMpValue = function(item) {
     // 回復を行うかの判定
     if (!isRecoverMp(item)) {
         return 0;
@@ -586,7 +598,7 @@ Game_Battler.prototype.recoverAfterActionMp = function(item) {
 /**
  * 【独自】行動後のＴＰ回復量
  */
-Game_Battler.prototype.recoverAfterActionTp = function(item) {
+Game_Battler.prototype.recoverAfterActionTpValue = function(item) {
     // 回復を行うかの判定
     if (!isRecoverTp(item)) {
         return 0;
@@ -827,9 +839,9 @@ Window_RecoverAction.prototype.drawItem = function(index) {
         this.hide();
         return;
     }
-    const hpValue = this._actor.recoverAfterActionHp(this._item);
-    const mpValue = this._actor.recoverAfterActionMp(this._item);
-    const tpValue = this._actor.recoverAfterActionTp(this._item);
+    const hpValue = this._actor.recoverAfterActionHpValue(this._item);
+    const mpValue = this._actor.recoverAfterActionMpValue(this._item);
+    const tpValue = this._actor.recoverAfterActionTpValue(this._item);
 
     let x = this.itemPadding();
     const numberWidth = pNumberWidth;
@@ -844,6 +856,7 @@ Window_RecoverAction.prototype.drawItem = function(index) {
         this.drawText(pHpRecoverLabel, x, 0, textWidth);
         this.resetTextColor();
         x += textWidth + this.itemPadding();
+        this.setupValueFont();
         this.drawText(hpValue, x, 0, numberWidth, align);
         x += numberWidth + this.itemPadding() * 2;
         windowWidth += textWidth + numberWidth + this.itemPadding() * 3;
@@ -855,6 +868,7 @@ Window_RecoverAction.prototype.drawItem = function(index) {
         this.drawText(pMpRecoverLabel, x, 0, textWidth);
         this.resetTextColor();
         x += textWidth + this.itemPadding();
+        this.setupValueFont();
         this.drawText(mpValue, x, 0, numberWidth, align);
         x += numberWidth + this.itemPadding() * 2;
         windowWidth += textWidth + numberWidth + this.itemPadding() * 3;
@@ -866,6 +880,7 @@ Window_RecoverAction.prototype.drawItem = function(index) {
         this.drawText(pTpRecoverLabel, x, 0, textWidth);
         this.resetTextColor();
         x += textWidth + this.itemPadding();
+        this.setupValueFont();
         this.drawText(tpValue, x, 0, numberWidth, align);
         x += numberWidth + this.itemPadding() * 2;
         windowWidth += textWidth + numberWidth + this.itemPadding() * 3;
@@ -885,6 +900,15 @@ Window_RecoverAction.prototype.drawItem = function(index) {
     if (hpValue || mpValue || tpValue) {
         this.show();
     }
+};
+
+/**
+ * ●数字用のフォントを設定
+ */
+Window_RecoverAction.prototype.setupValueFont = function() {
+    // this.contents.fontFace = $gameSystem.numberFontFace();
+    // this.contents.fontSize = $gameSystem.mainFontSize() - 6;
+    // this.contents.outlineWidth = 2;
 };
 
 Window_RecoverAction.prototype.maxCols = function() {
