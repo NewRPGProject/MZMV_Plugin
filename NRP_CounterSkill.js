@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.032 Create counter skill.
+ * @plugindesc v1.04 Create counter skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_ChainSkill
  * @url https://newrpg.seesaa.net/article/500432213.html
@@ -217,7 +217,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.032 反撃スキルを作成する。
+ * @plugindesc v1.04 反撃スキルを作成する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_ChainSkill
  * @url https://newrpg.seesaa.net/article/500432213.html
@@ -1011,8 +1011,8 @@ function resistCounter(target, subject, skillId, object, addCount) {
     const counterData = {};
     // 行動主体と対象を反転
     counterData.subject = target;
-    // 範囲が使用者の場合は自分に
-    if (dummyAction.isForUser()) {
+    // 範囲が味方の場合は自分に
+    if (dummyAction.isForFriend()) {
         counterData.target = target;
     } else {
         counterData.target = subject;
