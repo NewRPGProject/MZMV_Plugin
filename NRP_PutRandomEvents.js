@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.02 Placement automation for symbol encounters.
+ * @plugindesc v1.03 Placement automation for symbol encounters.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base TemplateEvent
  * @base EventReSpawn
@@ -231,7 +231,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.02 シンボルエンカウントの配置自動化。
+ * @plugindesc v1.03 シンボルエンカウントの配置自動化。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base TemplateEvent
  * @base EventReSpawn
@@ -1007,27 +1007,11 @@ function putEvents(coordinates, templateId, numberOfEvents, isCheckOpen) {
         return;
     }
 
-    // 有効な座標に限定
-    // ※すり抜け以外のイベントが配置されている場合は無効
-    coordinates = coordinates.filter(point => isValidPoint(point));
-    // 有効な座標が一つもない場合は終了
-    if (coordinates.length == 0) {
-        return;
-    }
-
     // 必要数だけ実行
     for (let i = 0; i < numberOfEvents; i++) {
         // ※bindによってthisをメソッドに渡す。
         putEvent.bind(this)(coordinates, templateId, isCheckOpen);
     }
-}
-
-/**
- * ●有効な座標かどうかを判定
- */
-function isValidPoint(point) {
-    // 座標が有効で、かつイベントが存在しない。
-    return point && $gameMap.eventsXyNt(point.x, point.y).length == 0;
 }
 
 /**
@@ -1045,6 +1029,20 @@ function putEvent(coordinates, templateId, isCheckOpen) {
     // ランダムに座標を取得
     let randomIndex = Math.randomInt(coordinates.length);
     let point = coordinates[randomIndex];
+
+    // 有効な座標に限定
+    // ※すり抜け以外のイベントが配置されている場合は無効
+    while (!isValidPoint(point)) {
+        // 対象の座標データを除去
+        coordinates.splice(randomIndex, 1);
+        // 有効な座標がなくなれば終了
+        if (coordinates.length == 0) {
+            return;
+        }
+        // ランダムに座標を再取得
+        randomIndex = Math.randomInt(coordinates.length);
+        point = coordinates[randomIndex];
+    }
 
     // 判定用に仮のイベントを作成する。
     const templateEvent = new Game_PrefabEvent($gameMap._mapId, null, originalEventId, point.x, point.y, true);
@@ -1083,6 +1081,14 @@ function putEvent(coordinates, templateId, isCheckOpen) {
     $gameMap.spawnEvent(originalEventId, point.x, point.y, true);
     // 配置した座標データを除去
     coordinates.splice(randomIndex, 1);
+}
+
+/**
+ * ●有効な座標かどうかを判定
+ */
+function isValidPoint(point) {
+    // 座標が有効で、かつイベントが存在しない。
+    return point && $gameMap.eventsXyNt(point.x, point.y).length == 0;
 }
 
 /**
