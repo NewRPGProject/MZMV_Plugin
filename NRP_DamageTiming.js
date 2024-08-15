@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.07 Adjusts the timing of damage display and enemy defeats.
+ * @plugindesc v1.08 Adjusts the timing of damage display and enemy defeats.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475196493.html
  *
@@ -84,7 +84,7 @@
  */
 /*:ja
  * @target MV MZ
- * @plugindesc v1.07 ダメージ表示や敵の撃破処理のタイミングを調整します。
+ * @plugindesc v1.08 ダメージ表示や敵の撃破処理のタイミングを調整します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475196493.html
  * 
@@ -351,6 +351,42 @@ if (pDamageSameTime) {
         }
 
         _Window_BattleLog_push.apply(this, arguments);
+    };
+
+    /**
+     * ●ＨＰの加算／減算
+     */
+    const _Game_Battler_gainHp = Game_Battler.prototype.gainHp;
+    Game_Battler.prototype.gainHp = function(value) {
+        // 値をクリアせず累積させる。
+        // ※全体吸収時に吸収量を合計表示するための措置
+        const keepHpDamage = this._result.hpDamage;
+        _Game_Battler_gainHp.apply(this, arguments);
+        this._result.hpDamage = keepHpDamage - value;
+    };
+
+    /**
+     * ●ＭＰの加算／減算
+     */
+    const _Game_Battler_gainMp = Game_Battler.prototype.gainMp;
+    Game_Battler.prototype.gainMp = function(value) {
+        // 値をクリアせず累積させる。
+        // ※全体吸収時に吸収量を合計表示するための措置
+        const keepMpDamage = this._result.mpDamage;
+        _Game_Battler_gainMp.apply(this, arguments);
+        this._result.mpDamage = keepMpDamage - value;
+    };
+
+    /**
+     * ●ＴＰの加算／減算
+     */
+    const _Game_Battler_gainTp = Game_Battler.prototype.gainTp;
+    Game_Battler.prototype.gainTp = function(value) {
+        // 値をクリアせず累積させる。
+        // ※全体吸収時に吸収量を合計表示するための措置
+        const keepTpDamage = this._result.tpDamage;
+        _Game_Battler_gainTp.apply(this, arguments);
+        this._result.tpDamage = keepTpDamage - value;
     };
 
     /**
