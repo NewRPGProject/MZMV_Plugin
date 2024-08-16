@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.22 Change the battle system to CTB.
+ * @plugindesc v1.221 Change the battle system to CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -289,7 +289,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.22 戦闘システムをＣＴＢへ変更します。
+ * @plugindesc v1.221 戦闘システムをＣＴＢへ変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -382,6 +382,16 @@
  * 戦闘開始時の待ち時間を指定した値に変更します。
  * 例えば、<StartWt:0>なら即時行動します。
  * <StartWt:200>ならば、１ターン分行動開始が遅れます。
+ * 
+ * -------------------------------------------------------------------
+ * ■スキルのメモ欄
+ * -------------------------------------------------------------------
+ * <ReviveWt:[数値]>
+ * 蘇生スキルに対して、蘇生時の待ち時間を設定します。数式可。
+ * baseWt:１ターン分の待ち時間, wt:戦闘不能時の待ち時間
+ * 
+ * 例：<ReviveWt:baseWt / 2>
+ * 蘇生から0.5ターンで行動できる。
  * 
  * -------------------------------------------------------------------
  * ■連続行動技
@@ -1721,6 +1731,12 @@ const _Window_BattleActor_select = Window_BattleActor.prototype.select;
 Window_BattleActor.prototype.select = function(index) {
     _Window_BattleActor_select.apply(this, arguments);
 
+    // 非表示時は処理しない。
+    // ※select処理は戦闘終了時に毎フレーム実行されるので対処
+    if (!this.visible) {
+        return;
+    }
+
     // 対象変更時、行動予測のために行動順序再計算
     BattleManager.reMakeActionOrders();
 };
@@ -1735,6 +1751,12 @@ Window_BattleActor.prototype.select = function(index) {
 const _Window_BattleEnemy_select = Window_BattleEnemy.prototype.select;
 Window_BattleEnemy.prototype.select = function(index) {
     _Window_BattleEnemy_select.apply(this, arguments);
+
+    // 非表示時は処理しない。
+    // ※select処理は戦闘終了時に毎フレーム実行されるので対処
+    if (!this.visible) {
+        return;
+    }
 
     // 対象変更時、行動予測のために行動順序再計算
     BattleManager.reMakeActionOrders();
