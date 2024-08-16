@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.221 Change the battle system to CTB.
+ * @plugindesc v1.23 Change the battle system to CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -108,9 +108,17 @@
  * For skills, this is a passive skill
  * 
  * <StartWt:[Number]>
- * Change the waiting time at the start of battle to the specified value.
+ * Change the waiting time (Base:100)
+ * at the start of battle to the specified value.
  * For example, if <StartWt:0>, the action is taken immediately.
  * If <StartWt:200>, the start of action is delayed by one turn.
+ * 
+ * -------------------------------------------------------------------
+ * [Note of Skills]
+ * -------------------------------------------------------------------
+ * <ReviveWt:[Number]>
+ * For the revive skill, set the waiting time (Base: 100) when reviving.
+ * If <ReviveWt:50>, the action starts in 1/2 turn.
  * 
  * -------------------------------------------------------------------
  * [Continuous action skill]
@@ -289,7 +297,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.221 戦闘システムをＣＴＢへ変更します。
+ * @plugindesc v1.23 戦闘システムをＣＴＢへ変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -379,9 +387,16 @@
  * スキルについては覚えているだけで、機能するパッシブスキルとなります。
  * 
  * <StartWt:[数値]>
- * 戦闘開始時の待ち時間を指定した値に変更します。
+ * 戦闘開始時の待ち時間（基準:100）を指定した値に変更します。
  * 例えば、<StartWt:0>なら即時行動します。
  * <StartWt:200>ならば、１ターン分行動開始が遅れます。
+ * 
+ * -------------------------------------------------------------------
+ * ■スキルのメモ欄
+ * -------------------------------------------------------------------
+ * <ReviveWt:[数値]>
+ * 蘇生スキルに対して、蘇生時の待ち時間（基準:100）を設定します。
+ * <ReviveWt:50>ならば、1/2ターンで行動開始します。
  * 
  * -------------------------------------------------------------------
  * ■連続行動技
@@ -1017,6 +1032,10 @@ BattleManager.changeTargetsWtState = function(targets) {
 
             // ステート解除
             } else if (effect.code == Game_Action.EFFECT_REMOVE_STATE) {
+                // 蘇生ならば、蘇生時のＷＴを反映
+                if (target.isDead() && effect.dataId === target.deathStateId()) {
+                    target.setReviveWt();
+                }
                 target._states.remove(effect.dataId);
 
             // バフ付加
@@ -1048,6 +1067,13 @@ BattleManager.changeTargetsWtState = function(targets) {
                     target._buffs[effect.dataId] = 0;
                 }
             }
+        }
+
+        // 蘇生
+        // ※戦闘不能ステートの解除がなくとも。蘇生はできるらしいので対応
+        if (target.isDead() && action.isForDeadFriend() && action.isRecover()) {
+            target._states.remove(target.deathStateId());
+            target.setReviveWt();
         }
 
         // 敏捷性が変化した場合はWTも変化させる。
@@ -1386,14 +1412,38 @@ const _Game_BattlerBase_revive = Game_BattlerBase.prototype.revive;
 Game_BattlerBase.prototype.revive = function() {
     _Game_BattlerBase_revive.apply(this, arguments);
 
-    if (pReviveWT != null) {
-        // eval計算用
-        const baseWt = this.baseWt;
-        const wt = this.wt;
-        // ＷＴを再設定
-        this.wt = eval(pReviveWT);
-    }
+    // 蘇生時のＷＴ設定
+    this.setReviveWt();
 };
+
+/**
+ * 【独自】蘇生時のＷＴ設定
+ */
+Game_BattlerBase.prototype.setReviveWt = function() {
+    // 戦闘時以外は無効
+    if (!$gameParty.inBattle()) {
+        return;
+    }
+
+    const baseWt = this.baseWt;
+
+    // スキルに蘇生ＷＴの指定があるなら優先
+    const action = BattleManager.inputtingAction() || BattleManager._action;
+    if (action) {
+        const item = action.item();
+        if (item && item.meta.ReviveWt) {
+            // ＷＴを再設定
+            this.setWt(baseWt * eval(item.meta.ReviveWt) / 100);
+            return;
+        }
+    }
+
+    // 共通の設定
+    if (pReviveWT != null) {
+        // ＷＴを再設定
+        this.setWt(eval(pReviveWT));
+    }
+}
 
 //-----------------------------------------------------------------------------
 // Game_Battler
