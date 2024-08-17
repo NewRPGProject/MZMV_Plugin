@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.09 Implemented a class change screen for multiple classes.
+ * @plugindesc v1.091 Implemented a class change screen for multiple classes.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -455,7 +455,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.09 多重職業用の転職画面を実装。
+ * @plugindesc v1.091 多重職業用の転職画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -2751,6 +2751,10 @@ Windows_ClassInfo.prototype.paramY = function(index) {
  */
 Windows_ClassInfo.prototype.drawLearnSkills = function(x, y) {
     const additionalClass = this.getClass();
+    // クラスが存在しない場合は非表示
+    if (!additionalClass) {
+        return;
+    }
 
     // スキルを表示しない場合
     if (!pShowSkillsType) {
@@ -2770,13 +2774,8 @@ Windows_ClassInfo.prototype.drawLearnSkills = function(x, y) {
         this.contents.fontSize = pSkillFontSize;
     }
 
-    let learningSkillIds;
-    // 職業がない場合は全スキルを表示
-    if (!additionalClass) {
-        learningSkillIds = this._tempActor.skills().map(skill => skill.id);
-    } else {
-        learningSkillIds = additionalClass.learnings.map(learning => learning.skillId);
-    }
+    // クラスで習得できるスキルを取得
+    const learningSkillIds = additionalClass.learnings.map(learning => learning.skillId);
 
     let i = 0;
     for (const skillId of learningSkillIds) {
