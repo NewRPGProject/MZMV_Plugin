@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.381 Creates a combination skill.
+ * @plugindesc v1.39 Creates a combination skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/474570191.html
  * 
@@ -65,7 +65,9 @@
  * - Do not cooperate in combination skills while in state.
  * (You can use your own starting combination skills.)
  * 
+ * -------------------------------------------------------------------
  * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
@@ -164,7 +166,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.381 合体技を実現します。
+ * @plugindesc v1.39 合体技を実現します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/474570191.html
  *
@@ -223,7 +225,9 @@
  * ・ステート中、合体技への協力を禁止します。
  * （自身が起点となる合体技は使用可能）
  * 
+ * -------------------------------------------------------------------
  * ■利用規約
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
@@ -533,11 +537,11 @@ function canUseCombinationSkill(subject, item) {
                 }
             }
 
-        // ターン中
-        } else if (BattleManager.isInTurn()) {
+        // ターン中（※ＣＴＢは除く）
+        } else if (BattleManager.isInTurn() && !BattleManager._isCtb) {
             // 同一スキルかどうか？
             // ※行動時に行動再選択を行うプラグインを考慮
-            var isMatch = member._actions.some(function(action) {
+            const isMatch = member._actions.some(function(action) {
                 return item == action.item();
             });
 
@@ -886,7 +890,7 @@ function getCombinationMembers(item, subject) {
      * エネミーＩＤ指定
      */
     } else if (csEnemysMeta) {
-        members = getCombinationEnemys(csEnemysMeta, subject);
+        members = getCombinationEnemys(csEnemysMeta, subject, item);
 
     /*
      * バトラー指定
@@ -990,11 +994,14 @@ Game_Action.prototype.csMembers = function() {
     return csMembers;
 };
 
+// 合体技用の行動制約フラグ
+let mCombinationRestriction = false;
+
 /**
  * ●合体技参加者取得（敵キャラ）
  * ※同一ＩＤの別キャラを考慮
  */
-function getCombinationEnemys(csEnemysMeta, subject) {
+function getCombinationEnemys(csEnemysMeta, subject, skill) {
     var members = [];
 
     // 配列化
@@ -1021,6 +1028,14 @@ function getCombinationEnemys(csEnemysMeta, subject) {
                 return false;
             }
 
+            mCombinationRestriction = true;
+            // 使用不可
+            if (!m.meetsSkillConditions(skill)) {
+                mCombinationRestriction = false;
+                return false;
+            }
+            mCombinationRestriction = false;
+
             let action = m.currentAction();
             // 合体技準備状態ではない → 協力決定
             if (!action || !action._isReserveCombination) {
@@ -1043,6 +1058,19 @@ function getCombinationEnemys(csEnemysMeta, subject) {
 
     return members;
 }
+
+/**
+ * ●行動制約の度合い取得
+ */
+const _Game_BattlerBase_restriction = Game_BattlerBase.prototype.restriction;
+Game_BattlerBase.prototype.restriction = function() {
+    if (mCombinationRestriction) {
+        // 反動ステートは除外
+        const restrictions = this.states().map(state => state.id != pReactionState && state.restriction);
+        return Math.max(0, ...restrictions);
+    }
+    return _Game_BattlerBase_restriction.apply(this, arguments);
+};
 
 //-----------------------------------------------------------------------------
 // 敵キャラ用の制御
@@ -1130,7 +1158,7 @@ function setReserveCombination(action, targetIndex) {
     }
 
     // 参加者取得
-    var csMembers = getCombinationMembers(item, subject);
+    const csMembers = getCombinationMembers(item, subject);
 
     // 合体技準備フラグを設定
     action._isReserveCombination = true;
@@ -1138,7 +1166,7 @@ function setReserveCombination(action, targetIndex) {
     action.setCsMembers(csMembers);
 
     // 参加者毎にループ
-    for (var member of csMembers) {
+    for (const member of csMembers) {
         // 行動主体以外も同一スキルを選択
         if (member != subject) {
             // アクションを設定
