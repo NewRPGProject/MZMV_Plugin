@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Activate the skill at dead time.
+ * @plugindesc v1.031 Activate the skill at dead time.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicAnimationMZ
  * @orderAfter NRP_StateEX
@@ -78,7 +78,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 戦闘不能時にスキルを発動します。
+ * @plugindesc v1.031 戦闘不能時にスキルを発動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_DynamicAnimationMZ
  * @orderAfter NRP_StateEX
@@ -452,11 +452,11 @@ Game_Battler.prototype.resistDeadSkill = function(isBeforeCollapse) {
         if (deadSkill != null) {
             const a = this;
             const skillId = eval(deadSkill);
-            resistDeadSkill(this, skillId, isBeforeCollapse);
+            const successFlg = resistDeadSkill(this, skillId, isBeforeCollapse);
 
             // ステートを削除する場合
             // ステートかどうか確認してから削除
-            if (pAutoRemoveState && $dataStates.includes(object)) {
+            if (successFlg && pAutoRemoveState && $dataStates.includes(object)) {
                 this.removeState(object.id);
             }
         }
@@ -470,14 +470,14 @@ function resistDeadSkill(subject, skillId, isBeforeCollapse) {
     // 既に登録済の場合は次へ
     const isResisted = mDeadSkillList.some(data => data.subject == subject && data.skillId == skillId);
     if (isResisted) {
-        return;
+        return false;
     }
 
     const metaBeforeCollapse = !$dataSkills[skillId].meta.DeadSkillAfterCollapse;
 
     // meta値と対象の演出タイプが一致しなかった場合は登録しない。
     if (isBeforeCollapse != metaBeforeCollapse) {
-        return;
+        return false;
     }
 
     // 反撃データの構造体を作成
@@ -491,6 +491,7 @@ function resistDeadSkill(subject, skillId, isBeforeCollapse) {
     mDeadSkillUserList.push(subject);
     // 戦闘不能スキルリストに登録
     mDeadSkillList.push(skillData);
+    return true;
 }
 
 /**
