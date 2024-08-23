@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.031 Activate the skill at dead time.
+ * @plugindesc v1.032 Activate the skill at dead time.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicAnimationMZ
  * @orderAfter NRP_StateEX
@@ -78,7 +78,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.031 戦闘不能時にスキルを発動します。
+ * @plugindesc v1.032 戦闘不能時にスキルを発動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_DynamicAnimationMZ
  * @orderAfter NRP_StateEX
@@ -309,6 +309,9 @@ function goDeadSkill(subject, skillId) {
     // 元の行動主体を保持
     if (!mOriginalSubject) {
         mOriginalSubject = BattleManager._subject;
+        // 元のスキル用の終了処理を実行
+        // ※NRP_CombinationSkill.jsなどに必要な調整
+        BattleManager._logWindow.performActionEnd(mOriginalSubject);
     }
     // 戦闘不能スキルの対象を取得
     // （行動主体が取得できればそのインデックス、それ以外はランダム）
@@ -324,8 +327,6 @@ function goDeadSkill(subject, skillId) {
     if (BattleManager.isForcedTurn && BattleManager.isForcedTurn()) {
         BattleManager._turnForced = false;
     }
-    
-    return true;
 }
 
 /**
