@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.131 Extend the functionality of the state in various ways.
+ * @plugindesc v1.141 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -232,6 +232,10 @@
  * It will not be released in dead state.
  * Can only be released if a state is specified.
  * 
+ * <RemoveState:10>
+ * When a state is added, state #10 is removed.
+ * Multiple comma-separated specifications are allowed (<RemoveState:10,11>)
+ * 
  * <AutoRemovalActionStart>
  * Change Auto-removal Timing to Action Start.
  * ※The setting on the database should be “End Action”.
@@ -340,7 +344,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.131 ステートの機能を色々と拡張します。
+ * @plugindesc v1.141 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -556,6 +560,10 @@
  * <IgnoreRecoverDie>
  * 戦闘不能時に解除されなくなります。
  * ステートを指定した場合のみ解除できます。
+ * 
+ * <RemoveState:10>
+ * ステートが追加された際、10番のステートを解除する。
+ * カンマ区切りで複数指定可（<RemoveState:10,11>）
  * 
  * <AutoRemovalActionStart>
  * 自動解除のタイミングを行動開始時に変更します。
@@ -854,6 +862,17 @@ Game_BattlerBase.prototype.addNewState = function(stateId) {
     const a = getSkillUser();
     const b = this;
     const meta = $dataStates[stateId].meta;
+
+    // <RemoveState:number>があれば、そのステートを設定
+    const metaRemoveState = $dataStates[stateId].meta.RemoveState;
+    if (metaRemoveState) {
+        // ","区切りに対応
+        const removeStates = metaRemoveState.split(",");
+        // 対象のステートＩＤを除去していく。
+        for (const stateId of removeStates) {
+            this.removeState(Number(stateId));
+        }
+    }
 
     // ステートを常に更新がオンの場合、現在のステートを消去
     // ※これをやらないと同じステートが重複してしまう。
@@ -1359,6 +1378,16 @@ BattleManager.startTurn = function() {
 };
 
 /**
+ * ●ターン終了時
+ */
+const _BattleManager_endTurn = BattleManager.endTurn;
+BattleManager.endTurn = function() {
+    // フラグを解除
+    mEndStateSkillId = null;
+    _BattleManager_endTurn.apply(this, arguments);
+};
+
+/**
  * ●ターン経過によるステート状況表示
  */
 const _Window_BattleLog_displayAutoAffectedStatus = Window_BattleLog.prototype.displayAutoAffectedStatus;
@@ -1505,8 +1534,11 @@ if (pAlwaysUpdateState) {
     Game_BattlerBase.prototype.isStateAffected = function(stateId) {
         // 強制的にfalseとすることでステートの重ねを有効に
         // ※ただし、死亡は無限ループとなるので対象外。
-        if (mIsStateAffectedFalse && this.deathStateId() != stateId) {
-            return false;
+        if (mIsStateAffectedFalse) {
+            mIsStateAffectedFalse = false;
+            if (this.deathStateId() != stateId) {
+                return false;
+            }
         }
         return _Game_BattlerBase_isStateAffected.apply(this, arguments);
     };
