@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.23 Change the battle system to CTB.
+ * @plugindesc v1.231 Change the battle system to CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -297,7 +297,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.23 戦闘システムをＣＴＢへ変更します。
+ * @plugindesc v1.231 戦闘システムをＣＴＢへ変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -1011,6 +1011,11 @@ BattleManager.changeTargetsWtState = function(targets) {
 
     // 対象毎にループ
     for (const target of targets) {
+        // 対象が戦闘不能の場合は範囲が有効かを確認。
+        if (target.isDead() && !action.isForDeadFriend()) {
+            continue;
+        }
+
         // 効果前の敏捷性を保持
         const beforeAgi = target.agi;
 
