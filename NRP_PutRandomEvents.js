@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.03 Placement automation for symbol encounters.
+ * @plugindesc v1.04 Placement automation for symbol encounters.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base TemplateEvent
  * @base EventReSpawn
@@ -231,7 +231,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.03 シンボルエンカウントの配置自動化。
+ * @plugindesc v1.04 シンボルエンカウントの配置自動化。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base TemplateEvent
  * @base EventReSpawn
@@ -1026,55 +1026,47 @@ function putEvent(coordinates, templateId, isCheckOpen) {
     // テンプレートマップ上のイベントＩＤ
     const originalEventId = this.getEventIdForEventReSpawn(templateId, true);
 
-    // ランダムに座標を取得
-    let randomIndex = Math.randomInt(coordinates.length);
-    let point = coordinates[randomIndex];
+    let randomIndex = null;
+    let point = null;
 
-    // 有効な座標に限定
-    // ※すり抜け以外のイベントが配置されている場合は無効
-    while (!isValidPoint(point)) {
-        // 対象の座標データを除去
-        coordinates.splice(randomIndex, 1);
-        // 有効な座標がなくなれば終了
+    // 有効な座標がなくなるか条件を満たすまでループ
+    while (true) {
+        // 有効な座標がなくなった場合は配置せず終了
         if (coordinates.length == 0) {
             return;
         }
-        // ランダムに座標を再取得
+
+        // ランダムに座標を取得
         randomIndex = Math.randomInt(coordinates.length);
         point = coordinates[randomIndex];
-    }
 
-    // 判定用に仮のイベントを作成する。
-    const templateEvent = new Game_PrefabEvent($gameMap._mapId, null, originalEventId, point.x, point.y, true);
-
-    // 通行可能かどうかを確認する。
-    if (pPassableOnly) {
-        while(!isPassable(templateEvent, point.x, point.y)) {
-            // 対象の座標データを除去
+        // 座標が無効だった場合
+        // ※すり抜け以外のイベントが配置されている場合は無効
+        if (!isValidPoint(point)) {
+            // 対象の座標データを除去してやり直し
             coordinates.splice(randomIndex, 1);
-            // 有効な座標がなくなれば終了
-            if (coordinates.length == 0) {
-                return;
-            }
-            // ランダムに座標を再取得
-            randomIndex = Math.randomInt(coordinates.length);
-            point = coordinates[randomIndex];
+            continue;
         }
-    }
 
-    // 座標が開かれた空間かどうかを確認する。
-    if (isCheckOpen) {
-        while (!isOpenSpace(templateEvent, point.x, point.y)) {
-            // 対象の座標データを除去
+        // 判定用に仮のイベントを作成する。
+        const templateEvent = new Game_PrefabEvent($gameMap._mapId, null, originalEventId, point.x, point.y, true);
+
+        // 座標が通行不可だった場合
+        if (pPassableOnly && !isPassable(templateEvent, point.x, point.y)) {
+            // 対象の座標データを除去してやり直し
             coordinates.splice(randomIndex, 1);
-            // 有効な座標がなくなれば終了
-            if (coordinates.length == 0) {
-                return;
-            }
-            // ランダムに座標を再取得
-            randomIndex = Math.randomInt(coordinates.length);
-            point = coordinates[randomIndex];
+            continue;
         }
+
+        // 座標が閉じた空間だった場合
+        if (isCheckOpen && !isOpenSpace(templateEvent, point.x, point.y)) {
+            // 対象の座標データを除去してやり直し
+            coordinates.splice(randomIndex, 1);
+            continue;
+        }
+
+        // 座標が全ての条件を満たした場合はループ終了して配置処理へ。
+        break;
     }
 
     // 配置実行（EventReSpawn.jsおよびTemplateEvent.jsと連携）
