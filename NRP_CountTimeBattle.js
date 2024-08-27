@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.231 Change the battle system to CTB.
+ * @plugindesc v1.232 Change the battle system to CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -297,7 +297,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.231 戦闘システムをＣＴＢへ変更します。
+ * @plugindesc v1.232 戦闘システムをＣＴＢへ変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -1041,7 +1041,10 @@ BattleManager.changeTargetsWtState = function(targets) {
                 if (target.isDead() && effect.dataId === target.deathStateId()) {
                     target.setReviveWt();
                 }
-                target._states.remove(effect.dataId);
+                const index = target._states.indexOf(effect.dataId);
+                if (index >= 0) {
+                    target._states.splice(index, 1);
+                }
 
             // バフ付加
             } else if (effect.code == Game_Action.EFFECT_ADD_BUFF) {
@@ -1077,7 +1080,10 @@ BattleManager.changeTargetsWtState = function(targets) {
         // 蘇生
         // ※戦闘不能ステートの解除がなくとも。蘇生はできるらしいので対応
         if (target.isDead() && action.isForDeadFriend() && action.isRecover()) {
-            target._states.remove(target.deathStateId());
+            const index = target._states.indexOf(target.deathStateId());
+            if (index >= 0) {
+                target._states.splice(index, 1);
+            }
             target.setReviveWt();
         }
 
