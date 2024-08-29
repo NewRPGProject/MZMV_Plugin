@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.122 Extend the functionality of the state in various ways.
+ * @plugindesc v1.13 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -344,7 +344,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.122 ステートの機能を色々と拡張します。
+ * @plugindesc v1.13 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -1243,6 +1243,7 @@ Game_Battler.prototype.removeState = function(stateId) {
 };
 
 // ステート終了スキルの実行判定用のＩＤ
+// ※ＣＴＢなどシステムによっては挙動が変わるので、念入りに解除処理を挿入している。
 let mEndStateSkillId = null;
 
 /**
@@ -1620,6 +1621,9 @@ Game_Battler.prototype.removeStatesAutoActionStart = function() {
  */
 const _BattleManager_startInput = BattleManager.startInput
 BattleManager.startInput = function() {
+    // フラグを解除
+    mEndStateSkillId = null;
+
     _BattleManager_startInput.apply(this, arguments);
 
     // 行動主体が取得できない場合は無効
