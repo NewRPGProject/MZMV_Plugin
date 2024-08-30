@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.07 Extends the functionality of battle events.
+ * @plugindesc v1.08 Extends the functionality of battle events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_ChargeSkill
  * @orderBefore NRP_DynamicAnimationMZ
@@ -184,6 +184,15 @@
  * @option Don't Force @value false
  * 
  * @------------------------------------------------------------------
+ * 
+ * @command randomSkills
+ * @desc Set the skill and run it at random.
+ * 
+ * @arg skills
+ * @desc Set the skills to be executed at random.
+ * @type skill[]
+ * 
+ * @------------------------------------------------------------------
  * @ Plugin Parameters
  * @------------------------------------------------------------------
  * 
@@ -236,7 +245,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.07 バトルイベントの機能を拡張します。
+ * @plugindesc v1.08 バトルイベントの機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_ChargeSkill
  * @orderBefore NRP_DynamicAnimationMZ
@@ -423,6 +432,17 @@
  * @option 強制しない @value false
  * 
  * @------------------------------------------------------------------
+ * 
+ * @command randomSkills
+ * @text スキルのランダム実行
+ * @desc スキルを設定し、ランダムで実行します。
+ * 
+ * @arg skills
+ * @text スキル
+ * @desc ランダムで実行するスキルを設定します。
+ * @type skill[]
+ * 
+ * @------------------------------------------------------------------
  * @ プラグインパラメータ
  * @------------------------------------------------------------------
  * 
@@ -564,6 +584,11 @@ PluginManager.registerCommand(PLUGIN_NAME, "forceSubject", function(args) {
 
     const value = getCommandValue(args.subject);
     plForceSubject = eval(value);
+
+    // aで行動主体を参照できるようにする。
+    if (pAIsSubject) {
+        a = plForceSubject;
+    }
 });
 
 /**
@@ -657,6 +682,38 @@ PluginManager.registerCommand(PLUGIN_NAME, "setConditionSwitch", function(args) 
 PluginManager.registerCommand(PLUGIN_NAME, "superForce", function(args) {
     const value = getCommandValue(args.forceMode);
     plSuperForce = eval(value);
+});
+
+/**
+ * ●行動判定の無効化
+ */
+PluginManager.registerCommand(PLUGIN_NAME, "randomSkills", function(args) {
+    // 行動主体を設定
+    let subject = BattleManager._subject;
+    if (plForceSubject) {
+        subject = plForceSubject;
+    } else if (!subject){
+        subject = BattleManager._action.subject();
+    }
+
+    const skills = JSON.parse(args.skills);
+    const filterSkills = skills.filter(skill => subject.canUse($dataSkills[skill]))
+
+    let skillId = 1;
+    // ランダムでスキルを取得
+    if (filterSkills.length > 0) {
+        skillId = filterSkills[Math.randomInt(filterSkills.length)];
+    }
+
+    // 使用不可なら中止
+    if (!subject.canUse($dataSkills[skillId])) {
+        return;
+    }
+
+    // 戦闘行動の強制を実行
+    subject.forceAction(skillId, -1);
+    BattleManager.forceAction(subject);
+    this.setWaitMode('action');
 });
 
 /**
