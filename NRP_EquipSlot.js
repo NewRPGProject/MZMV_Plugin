@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.11 Change the equipment slots at will.
+ * @plugindesc v1.12 Change the equipment slots at will.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489626316.html
  *
@@ -158,11 +158,20 @@
  * @type boolean
  * @default false
  * @desc Disables the ability to equip multiple pieces of the same armor.
+ * 
+ * @param <For NRP_EquipItem>
+ * @desc This item is for use with NRP_EquipItem.js.
+ * 
+ * @param ItemUnique
+ * @parent <For NRP_EquipItem>
+ * @type boolean
+ * @default false
+ * @desc Disables the ability to equip multiple pieces of the same item.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.11 装備スロットを自由に変更。
+ * @plugindesc v1.12 装備スロットを自由に変更。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489626316.html
  * 
@@ -307,6 +316,17 @@
  * @type boolean
  * @default false
  * @desc 同じ防具を複数装備できなくします。
+ * 
+ * @param <For NRP_EquipItem>
+ * @text ＜NRP_EquipItem.js連携＞
+ * @desc NRP_EquipItem.jsと併用する場合の項目です。
+ * 
+ * @param ItemUnique
+ * @text 同一アイテムの装備禁止
+ * @parent <For NRP_EquipItem>
+ * @type boolean
+ * @default false
+ * @desc 同じアイテムを複数装備できなくします。
  */
 
 (function() {
@@ -355,6 +375,7 @@ const pPagingEquipmentType = parameters["PagingEquipmentType"];
 const pStatusShowSlots = parseStruct1(parameters["StatusShowSlots"]);
 const pArmorTypeUnique = toBoolean(parameters["ArmorTypeUnique"], false);
 const pArmorUnique = toBoolean(parameters["ArmorUnique"], false);
+const pItemUnique = toBoolean(parameters["ItemUnique"], false);
 
 //-----------------------------------------------------------------------------
 // Game_Actor
@@ -426,10 +447,6 @@ if (pAdjustInitEquip) {
 const _Game_Actor_releaseUnequippableItems = Game_Actor.prototype.releaseUnequippableItems;
 Game_Actor.prototype.releaseUnequippableItems = function(forcing) {
     // この処理中のみスロット変化による装備解除を有効にする。
-    // ※ただし、forcingがfalseの場合のみが対象
-    // 　trueの場合は内部的な処理なので対象外
-    
-    // mReleaseUnequippableItems = !forcing;
     mForcing = forcing;
     mReleaseUnequippableItems = true;
     _Game_Actor_releaseUnequippableItems.apply(this, arguments);
@@ -741,8 +758,9 @@ Window_EquipItem.prototype.isEnabled = function(item) {
  * 【独自】装備制限に引っかかるか？
  */
 Game_BattlerBase.prototype.isEquipUnique = function(item, slotId) {
-    // 同一防具の装備禁止
-    if (pArmorUnique && DataManager.isArmor(item)) {
+    // 同一防具、同一アイテムの装備禁止
+    if (pArmorUnique && DataManager.isArmor(item)
+            || pItemUnique && DataManager.isItem(item)) {
         // アクターの装備チェック
         for (let tempSlotId = 0; tempSlotId < this.equips().length; tempSlotId++) {
             // 選択中のスロットについては除外
