@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.041 Manage audio files.
+ * @plugindesc v1.042 Manage audio files.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483999181.html
  *
@@ -329,7 +329,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.041 音声ファイルの管理を行う。
+ * @plugindesc v1.042 音声ファイルの管理を行う。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483999181.html
  *
@@ -767,9 +767,16 @@ PluginManager.registerCommand(PLUGIN_NAME, "ChangeCurrentBgmSetting", function(a
 
     // 変更した情報を反映
     if (AudioManager._bgmBuffer) {
-        AudioManager.updateBgmParameters(bgmData);
-        AudioManager._bgmBuffer.play(true, bgmData.pos);
-        AudioManager.updateCurrentBgm(bgmData, bgmData.pos);
+        // ピッチの変更がある場合
+        if (pitch) {
+            AudioManager.updateBgmParameters(bgmData);
+            AudioManager._bgmBuffer.play(true, bgmData.pos);
+            AudioManager.updateCurrentBgm(bgmData, bgmData.pos);
+        // ピッチの変更が必要ない場合は通常演奏
+        // ※こちらのほうが処理が安定する模様。
+        } else {
+            AudioManager.updateBgmParameters(bgmData);
+        }
     }
 });
 
