@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.254 When executing skills, call motion freely.
+ * @plugindesc v1.255 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -561,7 +561,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.254 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.255 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -1269,17 +1269,17 @@ const parameters = PluginManager.parameters("NRP_DynamicMotionMZ");
 const pTemplateList = parseStruct2(parameters["templateList"]);
 const pMapTemplateList = parseStruct2(parameters["mapTemplateList"]);
 
-var pSetStartMotion = parameters["setStartMotion"];
-var pSetStepForward = parameters["setStepForward"];
-var pJumpShadow = toBoolean(parameters["jumpShadow"]);
-var pShortTagName = parameters["shortTagName"];
-var pShortSettingTagName = parameters["shortSettingTagName"];
-var pDefaultDuration = toNumber(parameters["defaultDuration"], 12);
-var pDefaultEnemyMotionDuration = toNumber(parameters["defaultEnemyMotionDuration"], 12);
-var pImmortalState = toNumber(parameters["immortalState"]);
-var pUsePriority = toBoolean(parameters["usePriority"], true);
-var pBattlerZ = toNumber(parameters["battlerZ"], 3);
-var pOpponentSideZ = toNumber(parameters["opponentSideZ"]);
+const pSetStartMotion = parameters["setStartMotion"];
+const pSetStepForward = parameters["setStepForward"];
+const pJumpShadow = toBoolean(parameters["jumpShadow"]);
+const pShortTagName = parameters["shortTagName"];
+const pShortSettingTagName = parameters["shortSettingTagName"];
+const pDefaultDuration = toNumber(parameters["defaultDuration"], 12);
+const pDefaultEnemyMotionDuration = toNumber(parameters["defaultEnemyMotionDuration"], 12);
+const pImmortalState = toNumber(parameters["immortalState"]);
+const pUsePriority = toBoolean(parameters["usePriority"], true);
+const pBattlerZ = toNumber(parameters["battlerZ"], 3);
+const pOpponentSideZ = toNumber(parameters["opponentSideZ"]);
 
 const animatinParameters = PluginManager.parameters("NRP_DynamicAnimationMZ");
 const pNoMirrorForFriend = toBoolean(animatinParameters["noMirrorForFriend"], true);
@@ -2841,6 +2841,11 @@ Sprite.prototype.startDynamicMotion = function(dynamicMotion) {
         // 現在地を初期値に設定
         let sx = this.x;
         let sy = this.y - this.rollAirY(); // 空中座標は除外
+
+        // NRP_ShadowAndLevitate.js併用時の振幅は除外
+        if (this.floatSwing != null) {
+            sy -= this.floatSwing;
+        }
 
         // 指定があれば始点座標を設定
         if (dm.sx != undefined) {
