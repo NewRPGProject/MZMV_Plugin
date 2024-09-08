@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.051 Extend the effect of the skill.
+ * @plugindesc v1.06 Extend the effect of the skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -79,6 +79,19 @@
  * Example: Restores the HP of all allies, but the user takes damage.
  * <ChangeDamageType:a == b ? 1 : 3>
  * 
+ * ◆Change Number of Repeats
+ * <ChangeNumRepeats:2>
+ * Changes the number of repeats to the specified value.
+ * 
+ * ◆Change Number of Random Times
+ * <ChangeNumRandom:5>
+ * Changes the number of targets to the specified value
+ * when scope is random.
+ * It is valid for more than 5 times, which is normally not possible.
+ * 
+ * Example: Randomly run 2-4 times.
+ * <ChangeNumRandom:2 + Math.randomInt(3)>
+ * 
  * ◆Recover TP
  * <RecoverTp:100>
  * Recovers 100 TP.
@@ -144,7 +157,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.051 スキルの効果を拡張します。
+ * @plugindesc v1.06 スキルの効果を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -215,6 +228,18 @@
  * 
  * 例：味方全体のＨＰを回復するが、自分はダメージを受ける。
  * <ChangeDamageType:a == b ? 1 : 3>
+ * 
+ * ◆連続回数を変更
+ * <ChangeNumRepeats:2>
+ * 連続回数を指定した値へ変更します。
+ * 
+ * ◆ランダム回数を変更
+ * <ChangeNumRandom:5>
+ * 範囲がランダムの場合の対象数を指定した値へ変更します。
+ * 通常は不可能な５回以上も有効です。
+ * 
+ * 例：２～４回、ランダムに実行する。
+ * <ChangeNumRandom:2 + Math.randomInt(3)>
  * 
  * ◆ＴＰ回復
  * <RecoverTp:100>
@@ -587,6 +612,51 @@ Game_Action.prototype.evalDamageFormula = function(target) {
     }
 
     return _Game_Action_evalDamageFormula.apply(this, arguments);
+};
+
+/**
+ * ●連続回数
+ */
+const _Game_Action_numRepeats = Game_Action.prototype.numRepeats;
+Game_Action.prototype.numRepeats = function() {
+    const metaChangeNumRepeats = this.item().meta.ChangeNumRepeats;
+    if (metaChangeNumRepeats) {
+        const keepRepeats = this.item().repeats;
+        // eval参照用
+        const a = this.subject();
+        const action = this;
+
+        // 一時的に連続回数を書き換える。
+        this.item().repeats = eval(metaChangeNumRepeats);
+        const numRepeats = _Game_Action_numRepeats.apply(this, arguments);
+        // 値を戻す。
+        this.item().repeats = keepRepeats;
+
+        return numRepeats;
+    }
+    return _Game_Action_numRepeats.apply(this, arguments);;
+};
+
+/**
+ * ●範囲がランダムの際の対象数
+ */
+const _Game_Action_numTargets = Game_Action.prototype.numTargets;
+Game_Action.prototype.numTargets = function() {
+    const metaChangeNumRandom = this.item().meta.ChangeNumRandom;
+    if (metaChangeNumRandom) {
+        // 既に設定済みなら取得
+        if (this._numTargets != null) {
+            return this._numTargets;
+        }
+        // eval参照用
+        const a = this.subject();
+        const numTargets = eval(metaChangeNumRandom);
+        // actionに設定して記憶する。
+        // ※値がランダムの場合に以降の処理を固定させるため
+        this._numTargets = numTargets;
+        return numTargets;
+    }
+    return _Game_Action_numTargets.apply(this, arguments);
 };
 
 // ----------------------------------------------------------------------------
