@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.091 Implemented a class change screen for multiple classes.
+ * @plugindesc v1.092 Implemented a class change screen for multiple classes.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -455,7 +455,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.091 多重職業用の転職画面を実装。
+ * @plugindesc v1.092 多重職業用の転職画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -2817,7 +2817,7 @@ Windows_ClassInfo.prototype.drawSkill = function(x, y, i, skillId) {
         // マスクする場合
         if (pShowUnlearnedSkills == "mask") {
             // 他のアクターが習得していない
-            if (!$gameParty.members().some(m => m.isLearnedSkill(skillId))) {
+            if (!$gameParty.members().some(m => isLearnedClassSkill(m, skillId, this.getClass().id))) {
                 // マスク表示を行う
                 skillName = "？？？？？";
             }
@@ -2839,6 +2839,33 @@ Windows_ClassInfo.prototype.drawSkill = function(x, y, i, skillId) {
     this.drawText(skillName, x + textMargin, y, itemWidth);
     // 表示を戻す
     this.changePaintOpacity(1);
+}
+
+/**
+ * ●クラススキルを習得しているか？
+ */
+function isLearnedClassSkill(actor, skillId, classId) {
+    // スキルを習得している？
+    if (actor.isLearnedSkill(skillId)) {
+        return true;
+    }
+
+    // クラスの指定が存在する場合
+    if (classId) {
+        const dataClass = $dataClasses[classId];
+        // アクターの該当クラスのＥＸＰを取得
+        const exp = actor._exp[classId];
+        // ダミーアクターを作成し、クラスを設定する。
+        const dummyActor = new Game_Actor(actor.actorId());
+        dummyActor.changeClass(classId);
+        // クラスの習得スキル情報を取得
+        const learning = dataClass.learnings.find(l => l.skillId == skillId)
+        // スキル習得に必要なＥＸＰを満たしている？
+        if (exp >= dummyActor.expForLevel(learning.level)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /**
