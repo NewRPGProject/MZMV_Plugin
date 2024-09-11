@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.211 Automate & super-enhance battle animations.
+ * @plugindesc v1.22 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -209,7 +209,11 @@
  * @text MV Animation Flag
  * @type boolean
  * @desc The animation for RPG Maker MV is used.
- * This feature is not yet implemented.
+ * 
+ * @param damageSet
+ * @type boolean
+ * @desc Damage will be done at the end of the animation.
+ * If a numeric value is specified, process at that timing.
  * 
  * @param <Repeat>
  * @desc Basic settings that are processed for each repeat.
@@ -531,7 +535,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.211 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.22 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -765,7 +769,12 @@
  * @text MVアニメーションフラグ
  * @type boolean
  * @desc ツクールMV用アニメーションを使用します。
- * この機能は未実装です。
+ * 
+ * @param damageSet
+ * @text ダメージ処理（セット）
+ * @type boolean
+ * @desc アニメーションの終了に合わせてダメージ処理を行います。
+ * また数値を指定すれば、そのタイミングで処理を行います。
  * 
  * @param <Repeat>
  * @text ＜リピート＞
@@ -2025,8 +2034,15 @@ BaseAnimation.prototype.makeAnimation = function (dataA, mirror, dynamicAnimatio
 
     // リピート回数だけ実行（r = 現在のリピート回数）
     for (let r = 0; r < this.repeat; r++) {
-        // リピートごとにevalする。
-        const id = eval(this.id);
+        let id;
+        try {
+            // リピートごとにevalする。
+            id = eval(this.id);
+        // エラーならば次へ
+        // ※conditionを満たさない場合を想定
+        } catch (e) {
+            continue;
+        }
         // アニメーションを取得
         const animation = this.getAnimation(id);
 
@@ -2640,6 +2656,7 @@ DynamicAnimation.prototype.initialize = function(baseAnimation, target, index) {
     // ダメージ
     this.damage = eval(baseAnimation.damage);
     this.damageAll = eval(baseAnimation.damageAll);
+    this.damageSet = eval(baseAnimation.damageSet);
 
     // NRP_DynamicAnimationMapMZ用の情報
     const mapAnimation = baseAnimation.mapAnimation;
@@ -2668,6 +2685,7 @@ DynamicAnimation.prototype.isNoMake = function () {
         && this.isLimitSound
         && (this.damage == undefined || this.damage === false)
         && (this.damageAll == undefined || this.damageAll === false)
+        && (this.damageSet == undefined || this.damageSet === false)
         && !this.isLastRepeat) {
         return true;
     }
@@ -3128,18 +3146,43 @@ DynamicAnimation.prototype.makeAfterimage = function (baseAnimation, dynamicAnim
  * ●ダメージ処理用データの作成
  */
 DynamicAnimation.prototype.makeDamageData = function (baseAnimation, dynamicAnimationList, delay) {
-    // 単体ダメージか全体ダメージのいずれか
-    if (this.damage === undefined && this.damageAll === undefined) {
-        return;
-    // 全体時は初回以外は処理しない
-    } else if (this.damageAll != undefined && this.r > 0) {
+    let damageTiming = null;
+
+    if (this.damage != undefined) {
+        damageTiming = this.damage;
+    } else if (this.damageAll != undefined) {
+        damageTiming = this.damageAll;
+    } else if (this.damageSet != undefined) {
+        damageTiming = this.damageSet;
+    }
+
+    // ダメージ処理ではない場合
+    if (damageTiming === null) {
         return;
     }
 
-    const spriteAnimation = baseAnimation.spriteAnimation;
+    // 全体時の場合
+    if (this.damageAll != undefined) {
+        // 初回以外は処理しない
+        if (this.r > 0) {
+            return;
+        }
+    }
 
+    // ダメージセットの場合
+    if (this.damageSet != undefined) {
+        // trueなら最終リピートのみ
+        if (this.damageSet === true && this.r < this.repeat - 1) {
+            return;
+        // 数値指定なら初回リピートのみ
+        } else if (this.damageSet !== true && this.r > 0) {
+            return;
+        }
+    }
+
+    const spriteAnimation = baseAnimation.spriteAnimation;
     // ダメージ用のDynamicAnimationを作成（値はほぼ空で問題ない）
-    var damageData = new DynamicAnimation(baseAnimation, this.target);
+    const damageData = new DynamicAnimation(baseAnimation, this.target);
     // ダメージ表示フラグをオン
     damageData.afterDamage = true;
     // 各種演出を行わない。
@@ -3148,14 +3191,11 @@ DynamicAnimation.prototype.makeDamageData = function (baseAnimation, dynamicAnim
     damageData.id = 0;
 
     // trueならアニメーション終了に時間を合わせる
-    if (this.damage === true || this.damageAll == true) {
+    if (damageTiming == true) {
         damageData.targetDelay = delay + spriteAnimation._duration;
-    // 数値なら指定のフレーム数で（全体）
-    } else if (this.damageAll != undefined) {
-        damageData.targetDelay = delay + this.damageAll * this.rate;
-    // 数値なら指定のフレーム数で（１回ずつ）
-    } else if (this.damage != undefined) {
-        damageData.targetDelay = delay + this.damage * this.rate;
+    // 数値なら指定のフレーム数で
+    } else {
+        damageData.targetDelay = delay + damageTiming * this.rate;
     }
 
     // 戦闘アニメーション実行リストに追加
@@ -4554,6 +4594,9 @@ BattleManager.dynamicDamageControl = function(dynamicAction) {
     // ダメージ処理の実行（一回ずつ）
     } else if (dynamicAction.damage != null) {
         this.isDynamicCallDamage(dynamicAction);
+    // ダメージ処理の実行（セット）
+    } else if (dynamicAction.damageSet != null) {
+        this.isDynamicCallDamage(dynamicAction);
     }
 };
 
@@ -4604,6 +4647,9 @@ BattleManager.updateDynamicDamage = function() {
     }
 };
 
+// 結果クリア制御用
+let mNoClearResult = false;
+
 /**
  * 【独自】ダメージ処理の実行
  */
@@ -4629,6 +4675,12 @@ BattleManager.isDynamicCallDamage = function(dynamicAction) {
     // 重複ターゲットを削除して再作成
     const distinctTargets = Array.from(new Set(targets));
 
+    // 行動主体の結果クリア
+    subject.clearResult();
+    // 行動主体の結果クリアを一時的に禁止する。
+    // ※行動主体の数値表示が消えてしまうため。
+    mNoClearResult = true;
+
     // 対象の人数分実行
     for (const target of distinctTargets) {
         // 処理した要素を削除
@@ -4643,6 +4695,21 @@ BattleManager.isDynamicCallDamage = function(dynamicAction) {
         // ダメージ処理実行
         this.invokeAction(subject, target);
     }
+
+    // 結果クリアの禁止解除
+    mNoClearResult = false;
+};
+
+/**
+ * ●結果クリア
+ */
+const _Game_Battler_clearResult = Game_Battler.prototype.clearResult;
+Game_Battler.prototype.clearResult = function() {
+    // 一括処理中はクリアしない。
+    if (mNoClearResult) {
+        return;
+    }
+    _Game_Battler_clearResult.apply(this, arguments);
 };
 
 })();
