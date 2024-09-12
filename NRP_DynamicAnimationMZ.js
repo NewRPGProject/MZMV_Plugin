@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.22 Automate & super-enhance battle animations.
+ * @plugindesc v1.221 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -535,7 +535,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.22 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.221 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -2748,6 +2748,10 @@ DynamicAnimation.prototype.evaluate = function (spriteAnimation) {
     var ex;
     var ey;
 
+    // 放物線
+    var arcX = eval(baseAnimation.arcX);
+    var arcY = eval(baseAnimation.arcY);
+
     // 残像の場合：親の情報をコピー
     if (this.isAfterimage) {
         // 親情報を取得
@@ -2765,6 +2769,10 @@ DynamicAnimation.prototype.evaluate = function (spriteAnimation) {
             ex += parentDA.diffScreenX();
             ey += parentDA.diffScreenY();
         }
+
+        // 放物線
+        arcX = parentDA.arcX;
+        arcY = parentDA.arcY;
 
     // 通常時
     } else {
@@ -2845,16 +2853,16 @@ DynamicAnimation.prototype.evaluate = function (spriteAnimation) {
             var eyRandom = eval(baseAnimation.eyRandom);
             ey = ey - eyRandom + bestRandom2.y * (eyRandom * 2 + 1);
         }
+
+        // 放物線
+        arcX = eval(baseAnimation.arcX);
+        arcY = eval(baseAnimation.arcY);
     }
 
     this.sx = sx;
     this.sy = sy;
     this.ex = ex;
     this.ey = ey;
-    
-    // 放物線
-    var arcX = eval(baseAnimation.arcX);
-    var arcY = eval(baseAnimation.arcY);
     this.arcX = arcX;
     this.arcY = arcY;
 
