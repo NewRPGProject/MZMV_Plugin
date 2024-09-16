@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.232 Change the battle system to CTB.
+ * @plugindesc v1.233 Change the battle system to CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -297,7 +297,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.232 戦闘システムをＣＴＢへ変更します。
+ * @plugindesc v1.233 戦闘システムをＣＴＢへ変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -1153,6 +1153,11 @@ BattleManager.processTurn = function() {
 //        this._logWindow.displayCurrentState(subject);
 //        this._logWindow.displayRegeneration(subject);
 //        this._subject = this.getNextSubject();
+
+        // 状態を未確定に
+        // ※スキルが未設定の場合、BattleManager.endActionが
+        //   呼ばれないパターンもあるので強制的に調整する。
+        subject.setActionState('undecided');
         // CTBなので即ターン終了
         this.endTurn();
     }
