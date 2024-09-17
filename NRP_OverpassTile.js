@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.05 Realize a high-performance overpass.
+ * @plugindesc v1.06 Realize a high-performance overpass.
  * @author Takeshi Sunagawa (original triacontane & Yoji Ojima)
  * @orderAfter NRP_EventCollisionEX
  * @orderAfter NRP_BushEX
@@ -42,6 +42,7 @@
  * it will be treated as an overpass.
  * Then, as in "OverpassTile.js", specify the overpass
  * and its entrance in the region and terrain tags.
+ * (Multiple specifications are acceptable. Example: 1,2)
  * 
  * Initially, the character will be treated as being under the overpass.
  * When the character passes through the entrance of the overpass,
@@ -162,22 +163,22 @@
  * @param OverPathRegion
  * @desc Region ID set for bridge or other overpass sections.
  * @default 0
- * @type number
+ * @type text
  *
  * @param OverPathTerrainTag
  * @desc Terrain tag set for bridge or other overpass sections.
  * @default 0
- * @type number
+ * @type text
  *
  * @param GatewayRegion
  * @desc Region ID set for overpass entrances, such as both ends of a bridge.
  * @default 0
- * @type number
+ * @type text
  *
  * @param GatewayTerrainTag
  * @desc Terrain tag set for overpass entrances, such as both ends of a bridge.
  * @default 0
- * @type number
+ * @type text
  * 
  * @param ConsiderLadder
  * @desc If the character is on the overpass, ignore the ladder attribute below.
@@ -192,7 +193,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.05 高機能な立体交差を実現します。
+ * @plugindesc v1.06 高機能な立体交差を実現します。
  * @author 砂川赳 (original トリアコンタン & Yoji Ojima)
  * @orderAfter NRP_EventCollisionEX
  * @orderAfter NRP_BushEX
@@ -229,6 +230,7 @@
  * 立体交差として扱われます。
  * あとは『OverpassTile.js』と同じようにリージョンや地形タグで
  * 立体交差とその入口を指定してください。
+ * （カンマ区切りで複数指定可。例：1,2）
  * 
  * 初期状態では、キャラクターは立体交差の下にいるものとして扱われます。
  * 立体交差の入口を通過すると、キャラクターが立体交差の上に移動します。
@@ -351,25 +353,25 @@
  * @text 立体交差リージョン
  * @desc 橋などの立体交差部分に設定するリージョンIDです。
  * @default 0
- * @type number
+ * @type text
  *
  * @param OverPathTerrainTag
  * @text 立体交差地形タグ
  * @desc 橋などの立体交差部分に設定する地形タグです。
  * @default 0
- * @type number
+ * @type text
  *
  * @param GatewayRegion
  * @text 立体交差入り口リージョン
  * @desc 橋の両端など、立体交差の入り口部分に設定するリージョンIDです。
  * @default 0
- * @type number
+ * @type text
  *
  * @param GatewayTerrainTag
  * @text 立体交差入り口地形タグ
  * @desc 橋の両端など、立体交差の入り口部分に設定するリージョンIDです。
  * @default 0
- * @type number
+ * @type text
  * 
  * @param ConsiderLadder
  * @text ハシゴ属性に対応
@@ -405,10 +407,10 @@ function setDefault(str, def) {
 
 const PLUGIN_NAME = "NRP_OverpassTile";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
-const pOverPathRegion = toNumber(parameters["OverPathRegion"]);
-const pOverPathTerrainTag = toNumber(parameters["OverPathTerrainTag"]);
-const pGatewayRegion = toNumber(parameters["GatewayRegion"]);
-const pGatewayTerrainTag = toNumber(parameters["GatewayTerrainTag"]);
+const pOverPathRegion = setDefault(parameters["OverPathRegion"]);
+const pOverPathTerrainTag = setDefault(parameters["OverPathTerrainTag"]);
+const pGatewayRegion = setDefault(parameters["GatewayRegion"]);
+const pGatewayTerrainTag = setDefault(parameters["GatewayTerrainTag"]);
 const pConsiderLadder = toBoolean(parameters["ConsiderLadder"], true);
 const pAutoOverpassHigher = toBoolean(parameters["AutoOverpassHigher"], false);
 
@@ -686,14 +688,20 @@ Game_Followers.prototype.updateOverPathOnLocate = function() {
 /**
  * Game_Map
  */
-Game_Map.prototype.isRegionOrTerrainTag = function(x, y, regionId, terrainTag) {
-    if (regionId > 0 && this.regionId(x, y) === regionId) {
-        return true;
-    } else if (terrainTag > 0 && this.terrainTag(x, y) === terrainTag) {
-        return true;
-    } else {
-        return false;
+Game_Map.prototype.isRegionOrTerrainTag = function(x, y, regionIds, terrainTags) {
+    // リージョンＩＤ
+    for (let regionId of regionIds.split(",")) {
+        if (regionId > 0 && this.regionId(x, y) == regionId) {
+            return true;
+        }
     }
+    // 地形タグ
+    for (let terrainTag of terrainTags.split(",")) {
+        if (terrainTag > 0 && this.terrainTag(x, y) == terrainTag) {
+            return true;
+        }
+    }
+    return false;
 };
 
 Game_Map.prototype.isOverPath = function(x, y) {
