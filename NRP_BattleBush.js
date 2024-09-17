@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.04 Apply the bush effect to the battle background.
+ * @plugindesc v1.05 Apply the bush effect to the battle background.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_ShadowAndLevitate
  * @url http://newrpg.seesaa.net/article/486468229.html
@@ -191,7 +191,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 戦闘背景に茂み効果を適用します。
+ * @plugindesc v1.05 戦闘背景に茂み効果を適用します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_ShadowAndLevitate
  * @url http://newrpg.seesaa.net/article/486468229.html
@@ -529,11 +529,14 @@ function isMatch(settingValue, compareValue) {
  * 【独自】半透明用の半身の作成
  */
 Sprite_Battler.prototype.createHalfBodySprites = function() {
+    let createFlg = false;
+
     if (!this._upperBody) {
         this._upperBody = new Sprite();
         this._upperBody.anchor.x = 0.5;
         this._upperBody.anchor.y = 1;
         this.addChild(this._upperBody);
+        createFlg = true;
     }
     if (!this._lowerBody) {
         this._lowerBody = new Sprite();
@@ -541,6 +544,13 @@ Sprite_Battler.prototype.createHalfBodySprites = function() {
         this._lowerBody.anchor.y = 1;
         this._lowerBody.opacity = this.bushOpacity();
         this.addChild(this._lowerBody);
+        createFlg = true;
+    }
+
+    // ステートスプライトを上に表示
+    if (createFlg && this._stateSprite) {
+        const stateSprite = this.removeChild(this._stateSprite);
+        this.addChild(stateSprite);
     }
 };
 
@@ -627,7 +637,8 @@ Sprite_Actor.prototype.updateFrame = function() {
                 // 本体画像をダミーの透明画像に変更して非表示にする。
                 // ※bitmap.visible = falseでは半身まで消えてしまうので却下。
                 // ※setFrame(sx, sy, 0, ch);ではサイズを参照できなくなるので却下。
-                this.mainSprite().bitmap = new Bitmap(cw, ch);
+                this.mainSprite().bitmap = new Bitmap(originalBitmap.width, originalBitmap.height);
+                this.mainSprite().setFrame(0, 0, cw, ch);
                 // 茂み状態開始
                 this._isOnBush = true;
             }
@@ -709,6 +720,14 @@ Sprite_Actor.prototype.updateBitmap = function() {
         _Sprite_Actor_updateBitmap.apply(this, arguments);
         // 本来の画像を保持しておく。
         this._originalBitmap = this._mainSprite.bitmap;
+        // 茂み状態の場合
+        if (this._isOnBush) {
+            const cw = this._originalBitmap.width / 9; // 描画する横幅
+            const ch = this._originalBitmap.height / 6; // 描画する縦幅
+            // 本体画像をダミーの透明画像に変更して非表示にする。
+            this._mainSprite.bitmap = new Bitmap(this._originalBitmap.width, this._originalBitmap.height);
+            this._mainSprite.setFrame(0, 0, cw, ch);
+        }
         return;
     }
 
@@ -790,6 +809,7 @@ Sprite_Enemy.prototype.updateFrame = function() {
             this._upperBody.setFrame(0, 0, cw, ch - bushDepth);
             // 下半身を半透明描画
             this._lowerBody.setFrame(0, ch - bushDepth, cw, bushDepth);
+
             // 茂み状態になっていない場合
             if (!this._isOnBush) {
                 // 本体画像をダミーの透明画像に変更して非表示にする。
