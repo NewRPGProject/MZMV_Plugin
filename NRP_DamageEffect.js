@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.04 Change the effect of damage handling.
+ * @plugindesc v1.041 Change the effect of damage handling.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/475586753.html
  *
@@ -257,7 +257,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 ダメージ処理の演出を変更します。
+ * @plugindesc v1.041 ダメージ処理の演出を変更します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/475586753.html
  *
@@ -936,7 +936,19 @@ function isWeakEffect(target) {
         return false;
     }
 
-    return eval(pWeakCondition);
+    const a = action.subject();
+    const b = target;
+
+    if (eval(pWeakCondition)) {
+        return true;
+    }
+
+    // スキル毎の弱点判定
+    const metaWeakCondition = action.item().meta.WeakCondition;
+    if (metaWeakCondition && eval(metaWeakCondition)) {
+        return true;
+    }
+    return false;
 }
 
 /**
