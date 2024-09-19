@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v2.00 Adjusted the behavior of event triggers.
+ * @plugindesc v2.01 Adjusted the behavior of event triggers.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/489139124.html
  * @orderAfter NRP_EventCollisionEX
@@ -59,6 +59,17 @@
  * to prohibit activation by Action Button.
  * 
  * -------------------------------------------------------------------
+ * [Disable Through Collision]
+ * -------------------------------------------------------------------
+ * Fix a behavior where an event with priority “Normal”
+ * and trigger “Player Touch” or “Event Touch” could be activated
+ * only when it overlapped with other events
+ * when the event was set to slip through.
+ * 
+ * Due to the specifications, it is more natural to turn it
+ * on at the same time as “Disable Decision Touch”.
+ * 
+ * -------------------------------------------------------------------
  * [Usage]
  * -------------------------------------------------------------------
  * Simply enable the plugin.
@@ -88,11 +99,16 @@
  * @type boolean
  * @default true
  * @desc For events whose trigger is "Player Touch" or "Event Touch", activation with the decision button is prohibited.
+ * 
+ * @param DisableThroughCollision
+ * @type boolean
+ * @default true
+ * @desc For events whose trigger is “Player Touch” or “Event Touch”, collision in the state of slipping through is prohibited.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.00 イベントトリガーの挙動を調整。
+ * @plugindesc v2.01 イベントトリガーの挙動を調整。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/489139124.html
  * @orderAfter NRP_EventCollisionEX
@@ -143,6 +159,15 @@
  * というわけで、決定ボタンでの起動を禁止できるようにしました。
  * 
  * -------------------------------------------------------------------
+ * ■すり抜け衝突の禁止
+ * -------------------------------------------------------------------
+ * プライオリティが『通常キャラと同じ』かつトリガーが
+ * 『プレイヤーから接触』『イベントから接触』のイベントをすり抜けにした際、
+ * 他のイベントと重なっているときのみ起動できてしまう挙動を修正します。
+ * 
+ * 仕様上、決定ボタンによる接触無効と同時にオンにしたほうが自然です。
+ * 
+ * -------------------------------------------------------------------
  * ■利用規約
  * -------------------------------------------------------------------
  * 特に制約はありません。
@@ -167,6 +192,12 @@
  * @type boolean
  * @default true
  * @desc トリガーが『プレイヤーから接触』『イベントから接触』のイベントに対して、決定ボタンでの起動を禁止します。
+ * 
+ * @param DisableThroughCollision
+ * @text すり抜け衝突の禁止
+ * @type boolean
+ * @default true
+ * @desc トリガーが『プレイヤーから接触』『イベントから接触』のイベントに対して、すり抜け状態での衝突を禁止します。
  */
 
 (function() {
@@ -191,6 +222,7 @@ const PLUGIN_NAME = "NRP_TriggerSetting";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pStrictEventTouch = toNumber(parameters["StrictEventTouch"]);
 const pDisableDecisionTouch = toBoolean(parameters["DisableDecisionTouch"]);
+const pDisableThroughCollision = toBoolean(parameters["DisableThroughCollision"]);
 
 // ----------------------------------------------------------------------------
 // イベントから接触を厳密に
@@ -225,6 +257,29 @@ if (pDisableDecisionTouch) {
     Game_Player.prototype.checkEventTriggerThere = function(triggers) {
         // トリガーを『決定ボタン』だけに限定
         _Game_Player_checkEventTriggerThere.call(this, [0]);
+    };
+}
+
+// ----------------------------------------------------------------------------
+// すり抜け衝突の禁止
+// ----------------------------------------------------------------------------
+if (pDisableThroughCollision) {
+    /**
+     * ●トリガーの一致確認
+     * ※通常キャラと同じかつ接触系トリガーのイベントをすり抜けにした際、
+     * 　他のイベントと重なっているときのみ起動できてしまう不具合修正。
+     */
+    const _Game_Event_isTriggerIn = Game_Event.prototype.isTriggerIn;
+    Game_Event.prototype.isTriggerIn = function(triggers) {
+        // トリガーが接触系の場合
+        if (this._trigger == 1 || this._trigger == 2) {
+            // イベントが通常キャラと同じかつすり抜けならば対象外
+            if (this.isNormalPriority() && this.isThrough()) {
+                return false;
+            }
+        }
+
+        return _Game_Event_isTriggerIn.apply(this, arguments);
     };
 }
 
