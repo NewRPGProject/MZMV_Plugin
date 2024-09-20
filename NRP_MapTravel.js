@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.031 Implement a map selection & transfer screen.
+ * @plugindesc v1.04 Implement a map selection & transfer screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484927929.html
  *
@@ -217,6 +217,10 @@
  * @arg HideCommonList
  * @type boolean
  * @desc It does not show the common spot list, but only the additional ones.
+ * 
+ * @arg DefaultIdentifier
+ * @type text
+ * @desc Initial selection spot for the cursor, corresponding to TransferIdentifier.
  * 
  * @------------------------------------------------------------------
  * @ Plugin Parameters
@@ -569,7 +573,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.031 マップ選択＆移動画面を実装します。
+ * @plugindesc v1.04 マップ選択＆移動画面を実装します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484927929.html
  *
@@ -757,6 +761,11 @@
  * @text 共通一覧を非表示
  * @type boolean
  * @desc 共通の地点一覧を表示せず追加分だけを表示します。
+ * 
+ * @arg DefaultIdentifier
+ * @text カーソルの初期識別値
+ * @type text
+ * @desc カーソルの初期選択地点です。移動先識別値に対応します。
  * 
  * @------------------------------------------------------------------
  * @ プラグインパラメータ
@@ -1255,6 +1264,8 @@ if (!PluginManager.registerCommand) {
 let mSpotList = null;
 /** 表示専用 */
 let mReadOnly = false;
+/** 初期識別値 */
+let mDefaultIdentifier = null;
 // ロード中のマップＩＤ
 let mLoadMapId = null;
 // ロード済のマップ情報を格納する配列
@@ -1288,6 +1299,8 @@ PluginManager.registerCommand(PLUGIN_NAME, "SceneStart", function(args) {
 
     // 地点一覧を編集
     mSpotList = editSpotList(mSpotList);
+    // 初期識別値
+    mDefaultIdentifier = eval(args.DefaultIdentifier);
 
     // 選択肢ウィンドウが存在する場合は非表示
     // ※ゴミが残らないようにするため
@@ -2033,6 +2046,7 @@ Windows_SelectSpots.prototype.initialize = function(rect) {
     } else {
         Window_Selectable.prototype.initialize.call(this, rect);
     }
+
     // 先頭を選択しておく。
     this.select(0);
 };
@@ -2042,6 +2056,21 @@ Windows_SelectSpots.prototype.initialize = function(rect) {
  */
 Windows_SelectSpots.prototype.refresh = function() {
     this.makeItemList();
+
+    // 初期識別値の指定がある場合
+    if (mDefaultIdentifier && this._data) {
+        for (let i = 0; i < this._data.length; i++) {
+            const spot = this._data[i];
+            // 一致する移動先識別値が存在した場合
+            if (spot.transferIdentifier == mDefaultIdentifier) {
+                // 選択する。
+                this.select(i);
+                break;
+            }
+        }
+        mDefaultIdentifier = null;
+    }
+    
     Window_Selectable.prototype.refresh.call(this);
 };
 
