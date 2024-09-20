@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.255 When executing skills, call motion freely.
+ * @plugindesc v1.256 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -561,7 +561,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.255 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.256 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -1733,6 +1733,16 @@ BattleManager.processTurn = function() {
     }
     _BattleManager_processTurn.apply(this, arguments);
 }
+
+/**
+ * ●逃げる
+ */
+const _BattleManager_processEscape = BattleManager.processEscape;
+BattleManager.processEscape = function() {
+    // アクター位置の自動設定を禁止解除
+    this._noUpdateTargetPosition = false;
+    return _BattleManager_processEscape.apply(this, arguments);
+};
 
 /**
  * ●モーションの生成開始
