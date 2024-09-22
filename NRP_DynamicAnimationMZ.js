@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.221 Automate & super-enhance battle animations.
+ * @plugindesc v1.222 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -535,7 +535,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.221 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.222 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -2354,6 +2354,13 @@ BaseAnimation.prototype.isAnimationDisp = function(target, targets) {
             // 主対象以外はアニメを表示しない
             if (target == BattleManager._mainTarget) {
                 return true;
+            }
+            // 稀に主対象を対象に含まないケースがあるので、
+            // その場合は最初の一人にアニメを表示する。
+            if (!targets.includes(BattleManager._mainTarget)) {
+                if (target == targets[0]) {
+                    return true;
+                }
             }
             return false;
         }
