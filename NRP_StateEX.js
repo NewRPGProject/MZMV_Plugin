@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.13 Extend the functionality of the state in various ways.
+ * @plugindesc v1.131 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -344,7 +344,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.13 ステートの機能を色々と拡張します。
+ * @plugindesc v1.131 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -1312,7 +1312,9 @@ Game_Battler.prototype.stateEndForceAction = function(skillId, targetIndex) {
     const action = new Game_Action(this, true);
     action.setSkill(skillId);
 
-    if (targetIndex === -2) {
+    if (action.isForUser()) {
+        action.setTarget(this.index());
+    } else if (targetIndex === -2) {
         action.setTarget(this._lastTargetIndex);
     } else if (targetIndex === -1) {
         action.decideRandomTarget();
