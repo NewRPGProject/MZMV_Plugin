@@ -738,7 +738,7 @@ Game_Action.prototype.makeTargets = function() {
         }
 
         // NRP_SkillRangeEX.jsとの連携用
-        const rangeEx = actionItem.meta.RangeEx;
+        const rangeEx = actionItem.meta.RangeEx || actionItem.meta.RangeExIf;
         if (rangeEx) {
             // アクションの本来の対象が単体の場合は、対象を再設定
             if (BattleManager.rangeEx && this.isForOne()) {
