@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.011 Extends the substitute effect.
+ * @plugindesc v1.012 Extends the substitute effect.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_DynamicAnimationMZ
  * @url https://newrpg.seesaa.net/article/500482565.html
@@ -228,7 +228,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.011 身代わりの効果を拡張する。
+ * @plugindesc v1.012 身代わりの効果を拡張する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_DynamicAnimationMZ
  * @url https://newrpg.seesaa.net/article/500482565.html
