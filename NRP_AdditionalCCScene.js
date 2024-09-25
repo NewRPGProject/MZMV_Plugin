@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.092 Implemented a class change screen for multiple classes.
+ * @plugindesc v1.10 Implemented a class change screen for multiple classes.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -455,7 +455,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.092 多重職業用の転職画面を実装。
+ * @plugindesc v1.10 多重職業用の転職画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -2856,8 +2856,9 @@ function isLearnedClassSkill(actor, skillId, classId) {
         // アクターの該当クラスのＥＸＰを取得
         const exp = actor._exp[classId];
         // ダミーアクターを作成し、クラスを設定する。
+        // ※changeClassは装備解除が走るので使わない。
         const dummyActor = new Game_Actor(actor.actorId());
-        dummyActor.changeClass(classId);
+        dummyActor._classId = classId;
         // クラスの習得スキル情報を取得
         const learning = dataClass.learnings.find(l => l.skillId == skillId)
         // スキル習得に必要なＥＸＰを満たしている？
