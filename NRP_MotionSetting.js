@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.04 Set up various motions in side-view battle.
+ * @plugindesc v1.041 Set up various motions in side-view battle.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/475560242.html
@@ -588,7 +588,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 サイドビュー戦闘における各種モーション設定を行います。
+ * @plugindesc v1.041 サイドビュー戦闘における各種モーション設定を行います。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/475560242.html
@@ -1387,18 +1387,12 @@ Sprite_Actor.prototype.refreshMotion = function() {
     }
 
     if (actor) {
-        // ↓　何のために入れていたのか謎……。
-        // ↓　動かなくなる処理があるので、とりあえず消します。（ver1.02）
-        // // 移動中はモーション変更しない
-        // if (this.isMoving()) {
-        //     return;
-        // }
+        const stateMotion = actor.stateMotionIndex();
 
-        if (this._motion === motionGuard && !BattleManager.isInputting()) {
+        // 防御は優先表示
+        if (stateMotion === 0 && this._motion === motionGuard && !BattleManager.isInputting()) {
             return;
         }
-
-        const stateMotion = actor.stateMotionIndex();
 
         let motionName = null;
 
