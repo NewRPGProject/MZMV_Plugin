@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ MV
- * @plugindesc v1.00 Set up a formula for the EXP Curve.
+ * @plugindesc v1.01 Set up a formula for the EXP Curve.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/498685311.html
  *
@@ -80,7 +80,7 @@
 
 /*:ja
  * @target MZ MV
- * @plugindesc v1.00 経験値曲線の数式を設定する。
+ * @plugindesc v1.01 経験値曲線の数式を設定する。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/498685311.html
  *
@@ -188,6 +188,11 @@ const pDefaultExpForLevel = setDefault(parameters["DefaultExpForLevel"]);
  */
 const _Game_Actor_expForLevel = Game_Actor.prototype.expForLevel;
 Game_Actor.prototype.expForLevel = function(level) {
+    // レベル１の場合は０固定
+    if (level == 1) {
+        return 0;
+    }
+
     const c = this.currentClass();
 
     // eval計算用
