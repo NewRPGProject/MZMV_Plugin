@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.042 Manage audio files.
+ * @plugindesc v1.043 Manage audio files.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483999181.html
  *
@@ -329,7 +329,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.042 音声ファイルの管理を行う。
+ * @plugindesc v1.043 音声ファイルの管理を行う。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483999181.html
  *
@@ -749,6 +749,7 @@ if (!PluginManager.registerCommand) {
 PluginManager.registerCommand(PLUGIN_NAME, "ChangeCurrentBgmSetting", function(args) {
     // 現在演奏中のＢＧＭ情報を引き継ぎ
     const bgmData = AudioManager.saveBgm();
+    const oldPitch = bgmData.pitch;
 
     const volume = toNumber(args.Volume);
     if (volume != null) {
@@ -768,7 +769,7 @@ PluginManager.registerCommand(PLUGIN_NAME, "ChangeCurrentBgmSetting", function(a
     // 変更した情報を反映
     if (AudioManager._bgmBuffer) {
         // ピッチの変更がある場合
-        if (pitch) {
+        if (pitch && oldPitch != pitch) {
             AudioManager.updateBgmParameters(bgmData);
             AudioManager._bgmBuffer.play(true, bgmData.pos);
             AudioManager.updateCurrentBgm(bgmData, bgmData.pos);
