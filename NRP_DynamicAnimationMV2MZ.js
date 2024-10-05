@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.062 It makes MV animations correspond to DynamicAnimationMZ.
+ * @plugindesc v1.063 It makes MV animations correspond to DynamicAnimationMZ.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -104,7 +104,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.062 ＭＶ用アニメーションをDynamicAnimationMZに対応させます。
+ * @plugindesc v1.063 ＭＶ用アニメーションをDynamicAnimationMZに対応させます。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -528,19 +528,30 @@ Sprite_AnimationMV.prototype.updateDynamicAnimation = function() {
     if (scale != undefined || scaleX != undefined || scaleY != undefined) {
         let setScaleX = 1;
         let setScaleY = 1;
+
         // 全体
         if (scale != undefined) {
-            setScaleX = eval(scale);
-            setScaleY = eval(scale);
+            const evalScale = eval(scale);
+            if (evalScale != null) {
+                setScaleX = evalScale;
+                setScaleY = evalScale;
+            }
         }
         // Ｘ方向
         if (scaleX != undefined) {
-            setScaleX = eval(scaleX);
+            const evalScaleX = eval(scaleX);
+            if (evalScaleX != null) {
+                setScaleX = evalScaleX;
+            }
         }
         // Ｙ方向
         if (scaleY != undefined) {
-            setScaleY = eval(scaleY);
+            const evalScaleY = eval(scaleY);
+            if (evalScaleY != null) {
+                setScaleY = evalScaleY;
+            }
         }
+
         this.scale = new PIXI.Point(setScaleX, setScaleY);
     }
 
