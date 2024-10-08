@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.043 Manage audio files.
+ * @plugindesc v1.05 Manage audio files.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483999181.html
  *
@@ -151,6 +151,13 @@
  * @type struct<SeAlias>[]
  * @desc Replaces the SE file and plays it.
  * The higher the setting, the higher the priority.
+ * 
+ * @param <Other>
+ * 
+ * @param DisabledAutoplaySwitch
+ * @parent <Other>
+ * @type switch
+ * @desc Disables map switching and ride auto-play while the switch is on.
  */
 
 /*~struct~BgmSetting:
@@ -329,7 +336,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.043 音声ファイルの管理を行う。
+ * @plugindesc v1.05 音声ファイルの管理を行う。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483999181.html
  *
@@ -486,6 +493,15 @@
  * @type struct<SeAlias>[]
  * @desc ＳＥファイルを置換して演奏します。
  * 上の設定ほど優先されます。
+ * 
+ * @param <Other>
+ * @text ＜その他＞
+ * 
+ * @param DisabledAutoplaySwitch
+ * @parent <Other>
+ * @text 自動演奏禁止スイッチ
+ * @type switch
+ * @desc スイッチがオンの間、マップ切替や乗物の自動演奏を無効化します。
  */
 
 /*~struct~BgmSetting:ja
@@ -733,6 +749,7 @@ const pMeSettings = parseStruct2(parameters["MeSettings"]);
 const pMeAliases = parseStruct2(parameters["MeAliases"]);
 const pSeSettings = parseStruct2(parameters["SeSettings"]);
 const pSeAliases = parseStruct2(parameters["SeAliases"]);
+const pDisabledAutoplaySwitch = toNumber(parameters["DisabledAutoplaySwitch"]);
 
 //-----------------------------------------------------------------------------
 // ＭＺ用プラグインコマンド
@@ -781,9 +798,9 @@ PluginManager.registerCommand(PLUGIN_NAME, "ChangeCurrentBgmSetting", function(a
     }
 });
 
-//----------------------------------------
+//-----------------------------------------------------------------------------
 // ＢＧＭ
-//----------------------------------------
+//-----------------------------------------------------------------------------
 
 /**
  * ●ＢＧＭ演奏
@@ -866,9 +883,9 @@ AudioManager.isCurrentBgm = function(bgm) {
     );
 };
 
-//----------------------------------------
+//-----------------------------------------------------------------------------
 // ＢＧＳ
-//----------------------------------------
+//-----------------------------------------------------------------------------
 
 /**
  * ●ＢＧＳ演奏
@@ -951,9 +968,9 @@ AudioManager.isCurrentBgs = function(bgs) {
     );
 };
 
-//----------------------------------------
+//-----------------------------------------------------------------------------
 // ＭＥ
-//----------------------------------------
+//-----------------------------------------------------------------------------
 
 /**
  * ●ＭＥ演奏
@@ -1007,9 +1024,9 @@ AudioManager.updateMeParameters = function(me) {
     _AudioManager_updateMeParameters.apply(this, arguments);
 };
 
-//----------------------------------------
+//-----------------------------------------------------------------------------
 // ＳＥ
-//----------------------------------------
+//-----------------------------------------------------------------------------
 
 /**
  * ●ＳＥ演奏
@@ -1063,9 +1080,25 @@ AudioManager.updateSeParameters = function(buffer, se) {
     _AudioManager_updateSeParameters.apply(this, arguments);
 };
 
-//----------------------------------------
+//-----------------------------------------------------------------------------
+// Game_Map
+//-----------------------------------------------------------------------------
+
+/**
+ * ●マップ切替時の自動演奏
+ */
+const _Game_Map_autoplay = Game_Map.prototype.autoplay;
+Game_Map.prototype.autoplay = function() {
+    // スイッチがオンの場合は自動演奏停止
+    if (pDisabledAutoplaySwitch && $gameSwitches.value(pDisabledAutoplaySwitch)) {
+        return;
+    }
+    _Game_Map_autoplay.apply(this, arguments);
+};
+
+//-----------------------------------------------------------------------------
 // 共通処理
-//----------------------------------------
+//-----------------------------------------------------------------------------
 
 /**
  * ●別名を取得する。
