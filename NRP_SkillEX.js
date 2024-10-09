@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.06 Extend the effect of the skill.
+ * @plugindesc v1.07 Extend the effect of the skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -128,6 +128,10 @@
  * you can refer to it below.
  * a.startTp()
  * 
+ * ◆Ignore Guard State
+ * <IgnoreGuard>
+ * Ignores guard state and deals damage without being halved.
+ * 
  * -------------------------------------------------------------------
  * ■Formula Variables
  * -------------------------------------------------------------------
@@ -157,7 +161,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.06 スキルの効果を拡張します。
+ * @plugindesc v1.07 スキルの効果を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -273,6 +277,10 @@
  * 
  * ダメージ計算式に消費前のＴＰを使用したい場合は以下で参照できます。
  * a.startTp()
+ * 
+ * ◆防御ステートを無視
+ * <IgnoreGuard>
+ * 防御ステートを無視して、半減されずにダメージを与えます。
  * 
  * -------------------------------------------------------------------
  * ■数式用の変数
@@ -657,6 +665,19 @@ Game_Action.prototype.numTargets = function() {
         return numTargets;
     }
     return _Game_Action_numTargets.apply(this, arguments);
+};
+
+/**
+ * ●防御状態を反映
+ */
+const _Game_Action_applyGuard = Game_Action.prototype.applyGuard;
+Game_Action.prototype.applyGuard = function(damage, target) {
+    // 防御状態無視の場合
+    const ignoreGuard = this.item().meta.IgnoreGuard;
+    if (ignoreGuard) {
+        return damage;
+    }
+    return _Game_Action_applyGuard.apply(this, arguments);
 };
 
 // ----------------------------------------------------------------------------
