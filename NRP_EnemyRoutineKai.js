@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.09 Improve the enemy's action routine.
+ * @plugindesc v1.101 Improve the enemy's action routine.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/473218336.html
  *
@@ -143,7 +143,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.09 敵行動ルーチンを改善します。
+ * @plugindesc v1.101 敵行動ルーチンを改善します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/473218336.html
  *
@@ -810,6 +810,11 @@ Game_Action.prototype.testApplyEnemy = function(target) {
 
         // 効果がHP回復、かつ対象のHPが減っている。
         if (this.isHpRecover() && isRoutineHpRecover(subject, target)) {
+            // 回復に耐性があるなら無効
+            if (this.calcElementRate(target) <= 0) {
+                return false;
+            }
+
             return true;
         // 効果がMP回復、かつ対象のMPが減っている。
         } else if (this.isMpRecover() && isRoutineMpRecover(subject, target)) {
@@ -862,9 +867,27 @@ Game_Action.prototype.testItemEffect = function(target, effect) {
                 // 対象がステート無効である。
                 if (target.isStateResist(effect.dataId)) {
                     return false;
-                // 行動が必中ではない。かつ、ステート成功率が０
-                } else if (!this.isCertainHit() && target.stateRate(effect.dataId) == 0) {
-                    return false;
+                }
+
+                // 行動が必中ではない場合
+                if (!this.isCertainHit()) {
+                    let stateRate = target.stateRate(effect.dataId);
+
+                    // ステート付加率の指定がある場合
+                    // ※NRP_SkillEX.jsと併用時
+                    const metaStateRate = this.item().meta.StateRate;
+                    if (metaStateRate != null) {
+                        // eval計算用
+                        const a = this.subject();
+                        const b = target;
+                        // ステート付加率を書き換え
+                        stateRate = eval(metaStateRate) / 100;
+                    }
+
+                    // ステート成功率が０以下ならば無効
+                    if (stateRate <= 0) {
+                        return false;
+                    }
                 }
             }
         }
