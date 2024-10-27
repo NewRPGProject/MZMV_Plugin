@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.04 Implement the "Call Enemy" function.
+ * @plugindesc v1.05 Implement the "Call Enemy" function.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_TroopRandomFormation
  * @url http://newrpg.seesaa.net/article/485838070.html
@@ -53,6 +53,9 @@
  * <CallEnemyDynamic: x>
  * Works with the DynamicAnimation&Motion plugins.
  * Appears with the direction specified for the x numbered skill.
+ * 
+ * <CallEnemyDynamicXY:[X-Coordinate], [Y-Coordinate]>
+ * Makes enemies appear at the specified coordinates.
  * 
  * <CallEnemyCtbWt:[Number]>
  * ※For use with NRP_CountTimeBattle.js
@@ -176,7 +179,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 敵キャラの『仲間を呼ぶ』を実装します。
+ * @plugindesc v1.05 敵キャラの『仲間を呼ぶ』を実装します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_TroopRandomFormation
  * @url http://newrpg.seesaa.net/article/485838070.html
@@ -223,6 +226,9 @@
  * <CallEnemyDynamic: x>
  * DynamicAnimation&Motionプラグインと連携し、
  * x番のスキルに指定された演出で登場します。
+ * 
+ * <CallEnemyDynamicXY:[Ｘ座標], [Ｙ座標]>
+ * 指定された座標に敵を出現させます。
  * 
  * <CallEnemyCtbWt:[数値]>
  * ※NRP_CountTimeBattle.jsとの連携用
@@ -684,6 +690,28 @@ Window_BattleLog.prototype.performCallEnemy = function(action, newEnemy, newSpri
     }
     // 位置設定
     newSprite.setCallPosition(callArgs);
+
+    // スキルに指定座標が存在した場合は上書き
+    if (action.item() && action.item().meta.CallEnemyDynamicXY) {
+        // <CallEnemyDynamicXY>の座標を取得
+        const callEnemyDynamicXYMeta = action.item().meta.CallEnemyDynamicXY;
+        const callEnemyDynamicXYArray = callEnemyDynamicXYMeta.split(",");
+        const callEnemyDynamicX = eval(callEnemyDynamicXYArray[0]);
+        const callEnemyDynamicY = eval(callEnemyDynamicXYArray[1]);
+        // 座標が有効だった場合のみ設定
+        if (callEnemyDynamicX != null && callEnemyDynamicY != null) {
+            const battler = newSprite._battler;
+            // Game_Battlerに座標反映
+            battler._screenX = callEnemyDynamicX;
+            battler._screenY = callEnemyDynamicY;
+            // 配置更新
+            newSprite.setHome(battler.screenX(), battler.screenY());
+            // DynamicMotion用にhomeを反映
+            battler._homeX = newSprite._homeX;
+            battler._homeY = newSprite._homeY;
+        }
+    }
+
     // Ｙ座標を元にスプライトの並び順を更新
     spriteset.sortTroopSprite();
 
