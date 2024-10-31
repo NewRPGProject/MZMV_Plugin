@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.08 Extends the functionality of battle events.
+ * @plugindesc v1.09 Extends the functionality of battle events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_ChargeSkill
  * @orderBefore NRP_DynamicAnimationMZ
@@ -245,7 +245,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.08 バトルイベントの機能を拡張します。
+ * @plugindesc v1.09 バトルイベントの機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_ChargeSkill
  * @orderBefore NRP_DynamicAnimationMZ
@@ -578,7 +578,7 @@ function clearParam() {
  */
 PluginManager.registerCommand(PLUGIN_NAME, "forceSubject", function(args) {
     let subject = BattleManager._subject;
-    if (!subject){
+    if (!subject && BattleManager._action){
         subject = BattleManager._action.subject();
     }
 
@@ -948,16 +948,21 @@ Game_Interpreter.prototype.command339 = function(params) {
     // プラグインコマンドで行動主体の上書きが指定されていた場合
     if (plForceSubject) {
         var isActor = params[0];      // 敵なら0, 味方なら1
-        var subjectIndex = params[1]; // 行動主体のインデックス
+        var subjectNo = params[1]; // 行動主体のインデックス（アクターならアクターＩＤ）
         var targetIndex = params[3];  // 対象のインデックス
 
         // 行動主体の上書き
         if (plForceSubject) {
             isActor = plForceSubject.isActor() ? 1 : 0;
-            subjectIndex = plForceSubject.index();
+            // 敵キャラはインデックス、アクターはＩＤを参照
+            if (isActor) {
+                subjectNo = plForceSubject.actorId();
+            } else {
+                subjectNo = plForceSubject.index();
+            }
         }
 
-        this.iterateBattler(isActor, subjectIndex, function(battler) {
+        this.iterateBattler(isActor, subjectNo, function(battler) {
             if (!battler.isDeathStateAffected()) {
                 battler.forceAction(params[2], targetIndex);
                 BattleManager.forceAction(battler);
@@ -975,9 +980,16 @@ Game_Interpreter.prototype.command339 = function(params) {
  * ●【独自】戦闘行動の強制（引数使用）
  */
 Game_Interpreter.prototype.forceAction = function(subject, skillId, targetId) {
-    var subjectIsActor = subject.isActor() ? 1 : 0;
+    const subjectIsActor = subject.isActor() ? 1 : 0;
     
-    this.iterateBattler(subjectIsActor, subject.index(), function(battler) {
+    // 敵キャラはインデックス、アクターはＩＤを参照
+    if (subjectIsActor) {
+        subjectNo = subject.actorId();
+    } else {
+        subjectNo = subject.index();
+    }
+
+    this.iterateBattler(subjectIsActor, subjectNo, function(battler) {
         if (!battler.isDeathStateAffected()) {
             battler.forceAction(skillId, targetId);
             BattleManager.forceAction(battler);
