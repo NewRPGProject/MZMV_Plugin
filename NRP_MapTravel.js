@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.041 Implement a map selection & transfer screen.
+ * @plugindesc v1.042 Implement a map selection & transfer screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484927929.html
  *
@@ -573,7 +573,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.041 マップ選択＆移動画面を実装します。
+ * @plugindesc v1.042 マップ選択＆移動画面を実装します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484927929.html
  *
@@ -2183,7 +2183,15 @@ Windows_SelectSpots.prototype.maxItems = function() {
 Windows_SelectSpots.prototype.drawItemName = function(item, x, y) {
     if (item) {
         const textMargin = 4;
-        const iconDrawWidth = ImageManager.iconWidth + 4;
+
+        let iconWidth = 0;
+        if (Utils.RPGMAKER_NAME == "MV") {
+            iconWidth = Window_Base._iconWidth;
+        } else {
+            iconWidth = ImageManager.iconWidth;
+        }
+
+        const iconDrawWidth = iconWidth + 4;
 
         // 全体の描画幅を取得
         let drawWidth = this.innerWidth - 20;
