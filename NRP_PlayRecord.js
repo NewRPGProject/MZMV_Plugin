@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Displays the play record.
+ * @plugindesc v1.01 Displays the play record.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/503391609.html
  * @orderAfter NRP_EnemyCollapse
@@ -118,6 +118,10 @@
  * @default 0
  * @desc Adjust the X coordinate of the value. If the position is not correct when right-aligned, use this to adjust it.
  * 
+ * @param NoMaxDamageSwitch
+ * @type switch
+ * @desc Switch to stop updating the max damage. Assuming you do not want to include the results of event battle.
+ * 
  * @param <Menu Command>
  * @desc This is the relevant section for displaying the play record in the menu commands.
  * 
@@ -175,7 +179,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 戦歴（プレイレコード）を表示します。
+ * @plugindesc v1.01 戦歴（プレイレコード）を表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/503391609.html
  * @orderAfter NRP_EnemyCollapse
@@ -293,6 +297,12 @@
  * @type number @min -999 @max 999
  * @default 0
  * @desc 値のＸ座標を調整します。右寄せ時の位置がおかしい時はこれで調整してください。
+ * 
+ * @param NoMaxDamageSwitch
+ * @text 最大ダメージ無効スイッチ
+ * @type switch
+ * @desc スイッチをオンにすると最大ダメージの更新を停止します。
+ * イベント戦闘などを含めたくない場合に。
  * 
  * @param <Menu Command>
  * @text ＜メニューコマンド関連＞
@@ -418,6 +428,7 @@ const pWindowLineHeight = toNumber(parameters["WindowLineHeight"]);
 const pValueRightAligned = toBoolean(parameters["ValueRightAligned"], true);
 const pValueX = toNumber(parameters["ValueX"], 0);
 const pValueAdjustX = toNumber(parameters["ValueAdjustX"], 0);
+const pNoMaxDamageSwitch = toNumber(parameters["NoMaxDamageSwitch"]);
 // メニューコマンド関連
 const pShowMenuCommandPosition = toNumber(parameters["ShowMenuCommandPosition"]);
 const pCommandName = parameters["CommandName"];
@@ -712,6 +723,11 @@ Game_System.prototype.maxDamageSkillName = function() {
  * 【独自】最大ダメージ更新
  */
 Game_System.prototype.updateMaxDamage = function(damage, actorName, skillName) {
+    // 更新停止の場合
+    if (pNoMaxDamageSwitch && $gameSwitches.value(pNoMaxDamageSwitch)) {
+        return;
+    }
+
     if (!this._maxDamage) {
         this._maxDamage = 0;
     }
