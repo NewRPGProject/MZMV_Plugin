@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.233 Change the battle system to CTB.
+ * @plugindesc v1.234 Change the battle system to CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -297,7 +297,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.233 戦闘システムをＣＴＢへ変更します。
+ * @plugindesc v1.234 戦闘システムをＣＴＢへ変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -927,6 +927,7 @@ BattleManager.reMakeActionOrders = function() {
 
     // 予測用にＷＴ、ステート、能力変化を設定する。
     if (usePrediction) {
+        // 変化前のＷＴやステート、能力変化を保持
         for (const target of targets) {
             target._tmpWt = target.wt;
             target._tmpStates = JsonEx.makeDeepCopy(target._states);
@@ -953,7 +954,7 @@ BattleManager.reMakeActionOrders = function() {
     // ＷＴを元に戻す。
     subject.setWt(tmpWt);
 
-    // 予測用のＷＴを戻す。
+    // 予測用のＷＴやステート、能力変化を戻す。
     if (usePrediction) {
         for (const target of targets) {
             target.wt = target._tmpWt;
@@ -1012,7 +1013,7 @@ BattleManager.changeTargetsWtState = function(targets) {
     // 対象毎にループ
     for (const target of targets) {
         // 対象が戦闘不能の場合は範囲が有効かを確認。
-        if (target.isDead() && !action.isForDeadFriend()) {
+        if (target.isDead() && action.isForAliveFriend()) {
             continue;
         }
 
@@ -1184,6 +1185,9 @@ BattleManager.endTurn = function() {
     this._surprise = false;
     
     const subject = this._subject;
+    if (!subject) {
+        return;
+    }
 
     // 行動者の現在WTに加算WTを加算する。
     subject.setWt(subject.wt + subject.getAddWt());
