@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.234 Change the battle system to CTB.
+ * @plugindesc v1.235 Change the battle system to CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -297,7 +297,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.234 戦闘システムをＣＴＢへ変更します。
+ * @plugindesc v1.235 戦闘システムをＣＴＢへ変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -1765,6 +1765,16 @@ Game_Enemy.prototype.meetsTurnCondition = function(param1, param2) {
     } else {
         return n > 0 && n >= param1 && n % param2 === param1 % param2;
     }
+};
+
+/**
+ * ●変身
+ */
+const _Game_Enemy_transform = Game_Enemy.prototype.transform;
+Game_Enemy.prototype.transform = function(enemyId) {
+    _Game_Enemy_transform.apply(this, arguments);
+    // 基本WTを再計算
+    this.makeBaseWt();
 };
 
 //-----------------------------------------------------------------------------
