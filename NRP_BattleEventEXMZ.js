@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.09 Extends the functionality of battle events.
+ * @plugindesc v1.091 Extends the functionality of battle events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_ChargeSkill
  * @orderBefore NRP_DynamicAnimationMZ
@@ -245,7 +245,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.09 バトルイベントの機能を拡張します。
+ * @plugindesc v1.091 バトルイベントの機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_ChargeSkill
  * @orderBefore NRP_DynamicAnimationMZ
@@ -1056,7 +1056,7 @@ Game_Action.prototype.makeTargets = function() {
 
         // 対象が仲間
         if (isFrineds) {
-            // 条件を満たしたアクターでフィルタリング
+            // 条件を満たした仲間でフィルタリング
             targets = this.friendsUnit().members();
     
         // 対象が敵
@@ -1261,6 +1261,23 @@ Game_Action.prototype.targetsForAlive = function(unit) {
     }
     
     return _Game_Action_targetsForAlive.apply(this, arguments);
+};
+
+/**
+ * ●対象無条件共通
+ */
+const _Game_Action_targetsForDeadAndAlive = Game_Action.prototype.targetsForDeadAndAlive;
+Game_Action.prototype.targetsForDeadAndAlive = function(unit) {
+    // 強制対象リストが指定されている場合
+    // かつ、全体対象時
+    if (!this.isForOne() && plForceTargets && plForceTargets.length > 0) {
+        // シャッフルして対象をランダム化する。
+        shuffleArray(plForceTargets);
+        // 先頭のバトラーを対象サイドとして取得
+        return plForceTargets[0].friendsUnit().aliveMembers();
+    }
+
+    return _Game_Action_targetsForDeadAndAlive.apply(this, arguments);
 };
 
 /**
