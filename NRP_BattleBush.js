@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.05 Apply the bush effect to the battle background.
+ * @plugindesc v1.06 Apply the bush effect to the battle background.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_ShadowAndLevitate
  * @url http://newrpg.seesaa.net/article/486468229.html
@@ -109,6 +109,12 @@
  * @default true
  * @desc Whether the battler applies the bush effect while on the move?
  * 
+ * @param BushInHome
+ * @parent BushOnMove
+ * @type boolean
+ * @default true
+ * @desc  If BushOnMove is off, the bush effect is applied when the battler in action is at home coordinates.
+ * 
  * @param BushInAir
  * @parent <Common Default>
  * @type boolean
@@ -191,7 +197,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.05 戦闘背景に茂み効果を適用します。
+ * @plugindesc v1.06 戦闘背景に茂み効果を適用します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_ShadowAndLevitate
  * @url http://newrpg.seesaa.net/article/486468229.html
@@ -302,6 +308,13 @@
  * @type boolean
  * @default true
  * @desc バトラーが移動中も茂み効果を適用するかどうか？
+ * 
+ * @param BushInHome
+ * @text ホーム座標の茂み処理
+ * @parent BushOnMove
+ * @type boolean
+ * @default true
+ * @desc 移動中の茂み処理がオフの場合、行動中のバトラーがホーム座標にいる際に茂み効果を適用するかどうか？
  * 
  * @param BushInAir
  * @text 空中の茂み処理
@@ -449,6 +462,7 @@ const pActorBushOpacity = parameters["ActorBushOpacity"];
 const pEnemyBushDepth = parameters["EnemyBushDepth"];
 const pEnemyBushOpacity = parameters["EnemyBushOpacity"];
 const pBushOnMove = toBoolean(parameters["BushOnMove"], false);
+const pBushInHome = toBoolean(parameters["BushInHome"], false);
 const pBushInAir = toBoolean(parameters["BushInAir"], false);
 const pShowShadow = toBoolean(parameters["ShowShadow"], false);
 const pChangeShadowOpacity = toBoolean(parameters["ChangeShadowOpacity"], false);
@@ -480,6 +494,14 @@ const _Spriteset_Battle_createBattleback = Spriteset_Battle.prototype.createBatt
 Spriteset_Battle.prototype.createBattleback = function() {
     _Spriteset_Battle_createBattleback.apply(this, arguments);
 
+    // 戦闘中の茂み設定
+    this.settingBattleBush();
+};
+
+/**
+ * 【独自】戦闘中の茂み設定
+ */
+Spriteset_Battle.prototype.settingBattleBush = function() {
     // ＭＺとＭＶで取得先が異なる。
     let battleback1Name;
     let battleback2Name;
@@ -1046,6 +1068,10 @@ function isMovingNotOnBush(sprite, setting) {
 
     // アクション中
     } else if (sprite._battler.isActing()) {
+        // ホーム座標にいる場合は除外
+        if (pBushInHome && sprite.inHomePosition()) {
+            return false;
+        }
         return true;
     }
     return false;
