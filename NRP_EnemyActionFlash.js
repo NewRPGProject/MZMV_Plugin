@@ -3,12 +3,17 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.001 Adjust the flash when the enemy acts.
+ * @plugindesc v1.01 Adjust the flash when the enemy acts.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/500973022.html
  *
  * @help Adjust the flash when the enemy acts.
  * Flash strength, duration, delay (wait), etc. can be set.
+ * 
+ * -------------------------------------------------------------------
+ * [Note of Skills]
+ * -------------------------------------------------------------------
+ * When executing a skill, it does not perform a flash of the enemy.
  * 
  * -------------------------------------------------------------------
  * [Terms]
@@ -49,12 +54,18 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.001 敵の行動時のフラッシュを調整します。
+ * @plugindesc v1.01 敵の行動時のフラッシュを調整します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/500973022.html
  *
  * @help 敵の行動時のフラッシュを調整します。
  * フラッシュの強さ、時間、ディレイ（ウェイト）などを設定できます。
+ * 
+ * -------------------------------------------------------------------
+ * ■スキルのメモ欄
+ * -------------------------------------------------------------------
+ * <NoEnemyActionFlash>
+ * スキル実行時、敵キャラのフラッシュを実行しません。
  * 
  * -------------------------------------------------------------------
  * ■利用規約
@@ -158,6 +169,20 @@ Sprite_Enemy.prototype.startWhiten = function() {
 Sprite_Enemy.prototype.updateWhiten = function() {
     const alpha = pFlashStrong - (pFlashDuration - this._effectDuration) * (pFlashStrong / pFlashDuration);
     this.setBlendColor([255, 255, 255, alpha]);
+};
+
+/**
+ * ●フラッシュ開始
+ */
+const _Sprite_Enemy_startWhiten = Sprite_Enemy.prototype.startWhiten;
+Sprite_Enemy.prototype.startWhiten = function() {
+    const action = BattleManager._action
+    // フラッシュ禁止の場合
+    if (action && action.item().meta.NoEnemyActionFlash) {
+        this._effectDuration = 0;
+        return;
+    }
+    _Sprite_Enemy_startWhiten.apply(this, arguments);
 };
 
 })();
