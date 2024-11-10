@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.08 Display a picture when showing text.
+ * @plugindesc v1.081 Display a picture when showing text.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -396,7 +396,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.08 文章の表示時に立ち絵を表示する。
+ * @plugindesc v1.081 文章の表示時に立ち絵を表示する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -1041,7 +1041,7 @@ Game_Screen.prototype.showMessagePicture = function(
     picture._attachedPictures = attachedPictures;
 
     // ピクチャの端をフェードアウトする場合
-    if (pictureData.UseEdgeFadeout) {
+    if (toBoolean(pictureData.UseEdgeFadeout)) {
         picture._fadeStartX = toNumber(pictureData.FadeStartX);
         picture._fadeGradient = toNumber(pictureData.FadeGradient);
     }
