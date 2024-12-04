@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.042 Display the cursor when selecting a target in battle.
+ * @plugindesc v1.05 Display the cursor when selecting a target in battle.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482370647.html
  *
@@ -269,7 +269,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.042 戦闘時、選択中の対象にカーソルを表示
+ * @plugindesc v1.05 戦闘時、選択中の対象にカーソルを表示
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/482370647.html
  *
@@ -566,6 +566,28 @@
  * @desc カーソル位置を毎フレーム更新します。
  * リアルタイムで位置が変動する戦闘システムとの併用に。
  */
+
+//-----------------------------------------------------------------------------
+// 敵名表示用の追加ウィンドウ
+//-----------------------------------------------------------------------------
+
+function Window_BattleEnemyName() {
+    this.initialize(...arguments);
+}
+
+Window_BattleEnemyName.prototype = Object.create(Window_Selectable.prototype);
+Window_BattleEnemyName.prototype.constructor = Window_BattleEnemyName;
+
+//-----------------------------------------------------------------------------
+// アクター名表示用の追加ウィンドウ
+//-----------------------------------------------------------------------------
+
+function Window_BattleActorName() {
+    this.initialize(...arguments);
+}
+
+Window_BattleActorName.prototype = Object.create(Window_Selectable.prototype);
+Window_BattleActorName.prototype.constructor = Window_BattleActorName;
 
 (function() {
 "use strict";
@@ -872,15 +894,9 @@ Window_BattleActor.prototype.processTouch = function() {
 };
 
 //-----------------------------------------------------------------------------
-// 敵名表示用の追加ウィンドウ
+// Window_BattleEnemyName
+// ※敵名表示用の追加ウィンドウ
 //-----------------------------------------------------------------------------
-
-function Window_BattleEnemyName() {
-    this.initialize(...arguments);
-}
-
-Window_BattleEnemyName.prototype = Object.create(Window_Selectable.prototype);
-Window_BattleEnemyName.prototype.constructor = Window_BattleEnemyName;
 
 // MV
 if (Utils.RPGMAKER_NAME == "MV") {
@@ -1104,15 +1120,9 @@ Window_BattleEnemyName.prototype.cursorAll = function() {
 };
 
 //-----------------------------------------------------------------------------
-// アクター名表示用の追加ウィンドウ
+// Window_BattleActorName
+// ※アクター名表示用の追加ウィンドウ
 //-----------------------------------------------------------------------------
-
-function Window_BattleActorName() {
-    this.initialize(...arguments);
-}
-
-Window_BattleActorName.prototype = Object.create(Window_Selectable.prototype);
-Window_BattleActorName.prototype.constructor = Window_BattleActorName;
 
 // MV
 if (Utils.RPGMAKER_NAME == "MV") {
