@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.04 Create counter skill.
+ * @plugindesc v1.041 Create counter skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_ChainSkill
  * @url https://newrpg.seesaa.net/article/500432213.html
@@ -223,7 +223,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 反撃スキルを作成する。
+ * @plugindesc v1.041 反撃スキルを作成する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_ChainSkill
  * @url https://newrpg.seesaa.net/article/500432213.html
@@ -618,6 +618,16 @@ BattleManager.updateAction = function() {
 };
 
 /**
+ * ●アクション終了時
+ */
+const _BattleManager_endTurn = BattleManager.endTurn;
+BattleManager.endTurn = function() {
+    _BattleManager_endTurn.apply(this, arguments);
+    // 反撃実行者をクリア
+    this._counterSubject = null;
+};
+
+/**
  * ●反撃スキルを実行
  */
 function goCounterSkill(subject, target, skillId) {
@@ -698,6 +708,10 @@ Game_Battler.prototype.counterForceAction = function(skillId, target) {
 
     // アクター位置の自動設定を禁止解除（DynamicMotion）
     BattleManager._noUpdateTargetPosition = false;
+
+    // 反撃実行者を保持
+    // ※他プラグインとの連携用
+    BattleManager._counterSubject = this;
 
     // 反撃有効と判定
     return true;
