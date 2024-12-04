@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.05 Manage audio files.
+ * @plugindesc v1.051 Manage audio files.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483999181.html
  *
@@ -336,7 +336,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.05 音声ファイルの管理を行う。
+ * @plugindesc v1.051 音声ファイルの管理を行う。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483999181.html
  *
@@ -1094,6 +1094,22 @@ Game_Map.prototype.autoplay = function() {
         return;
     }
     _Game_Map_autoplay.apply(this, arguments);
+};
+
+//-----------------------------------------------------------------------------
+// Game_System
+//-----------------------------------------------------------------------------
+
+/**
+ * ●乗物から降りた際の演奏
+ */
+const _Game_System_replayWalkingBgm = Game_System.prototype.replayWalkingBgm;
+Game_System.prototype.replayWalkingBgm = function() {
+    // スイッチがオンの場合は自動演奏停止
+    if (pDisabledAutoplaySwitch && $gameSwitches.value(pDisabledAutoplaySwitch)) {
+        return;
+    }
+    _Game_System_replayWalkingBgm.apply(this, arguments);
 };
 
 //-----------------------------------------------------------------------------
