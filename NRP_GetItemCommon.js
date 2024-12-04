@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Commonize the process of gaining items.
+ * @plugindesc v1.02 Commonize the process of gaining items.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484654978.html
  *
@@ -19,9 +19,9 @@
  * You can also prohibit the calling of common events
  * only while the specified switch is on.
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * [Plugin Command MZ]
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * Stores each item's information gained immediately
  * before in a variable.
  * If you specify a variable in the message,
@@ -67,9 +67,9 @@
  * If you specify the "Test" part as the meta name,
  * 100 will be stored in the variable.
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * [Plugin Command MV]
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * The functions are exactly the same as the MZ version,
  * so I'll skip them.
  * Call the following command.
@@ -103,12 +103,40 @@
  * ◆GetMetaValue
  * NRP.GetItemCommon.GetMetaValue [MetaName] [VariableId]
  * 
+ * -------------------------------------------------------------------
+ * [Script]
+ * -------------------------------------------------------------------
+ * The following functions can be used in conditional branching scripts.
+ * 
+ * ◆I have obtained an item with the specified ID.
+ * $gameParty.havedItem($dataItems[ID])
+ * 
+ * ◆I have obtained a weapon with the specified ID.
+ * $gameParty.havedItem($dataWeapons[ID])
+ * 
+ * ◆I have obtained an armor with the specified ID.
+ * $gameParty.havedItem($dataArmors[ID])
+ * 
+ * ※However, the acquisition experience will be effective
+ *   after the plugin (ver1.02) is installed.
+ * 　Items that were sold or otherwise lost
+ *   before that was introduced cannot be determined.
+ * 
+ * ◆Clear acquisition status
+ * $gameParty.clearHavedItems()
+ * 
+ * -------------------------------------------------------------------
  * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
  * The author is not responsible,
  * but will deal with defects to the extent possible.
+ * 
+ * @-----------------------------------------------------
+ * @ [Plugin Commands]
+ * @-----------------------------------------------------
  * 
  * @command GetName
  * @desc Stores the name of the last item gained in a variable.
@@ -117,6 +145,7 @@
  * @desc A variable that stores the name of the item.
  * @type variable
  * 
+ * @-----------------------------------------------------
  * 
  * @command GetAmount
  * @desc Stores the amount of the last item gained in a variable.
@@ -125,6 +154,7 @@
  * @desc A variable that stores the amount of the item.
  * @type variable
  * 
+ * @-----------------------------------------------------
  * 
  * @command GetDescription
  * @desc Stores the description of the last item gained in a variable.
@@ -133,6 +163,7 @@
  * @desc A variable that stores the description of the item.
  * @type variable
  * 
+ * @-----------------------------------------------------
  * 
  * @command GetIcon
  * @desc Stores the icon ID of the last item gained in a variable.
@@ -141,6 +172,7 @@
  * @desc A variable that stores the icon ID of the item.
  * @type variable
  * 
+ * @-----------------------------------------------------
  * 
  * @command GetCategory
  * @desc Stores the category of the last item gained in a variable.
@@ -150,6 +182,7 @@
  * @desc A variable that stores the category of the item.
  * @type variable
  * 
+ * @-----------------------------------------------------
  * 
  * @command GetId
  * @desc Stores the ID of the last item gained in a variable.
@@ -158,6 +191,7 @@
  * @desc A variable that stores the ID of the item.
  * @type variable
  * 
+ * @-----------------------------------------------------
  * 
  * @command GetType
  * @desc Stores the type of the last item gained in a variable.
@@ -167,6 +201,7 @@
  * @desc A variable that stores the item type of the item.
  * @type variable
  * 
+ * @-----------------------------------------------------
  * 
  * @command GetEquipType
  * @desc Stores the equip type of the last armor gained in a variable.
@@ -175,6 +210,7 @@
  * @desc A variable that stores the equip type of the item.
  * @type variable
  * 
+ * @-----------------------------------------------------
  * 
  * @command GetMetaValue
  * @desc Stores the meta value of the last item gained in a variable.
@@ -188,6 +224,9 @@
  * @desc A variable that stores the meta value of the item.
  * @type variable
  * 
+ * @-----------------------------------------------------
+ * @ [Plugin Parameters]
+ * @-----------------------------------------------------
  * 
  * @param GoldCommonEvent
  * @type common_event
@@ -212,7 +251,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 アイテムの入手処理を共通化します。
+ * @plugindesc v1.02 アイテムの入手処理を共通化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484654978.html
  *
@@ -227,9 +266,9 @@
  * また、指定のスイッチがオンの間だけ、
  * コモンイベントの呼び出しを禁止することもできます。
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * ■ＭＺ版プラグインコマンド
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * 直前に入手したアイテムの各情報を変数に格納します。
  * メッセージ内で\v[1]のように変数を指定すると、値が表示されます。
  * ※対象が『所持金』の場合は増減量のみが有効となります。
@@ -272,9 +311,9 @@
  * 例えば、<Test:100>と記述した場合、
  * 『Test』の部分を定義名に指定すると、変数に100が格納されます。
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * ■ＭＶ版プラグインコマンド
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * 機能はＭＺ版と全く同じなので割愛します。
  * 以下のコマンドを呼び出してください。
  * ※大文字個別は区別しません。また[]は含まないでください。
@@ -306,12 +345,36 @@
  * ◆メタ値を取得
  * NRP.GetItemCommon.GetMetaValue [定義名] [変数ＩＤ]
  * 
- * ------------------------------------------
+ * -------------------------------------------------------------------
+ * ■スクリプト
+ * -------------------------------------------------------------------
+ * 以下の関数を条件分岐のスクリプトに使用できます。
+ * 
+ * ◆指定したＩＤのアイテムを入手したことがある。
+ * $gameParty.havedItem($dataItems[ID])
+ * 
+ * ◆指定したＩＤの武器を入手したことがある。
+ * $gameParty.havedItem($dataWeapons[ID])
+ * 
+ * ◆指定したＩＤの防具を入手したことがある。
+ * $gameParty.havedItem($dataArmors[ID])
+ * 
+ * ※ただし、入手経験はプラグイン（ver1.02）導入後から保持されます。
+ * 　導入前に売却などでなくなったアイテムは判定できません。
+ * 
+ * ◆入手状況をクリア
+ * $gameParty.clearHavedItems()
+ * 
+ * -------------------------------------------------------------------
  * ■利用規約
- * ------------------------------------------
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
+ * 
+ * @-----------------------------------------------------
+ * @ プラグインコマンド
+ * @-----------------------------------------------------
  * 
  * @command GetName
  * @text アイテム名を取得
@@ -322,6 +385,7 @@
  * @desc アイテム名を格納する変数です。
  * @type variable
  * 
+ * @-----------------------------------------------------
  * 
  * @command GetAmount
  * @text 増減量を取得
@@ -332,6 +396,7 @@
  * @desc 増減量を格納する変数です。
  * @type variable
  * 
+ * @-----------------------------------------------------
  * 
  * @command GetDescription
  * @text 説明文を取得
@@ -342,6 +407,7 @@
  * @desc 説明文を格納する変数です。
  * @type variable
  * 
+ * @-----------------------------------------------------
  * 
  * @command GetIcon
  * @text アイコンを取得
@@ -352,6 +418,7 @@
  * @desc アイテムのアイコンＩＤを格納する変数です。
  * @type variable
  * 
+ * @-----------------------------------------------------
  * 
  * @command GetCategory
  * @text 分類を取得
@@ -363,6 +430,7 @@
  * @desc アイテム分類を格納する変数です。
  * @type variable
  * 
+ * @-----------------------------------------------------
  * 
  * @command GetId
  * @text アイテムＩＤを取得
@@ -373,6 +441,7 @@
  * @desc アイテムＩＤを格納する変数です。
  * @type variable
  * 
+ * @-----------------------------------------------------
  * 
  * @command GetType
  * @text タイプを取得
@@ -384,6 +453,7 @@
  * @desc タイプを格納する変数です。
  * @type variable
  * 
+ * @-----------------------------------------------------
  * 
  * @command GetEquipType
  * @text 装備タイプを取得
@@ -394,6 +464,7 @@
  * @desc 装備タイプを格納する変数です。
  * @type variable
  * 
+ * @-----------------------------------------------------
  * 
  * @command GetMetaValue
  * @text メタ値を取得
@@ -410,6 +481,9 @@
  * @desc メタ値を格納する変数です。
  * @type variable
  * 
+ * @-----------------------------------------------------
+ * @ プラグインパラメータ
+ * @-----------------------------------------------------
  * 
  * @param GoldCommonEvent
  * @text 所持金コモンイベント
@@ -546,6 +620,10 @@ Game_Interpreter.prototype.command128 = function(params) {
     return result;
 };
 
+// ----------------------------------------------------------------------------
+// Game_Party
+// ----------------------------------------------------------------------------
+
 /**
  * ●アイテムの入手
  */
@@ -570,6 +648,28 @@ Game_Party.prototype.gainItem = function(item, amount, includeEquip) {
 
         mEquipType = item.etypeId;
         mItemMeta = item.meta;
+
+        if (amount > 0) {
+            if (mItemCategory == 1) {
+                // 初期化していないとクリア
+                if (!this._havedItems) {
+                    this.clearHavedItems();
+                }
+                this._havedItems[item.id] = true;
+            } else if (mItemCategory == 2) {
+                // 初期化していないとクリア
+                if (!this._havedWeapons) {
+                    this.clearHavedItems();
+                }
+                this._havedWeapons[item.id] = true;
+            } else if (mItemCategory == 3) {
+                // 初期化していないとクリア
+                if (!this._havedArmors) {
+                    this.clearHavedItems();
+                }
+                this._havedArmors[item.id] = true;
+            }
+        }
     }
 
     _Game_Party_gainItem.apply(this, arguments);
@@ -591,9 +691,70 @@ Game_Party.prototype.gainGold = function(amount) {
     _Game_Party_gainGold.apply(this, arguments);
 };
 
-//----------------------------------------
+/**
+ * ●アイテムの初期化
+ */
+const _Game_Party_initAllItems = Game_Party.prototype.initAllItems;
+Game_Party.prototype.initAllItems = function() {
+    _Game_Party_initAllItems.apply(this, arguments);
+
+    // アイテム所有状況のクリア
+    this.clearHavedItems();
+};
+
+/**
+ * 【独自】アイテム所有状況のクリア
+ */
+Game_Party.prototype.clearHavedItems = function() {
+    // アイテムの過去所有情報を取得
+    this._havedItems = {};
+    this._havedWeapons = {};
+    this._havedArmors = {};
+};
+
+/**
+ * 【独自】指定ＩＤのアイテムを入手したことがあるか？
+ */
+Game_Party.prototype.havedItem = function(item) {
+    // 現在持っているアイテム
+    if ($gameParty.hasItem(item, true)) {
+        return true;
+    }
+
+    const itemId = item.id;
+
+    // 過去に入手したことがあるアイテム
+    // アイテム
+    if (DataManager.isItem(item)) {
+        // 初期化していないとクリア
+        if (!this._havedItems) {
+            this.clearHavedItems();
+        }
+        return this._havedItems[itemId];
+
+    // 武器
+    } else if (DataManager.isWeapon(item)) {
+        // 初期化していないとクリア
+        if (!this._havedWeapons) {
+            this.clearHavedItems();
+        }
+        return this._havedWeapons[itemId];
+
+    // 防具
+    } else if (DataManager.isArmor(item)) {
+        // 初期化していないとクリア
+        if (!this._havedArmors) {
+            this.clearHavedItems();
+        }
+        return this._havedArmors[itemId];
+    }
+
+    return false;
+};
+
+// ----------------------------------------------------------------------------
 // ＭＺ用プラグインコマンド
-//----------------------------------------
+// ----------------------------------------------------------------------------
 
 // MVには存在しないため、空で定義しておかないとエラーになる。
 if (!PluginManager.registerCommand) {
@@ -673,9 +834,9 @@ PluginManager.registerCommand(PLUGIN_NAME, "GetMetaValue", function(args) {
     setVariableValue(variableId, eval(mItemMeta[metaName]));
 });
 
-//----------------------------------------
+// ----------------------------------------------------------------------------
 // ＭＶ用プラグインコマンド
-//----------------------------------------
+// ----------------------------------------------------------------------------
 
 const _Game_Interpreter_pluginCommand = Game_Interpreter.prototype.pluginCommand;
 Game_Interpreter.prototype.pluginCommand = function(command, args) {
@@ -750,9 +911,9 @@ Game_Interpreter.prototype.pluginCommand = function(command, args) {
     }
 };
 
-//----------------------------------------
+// ----------------------------------------------------------------------------
 // 共通関数
-//----------------------------------------
+// ----------------------------------------------------------------------------
 
 /**
  * ●変数に値を設定
