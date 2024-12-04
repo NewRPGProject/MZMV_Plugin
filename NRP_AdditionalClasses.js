@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.133 Multiple classes allow for a highly flexible growth system.
+ * @plugindesc v1.134 Multiple classes allow for a highly flexible growth system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -219,6 +219,7 @@
  * @arg Actor
  * @type actor
  * @desc The target actor.
+ * If not specified, the entire party is targeted.
  * 
  * @arg VariableActor
  * @type variable
@@ -244,6 +245,7 @@
  * @arg Actor
  * @type actor
  * @desc The target actor.
+ * If not specified, the entire party is targeted.
  * 
  * @arg VariableActor
  * @type variable
@@ -550,7 +552,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.133 多重職業によって自由度の高い成長システムを実現。
+ * @plugindesc v1.134 多重職業によって自由度の高い成長システムを実現。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -753,6 +755,7 @@
  * @text アクター
  * @type actor
  * @desc 対象とするアクターです。
+ * 未指定ならパーティ全体を対象とします。
  * 
  * @arg VariableActor
  * @text アクター（変数指定）
@@ -783,6 +786,7 @@
  * @text アクター
  * @type actor
  * @desc 対象とするアクターです。
+ * 未指定ならパーティ全体を対象とします。
  * 
  * @arg VariableActor
  * @text アクター（変数指定）
@@ -1241,16 +1245,25 @@ let mCommandFlg = false;
  * ●職業の追加
  */
 PluginManager.registerCommand(PLUGIN_NAME, "AddClass", function(args) {
+    // インデックス
+    const index = toNumber(args.Index);
+    const additionalClassId = setDefault(args.AdditionalClass);
+
     // アクターを取得
     const actor = getActor(args);
     if (!actor) {
+        // アクターの指定がない場合は全体を対象化
+        if (isForParty(args)) {
+            // 通常時
+            for (const member of $gameParty.members()) {
+                // 追加職業の追加
+                member.changeAdditionalClass(additionalClassId, index);
+            }
+        }
         return;
     }
 
-    // インデックス
-    const index = toNumber(args.Index);
     // 追加職業の追加
-    const additionalClassId = setDefault(args.AdditionalClass);
     actor.changeAdditionalClass(additionalClassId, index);
 });
 
@@ -1258,18 +1271,29 @@ PluginManager.registerCommand(PLUGIN_NAME, "AddClass", function(args) {
  * ●職業の削除
  */
 PluginManager.registerCommand(PLUGIN_NAME, "RemoveClass", function(args) {
-    // アクターを取得
-    const actor = getActor(args);
-    if (!actor) {
-        return;
-    }
-
     // インデックス
     const index = toNumber(args.Index);
     // 削除する追加職業ＩＤ
     const additionalClassId = setDefault(args.AdditionalClass);
     // 隙間を詰めるかどうか？
     const fillGap = toBoolean(args.FillGap);
+
+    // アクターを取得
+    const actor = getActor(args);
+    if (!actor) {
+        // アクターの指定がない場合は全体を対象化
+        if (isForParty(args)) {
+            // 通常時
+            for (const member of $gameParty.members()) {
+                // 追加職業の削除
+                member.leaveAdditionalClass(additionalClassId, index, fillGap);
+                // 追加職業のスキル再習得
+                member.setAllAdditionalClassesSkills();
+            }
+        }
+        return;
+    }
+
     // 追加職業の削除
     actor.leaveAdditionalClass(additionalClassId, index, fillGap);
     // 追加職業のスキル再習得
@@ -1874,7 +1898,10 @@ AdditionalClass.prototype.displayLevelMax = function(show) {
     if (!actor.shouldDisplayLevelUp()) {
         $gameMessage.newPage();
     }
-    $gameMessage.add(text);
+    // 改行しながら出力
+    for (const line of text.split("\\n")) {
+        $gameMessage.add(line);
+    }
 };
 
 //-----------------------------------------------------------------------------
