@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.041 Change the effect of damage handling.
+ * @plugindesc v1.05 Change the effect of damage handling.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/475586753.html
  *
@@ -253,11 +253,23 @@
  * @type string
  * @desc Adjustment to the Y for displaying actor damage popups.
  * You can use a formula. The default value is 0.
+ * 
+ * @param damageDistanceX
+ * @parent <Damage Position>
+ * @type number @min -999 @max 999
+ * @desc The distance between damages (X coordinate).
+ * Default: 8
+ * 
+ * @param damageDistanceY
+ * @parent <Damage Position>
+ * @type number @min -999 @max 999
+ * @desc The distance between damages (Y coordinate).
+ * Default: 16
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.041 ダメージ処理の演出を変更します。
+ * @plugindesc v1.05 ダメージ処理の演出を変更します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/475586753.html
  *
@@ -536,6 +548,20 @@
  * @type string
  * @desc アクターのダメージ数値を表示するＹ座標の調整分です。
  * 数式使用可。初期値は0です。
+ * 
+ * @param damageDistanceX
+ * @text ダメージ間隔Ｘ
+ * @parent <Damage Position>
+ * @type number @min -999 @max 999
+ * @desc 連続ヒット時のダメージ同士の間隔（Ｘ座標）です。
+ * 初期値は8です。
+ * 
+ * @param damageDistanceY
+ * @text ダメージ間隔Ｙ
+ * @parent <Damage Position>
+ * @type number @min -999 @max 999
+ * @desc 連続ヒット時のダメージ同士の間隔（Ｙ座標）です。
+ * 初期値は16です。
  */
 
 /**
@@ -564,6 +590,9 @@ function toBoolean(str) {
     return (str == "true") ? true : false;
 }
 function toNumber(str, def) {
+    if (str == undefined || str == "") {
+        return def;
+    }
     return isNaN(str) ? def : +(str || def);
 }
 function setDefault(str, def) {
@@ -605,6 +634,8 @@ const pEnemyDamageOffsetX = setDefault(parameters["enemyDamageOffsetX"]);
 const pEnemyDamageOffsetY = setDefault(parameters["enemyDamageOffsetY"]);
 const pActorDamageOffsetX = setDefault(parameters["actorDamageOffsetX"]);
 const pActorDamageOffsetY = setDefault(parameters["actorDamageOffsetY"]);
+const pDamageDistanceX = toNumber(parameters["damageDistanceX"]);
+const pDamageDistanceY = toNumber(parameters["damageDistanceY"]);
 
 // 競合を避けるためのフラグ
 var noBlink = false;
@@ -1117,6 +1148,27 @@ if (pActorDamageOffsetY != undefined) {
         return offset ? Number(offset) : 0;
     };
 }
+
+/**
+ * ●ダメージスプライトの作成
+ */
+const _Sprite_Battler_createDamageSprite = Sprite_Battler.prototype.createDamageSprite;
+Sprite_Battler.prototype.createDamageSprite = function() {
+    const last = this._damages[this._damages.length - 1];
+
+    _Sprite_Battler_createDamageSprite.apply(this, arguments);
+
+    if (last) {
+        const sprite = this._damages[this._damages.length - 1];
+        // 連続ヒット時のダメージ同士の間隔を調整
+        if (pDamageDistanceX != null) {
+            sprite.x = last.x + pDamageDistanceX;
+        }
+        if (pDamageDistanceY != null) {
+            sprite.y = last.y - pDamageDistanceY;
+        }
+    }
+};
 
 /***********************************************************
  * ■ダメージ表示変更
