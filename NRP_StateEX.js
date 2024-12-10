@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.131 Extend the functionality of the state in various ways.
+ * @plugindesc v1.14 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -344,7 +344,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.131 ステートの機能を色々と拡張します。
+ * @plugindesc v1.14 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
