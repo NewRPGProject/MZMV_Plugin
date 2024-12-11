@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Visualize the order of action in turn-based battle.
+ * @plugindesc v1.04 Visualize the order of action in turn-based battle.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -43,7 +43,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 ターン制戦闘の行動順序を表示できるようにします。
+ * @plugindesc v1.04 ターン制戦闘の行動順序を表示できるようにします。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
