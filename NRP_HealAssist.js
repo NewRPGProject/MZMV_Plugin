@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Assist in target selection of recovery skills.
+ * @plugindesc v1.001 Assist in target selection of recovery skills.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/506049329.html
  *
@@ -68,7 +68,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 回復スキルの対象選択をアシストします。
+ * @plugindesc v1.001 回復スキルの対象選択をアシストします。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/506049329.html
  *
@@ -294,15 +294,20 @@ function isMpRecover(action) {
  * ●ＭＰ回復対象を取得
  */
 function getMpRecoverTarget() {
-    // 対象の中で、ＭＰの割合が最も低い者
-    const member = $gameParty.aliveMembers().reduce(function(a, b) {
-        return a.mpRate() <= b.mpRate() ? a : b;
-    });
+    // 最大ＭＰが１以上のアクターを取得
+    const mpMembers = $gameParty.aliveMembers().filter(m => m.mmp > 0);
+    if (mpMembers.length > 0) {
+        // 対象の中で、ＭＰの割合が最も低い者
+        const member = mpMembers.reduce(function(a, b) {
+            return a.mpRate() <= b.mpRate() ? a : b;
+        });
 
-    // ＭＰが減っている場合のみ返す
-    if (member.mpRate() < 1) {
-        return member;
+        // ＭＰが減っている場合のみ返す
+        if (member.mpRate() < 1) {
+            return member;
+        }
     }
+
     // 全快の場合は対象外
     return null;
 }
