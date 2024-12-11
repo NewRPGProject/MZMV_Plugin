@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v2.04 The order of actions is displayed on the battle screen.
+ * @plugindesc v2.041 The order of actions is displayed on the battle screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -434,7 +434,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.04 行動順序を戦闘画面へ表示します。
+ * @plugindesc v2.041 行動順序を戦闘画面へ表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -995,6 +995,10 @@ if (pUseSprite) {
     pWindowPadding = 0;
 }
 
+function NrpVisualTurn() {
+    throw new Error('This is a static class');
+}
+
 /**
  * ●行動順序の作成
  */
@@ -1013,8 +1017,12 @@ BattleManager.makeActionOrders = function() {
     }
 }
 
-function NrpVisualTurn() {
-    throw new Error('This is a static class');
+/**
+ * 【独自】表示処理を呼び出す。
+ * ※外部参照用
+ */
+BattleManager.displayActionOrders = function() {
+    NrpVisualTurn.visualTurnList(this._actionBattlers);
 }
 
 /**
