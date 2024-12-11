@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.043 Adjust the message window.
+ * @plugindesc v1.044 Adjust the message window.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -230,7 +230,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.043 メッセージウィンドウを調整する。
+ * @plugindesc v1.044 メッセージウィンドウを調整する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -760,15 +760,6 @@ if (pLineHeight != null) {
     };
 }
 
-// Window_Message.prototype.needsNewPage = function(textState) {
-//     alert(textState.y + textState.height + " > " + this.contents.height);
-
-//     return (
-//         !this.isEndOfText(textState) &&
-//         textState.y + textState.height > this.contents.height
-//     );
-// };
-
 /**
  * ●アイコンのＹ座標修正
  */
@@ -987,6 +978,12 @@ if (typeof Window_NameBox !== "undefined") {
         // Ｙ座標補正
         if (pNameBoxAdjustY != null) {
             this.y += eval(pNameBoxAdjustY);
+        }
+
+        // 名前欄の重なり対応がオンの場合、windowLayer分の座標を補正
+        if (pOverlapNameBox) {
+            this.x += this._messageWindow.parent.x;
+            this.y += this._messageWindow.parent.y;
         }
 
         // ウィンドウ画像の指定が存在する場合
