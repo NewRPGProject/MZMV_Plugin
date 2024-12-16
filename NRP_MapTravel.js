@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.042 Implement a map selection & transfer screen.
+ * @plugindesc v1.05 Implement a map selection & transfer screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484927929.html
  *
@@ -417,6 +417,10 @@
  * @desc A common event that is executed after spot selection.
  * This event has priority over the one set for the entire event.
  * 
+ * @param ChoiceSpots
+ * @type struct<ChoiceSpot>[]
+ * @desc Set multiple transfer spots.
+ * 
  * @param Icons
  * @type struct<SwitchIcon>[]
  * @desc Add icons next to the spot name.
@@ -554,6 +558,55 @@
  * @desc The radius of the symbol.
  */
 
+/*~struct~ChoiceSpot:
+ * @param SpotName
+ * @type text
+ * @desc The name of the spot to be displayed.
+ * Icon display such as \i[1] is also valid.
+ * 
+ * @param DispSwitch
+ * @type switch
+ * @desc This switch is the condition for displaying the spot.
+ * If it is blank, it is always displayed.
+ * 
+ * @param TransferMapId
+ * @type text
+ * @desc The map ID to transfer to. Can be a formula.
+ * If left blank, it will not appear in the list.
+ * 
+ * @param TransferX
+ * @type text
+ * @desc X coordinate of the transfer destination. Can be a formula.
+ * 
+ * @param TransferY
+ * @type text
+ * @desc Y coordinate of the transfer destination. Can be a formula.
+ * 
+ * @param TransferDirection
+ * @type select
+ * @option Keep @value 0
+ * @option Down @value 2
+ * @option Left @value 4
+ * @option Right @value 6
+ * @option Up @value 8
+ * @desc This is the direction after transfer.
+ * 
+ * @param TransferIdentifier
+ * @type number
+ * @desc This value is used to identify the spot to be transferred.
+ * The value is stored in the "IdentifierVariable".
+ * 
+ * @param TransferCommonEvent
+ * @type common_event
+ * @desc A common event that is executed after spot selection.
+ * This event has priority over the one set for the entire event.
+ * 
+ * @param UseFieldData
+ * @type boolean
+ * @default false
+ * @desc Refer to field information as parent data.
+ */
+
 /*~struct~SwitchIcon:
  * @param IconIndex
  * @type text
@@ -573,7 +626,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.042 マップ選択＆移動画面を実装します。
+ * @plugindesc v1.05 マップ選択＆移動画面を実装します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484927929.html
  *
@@ -1000,6 +1053,11 @@
  * @desc 地点選択後に実行するコモンイベントです。
  * 全体で設定したものより優先されます。
  * 
+ * @param ChoiceSpots
+ * @text 移動先（複数）
+ * @type struct<ChoiceSpot>[]
+ * @desc 複数の移動先を設定します。
+ * 
  * @param Icons
  * @text アイコン（複数）
  * @type struct<SwitchIcon>[]
@@ -1162,6 +1220,67 @@
  * @type number
  * @default 8
  * @desc シンボルの半径です。
+ */
+
+/*~struct~ChoiceSpot:ja
+ * @param SpotName
+ * @text 地点名
+ * @type text
+ * @desc 表示される地点の名前です。
+ * \i[1]などのアイコン表示も有効です。
+ * 
+ * @param DispSwitch
+ * @text 表示スイッチ
+ * @type switch
+ * @desc 地点の表示条件となるスイッチです。
+ * 空欄なら常に表示します。
+ * 
+ * @param TransferMapId
+ * @text 移動先マップＩＤ
+ * @type text
+ * @desc 移動先のマップＩＤです。数式可。
+ * 空欄だと親データを流用します。
+ * 
+ * @param TransferX
+ * @text 移動先Ｘ座標
+ * @type text
+ * @desc 移動先のＸ座標です。数式可。
+ * 空欄だと親データを流用します。
+ * 
+ * @param TransferY
+ * @text 移動先Ｙ座標
+ * @type text
+ * @desc 移動先のＹ座標です。数式可。
+ * 空欄だと親データを流用します。
+ * 
+ * @param TransferDirection
+ * @text 移動後の向き
+ * @type select
+ * @option そのまま @value 0
+ * @option 下 @value 2
+ * @option 左 @value 4
+ * @option 右 @value 6
+ * @option 上 @value 8
+ * @desc 移動後の向きです。
+ * 空欄だと親データを流用します。
+ * 
+ * @param TransferIdentifier
+ * @text 移動先識別値
+ * @type number
+ * @desc 移動先の地点を識別するための値です。
+ * 空欄だと親データを流用します。
+ * 
+ * @param TransferCommonEvent
+ * @text 移動用コモンイベント
+ * @type common_event
+ * @desc 地点選択後に実行するコモンイベントです。
+ * 空欄だと親データを流用します。
+ * 
+ * @param UseFieldData
+ * @text 地図情報を使用
+ * @type boolean
+ * @default false
+ * @desc 親データとして地図情報を参照します。
  */
 
 /*~struct~SwitchIcon:ja
@@ -1340,6 +1459,8 @@ function editSpot(spot) {
     spot.transferDirection = eval(spot.TransferDirection);
     spot.transferIdentifier = eval(spot.TransferIdentifier);
     spot.transferCommonEvent = eval(spot.TransferCommonEvent);
+    // 移動先（複数）情報
+    spot.choiceSpots = parseStruct2(spot.ChoiceSpots);
     // アイコン情報
     spot.icons = parseStruct2(spot.Icons);
     // 地図表示用
@@ -1671,9 +1792,24 @@ Scene_SelectSpots.prototype.create = function() {
 
     // マップ表示用ウィンドウへの参照を設定
     this._selectWindow.setMapWindow(this._mapWindow);
-
+    // 地点選択用ウィンドウ
+    this.createChoiceSpotWindow();
     // メッセージ表示用の設定
     this.createMessageWindows();
+};
+
+/**
+ * ●地点選択ウィンドウの作成
+ */
+Scene_SelectSpots.prototype.createChoiceSpotWindow = function() {
+    this._choiceSpotWindow = new Window_ChoiceSpot(new Rectangle(0, 0, Graphics.boxWidth, Graphics.boxHeight));
+    this._choiceSpotWindow.setHandler("ok", this.onChoiceOk.bind(this));
+    this._choiceSpotWindow.setHandler('cancel', this.onChoiceCancel.bind(this));
+    // addWindowだと下が見えなくなるのでaddChildで追加する。
+    this.addChild(this._choiceSpotWindow);
+
+    this._choiceSpotWindow.hide();
+    this._choiceSpotWindow.close();
 };
 
 /**
@@ -1808,11 +1944,33 @@ Scene_SelectSpots.prototype.onSpotSelectCancel = function() {
 };
 
 /**
- * ●地点選択確定時
+ * ●地点選択押下時
  */
 Scene_SelectSpots.prototype.onSpotSelectOk = function() {
     // 選択中の地点を取得
     const spot = this._selectWindow.item();
+
+    // 移動先が複数存在する場合
+    const choiceSpots = spot.choiceSpots;
+    if (choiceSpots && choiceSpots.length > 0) {
+        // 選択ウィンドウにスキルデータを設定
+        this._choiceSpotWindow.setSpotData(choiceSpots);
+        // 選択ウィンドウを表示
+        this._choiceSpotWindow.show();
+        this._choiceSpotWindow.open();
+        this._choiceSpotWindow.activate();
+        this._choiceSpotWindow.select(0);
+        return;
+    }
+
+    // 選択肢が存在しない場合は確定
+    this.onSpotSelectDecision(spot);
+};
+
+/**
+ * ●地点選択確定時
+ */
+Scene_SelectSpots.prototype.onSpotSelectDecision = function(spot) {
     // 遷移先を取得
     const mapId = spot.transferMapId;
     const x = spot.transferX;
@@ -1889,6 +2047,70 @@ Scene_SelectSpots.prototype.onSpotSelectOk = function() {
  */
 Scene_SelectSpots.prototype.onSpotCancel = function() {
     this._mapWindow.deselect();
+    // 地点選択ウィンドウに戻る
+    this._selectWindow.activate();
+};
+
+/**
+ * ●地点（選択肢）確定
+ */
+Scene_SelectSpots.prototype.onChoiceOk = function() {
+    // 選択中の項目を取得して編集
+    const spot = this._choiceSpotWindow.item();
+
+    // 場所移動先
+    spot.transferMapId = eval(spot.TransferMapId);
+    spot.transferX = eval(spot.TransferX);
+    spot.transferY = eval(spot.TransferY);
+    spot.transferDirection = eval(spot.TransferDirection);
+    spot.transferIdentifier = eval(spot.TransferIdentifier);
+    spot.transferCommonEvent = eval(spot.TransferCommonEvent);
+
+    // 親データを取得
+    const parentSpot = this._selectWindow.item();
+
+    // 空白の場合は親データを参照
+    if (spot.transferIdentifier == null) {
+        spot.transferIdentifier = parentSpot.transferIdentifier;
+    }
+    if (spot.transferDirection == null) {
+        spot.transferDirection = parentSpot.transferDirection;
+    }
+    if (spot.transferCommonEvent == null) {
+        spot.transferCommonEvent = parentSpot.transferCommonEvent;
+    }
+
+    // フィールドデータを参照する場合
+    if (toBoolean(spot.UseFieldData)) {
+        if (spot.transferMapId == null) {
+            spot.transferMapId = parentSpot.fieldMapId;
+        }
+        if (spot.transferX == null) {
+            spot.transferX = parentSpot.fieldX;
+        }
+        if (spot.transferY == null) {
+            spot.transferY = parentSpot.fieldY;
+        }
+    } else {
+        if (spot.transferMapId == null) {
+            spot.transferMapId = parentSpot.transferMapId;
+        }
+        if (spot.transferX == null) {
+            spot.transferX = parentSpot.transferX;
+        }
+        if (spot.transferY == null) {
+            spot.transferY = parentSpot.transferY;
+        }
+    }
+
+    this.onSpotSelectDecision(spot);
+};
+
+/**
+ * ●地点（選択肢）キャンセル
+ */
+Scene_SelectSpots.prototype.onChoiceCancel = function() {
+    this._choiceSpotWindow.close();
     // 地点選択ウィンドウに戻る
     this._selectWindow.activate();
 };
@@ -2021,6 +2243,190 @@ Scene_SelectSpots.prototype.showMessage = function(message) {
             window.activate();
         }
     }
+};
+
+//-----------------------------------------------------------------------------
+// Window_ChoiceSpot
+//
+// 地点選択（サブ）用のウィンドウ
+
+function Window_ChoiceSpot() {
+    this.initialize(...arguments);
+}
+
+Window_ChoiceSpot.prototype = Object.create(Window_Command.prototype);
+Window_ChoiceSpot.prototype.constructor = Window_ChoiceSpot;
+
+Window_ChoiceSpot.prototype.initialize = function(rect) {
+    if (Utils.RPGMAKER_NAME === "MV") {
+        Window_Command.prototype.initialize.call(this, rect.x, rect.y, rect.width, rect.height);
+        this.innerWidth = this.contentsWidth();
+        this.innerHeight = this.contentsHeight();
+    } else {
+        Window_Command.prototype.initialize.call(this, rect);
+    }
+};
+
+Window_ChoiceSpot.prototype.refresh = function() {
+    this.clearCommandList();
+    this.makeCommandList();
+    this.updatePlacement();
+    Window_Selectable.prototype.refresh.call(this);
+};
+
+/**
+ * ●項目の描画
+ */
+Window_ChoiceSpot.prototype.drawItem = function(index) {
+    const rect = this.itemLineRect(index);
+    this.drawTextEx(this.commandName(index), rect.x, rect.y, rect.width);
+};
+
+if (Utils.RPGMAKER_NAME == "MV") {
+    Window_ChoiceSpot.prototype.itemPadding = function() {
+        return 8;
+    };
+    Window_ChoiceSpot.prototype.itemRectWithPadding = function(index) {
+        const rect = this.itemRect(index);
+        const padding = this.itemPadding();
+        rect.x += padding;
+        rect.width -= padding * 2;
+        return rect;
+    };
+    Window_ChoiceSpot.prototype.itemLineRect = function(index) {
+        const rect = this.itemRectWithPadding(index);
+        const padding = (rect.height - this.lineHeight()) / 2;
+        rect.y += padding;
+        rect.height -= padding * 2;
+        return rect;
+    };
+}
+
+/**
+ * ●地点データの設定
+ */
+Window_ChoiceSpot.prototype.setSpotData = function(spotsData) {
+    this._data = [];
+    for (const spot of spotsData) {
+        // 該当のスイッチがオンでない場合は追加しない
+        if (spot.DispSwitch && !$gameSwitches.value(toNumber(spot.DispSwitch))) {
+            continue;
+        }
+        this._data.push(spot);
+    }
+    this.refresh();
+};
+
+/**
+ * ●コマンドの作成
+ */
+Window_ChoiceSpot.prototype.makeCommandList = function() {
+    if (!this._data) {
+        return;
+    }
+    for (const data of this._data) {
+        this.addCommand(data.SpotName, "choice");
+    }
+};
+
+/**
+ * ●選択中の項目を取得
+ */
+Window_ChoiceSpot.prototype.item = function() {
+    return this.itemAt(this.index());
+};
+
+/**
+ * ●指定した番号の項目を取得
+ */
+Window_ChoiceSpot.prototype.itemAt = function(index) {
+    return this._data && index >= 0 ? this._data[index] : null;
+};
+
+/**
+ * ●位置調整
+ */
+Window_ChoiceSpot.prototype.updatePlacement = function() {
+    this.x = this.windowX();
+    this.y = this.windowY();
+    this.width = this.windowWidth();
+    this.height = this.windowHeight();
+};
+
+/**
+ * ●ウィンドウのＸ座標
+ */
+Window_ChoiceSpot.prototype.windowX = function() {
+    return (Graphics.boxWidth - this.windowWidth()) / 2;
+};
+
+/**
+ * ●ウィンドウのＹ座標
+ */
+Window_ChoiceSpot.prototype.windowY = function() {
+    return (Graphics.boxHeight - this.windowHeight()) / 2;
+};
+
+/**
+ * ●ウィンドウの横幅
+ */
+Window_ChoiceSpot.prototype.windowWidth = function() {
+    const width = this.maxChoiceWidth() + this.colSpacing() + this.padding * 2;
+    return Math.min(width, Graphics.boxWidth);
+};
+
+if (Utils.RPGMAKER_NAME === "MV") {
+    Window_ChoiceSpot.prototype.colSpacing = function() {
+        return 8;
+    };
+}
+
+/**
+ * ●ウィンドウの縦幅
+ */
+Window_ChoiceSpot.prototype.windowHeight = function() {
+    return this.fittingHeight(this.numVisibleRows());
+};
+
+/**
+ * ●表示行数
+ */
+Window_ChoiceSpot.prototype.numVisibleRows = function() {
+    if (!this._data) {
+        return 0;
+    }
+    return this._data.length;
+};
+
+/**
+ * ●選択肢の最大横幅
+ */
+Window_ChoiceSpot.prototype.maxChoiceWidth = function() {
+    let maxWidth = 96;
+    const choices = this._list;
+
+    if (Utils.RPGMAKER_NAME === "MV") {
+        for (var i = 0; i < choices.length; i++) {
+            var choiceWidth = this.textWidthEx(choices[i].name) + this.textPadding() * 2;
+            if (maxWidth < choiceWidth) {
+                maxWidth = choiceWidth;
+            }
+        }
+    } else {
+        for (const choice of choices) {
+            const textWidth = this.textSizeEx(choice.name).width;
+            const choiceWidth = Math.ceil(textWidth) + this.itemPadding() * 2;
+            if (maxWidth < choiceWidth) {
+                maxWidth = choiceWidth;
+            }
+        }
+    }
+
+    return maxWidth;
+};
+
+Window_ChoiceSpot.prototype.textWidthEx = function(text) {
+    return this.drawTextEx(text, 0, this.contents.height);
 };
 
 //-----------------------------------------------------------------------------
