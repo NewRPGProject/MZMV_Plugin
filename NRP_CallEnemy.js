@@ -3,9 +3,10 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.051 Implement the "Call Enemy" function.
+ * @plugindesc v1.06 Implement the "Call Enemy" function.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_TroopRandomFormation
+ * @orderAfter NRP_EnemyRoutineKai
  * @url http://newrpg.seesaa.net/article/485838070.html
  *
  * @help Add a "Call Enemy" function to the enemy skill.
@@ -171,6 +172,12 @@
  * @default However, the fellow didn't show up!
  * @desc The message to be displayed when the call is failed.
  * 
+ * @param DeleteDeadEnemy
+ * @type boolean
+ * @default false
+ * @desc Deletes dead enemies when Call Enemy is executed.
+ * Do not overlap placements with revival.
+ * 
  * @param LinkDynamicAppear
  * @type boolean
  * @default true
@@ -179,9 +186,10 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.051 敵キャラの『仲間を呼ぶ』を実装します。
+ * @plugindesc v1.06 敵キャラの『仲間を呼ぶ』を実装します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_TroopRandomFormation
+ * @orderAfter NRP_EnemyRoutineKai
  * @url http://newrpg.seesaa.net/article/485838070.html
  *
  * @help 敵キャラのスキルに『仲間を呼ぶ』機能を追加します。
@@ -347,6 +355,13 @@
  * @default しかし仲間は現れなかった！
  * @desc 呼び出しに失敗した際に表示する文章です。
  * 
+ * @param DeleteDeadEnemy
+ * @text 戦闘不能の敵を消す
+ * @type boolean
+ * @default false
+ * @desc 仲間を呼んだ際に戦闘不能の敵キャラを消します。
+ * 蘇生で配置が被ってしまう問題への対処です。
+ * 
  * @param LinkDynamicAppear
  * @text DynamicAppearと連携
  * @type boolean
@@ -383,6 +398,7 @@ const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pMaxEnemyNo = toNumber(parameters["MaxEnemyNo"]);
 const pSuccessMessage = parameters["SuccessMessage"];
 const pFailureMessage = parameters["FailureMessage"];
+const pDeleteDeadEnemy = toBoolean(parameters["DeleteDeadEnemy"], false);
 const pLinkDynamicAppear = toBoolean(parameters["LinkDynamicAppear"], true);
 
 /**
@@ -529,6 +545,13 @@ Game_Action.prototype.callEnemy = function(enemyId, callArgs) {
         return;
     }
 
+    // 現在戦闘不能の敵に蘇生禁止フラグを立てる。
+    if (pDeleteDeadEnemy) {
+        for (const enemy of $gameTroop.deadMembers()) {
+            enemy.prohibitRevive();
+        }
+    }
+
     // 敵を追加
     const newEnemy = new Game_Enemy(enemyId, 0, 0, true);
     $gameTroop._enemies.push(newEnemy);
@@ -542,6 +565,46 @@ Game_Action.prototype.callEnemy = function(enemyId, callArgs) {
     this.makeSuccess(newEnemy);
     BattleManager._logWindow.displayCallEnemy(this, newEnemy, mNewEnemySprite, callArgs);
 };
+
+if (pDeleteDeadEnemy) {
+    /**
+     * ●敵行動の有効判定
+     * ※NRP_EnemyRoutineKai.jsの関数
+     */
+    const _Game_Action_testApplyEnemy = Game_Action.prototype.testApplyEnemy;
+    Game_Action.prototype.testApplyEnemy = function(target) {
+        // 対象が戦闘不能の仲間向け、かつ対象が蘇生禁止の場合
+        if (this.isForDeadFriend() && target.isProhibitRevive()) {
+            // 効果を無効にする。
+            return false;
+        }
+        return _Game_Action_testApplyEnemy.apply(this, arguments);
+    }
+
+    // 蘇生禁止のチェックフラグ
+    let mCheckProhibitRevive = false;
+
+    /**
+     * ●範囲が戦闘不能スキルの対象
+     */
+    const _Game_Action_targetsForDead = Game_Action.prototype.targetsForDead;
+    Game_Action.prototype.targetsForDead = function(unit) {
+        mCheckProhibitRevive = true;
+        // Game_Troop.prototype.membersが呼ばれる。
+        const ret = _Game_Action_targetsForDead.apply(this, arguments);
+        mCheckProhibitRevive = false;
+        return ret;
+    };
+
+    const _Game_Troop_members = Game_Troop.prototype.members;
+    Game_Troop.prototype.members = function() {
+        // 蘇生禁止以外に限定して取得
+        if (mCheckProhibitRevive) {
+            return this._enemies.filter(enemy => !enemy.isProhibitRevive());
+        }
+        return _Game_Troop_members.apply(this, arguments);
+    };
+}
 
 /**
  * ●呼び出す敵キャラのＩＤを取得
@@ -762,6 +825,20 @@ Game_Battler.prototype.initCtbTurn = function() {
         }
     }
 };
+
+/**
+ * 【独自】蘇生を禁止する。
+ */
+Game_Battler.prototype.prohibitRevive = function() {
+    this._isProhibitRevive = true;
+}
+
+/**
+ * 【独自】蘇生が禁止されているかどうか？
+ */
+Game_Battler.prototype.isProhibitRevive = function() {
+    return this._isProhibitRevive;
+}
 
 //-----------------------------------------------------------------------------
 // NRP_DynamicAppear.jsと連携
