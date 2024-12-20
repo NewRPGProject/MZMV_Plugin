@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Add an auto-battle command.
+ * @plugindesc v1.031 Add an auto-battle command.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/498941158.html
  *
@@ -60,6 +60,7 @@
  * @desc If only the normal attack is on, only the first enemy is targeted.
  * 
  * @param ShortcutKey
+ * @text [MZ]ShortcutKey
  * @type select
  * @option shift
  * @option menu
@@ -102,7 +103,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 自動戦闘コマンドを追加します。
+ * @plugindesc v1.031 自動戦闘コマンドを追加します。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/498941158.html
  *
@@ -159,7 +160,7 @@
  * @desc 通常攻撃のみがオンの場合、先頭の敵のみを対象とします。
  * 
  * @param ShortcutKey
- * @text ショートカットキー
+ * @text [MZ]ショートカットキー
  * @type select
  * @option shift
  * @option menu
