@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.10 Implemented a class change screen for multiple classes.
+ * @plugindesc v1.101 Implemented a class change screen for multiple classes.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -455,7 +455,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.10 多重職業用の転職画面を実装。
+ * @plugindesc v1.101 多重職業用の転職画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -1288,6 +1288,7 @@ Scene_AdditionalCC.prototype.update = function() {
         // メッセージが完全に閉じてからシーン終了
         if (this._messageWindow.isClosed()) {
             this.classChangeEnd();
+            this._isMessageClosing = false;
         }
         return;
     }
@@ -1550,7 +1551,7 @@ Scene_AdditionalCC.prototype.onClassChangeSelectStart = function() {
     // 職業情報ウィンドウの表示。ただし選択しない
     this._infoWindow.show();
     this._infoWindow.deselect();
-    this._infoWindow.deactivate()
+    this._infoWindow.deactivate();
 };
 
 /**
@@ -2532,7 +2533,7 @@ Windows_ClassInfo.prototype.drawActorClass = function(x, y, width) {
     this.resetTextColor();
     const additionalClass = this.getClass();
     if (additionalClass) {
-        this.drawText(additionalClass.name, x, y, this.innerWidth - this.itemPadding(), "right");
+        this.drawText(additionalClass.name, x, y, this.innerWidth - this.itemPadding() - 8, "right");
     }
 };
 
