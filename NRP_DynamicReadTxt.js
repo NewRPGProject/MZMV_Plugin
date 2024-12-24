@@ -1,15 +1,15 @@
 ﻿//=============================================================================
-// NRP_DynamicReadTxt.js
+// NRP_DynamicReadTxt2.js
 //=============================================================================
 
 /*:
  * @target MV MZ
- * @plugindesc v1.06 Read the definition of DynamicAnimation&Motion from txt file.
+ * @plugindesc v2.00 Read the definition of DynamicAnimation&Motion from txt file.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMapMZ
- * @url http://newrpg.seesaa.net/article/477791458.html
+ * @url https://newrpg.seesaa.net/article/477791458.html
  *
  * @help Read the definition of DynamicAnimation&Motion from txt file.
  * 
@@ -35,20 +35,63 @@
  * This allows you to check the operation repeatedly without stopping the game.
  * In production mode, all definitions are read at startup.
  * 
- * [Caution!]
- * At the test startup, create a file named "FILE_LIST.txt" in the "ReadTxtFolder".
+ * -------------------------------------------------------------------
+ * [About Encryption]
+ * -------------------------------------------------------------------
+ * This plugin can encrypt txt files.
+ * The contents will be unreadable when deployed for production.
+ * 
+ * Please note, however,
+ * that the strength of the encryption is only for peace of mind.
+ * You can avoid a situation in which the contents of the file
+ * can be discovered simply by opening it in a text editor.
+ * 
+ * ◆Procedure
+ * 1. Specify a folder outside the project for the "ReadTxtFolder".
+ * 
+ * 　Example: C:/D-Txt/
+ * 
+ * ※Be sure to use "/"" instead of "\"".
+ * ※"/"" is required at the end as well.
+ * ※The placement can be anywhere,
+ *   but the plugin settings will remain in production.
+ *   Be careful not to include personal information in the path name.
+ * 
+ * 2. Turn on "UseEncrypt" and run the test play.
+ *    "EncryptFolder" can be the default setting.
+ * 
+ * Encrypted files will be created
+ * in the "EncryptFolder" at the start of test play.
+ * After that, deploy as is.
+ * 
+ * If the number of files is large or PC specs are low,
+ * encryption will take a long time.
+ * "UseEncrypt" can be turned off during normal development.
+ * 
+ * -------------------------------------------------------------------
+ * [About Browser Launch]
+ * -------------------------------------------------------------------
+ * At the test startup, create a file named "FILE_LIST.txt"
+ * in the "ReadTxtFolder".
  * This file is used to obtain a list of files to be loaded
  * when starting a browser, such as "RPG Atsumaru".
  * Therefore, after each txt file renaming,
- * if you upload a production file without ever starting the test, it will not work properly.
+ * if you upload a production file without ever starting the test,
+ * it will not work properly.
  * ※I think it is unlikely to happen first...
  * 
+ * -------------------------------------------------------------------
  * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
  * The author is not responsible,
  * but we will respond to defects as far as possible.
+ * 
+ * @-----------------------------------------------------
+ * @ [Plugin Parameters]
+ * @-----------------------------------------------------
  * 
  * @param ReadTxtFolder
  * @type string
@@ -56,13 +99,40 @@
  * @desc The folder where the .txt file to be read is located.
  * The default setting is "data/D-Txt/".
  * 
+ * @param UseEncrypt
+ * @type boolean
+ * @default false
+ * @desc Encrypt the txt file and output to EncryptFolder.
+ * 
+ * @param EncryptFolder
+ * @parent UseEncrypt
+ * @type string
+ * @default data/D-Txt-Encrypt/
+ * @desc Folder to place the encrypted txt file.
+ * The default setting is "data/D-Txt-Encrypt/".
+ * 
  * @param DynamicReadOnTest
  * @type boolean
  * @default true
  * @desc When testing, the game will load every time someone uses a skill.
  * This allows you to change behavior without stopping the game.
  * 
+ * @param MakeBrowserFileList
+ * @type boolean
+ * @default true
+ * @desc Creates a list of files for browser execution.
+ * 
+ * @param <For Verification>
+ * 
+ * @param ProductionMode
+ * @parent <For Verification>
+ * @type boolean
+ * @default false
+ * @desc Force it to run in production mode behavior.
+ * Items for debugging. Basically, it is recommended off.
+ * 
  * @param BrowserMode
+ * @parent <For Verification>
  * @type boolean
  * @default false
  * @desc Force it to run in browser mode behavior.
@@ -71,14 +141,15 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.06 DynamicAnimation&Motionの定義をtxtから読み込みます。
+ * @plugindesc v2.00 DynamicAnimation&Motionの定義をtxtから読み込みます。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMapMZ
- * @url http://newrpg.seesaa.net/article/477791458.html
+ * @url https://newrpg.seesaa.net/article/477791458.html
  *
  * @help DynamicAnimation&Motionの定義をtxtファイルから読み込みます。
+ * ※暗号化検証用のテストプラグインです。
  * 
  * スキルのメモ欄に<D-Txt:[ファイル名]>と記載すれば、
  * 指定のフォルダにあるtxtファイルから定義を読み込み、置換します。
@@ -99,7 +170,40 @@
  * これにより、ゲームを停止することなく動作を繰り返し確認できます。
  * ※本番モード時は起動時に全ての定義を読み込みます。
  * 
- * ■注意！
+ * -------------------------------------------------------------------
+ * ■暗号化について
+ * -------------------------------------------------------------------
+ * 本プラグインは暗号化に対応しています。
+ * txtファイルを暗号化し、本番用にデプロイメントした際には
+ * 中身を読めないようにすることができます。
+ * 
+ * ただし、暗号化の強度は気休め程度なのでご了承ください。
+ * txtを開くだけで中身が分かるという状況は避けられます。
+ * 
+ * ◆手順
+ * １．『txt配置フォルダ』にプロジェクト外のフォルダを指定する。
+ * 
+ * 　例：C:/D-Txt/
+ * 
+ * ※必ず『\』ではなく『/』にしてください。
+ * ※末尾にも『/』は必須です。
+ * ※配置はどこでもよいですが、プラグインの設定は本番にも残ります。
+ * 　パス名に個人情報を含まないように注意してください。
+ * 
+ * ２．『暗号化を使用』をオンにして、テストプレイを実行する。
+ * ※『暗号化出力フォルダ』は初期設定でも問題ありません。
+ * 
+ * テストプレイ開始時に『暗号化出力フォルダ』へと
+ * 暗号化されたファイルが作成されるようになります。
+ * 後はそのままデプロイメントすればＯＫです。
+ * 
+ * ファイルの数が多かったり、ＰＣのスペックが低かったりすると、
+ * 暗号化に時間がかかってしまいます。
+ * 『暗号化を使用』は普段の開発時はオフにしても問題ありません。
+ * 
+ * -------------------------------------------------------------------
+ * ■ブラウザ起動について
+ * -------------------------------------------------------------------
  * テスト起動時、FILE_LIST.txtというファイルを『txt配置フォルダ』に作成します。
  * これはRPGアツマールなどのブラウザ起動時に、
  * 読込対象となるファイル一覧を取得するためのファイルです。
@@ -107,10 +211,16 @@
  * 本番ファイルをアップロードした場合、正常に動作しません。
  * ※まずありえないと思いますが……。
  * 
+ * -------------------------------------------------------------------
  * ■利用規約
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
+ * 
+ * @-----------------------------------------------------
+ * @ プラグインパラメータ
+ * @-----------------------------------------------------
  * 
  * @param ReadTxtFolder
  * @text txt配置フォルダ
@@ -119,6 +229,20 @@
  * @desc 読み込む.txtファイルを配置するフォルダです。
  * 初期設定は"data/D-Txt/"です。
  * 
+ * @param UseEncrypt
+ * @text 暗号化を使用
+ * @type boolean
+ * @default false
+ * @desc txtファイルを暗号化し、暗号化出力フォルダへと出力します。
+ * 
+ * @param EncryptFolder
+ * @parent UseEncrypt
+ * @text 暗号化出力フォルダ
+ * @type string
+ * @default data/D-Txt-Encrypt/
+ * @desc 暗号化したtxtファイルを配置するフォルダです。
+ * 初期設定は"data/D-Txt-Encrypt/"です。
+ * 
  * @param DynamicReadOnTest
  * @text テスト時は毎回読込
  * @type boolean
@@ -126,7 +250,25 @@
  * @desc テスト時はスキルを使用する度に読込を行います。
  * これによりゲームを停止せずに動作変更が可能です。
  * 
+ * @param MakeBrowserFileList
+ * @text ブラウザ用のリスト作成
+ * @type boolean
+ * @default true
+ * @desc ブラウザ実行用のファイルリストを作成します。
+ * 
+ * @param <For Verification>
+ * @text ＜検証用＞
+ * 
+ * @param ProductionMode
+ * @parent <For Verification>
+ * @text 本番モードで実行
+ * @type boolean
+ * @default false
+ * @desc 強制的に本番モードの挙動で実行します。
+ * ※デバッグ用の項目なので基本的にはオフ推奨です。
+ * 
  * @param BrowserMode
+ * @parent <For Verification>
  * @text ブラウザモードで実行
  * @type boolean
  * @default false
@@ -161,11 +303,31 @@ function setDefault(str, def) {
 const PLUGIN_NAME = "NRP_DynamicReadTxt";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pReadTxtFolder = setDefault(parameters["ReadTxtFolder"], "data/D-Txt/");
+const pUseEncrypt = toBoolean(parameters["UseEncrypt"], false);
+const pEncryptFolder = setDefault(parameters["EncryptFolder"], "data/D-Txt-Encrypt/");
 const pDynamicReadOnTest = toBoolean(parameters["DynamicReadOnTest"], true);
+const pMakeBrowserFileList = toBoolean(parameters["MakeBrowserFileList"], true);
+const pProductionMode = toBoolean(parameters["ProductionMode"], false);
 const pBrowserMode = toBoolean(parameters["BrowserMode"], false);
 
 const TAG_NAME = "D-Txt";
 const FILE_LIST_NAME = "FILE_LIST"
+
+// テキストの拡張子
+const TXT_EXT = ".txt";
+// 暗号化版の拡張子
+const ENCRYPT_EXT = ".drtxt";
+
+// Node.jsの暗号化機能を呼び出し
+const mCrypto = require("crypto");
+// 暗号化アルゴリズム（AES）
+const ALGORISM = "aes-256-cbc";
+// パスワード（適当）
+const PASSWORD = "DYNAMIC_READ_TXT";
+// SALT（適当）
+const SALT = "RPG_TCOOL_MZ"
+// 鍵を生成
+const mCryptKey = mCrypto.scryptSync(PASSWORD, SALT, 32);
 
 /************************************************
  * 以下、共通処理
@@ -178,12 +340,23 @@ DataManager._dynamicTextErrors = [];
  * ●テスト実行かどうか？
  */
 function isPlaytest() {
-    // ブラウザ実行時は常に本番と判定
-    if (isBrowserMode()) {
+    // 本番モード、ブラウザ実行時は常に本番と判定
+    if (pProductionMode || isBrowserMode()) {
         return false;
 
     // ※この段階では$gameTemp.isPlaytest()は有効にならないため、こちらで判定。
     } else if (Utils.isOptionValid("test")) {
+        return true;
+    }
+    return false;
+}
+
+/**
+ * ●暗号ファイルを参照するかどうか？
+ */
+function isWatchEncrypt() {
+    // 本番かつ暗号使用
+    if (!isPlaytest() && pUseEncrypt) {
         return true;
     }
     return false;
@@ -224,9 +397,19 @@ function loadDynamicTextFile(item) {
         // 一時読込領域クリア
         $dynamicReadTextTemp = [];
 
+        let ext;
+
+        // 暗号ファイルを参照する場合
+        if (isWatchEncrypt()) {
+            ext = ENCRYPT_EXT;
+        // それ以外
+        } else {
+            ext = TXT_EXT;
+        }
+
         // 複数ファイルに対してロード実行
         for (const fileName of fileNames) {
-            DataManager.loadDynamicTextFile("$dynamicReadTextTemp", fileName + ".txt");
+            DataManager.loadDynamicTextFile("$dynamicReadTextTemp", fileName + ext);
         }
         return true;
     }
@@ -289,7 +472,17 @@ function readLineFileName(line, item) {
  */
 DataManager.loadDynamicTextFile = function(name, src) {
     const xhr = new XMLHttpRequest();
-    const url = pReadTxtFolder + src;
+    
+    let url;
+
+    // 暗号ファイルを参照する場合
+    if (isWatchEncrypt()) {
+        url = pEncryptFolder + src;
+    // それ以外
+    } else {
+        url = pReadTxtFolder + src;
+    }
+
     // 拡張子を除去してキーにする。abc.txt -> abc
     const key = src.replace(/\.[^/.]+$/, "");
     window[name][key] = null;
@@ -321,7 +514,7 @@ DataManager.onXhrLoadDynamicText = function(xhr, name, src, url) {
         const key = src.replace(/\.[^/.]+$/, "");
         window[name][key] = xhr.responseText;
         $dynamicReadText[key] = xhr.responseText;
-
+        
         this.onLoad(window[name][key]);
     } else {
         this.onXhrErrorDynamicText(name, src, url);
@@ -376,7 +569,7 @@ DataManager.loadDynamicTextAll = function() {
     // ブラウザ実行時
     if (isBrowserMode()) {
         // FILE_LIST.txtから一覧を取得
-        DataManager.loadDynamicTextFile("$dynamicReadTextTemp", FILE_LIST_NAME + ".txt");
+        DataManager.loadDynamicTextFile("$dynamicReadTextTemp", FILE_LIST_NAME + TXT_EXT);
         // 一覧用のロード実行フラグ
         this.onLoadDynamicFileList = true;
         return;
@@ -387,9 +580,6 @@ DataManager.loadDynamicTextAll = function() {
     
     // 処理はreaddirDynamicTextFileに引き継ぐ
     fs.readdir(getReaddirTarget(fs), readdirDynamicTextFile);
-
-    // ロード実行フラグ
-    this.onLoadDynamicTextAll = true;
 };
 
 /**
@@ -417,24 +607,64 @@ function readdirDynamicTextFile(err, dynamicFileNames) {
     // .txtファイルだけに絞り込み
     // ※フォルダ名に.txtを付けると誤検出するけど気にしない。
     const dynamicTextFileNames = dynamicFileNames.filter(function(fileName) {
-        return fileName.endsWith(".txt");
+        return fileName.endsWith(TXT_EXT);
     });
+
+    // デバッグ用の時間計測処理
+    // const startTime = performance.now(); // 開始時間
 
     // テスト実行時
     if (isPlaytest()) {
-        // v1.2.0に伴い、NW.jsの挙動が変化
-        // 配列のまま引数には使えなくなったので、文字列に変換する。
-        const dynamicTextFileNamesJoin = dynamicTextFileNames.join(",");
-        // ファイル一覧をファイルに出力
-        const fs = require("fs");
-        fs.writeFile(pReadTxtFolder + FILE_LIST_NAME + ".txt", dynamicTextFileNamesJoin, (err, data) => {
-            if (err) {
-                alert(err);
-            } else {
-                console.log('write end');
+        try {
+            // v1.2.0に伴い、NW.jsの挙動が変化
+            // 配列のまま引数には使えなくなったので、文字列に変換する。
+            const dynamicTextFileNamesJoin = dynamicTextFileNames.join(",");
+            const fs = require("fs");
+
+            // ファイル一覧をファイルに出力
+            if (pMakeBrowserFileList) {
+                fs.writeFileSync(pReadTxtFolder + FILE_LIST_NAME + TXT_EXT, dynamicTextFileNamesJoin);
             }
-        });
+
+            // ファイルを暗号化
+            if (pUseEncrypt) {
+                // 暗号化フォルダが存在しない場合は作成
+                if (!fs.existsSync(pEncryptFolder)) {
+                    fs.mkdirSync(pEncryptFolder, {recursive:true});
+                }
+
+                // ファイルを出力
+                for (const fileName of dynamicTextFileNames) {
+                    // 開発用のフォルダから読み込み
+                    const data = fs.readFileSync(pReadTxtFolder + fileName, 'utf-8');
+                    // data を暗号化
+                    const cipher = mCrypto.createCipher(ALGORISM, mCryptKey);
+                    let encryptedData = cipher.update(data, "utf-8", "hex");
+                    encryptedData += cipher.final("hex");
+
+                    // ファイル名から拡張子を除去
+                    const fileNameNoExt = fileName.replace(/\.[^/.]+$/, "");
+                    // プロジェクト内へ出力
+                    fs.writeFileSync(pEncryptFolder + fileNameNoExt + ENCRYPT_EXT, encryptedData);
+                }
+            }
+
+        } catch (e) {
+            //エラー処理
+            console.log(e);
+        }
     }
+
+    // const endTime = performance.now(); // 終了時間
+    // console.log(endTime - startTime); // 何ミリ秒かかったかを表示する
+
+    // テスト時は毎回読込の設定なら、全ファイルを読み込む必要はないので終了。
+    if (isDynamicReadOnTest()) {
+        return;
+    }
+
+    // ロード実行フラグ
+    DataManager.onLoadDynamicTextAll = true;
 
     // ファイル名の一覧からロード実行
     loadDynamicTextFileNames(dynamicTextFileNames);
@@ -446,7 +676,18 @@ function readdirDynamicTextFile(err, dynamicFileNames) {
 function loadDynamicTextFileNames(dynamicTextFileNames) {
     // 一行ずつファイルを読込
     for (const fileName of dynamicTextFileNames) {
-        DataManager.loadDynamicTextFile("$dynamicReadTextTemp", fileName);
+        // ファイル名から拡張子を除去
+        const fileNameNoExt = fileName.replace(/\.[^/.]+$/, "");
+
+        let ext;
+        // 暗号ファイルを参照する場合
+        if (isWatchEncrypt()) {
+            ext = ENCRYPT_EXT;
+        // それ以外
+        } else {
+            ext = TXT_EXT;
+        }
+        DataManager.loadDynamicTextFile("$dynamicReadTextTemp", fileNameNoExt + ext);
     }
 
     // ファイル名リストを設定してチェックに使う
@@ -598,8 +839,21 @@ function replaceDynamicNote(item) {
         const fileName = readLineFileName(line, item);
         // 取得できれば配列に追加
         if (fileName) {
-            // 変換して追加
-            dynamicText += $dynamicReadText[fileName];
+            // ファイルの内容を取得
+            let readText = $dynamicReadText[fileName];
+
+            // 暗号ファイルを参照する場合
+            if (isWatchEncrypt()) {
+                // ファイルの内容を復号
+                const decipher = mCrypto.createDecipher(ALGORISM, mCryptKey)
+                let decryptedText = decipher.update(readText, "hex", "utf-8");
+                decryptedText += decipher.final("utf-8");
+                // ファイルの内容を追加
+                dynamicText += decryptedText;
+            } else {
+                // ファイルの内容を追加
+                dynamicText += readText;
+            }
 
         // 取得できなければ普通に行を出力
         } else {
