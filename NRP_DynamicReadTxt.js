@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v2.00 Read the definition of DynamicAnimation&Motion from txt file.
+ * @plugindesc v2.001 Read the definition of DynamicAnimation&Motion from txt file.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -141,7 +141,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.00 DynamicAnimation&Motionの定義をtxtから読み込みます。
+ * @plugindesc v2.001 DynamicAnimation&Motionの定義をtxtから読み込みます。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -657,11 +657,6 @@ function readdirDynamicTextFile(err, dynamicFileNames) {
 
     // const endTime = performance.now(); // 終了時間
     // console.log(endTime - startTime); // 何ミリ秒かかったかを表示する
-
-    // テスト時は毎回読込の設定なら、全ファイルを読み込む必要はないので終了。
-    if (isDynamicReadOnTest()) {
-        return;
-    }
 
     // ロード実行フラグ
     DataManager.onLoadDynamicTextAll = true;
