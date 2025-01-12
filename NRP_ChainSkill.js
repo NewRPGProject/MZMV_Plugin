@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.083 Chain skills together.
+ * @plugindesc v1.09 Chain skills together.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -245,7 +245,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.083 スキルを連結する。
+ * @plugindesc v1.09 スキルを連結する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -725,6 +725,11 @@ function goChainSkill(object, passiveFlg) {
         }
     }
 
+    // 有効判定を無視しないなら判定を行う
+    if (!pIgnoreSkillConditions && !subject.canUse($dataSkills[chainSkillId])) {
+        return false;
+    }
+
     // 確率判定
     const percent = object.meta.ChainSkillPercent;
     if (percent && Math.randomInt(100) >= eval(percent)) {
@@ -987,8 +992,18 @@ Game_BattlerBase.prototype.canPaySkillCost = function(skill) {
  */
 const _Game_BattlerBase_paySkillCost = Game_BattlerBase.prototype.paySkillCost;
 Game_BattlerBase.prototype.paySkillCost = function(skill) {
-    // 連結スキルかつ無消費なら終了
-    if (this == mChainBattler && pNoMpTpCost) {
+    // 連結スキルの場合
+    if (this == mChainBattler) {
+        // 無消費なら終了
+        if (pNoMpTpCost) {
+            return;
+        }
+
+        _Game_BattlerBase_paySkillCost.apply(this, arguments);
+
+        // ＭＰＴＰが０を下回った場合は調整
+        this._mp = Math.max(this._mp, 0);
+        this._tp = Math.max(this._tp, 0);
         return;
     }
     _Game_BattlerBase_paySkillCost.apply(this, arguments);
