@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.041 Create counter skill.
+ * @plugindesc v1.05 Create counter skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_ChainSkill
  * @url https://newrpg.seesaa.net/article/500432213.html
@@ -223,7 +223,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.041 反撃スキルを作成する。
+ * @plugindesc v1.05 反撃スキルを作成する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_ChainSkill
  * @url https://newrpg.seesaa.net/article/500432213.html
@@ -642,7 +642,7 @@ function goCounterSkill(subject, target, skillId) {
     // カウンター実行フラグオン
     mInCounter = true;
 
-    BattleManager.forceAction(subject);
+    BattleManager._actionForcedBattler = subject;
     BattleManager.processForcedAction();
 
     // 【ＭＶ】強制実行フラグを解除
