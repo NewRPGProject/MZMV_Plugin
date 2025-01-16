@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.05 Change the effect of damage handling.
+ * @plugindesc v1.06 Change the effect of damage handling.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/475586753.html
  *
@@ -269,7 +269,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.05 ダメージ処理の演出を変更します。
+ * @plugindesc v1.06 ダメージ処理の演出を変更します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/475586753.html
  *
@@ -637,6 +637,9 @@ const pActorDamageOffsetY = setDefault(parameters["actorDamageOffsetY"]);
 const pDamageDistanceX = toNumber(parameters["damageDistanceX"]);
 const pDamageDistanceY = toNumber(parameters["damageDistanceY"]);
 
+// ダメージ保持用のマップ
+const mDamageMap = new Map();
+
 // 競合を避けるためのフラグ
 var noBlink = false;
 var noDamageSound = false;
@@ -943,9 +946,10 @@ function isEffectTarget(target) {
 function isCriticalEffect(target) {
     // eval参照用
     const action = BattleManager._action;
+    const result = mDamageMap.get(target);
 
     // 会心かつアニメーションが設定されている
-    if (target.result().critical && pCriticalAnimation) {
+    if (result.critical && pCriticalAnimation) {
         return true;
     }
     return false;
@@ -957,13 +961,14 @@ function isCriticalEffect(target) {
 function isWeakEffect(target) {
     // eval参照用
     const action = BattleManager._action;
+    const result = mDamageMap.get(target);
 
     // ミス、回避、弱点アニメーションの設定がない場合は無効
-    if (target.result().missed || target.result().evaded || !pWeakAnimation) {
+    if (result.missed || result.evaded || !pWeakAnimation) {
         return false;
 
     // ダメージがない場合は無効
-    } else if (target.result().hpAffected && target.result().hpDamage <= 0) {
+    } else if (result.hpAffected && result.hpDamage <= 0) {
         return false;
     }
 
@@ -988,9 +993,10 @@ function isWeakEffect(target) {
 function isResistEffect1(target) {
     // eval参照用
     const action = BattleManager._action;
+    const result = mDamageMap.get(target);
 
     // ミス、回避、弱点アニメーションの設定がない場合は無効
-    if (target.result().missed || target.result().evaded || !pResistAnimation1) {
+    if (result.missed || result.evaded || !pResistAnimation1) {
         return false;
     }
 
@@ -1003,9 +1009,10 @@ function isResistEffect1(target) {
 function isResistEffect2(target) {
     // eval参照用
     const action = BattleManager._action;
+    const result = mDamageMap.get(target);
 
     // ミス、回避、弱点アニメーションの設定がない場合は無効
-    if (target.result().missed || target.result().evaded || !pResistAnimation2) {
+    if (result.missed || result.evaded || !pResistAnimation2) {
         return false;
     }
 
@@ -1187,9 +1194,9 @@ let misDamageResist2 = false;
 /**
  * ●アクション結果の反映
  */
-const _Game_Action_apply2 = Game_Action.prototype.apply;
+const _Game_Action_apply = Game_Action.prototype.apply;
 Game_Action.prototype.apply = function(target) {
-    _Game_Action_apply2.apply(this, arguments);
+    _Game_Action_apply.apply(this, arguments);
 
     const action = this; // eval参照用
     const result = target.result();
@@ -1225,6 +1232,10 @@ Game_Action.prototype.apply = function(target) {
             }
         }
     }
+
+    // 現時点の値を保持するためマップに登録
+    // ※resultはすぐにクリアされてしまうため
+    mDamageMap.set(target, {...result});
 };
 
 /**
