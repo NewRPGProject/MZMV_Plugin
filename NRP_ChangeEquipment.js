@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.021 Change the actor's equipment at will.
+ * @plugindesc v1.03 Change the actor's equipment at will.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/489100727.html
  *
@@ -31,6 +31,12 @@
  *
  * Both items can be formulated by changing to text mode.
  * Example: "$gameVariables.value(1)" is the value of variable 1.
+ * 
+ * ◆ReleaseEquipment
+ * Release the actor's equipment.
+ * If EquipType and OrderNo are unspecified, all are targeted.
+ * ※"EquipType" corresponds to the registered value in the database.
+ * (Default: 1:Weapon, 2:Shield, 3:Head, 4:Body, 5:Accessory)
  * 
  * ◆ChangeEquipment(Old)
  * The equipment type must be specified here.
@@ -93,6 +99,27 @@
  * 
  * @------------------------------------------------------------------
  * 
+ * @command ReleaseEquipment
+ * @desc Release the actor's equipment. If EquipType and OrderNo are unspecified, all are targeted.
+ * 
+ * @arg ActorId
+ * @type actor
+ * @desc Actor to change equipment.
+ * 
+ * @arg EquipType
+ * @type number
+ * @min 1
+ * @desc Equipment Type. Below are the default values for DB.
+ * (1:Weapon, 2:Shield, 3:Head, 4:Body, 5:Accessory)
+ * 
+ * @arg OrderNo
+ * @type number
+ * @min 1
+ * @desc The order in which the same equip types are present.
+ * For example, specify 2 for the lower side of Dual Wield.
+ * 
+ * @------------------------------------------------------------------
+ * 
  * @command ChangeEquipment
  * @text ChangeEquipment(Old)
  * @desc Change the actor's equipment.
@@ -128,7 +155,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.021 アクターの装備を自由に変更。
+ * @plugindesc v1.03 アクターの装備を自由に変更。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/489100727.html
  *
@@ -156,6 +183,12 @@
  *
  * いずれの項目もテキストモードに変更すれば、数式可です。
  * 例：『$gameVariables.value(1)』で変数１の値。
+ * 
+ * ◆装備を外す
+ * アクターの装備を外します。
+ * 装備タイプ、順序番号が未指定なら全ての装備を外します。
+ * ※装備タイプはデータベースの登録値に対応します。
+ * （デフォルト：1:武器, 2:盾, 3:頭, 4:身体, 5:装飾品）
  * 
  * ◆装備の変更（旧）
  * こちらは装備タイプの指定が必須です。
@@ -209,6 +242,32 @@
  * @type item
  * @desc 装備するアイテムです。
  * アイテムを装備できるプラグインと併用してください。
+ * 
+ * @arg OrderNo
+ * @text 順序番号
+ * @type number
+ * @min 1
+ * @desc 同一の装備タイプが複数存在する場合の順番です。
+ * 例えば、二刀流の下側ならば2を指定してください。
+ * 
+ * @------------------------------------------------------------------
+ * 
+ * @command ReleaseEquipment
+ * @text 装備を外す
+ * @desc アクターの装備を外します。
+ * 装備タイプ、順序番号は未指定なら全て対象です。
+ * 
+ * @arg ActorId
+ * @text アクター
+ * @type actor
+ * @desc 装備を変更するアクターです。
+ * 
+ * @arg EquipType
+ * @text 装備タイプ
+ * @type number
+ * @min 1
+ * @desc 装備タイプです。以下はＤＢのデフォルト値です。
+ * 1:武器, 2:盾, 3:頭, 4:身体, 5:装飾品
  * 
  * @arg OrderNo
  * @text 順序番号
@@ -303,6 +362,9 @@ PluginManager.registerCommand(PLUGIN_NAME, "ChangeEquipmentAuto", function(args)
     const itemId = eval(args.ItemId);
     const orderNo = eval(setDefault(args.OrderNo, 1));
     const actor = $gameActors.actor(actorId);
+    if (!actor) {
+        return;
+    }
 
     // 武器／防具／アイテムの有効なものを取得
     let dataItem;
@@ -366,6 +428,58 @@ PluginManager.registerCommand(PLUGIN_NAME, "ChangeEquipmentAuto", function(args)
 });
 
 /**
+ * ●装備を外す
+ */
+PluginManager.registerCommand(PLUGIN_NAME, "ReleaseEquipment", function(args) {
+    const actorId = eval(args.ActorId);
+    const equipType = eval(args.EquipType);
+    const orderNo = eval(setDefault(args.OrderNo));
+    const actor = $gameActors.actor(actorId);
+    if (!actor) {
+        return;
+    }
+
+    // アクターのスロット配列
+    const slots = actor.equipSlots();
+
+    // 順序番号の指定がない場合、全て解除
+    if (orderNo == null) {
+        for (let slotId = 0; slotId < slots.length; slotId++) {
+            // 装備タイプが一致するスロットが対象
+            // ※装備タイプが空欄の場合は全て対象
+            if (equipType == slots[slotId] || equipType == null) {
+                actor.changeEquip(slotId, null);
+            }
+        }
+        return;
+    }
+
+    let slotId = null;
+    // 装備タイプからスロットＩＤを求める。
+    for (let i = 0; i < slots.length; i++) {
+        if (equipType == slots[i]) {
+            // 順序番号の指定がある場合
+            if (orderNo >= 2) {
+                slotId = i + (orderNo - 1);
+                // スロットが存在した場合は確定
+                if (slots[slotId] == equipType) {
+                    break;
+                }
+                // スロットが存在しないので処理終了
+                return;
+            }
+            slotId = i;
+            break;
+        }
+    }
+
+    // スロットが取得できなかった場合は終了
+    if (slotId != null) {
+        actor.changeEquip(slotId, null);
+    }
+});
+
+/**
  * ●装備の変更
  */
 PluginManager.registerCommand(PLUGIN_NAME, "ChangeEquipment", function(args) {
@@ -375,6 +489,9 @@ PluginManager.registerCommand(PLUGIN_NAME, "ChangeEquipment", function(args) {
     const armorId = eval(args.ArmorId);
     const itemId = eval(args.ItemId);
     const actor = $gameActors.actor(actorId);
+    if (!actor) {
+        return;
+    }
 
     // 武器／防具／アイテムの有効なものを取得
     const slotId = equipType - 1;
