@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.101 Improve the enemy's action routine.
+ * @plugindesc v1.11 Improve the enemy's action routine.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/473218336.html
  *
@@ -35,6 +35,15 @@
  * - Control the effect for enemys  : <RoutineEnemyEffect:[true or false]>
  * - Watch for state resistance?    : <RoutineWatchResist:[true or false]>
  * ※The [] is not required. If incorrectly included, it will not work.
+ * ※> (greater than mark) cannot be used for the condition.
+ * 
+ * You can also set the conditions of use
+ * by entering the following in the note for the skill.
+ * 
+ * <RoutineCondition:[condition]>
+ * 
+ * Example: Perform only if there is an enemy in 10:sleep state.
+ * <RoutineCondition:$gameTroop.aliveMembers().some(function(m) {return m.isStateAffected(10)})>
  * 
  * -------------------------------------------------------------------
  * [Notes]
@@ -143,7 +152,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.101 敵行動ルーチンを改善します。
+ * @plugindesc v1.11 敵行動ルーチンを改善します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/473218336.html
  *
@@ -173,6 +182,14 @@
  * ・対エネミー使用効果を制御するか？：<RoutineEnemyEffect:[true or false]>
  * ・ステート耐性を見るか？         ：<RoutineWatchResist:[true or false]>
  * ※[]は不要です。誤って含めると動きません。
+ * ※>（大なり）は条件に使えません。
+ * 
+ * また、スキルのメモ欄に以下を記入すれば、使用条件を設定できます。
+ * 
+ * <RoutineCondition:[condition]>
+ * 
+ * 例：10:睡眠の敵がいる場合のみ実行
+ * <RoutineCondition:$gameTroop.aliveMembers().some(function(m) {return m.isStateAffected(10)})>
  * 
  * -------------------------------------------------------------------
  * ■注意点
@@ -729,8 +746,15 @@ Game_Enemy.prototype.isActionValid = function(action) {
     if (isTestApply(this)) {
         // 引数のactionはJSONのパラメータそのままなので、
         // Game_Actionに変換する。
-        var gameAction = new Game_Action(this);
+        const gameAction = new Game_Action(this);
         gameAction.setSkill(action.skillId);
+
+        // スキルの独自条件がある場合、かつ条件を満たさない場合
+        const skill = gameAction.item();
+        const routineCondition = skill.meta.RoutineCondition;
+        if (routineCondition && !eval(routineCondition)) {
+            return false;
+        }
 
         // 既にターン実行中ならば、速度補正技は使用候補から外す。
         if (isResetAction(this) && BattleManager.isInTurn()) {
