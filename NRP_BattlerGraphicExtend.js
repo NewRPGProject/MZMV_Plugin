@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.04 Extend the graphics of the battler.
+ * @plugindesc v1.05 Extend the graphics of the battler.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/500642681.html
  *
@@ -111,11 +111,23 @@
  * @type number
  * @default 9
  * @desc Specifies the Z coordinate of the icon if NoFlashStateIcon is on.
+ * 
+ * @param StateIconAdjustX
+ * @parent NoFlashStateIcon
+ * @type number @min -999
+ * @default -4
+ * @desc Adjusts the X coordinate of the icon when the state icon is not flashed.
+ * 
+ * @param StateIconAdjustY
+ * @parent NoFlashStateIcon
+ * @type number @min -999
+ * @default 10
+ * @desc Adjusts the Y coordinate of the icon when the state icon is not flashed.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 バトラーのグラフィックを拡張します。
+ * @plugindesc v1.05 バトラーのグラフィックを拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/500642681.html
  *
@@ -229,6 +241,20 @@
  * @type number
  * @default 9
  * @desc ステートアイコンを光らせない場合にアイコンのＺ座標を指定します。
+ * 
+ * @param StateIconAdjustX
+ * @parent NoFlashStateIcon
+ * @text ｽﾃｰﾄｱｲｺﾝＸ座標調整
+ * @type number @min -999
+ * @default -4
+ * @desc ステートアイコンを光らせない場合にアイコンのＸ座標を調整します。
+ * 
+ * @param StateIconAdjustY
+ * @parent NoFlashStateIcon
+ * @text ｽﾃｰﾄｱｲｺﾝＹ座標調整
+ * @type number @min -999
+ * @default 10
+ * @desc ステートアイコンを光らせない場合にアイコンのＹ座標を調整します。
  */
 
 (function() {
@@ -256,6 +282,8 @@ const pFlashInterval = toNumber(parameters["FlashInterval"], 90);
 const pPriorityByInterval = toBoolean(parameters["PriorityByInterval"], false);
 const pNoFlashStateIcon = toBoolean(parameters["NoFlashStateIcon"], false);
 const pStateIconZ = toNumber(parameters["StateIconZ"], 9);
+const pStateIconAdjustX = toNumber(parameters["StateIconAdjustX"], 0);
+const pStateIconAdjustY = toNumber(parameters["StateIconAdjustY"], 0);
 
 // ----------------------------------------------------------------------------
 // Game_BattlerBase
@@ -661,8 +689,8 @@ if (pNoFlashStateIcon) {
         _Sprite_Enemy_updateStateSprite.apply(this, arguments);
 
         if (this._stateIconSprite2) {
-            this._stateIconSprite2.x = this.x + this.parent.x;
-            this._stateIconSprite2.y = this.y + this.parent.y + this._stateIconSprite.y;
+            this._stateIconSprite2.x = this.x + this.parent.x + this._stateIconSprite.x + pStateIconAdjustX;
+            this._stateIconSprite2.y = this.y + this.parent.y + this._stateIconSprite.y + pStateIconAdjustY;
         }
     };
 }
