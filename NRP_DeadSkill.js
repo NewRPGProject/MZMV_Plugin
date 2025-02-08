@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.032 Activate the skill at dead time.
+ * @plugindesc v1.04 Activate the skill at dead time.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicAnimationMZ
  * @orderAfter NRP_StateEX
@@ -37,7 +37,7 @@
  * by setting the scope to yourself
  * Without it, the skill will not hit.
  * 
- * ◆Skill is executed after dead performance.
+ * ◆Skill is executed after dead performance. (Enemy Only)
  * <DeadSkillAfterCollapse>
  * Make the skill be executed after the dead performance is over.
  * However, you cannot mix skills
@@ -78,7 +78,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.032 戦闘不能時にスキルを発動します。
+ * @plugindesc v1.04 戦闘不能時にスキルを発動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_DynamicAnimationMZ
  * @orderAfter NRP_StateEX
@@ -110,7 +110,7 @@
  * ※範囲を自身にして、自動蘇生をやりたい場合は必須です。
  * 　これがないとスキルが命中しません。
  * 
- * ◆スキルを戦闘不能演出後に実行
+ * ◆スキルを戦闘不能演出後に実行（敵のみ）
  * <DeadSkillAfterCollapse>
  * スキルを戦闘不能演出が終わった後に実行するようにします。
  * ただし、これが設定されたスキルとされてないスキルの混在はできません。
@@ -282,7 +282,8 @@ BattleManager.endAction = function() {
 
         // スプライトを確認して表示状態をチェック
         const sprite = getSprite(battler);
-        if (sprite._appeared) {
+        // 敵の場合は表示されている場合、アクターの場合は常に有効
+        if ((sprite && sprite._appeared) || battler.isActor()) {
             // 改めて死亡処理を実行
             const state = $dataStates[battler.deathStateId()];
             const stateText = battler.isActor() ? state.message1 : state.message2;
