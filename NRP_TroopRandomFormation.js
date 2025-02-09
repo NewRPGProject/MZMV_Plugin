@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.09 Place enemy groups automatically and randomly.
+ * @plugindesc v1.091 Place enemy groups automatically and randomly.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475049887.html
  *
@@ -183,7 +183,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.09 敵グループを自動でランダム配置します。
+ * @plugindesc v1.091 敵グループを自動でランダム配置します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475049887.html
  *
@@ -764,8 +764,8 @@ Sprite_Battler.prototype.makeAutoPosition = function(bestDistance) {
     }
 
     // 配置範囲を取得（Ｘ座標は中央が基準、Ｙ座標は足元が基準）
-    const startX = eval(pStartX) + this.width/2;
-    const endX = eval(pEndX) - this.width/2;
+    const startX = Math.round(eval(pStartX) + this.width/2);
+    const endX = Math.round(eval(pEndX) - this.width/2);
     // 頭上と足元を基準に大きなほうを取得
     const startY = Math.max(eval(pStartHeadY) + height, eval(pStartFootY));
     const endY = eval(pEndY);
