@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Automatically adds the state.
+ * @plugindesc v1.02 Automatically adds the state.
  * @orderAfter NRP_StateEX
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/500375292.html
@@ -61,11 +61,17 @@
  * @default false
  * @desc Limit the effect of auto state to during battle.
  * It will no longer be reflected in the status display.
+ * 
+ * @param ClearStateOnDead
+ * @type boolean
+ * @default true
+ * @desc During dead, the auto state is suspended.
+ * State is re-assigned on revival.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 自動でステートを付加する。
+ * @plugindesc v1.02 自動でステートを付加する。
  * @orderAfter NRP_StateEX
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/500375292.html
@@ -120,6 +126,14 @@
  * @default false
  * @desc 自動ステートの効果を戦闘時に限定します。
  * ステータス表示にも反映されなくなります。
+ * 
+ * @param ClearStateOnDead
+ * @text 戦闘不能時は停止
+ * @type boolean
+ * @default true
+ * @desc 戦闘不能中は自動ステートを停止します。
+ * 蘇生時に再びステートが付与されます。
+ * 
  */
 (function() {
 "use strict";
@@ -160,6 +174,7 @@ function setDefault(str, def) {
 const PLUGIN_NAME = "NRP_AutoState";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pAutoStateOnlyBattle = toBoolean(parameters["AutoStateOnlyBattle"], false);
+const pClearStateOnDead = toBoolean(parameters["ClearStateOnDead"], true);
 
 /**
  * ●引数を元に配列を取得する。
@@ -212,6 +227,13 @@ Game_BattlerBase.prototype.updateAutoStates = function() {
     // アクターかつ装備が読み込まれていない段階ではエラーになるので処理しない。
     if (this.equips && !this._equips) {
         return;
+    }
+
+    // 戦闘不能時は無効。
+    if (pClearStateOnDead) {
+        if (this.isDead() || this.hp === 0) {
+            return;
+        }
     }
 
     // 変数初期化
