@@ -103,6 +103,7 @@
  * <ChainSkillImmortal>
  * Renders the battler immortal until the end of the chain skill.
  * This can be used when you do not want to interrupt the performance.
+ * The immortal state (plugin parameter) must be set in advance.
  * 
  * -------------------------------------------------------------------
  * [About Passive Skills]
@@ -344,6 +345,7 @@
  * <ChainSkillImmortal>
  * 連結スキルが終了するまでバトラーを不死身状態にします。
  * 演出を途切れさせたくない場合などにどうぞ。
+ * 事前に不死身ステート（プラグインパラメータ）の設定を行う必要があります。
  * 
  * -------------------------------------------------------------------
  * ■パッシブスキルについて
