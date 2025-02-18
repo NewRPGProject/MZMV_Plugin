@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.09 Chain skills together.
+ * @plugindesc v1.10 Chain skills together.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -99,6 +99,10 @@
  * 
  * <ChainSkillNoResult>
  * Hides the results of the skills used.
+ * 
+ * <ChainSkillImmortal>
+ * Renders the battler immortal until the end of the chain skill.
+ * This can be used when you do not want to interrupt the performance.
  * 
  * -------------------------------------------------------------------
  * [About Passive Skills]
@@ -241,11 +245,17 @@
  * @type boolean
  * @default true
  * @desc When a chain skill is activated, it does not show the flash of the enemy.
+ * 
+ * @param ImmortalState
+ * @type state
+ * @default 3
+ * @desc The immortal state number to use for performance.
+ * Please set up a dedicated state if possible.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.09 スキルを連結する。
+ * @plugindesc v1.10 スキルを連結する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -330,6 +340,10 @@
  * 
  * <ChainSkillNoResult>
  * 使用したスキルの結果を非表示にします。
+ * 
+ * <ChainSkillImmortal>
+ * 連結スキルが終了するまでバトラーを不死身状態にします。
+ * 演出を途切れさせたくない場合などにどうぞ。
  * 
  * -------------------------------------------------------------------
  * ■パッシブスキルについて
@@ -483,6 +497,13 @@
  * @type boolean
  * @default true
  * @desc 連結スキル発動時は敵のフラッシュを表示しません。
+ * 
+ * @param ImmortalState
+ * @text 不死身ステート
+ * @type state
+ * @default 3
+ * @desc 演出制御に使う不死身ステートの番号です。
+ * なるべく専用のステートを設定してください。
  */
 
 (function() {
@@ -525,6 +546,7 @@ const pAbortTargetResist = toBoolean(parameters["AbortTargetResist"], false);
 const pDisableSameSkill = toBoolean(parameters["DisableSameSkill"], false);
 const pAdjustAllRangeTarget = setDefault(parameters["AdjustAllRangeTarget"]);
 const pNoEnemyFlash = toBoolean(parameters["NoEnemyFlash"], true);
+const pImmortalState = toNumber(parameters["ImmortalState"]);
 
 // ----------------------------------------------------------------------------
 // 共通変数
@@ -549,6 +571,8 @@ let mKeepHit = null;
 let mOriginalSpeed = null;
 // 混乱用の対象保持
 let mConfusedTarget = null;
+// 不死身モードの判定フラグ
+let mImmortalMode = false;
 
 // ----------------------------------------------------------------------------
 // BattleManager
@@ -630,6 +654,9 @@ BattleManager.updateAction = function() {
         this._subject._speed = mOriginalSpeed;
     }
 
+    // 不死身処理の解除
+    endImmortal();
+
     // 変数初期化
     mOriginalAction = null;
     mOriginalTargets = null;
@@ -648,6 +675,18 @@ BattleManager.updateAction = function() {
  */
 const _BattleManager_startAction = BattleManager.startAction;
 BattleManager.startAction = function() {
+    const action = this._subject.currentAction();
+    const actionItem = action.item();
+
+    // 対象の不死身処理
+    if (actionItem.meta.ChainSkillImmortal) {
+        // 全バトラーを不死身にする。
+        for (const member of BattleManager.allBattleMembers()) {
+            member.addState(pImmortalState);
+        }
+        mImmortalMode = true;
+    }
+
     _BattleManager_startAction.apply(this, arguments);
 
     // 最初の対象を保持（連結スキルによって対象変更される場合があるため）
@@ -706,22 +745,14 @@ function goChainSkill(object, passiveFlg) {
         return false;
     }
 
-    if (target) {
-        // 対象死亡時に停止する場合
-        if (checkMeta(pAbortTargetDeath, object, "ChainSkillAbortDeath")) {
-            if (target.isDeathStateAffected()) {
-                return false;
-            }
-        }
-        // 対象耐性時に停止する場合
-        if (checkMeta(pAbortTargetResist, object, "ChainSkillAbortResist")) {
-            // 計算用に仮のアクションを生成
-            const tmpAction = new Game_Action(subject);
-            tmpAction.setSkill(chainSkillId);
-            // 属性有効度が０以下ならば中断
-            if (tmpAction.calcElementRate(target) <= 0) {
-                return false;
-            }
+    // 対象耐性時に停止する場合
+    if (checkMeta(pAbortTargetResist, object, "ChainSkillAbortResist")) {
+        // 計算用に仮のアクションを生成
+        const tmpAction = new Game_Action(subject);
+        tmpAction.setSkill(chainSkillId);
+        // 属性有効度が０以下ならば中断
+        if (tmpAction.calcElementRate(target) <= 0) {
+            return false;
         }
     }
 
@@ -735,6 +766,17 @@ function goChainSkill(object, passiveFlg) {
     if (percent && Math.randomInt(100) >= eval(percent)) {
         return false;
     }
+
+    // 対象死亡時に停止する場合
+    if (checkMeta(pAbortTargetDeath, object, "ChainSkillAbortDeath")) {
+        if (target.isDeathStateAffected()) {
+            return false;
+        }
+    }
+
+    //---------------------------------------
+    // 連結スキルの発動確定
+    //---------------------------------------
 
     // 発動したオブジェクトを保持
     mChainedObjects.push(object);
@@ -781,6 +823,43 @@ function goChainSkill(object, passiveFlg) {
         BattleManager._turnForced = false;
     }
     return true;
+}
+
+/**
+ * ●不死身処理の終了
+ */
+function endImmortal() {
+    if (!mImmortalMode) {
+        return;
+    }
+
+    // 不死身設定が使用されている場合
+    const immortalBattlers = BattleManager.allBattleMembers();
+    if (immortalBattlers.length > 0) {
+        for (const battler of immortalBattlers) {
+            // 不死身を解除
+            battler.removeState(pImmortalState);
+            // 既に死んでいる場合は演出実行
+            if (battler.isStateAffected(battler.deathStateId())) {
+                BattleManager._logWindow.displayAddedStates(battler);
+            }
+        }
+
+        // ステータス表示を更新するため、スプライトを取得
+        // ※ＨＰの色表示などを正しく更新させるため
+        const additionalSprites = SceneManager._scene._statusWindow._additionalSprites;
+        // 保有する属性名でループ
+        for (const statusName in additionalSprites) {
+            // 属性名を元に各スプライトを取得
+            const statusSprite = additionalSprites[statusName];
+            // redraw関数を持っている場合（Sprite_Gaugeを想定）のみ再描画
+            if (statusSprite.redraw) {
+                statusSprite.redraw();
+            }
+        }
+    }
+
+    mImmortalMode = false;
 }
 
 /**
