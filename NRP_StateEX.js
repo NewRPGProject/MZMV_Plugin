@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.131 Extend the functionality of the state in various ways.
+ * @plugindesc v1.14 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -219,6 +219,10 @@
  * the number 100 skill is activated.
  * Note that the target will be random.
  * 
+ * <StateEndSkillUseCheck>
+ * Check if it can be used to trigger the <StateEndSkill> above.
+ * For example, if the battler is restricted, the skill will fail.
+ * 
  * <DefeatState>
  * Same as dead, subject to a defeat determination.
  * Assumes a petrification-like state
@@ -344,7 +348,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.131 ステートの機能を色々と拡張します。
+ * @plugindesc v1.14 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -548,6 +552,10 @@
  * <StateEndSkill:100>
  * ステートがターン経過で解除される際に１００番のスキルを発動します。
  * なお、対象はランダムになります。
+ * 
+ * <StateEndSkillUseCheck>
+ * 上記の<StateEndSkill>を発動する際に使用判定を行います。
+ * 例えば、行動制約にかかっている場合は不発するようになります。
  * 
  * <DefeatState>
  * 戦闘不能と同じように、全滅判定の対象になります。
@@ -1229,10 +1237,18 @@ Game_Battler.prototype.removeState = function(stateId) {
 
     // ターン経過でステートが解除された場合
     if (mIsRemoveStatesAuto) {
-        const stateEndSkill = $dataStates[stateId].meta.StateEndSkill;
+        const dataState = $dataStates[stateId];
+        const stateEndSkill = dataState.meta.StateEndSkill;
         if (stateEndSkill) {
             const a = this;
             const skillId = eval(stateEndSkill);
+
+            // 使用判定を行う場合
+            const stateEndSkillUseCheck = dataState.meta.StateEndSkillUseCheck;
+            if (stateEndSkillUseCheck && !this.canUse($dataSkills[skillId])) {
+                return;
+            }
+
             const action = new Game_Action(this, true);
             action.setSkill(skillId);
 
