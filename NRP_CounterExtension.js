@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Extend the functionality of the counter attribute.
+ * @plugindesc v1.02 Extend the functionality of the counter attribute.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483969944.html
  *
@@ -51,7 +51,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 カウンター属性の機能を拡張する。
+ * @plugindesc v1.02 カウンター属性の機能を拡張する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483969944.html
  *
@@ -130,10 +130,6 @@ if (pCounterExtension) {
             // プレイヤーの１マス先の座標を確認
             let tmpX = $gameMap.roundXWithDirection(x1, direction);
             let tmpY = $gameMap.roundYWithDirection(y1, direction);
-            // 元の処理で既に１マス先は確認済みのため、
-            // さらに１マス先の座標を確認
-            tmpX = $gameMap.roundXWithDirection(tmpX, direction);
-            tmpY = $gameMap.roundYWithDirection(tmpY, direction);
 
             // カウンター属性が続く限りループ
             while ($gameMap.isCounter(tmpX, tmpY)) {
