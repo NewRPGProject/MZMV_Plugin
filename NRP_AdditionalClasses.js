@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.134 Multiple classes allow for a highly flexible growth system.
+ * @plugindesc v1.14 Multiple classes allow for a highly flexible growth system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -167,6 +167,15 @@
  * Increases class EXP.
  * When level up, the item menu is closed
  * and then a message is displayed.
+ * 
+ * -------------------------------------------------------------------
+ * [Note (actor, class, equipment, state)]
+ * -------------------------------------------------------------------
+ * <ClassExpRate:?>
+ * Change the amount of class exp gained to the specified %.
+ * For example, 200 would be 200% (double).
+ * If you do not want the class experience to be gained when dead,
+ * specify <ClassExpRate:0> for the dead state.
  * 
  * -------------------------------------------------------------------
  * [Script]]
@@ -552,7 +561,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.134 多重職業によって自由度の高い成長システムを実現。
+ * @plugindesc v1.14 多重職業によって自由度の高い成長システムを実現。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_TraitsPlus
  * @url http://newrpg.seesaa.net/article/483582956.html
@@ -705,6 +714,15 @@
  * <AddClassExp:?>
  * 職業経験値を増加させます。
  * レベルアップ時はアイテムメニューを閉じてから、メッセージを表示します。
+ * 
+ * -------------------------------------------------------------------
+ * ■アクター、職業、装備、ステートのメモ欄
+ * -------------------------------------------------------------------
+ * <ClassExpRate:?>
+ * 職業経験値の獲得量を指定した%に変更します。
+ * 200ならば200%（２倍）になります。
+ * もし、戦闘不能時に職業経験値を獲得させたくない場合は、
+ * 戦闘不能ステートに<ClassExpRate:0>を指定してください。
  * 
  * -------------------------------------------------------------------
  * ■スクリプト
@@ -2403,7 +2421,18 @@ Game_Actor.prototype.gainClassExp = function(classExp, ignoreBench) {
  * 【独自】職業経験値の獲得率
  */
 Game_Actor.prototype.finalClassExpRate = function() {
-    return this.isBattleMember() ? 1 : this.benchMembersClassExpRate();
+    let rate = 1;
+    const a = this; // eval計算用
+
+    // 倍率計算
+    for (const object of this.traitObjects()) {
+        const classExpRate = object.meta.ClassExpRate;
+        if (classExpRate != null) {
+            rate *= (eval(classExpRate) / 100);
+        }
+    }
+
+    return rate * (this.isBattleMember() ? 1 : this.benchMembersClassExpRate());
 };
 
 /**
