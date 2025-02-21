@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ MV
- * @plugindesc v1.00 Picture is displayed as a face image.
+ * @plugindesc v1.01 Picture is displayed as a face image.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/502356002.html
  *
@@ -21,6 +21,7 @@
  * the picture is displayed as a 144x144 sized face image.
  * ※Note that the index of the face image is not referenced.
  *   1 character = 1 file.
+ * ※Starting with MZ ver 1.9.0, face size can be specified in System 2.
  * 
  * -------------------------------------------------------------------
  * [Usage]
@@ -57,7 +58,7 @@
  * 
  * @param PictureList
  * @type struct<Picture>[]
- * @desc 立ち絵の表示を行うピクチャの一覧です。
+ * @desc Here is a list of pictures.
  * 
  * @param <PictureSetting>
  * 
@@ -91,16 +92,14 @@
  * @param FaceWidth
  * @parent <PictureSetting>
  * @type number
- * @default 144
  * @desc The width of the face image to be displayed.
- * Basically, it should be left at 144.
+ * If blank, refers to the value set in System 2.
  * 
  * @param FaceHeight
  * @parent <PictureSetting>
  * @type number
- * @default 144
  * @desc The height of the face image to be displayed.
- * Basically, it should be left at 144.
+ * If blank, refers to the value set in System 2.
  */
 //-----------------------------------------------------------------------------
 // Picture
@@ -155,7 +154,7 @@
 
 /*:ja
  * @target MZ MV
- * @plugindesc v1.00 ピクチャを顔グラとして表示。
+ * @plugindesc v1.01 ピクチャを顔グラとして表示。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/502356002.html
  *
@@ -172,6 +171,7 @@
  * ピクチャを144x144のサイズの顔グラとして表示します。
  * ※なお、顔グラのパターンは参照しません。
  * 　１キャラクター＝１ファイルとしてください。
+ * ※MZ ver1.9.0より、システム2で顔サイズを指定できるようになりました。
  * 
  * -------------------------------------------------------------------
  * ■使用方法
@@ -247,17 +247,15 @@
  * @parent <PictureSetting>
  * @text 顔グラの横幅
  * @type number
- * @default 144
  * @desc 表示される顔グラの横幅です。
- * 基本的には144のままでよいと思います。
+ * 空欄ならシステム2の設定値を参照します。
  * 
  * @param FaceHeight
  * @parent <PictureSetting>
  * @text 顔グラの縦幅
  * @type number
- * @default 144
  * @desc 表示される顔グラの縦幅です。
- * 基本的には144のままでよいと思います。
+ * 空欄ならシステム2の設定値を参照します。
  */
 //-----------------------------------------------------------------------------
 // Picture
@@ -335,6 +333,12 @@ function toNumber(str, def) {
     }
     return isNaN(str) ? def : +(str || def);
 }
+function setDefault(str, def) {
+    if (str == undefined || str == "") {
+        return def;
+    }
+    return str;
+}
 /**
  * ●構造体（二重配列）をJSで扱えるように変換
  */
@@ -357,8 +361,8 @@ const pOrigin = parameters["Origin"];
 const pAdjustX = toNumber(parameters["AdjustX"]);
 const pAdjustY = toNumber(parameters["AdjustY"]);
 const pScale = toNumber(parameters["Scale"], 100);
-const pFaceWidth = toNumber(parameters["FaceWidth"], ImageManager.faceWidth);
-const pFaceHeight = toNumber(parameters["FaceHeight"], ImageManager.faceHeight);
+const pFaceWidth = toNumber(parameters["FaceWidth"]);
+const pFaceHeight = toNumber(parameters["FaceHeight"]);
 
 // ----------------------------------------------------------------------------
 // Window_StatusBase
@@ -410,13 +414,17 @@ const _ImageManager_loadFace = ImageManager.loadFace;
 ImageManager.loadFace = function(filename) {
     const data = getMatchPictureData(filename, mActor);
     if (data) {
+        // 指定がない場合は初期値を取得
+        const faceWidth = setDefault(pFaceWidth, ImageManager.faceWidth);
+        const faceHeight = setDefault(pFaceHeight, ImageManager.faceHeight);
+
         // ピクチャを取得する。
         const pictureBitmap = ImageManager.loadPicture(data.picture);
         // ピクチャを元に顔グラを作成する。
-        const faceBitmap = new Bitmap(pFaceWidth, pFaceHeight);
+        const faceBitmap = new Bitmap(faceWidth, faceHeight);
         // ピクチャから切り取る幅
-        const cutWidth = pFaceWidth / data.scale * 100;
-        const cutHeight = pFaceHeight / data.scale * 100;
+        const cutWidth = faceWidth / data.scale * 100;
+        const cutHeight = faceHeight / data.scale * 100;
 
         let sx = data.adjustX;
         let sy = data.adjustY;
@@ -428,7 +436,7 @@ ImageManager.loadFace = function(filename) {
             sy += pictureBitmap.height / 2 - cutHeight / 2;
         }
 
-        faceBitmap.blt(pictureBitmap, sx, sy, cutWidth, cutHeight, 0, 0, pFaceWidth, pFaceHeight);
+        faceBitmap.blt(pictureBitmap, sx, sy, cutWidth, cutHeight, 0, 0, faceWidth, faceHeight);
         return faceBitmap;
     }
 
