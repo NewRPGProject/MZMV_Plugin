@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.05 Implemented a party change screen.
+ * @plugindesc v1.06 Implemented a party change screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/500297653.html
  *
@@ -158,7 +158,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.05 パーティ編成画面を実装。
+ * @plugindesc v1.06 パーティ編成画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/500297653.html
  *
@@ -597,9 +597,11 @@ Scene_ChangeParty.prototype.onFormationCancel = function() {
     if (this._statusWindow.pendingIndex() >= 0) {
         this._statusWindow.setPendingIndex(-1);
         this._statusWindow.activate();
-    // 別のウィンドウが選択状態の場合も解除（タッチ操作用の制御）
+    // 別のウィンドウが選択状態の場合も解除
     } else if (this._benchWindow.pendingIndex() >= 0) {
         this._benchWindow.setPendingIndex(-1);
+        this._statusWindow.setPendingIndex(-1);
+        this._statusWindow.activate();
     // 選択状態でない場合は終了して前のシーンへ戻る
     } else {
         this.popScene();
@@ -614,9 +616,11 @@ Scene_ChangeParty.prototype.onFormationBenchCancel = function() {
     if (this._benchWindow.pendingIndex() >= 0) {
         this._benchWindow.setPendingIndex(-1);
         this._benchWindow.activate();
-    // 別のウィンドウが選択状態の場合も解除（タッチ操作用の制御）
+    // 別のウィンドウが選択状態の場合も解除
     } else if (this._statusWindow.pendingIndex() >= 0) {
         this._statusWindow.setPendingIndex(-1);
+        this._benchWindow.setPendingIndex(-1);
+        this._benchWindow.activate();
     // 選択状態でない場合は終了して前のシーンへ戻る
     } else {
         this.popScene();
