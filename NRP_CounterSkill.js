@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.05 Create counter skill.
+ * @plugindesc v1.051 Create counter skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_ChainSkill
  * @url https://newrpg.seesaa.net/article/500432213.html
@@ -223,7 +223,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.05 反撃スキルを作成する。
+ * @plugindesc v1.051 反撃スキルを作成する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_ChainSkill
  * @url https://newrpg.seesaa.net/article/500432213.html
@@ -1017,13 +1017,6 @@ Game_Action.prototype.applyCounter = function(object, target, addCount, isDefaul
  * ●反撃リストへ登録する。
  */
 function resistCounter(target, subject, skillId, object, addCount) {
-    // 既に登録済の場合は次へ
-    const isResisted = mCounterList.some(data =>
-        data.subject == target && data.target == subject && data.skillId == skillId);
-    if (isResisted) {
-        return;
-    }
-
     // 対象死亡時に停止するかどうか？
     const abortDeath = checkMeta(pAbortTargetDeath, object, "CounterAbortDeath");
 
@@ -1045,6 +1038,15 @@ function resistCounter(target, subject, skillId, object, addCount) {
     counterData.abortDeath = abortDeath;
     counterData.addCount = addCount; // 追加カウント
     
+    // 既に登録済の場合は次へ
+    const isResisted = mCounterList.some(data =>
+        data.subject == counterData.subject
+        && data.target == counterData.target
+        && data.skillId == counterData.skillId);
+    if (isResisted) {
+        return;
+    }
+
     // 反撃予約リストに登録
     mCounterList.push(counterData);
 }
