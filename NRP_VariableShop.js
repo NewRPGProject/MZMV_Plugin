@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.001 Create a shop with variable goods.
+ * @plugindesc v1.002 Create a shop with variable goods.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/504839628.html
  *
@@ -67,7 +67,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.001 商品が可変のショップを作成する。
+ * @plugindesc v1.002 商品が可変のショップを作成する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/504839628.html
  *
@@ -195,11 +195,6 @@ PluginManager.registerCommand(PLUGIN_NAME, "StartShop", function(args) {
     mSetGoods = [];
     mSetGoodsFlg = false;
 
-    // 商品が存在しない場合は無視
-    if (pIgnoreNoGoods && goods.length == 0) {
-        return;
-    }
-
     // 購入のみ
     const purchaseOnly = toBoolean(args.PurchaseOnly, false);
     // 商品数の変数
@@ -207,6 +202,11 @@ PluginManager.registerCommand(PLUGIN_NAME, "StartShop", function(args) {
     if (variableGoodsCount) {
         // 指定した変数に格納
         $gameVariables.setValue(variableGoodsCount, goods.length);
+    }
+
+    // 商品が存在しない場合は無視
+    if (pIgnoreNoGoods && goods.length == 0) {
+        return;
     }
 
     // ショップ起動
