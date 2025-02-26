@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.06 Change the effect of damage handling.
+ * @plugindesc v1.061 Change the effect of damage handling.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/475586753.html
  *
@@ -269,7 +269,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.06 ダメージ処理の演出を変更します。
+ * @plugindesc v1.061 ダメージ処理の演出を変更します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/475586753.html
  *
@@ -948,6 +948,10 @@ function isCriticalEffect(target) {
     const action = BattleManager._action;
     const result = mDamageMap.get(target);
 
+    if (!result) {
+        return false;
+    }
+
     // 会心かつアニメーションが設定されている
     if (result.critical && pCriticalAnimation) {
         return true;
@@ -962,6 +966,10 @@ function isWeakEffect(target) {
     // eval参照用
     const action = BattleManager._action;
     const result = mDamageMap.get(target);
+
+    if (!result) {
+        return false;
+    }
 
     // ミス、回避、弱点アニメーションの設定がない場合は無効
     if (result.missed || result.evaded || !pWeakAnimation) {
@@ -995,6 +1003,10 @@ function isResistEffect1(target) {
     const action = BattleManager._action;
     const result = mDamageMap.get(target);
 
+    if (!result) {
+        return false;
+    }
+
     // ミス、回避、弱点アニメーションの設定がない場合は無効
     if (result.missed || result.evaded || !pResistAnimation1) {
         return false;
@@ -1010,6 +1022,10 @@ function isResistEffect2(target) {
     // eval参照用
     const action = BattleManager._action;
     const result = mDamageMap.get(target);
+
+    if (!result) {
+        return false;
+    }
 
     // ミス、回避、弱点アニメーションの設定がない場合は無効
     if (result.missed || result.evaded || !pResistAnimation2) {
