@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.041 Activate the skill at dead time.
+ * @plugindesc v1.042 Activate the skill at dead time.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicAnimationMZ
  * @orderAfter NRP_StateEX
@@ -78,7 +78,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.041 戦闘不能時にスキルを発動します。
+ * @plugindesc v1.042 戦闘不能時にスキルを発動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_DynamicAnimationMZ
  * @orderAfter NRP_StateEX
@@ -335,19 +335,36 @@ function goDeadSkill(subject, skillId) {
  */
 const _BattleManager_updateTurnEnd = BattleManager.updateTurnEnd;
 BattleManager.updateTurnEnd = function() {
+    // こちらは毒などのステートで死亡した場合に呼び出される想定
+    // ※こちらは主にＣＴＢを想定
+    if (callDeadSkill()) {
+        return;
+    }
+
+    // 元の処理
+    // ※ＭＺのターン制ではthis.endAllBattlersTurn();が呼び出される。
     _BattleManager_updateTurnEnd.apply(this, arguments);
 
-    // 戦闘不能スキルリストに登録がある場合
-    // ※こちらは毒などのステートで死亡した場合にのみ通る
+    // ※こちらは主にターン制を想定
+    // endAllBattlersTurnでスリップダメージを処理するためその後でも実行する必要がある。
+    if (callDeadSkill()) {
+        return;
+    }
+};
+
+/**
+ * ●戦闘不能スキルリストに登録がある場合、処理を呼び出し。
+ */
+function callDeadSkill() {
     if (mDeadSkillList.length > 0) {
         // データを取り出し
         const skillData = mDeadSkillList.shift();
         // 戦闘行動の強制を実行
         goDeadSkill(skillData.subject, skillData.skillId);
-        return;
+        return true;
     }
-};
-
+    return false;
+}
 
 // ----------------------------------------------------------------------------
 // Game_BattlerBase
