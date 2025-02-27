@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.222 Automate & super-enhance battle animations.
+ * @plugindesc v1.23 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -131,6 +131,12 @@
  * @desc When calculating the animation position, consider the target scale.
  * This item also affects DynamicMotion.
  * 
+ * @param overWindow
+ * @parent <Animation Position>
+ * @type boolean
+ * @default false
+ * @desc Display the animation above the window.
+ * 
  * @param <For FrontView>
  * @desc Items related to the front view.
  * 
@@ -209,6 +215,10 @@
  * @text MV Animation Flag
  * @type boolean
  * @desc The animation for RPG Maker MV is used.
+ * 
+ * @param overWindow
+ * @type boolean
+ * @desc Display the animation above the window.
  * 
  * @param damageSet
  * @type boolean
@@ -535,7 +545,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.222 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.23 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -676,6 +686,13 @@
  * @desc アニメーションの位置計算時に対象の拡大率を考慮します。
  * この項目はDynamicMotionにも適用されます。
  * 
+ * @param overWindow
+ * @text ウィンドウより上に表示
+ * @parent <Animation Position>
+ * @type boolean
+ * @default false
+ * @desc アニメーションをウィンドウよりも上に表示します。
+ * 
  * @param <For FrontView>
  * @text ＜フロントビュー用＞
  * @desc フロントビュー関連の項目です。
@@ -769,6 +786,11 @@
  * @text MVアニメーションフラグ
  * @type boolean
  * @desc ツクールMV用アニメーションを使用します。
+ * 
+ * @param overWindow
+ * @text ウィンドウより上に表示
+ * @type boolean
+ * @desc アニメーションをウィンドウよりも上に表示します。
  * 
  * @param damageSet
  * @text ダメージ処理（セット）
@@ -1221,8 +1243,9 @@ var pAllRangeY = setDefault(parameters["allRangeY"], "($gameSystem.isSideView() 
 var pMirrorAdjustX = parameters["mirrorAdjustX"];
 var pMirrorAdjustY = parameters["mirrorAdjustY"];
 const pNoMirrorForFriend = toBoolean(parameters["noMirrorForFriend"], true);
-var pRandomAdjust = toNumber(parameters["randomAdjust"], 0);
-var pConsiderTargetScale = toBoolean(parameters["considerTargetScale"], true);
+const pRandomAdjust = toNumber(parameters["randomAdjust"], 0);
+const pConsiderTargetScale = toBoolean(parameters["considerTargetScale"], true);
+const pOverWindow = toBoolean(parameters["overWindow"], false);
 // フロントビュー関連
 var pFvActorHomeX = parameters["fvActorHomeX"];
 var pFvActorHomeY = parameters["fvActorHomeY"];
@@ -2271,6 +2294,7 @@ BaseAnimation.prototype.makeRepeatAnimation = function(dynamicAnimationList, ani
             // 非表示、フラッシュなし、効果音なし、ダメージなし、最終リピートではない
             // 全てを満たす場合は意味がないので不要
             if (dynamicAnimation.isNoMake()) {
+                index++;
                 continue;
             }
 
@@ -2395,7 +2419,7 @@ BaseAnimation.prototype.createDynamicAnimation = function (target, delay, dynami
     // ダメージ用データの作成
     dynamicAnimation.makeDamageData(this, dynamicAnimationList, delay);
     // 残像の作成
-    dynamicAnimation.makeAfterimage(this, dynamicAnimationList);
+    dynamicAnimation.makeAfterimage(this, dynamicAnimationList, index);
 
     // 最終リピートの場合
     if (this.r == this.repeat - 1) {
@@ -2592,7 +2616,7 @@ DynamicAnimation.prototype.initialize = function(baseAnimation, target, index) {
     this.no = no;
 
     // 対象番号を保持しておく
-    this.targetNo = index;
+    this.targetNo = index ?? 0;
 
     // 親情報への参照設定
     this.baseAnimation = baseAnimation;
@@ -2609,11 +2633,14 @@ DynamicAnimation.prototype.initialize = function(baseAnimation, target, index) {
     this.repeat = repeat;
     // MVフラグ
     this.mv = baseAnimation.mv;
+    // ウィンドウより上に表示
+    this.overWindow = baseAnimation.overWindow;
 
     this.r = r;
 
     // eval参照用
     const da = this;
+    const targetNo = this.targetNo;
 
     /*
      * 以下はリピートごとに変化する項目
@@ -3128,13 +3155,13 @@ DynamicAnimation.prototype.setLimitEffect = function (baseAnimation) {
 /**
  * ●残像の作成
  */
-DynamicAnimation.prototype.makeAfterimage = function (baseAnimation, dynamicAnimationList) {
+DynamicAnimation.prototype.makeAfterimage = function (baseAnimation, dynamicAnimationList, index) {
     // 残像の作成
     const afterimage = this.afterimage;
     // 設定数分ループ
     for (var i = 0; i < afterimage; i++) {
         // DynamicAnimationを作成（値はほぼ空で問題ない）
-        const afterimageData = new DynamicAnimation(baseAnimation, this.target);
+        const afterimageData = new DynamicAnimation(baseAnimation, this.target, index);
         // 本体をコピー
         afterimageData.setProperties(this);
         // 親への参照
@@ -3847,7 +3874,15 @@ Spriteset_Base.prototype.createDynamicAnimationSprite = function(
     sprite.targetObjects = targets;
     sprite.dynamicAnimation = dynamicAnimation; // 追加
     sprite.setup(targetSprites, animation, mirror, delay, previous);
-    this._effectsContainer.addChild(sprite);
+    
+    // ウィンドウより上に表示する場合はシーン直下に追加。
+    if (isOverWindow(dynamicAnimation)) {
+        SceneManager._scene.addChild(sprite);
+    // それ以外は通常アニメーションと同じ
+    } else {
+        this._effectsContainer.addChild(sprite);
+    }
+
     this._animationSprites.push(sprite);
 
     // 終了待機が必要なアニメーションがあればリストに追加
@@ -3856,6 +3891,21 @@ Spriteset_Base.prototype.createDynamicAnimationSprite = function(
         this._waitAnimationSprites.push(sprite);
     }
 };
+
+/**
+ * ●ウィンドウよりアニメーションを上に表示するかどうか？
+ */
+function isOverWindow(dynamicAnimation) {
+    const overWindow = toBoolean(dynamicAnimation.overWindow);
+    // 優先設定がある場合
+    if (overWindow === true) {
+        return true;
+    } else if (overWindow === false) {
+        return false;
+    }
+    // それ以外はパラメータの設定を使用
+    return pOverWindow;
+}
 
 /**
  * ●アニメーションの削除処理
