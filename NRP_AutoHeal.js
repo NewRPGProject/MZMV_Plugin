@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 It enables the "Auto Heal" command.
+ * @plugindesc v1.021 It enables the "Auto Heal" command.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/480069638.html
  * 
@@ -191,9 +191,8 @@
  * 
  * @param TargetHpRate
  * @parent <Heal Setting>
- * @type number
+ * @type text
  * @default 100
- * @max 100
  * @desc If the actor's HP% is less than this value, the actor will recover.
  * 
  * @param TargetHpRateVariable
@@ -332,7 +331,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 自動回復コマンド（まんたん）を実現
+ * @plugindesc v1.021 自動回復コマンド（まんたん）を実現
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/480069638.html
  *
@@ -512,9 +511,8 @@
  * @param TargetHpRate
  * @text 対象とするＨＰ％
  * @parent <Heal Setting>
- * @type number
+ * @type text
  * @default 100
- * @max 100
  * @desc ＨＰ％がこの数値未満の場合に回復対象とします。
  * 初期値は100。少しでも減っていれば回復します。
  * 
@@ -715,7 +713,7 @@ const pShowMenuCommandPosition = toNumber(parameters["ShowMenuCommandPosition"],
 const pAutoHealName = parameters["AutoHealName"];
 const pAutoHealSymbol = parameters["AutoHealSymbol"];
 
-const pTargetHpRate = toNumber(parameters["TargetHpRate"]);
+const pTargetHpRate = setDefault(parameters["TargetHpRate"]);
 const pCureStates = parseStruct1(parameters["CureStates"]);
 const pTargetHpRateVariable = toNumber(parameters["TargetHpRateVariable"]);
 const pUserPriority = setDefault(parameters["UserPriority"], "Balance");
@@ -888,7 +886,7 @@ Game_Party.prototype.startAutoHeal = function(params) {
             targetHpRate = $gameVariables.value(pTargetHpRateVariable);
         // デフォルト値を取得
         } else {
-            targetHpRate = pTargetHpRate;
+            targetHpRate = eval(pTargetHpRate);
         }
     }
 
