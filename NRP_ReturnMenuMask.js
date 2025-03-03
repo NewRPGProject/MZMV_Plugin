@@ -3,13 +3,13 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Eliminate the seam when closing the menu.
+ * @plugindesc v1.02 Eliminate the seam when closing the menu.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484101737.html
  *
  * @help Eliminate the seam when closing the menu.
  * 
- * When using plug-ins such as DynamicAnimation for maps,
+ * When using plugins such as DynamicAnimation for maps,
  * elements may not be displayed for a moment when the menu screen is closed.
  * This is due to the fact that when you switch scenes from the map screen
  * to the menu screen to the map screen, each element is recreated.
@@ -42,6 +42,24 @@
  * @default 1
  * @desc The number of frames to hide the seam when the menu is closed.
  * 
+ * @param FadeFrame
+ * @type number
+ * @default 0
+ * @desc The number of frames to fade, executed after MaskFrame.
+ * 
+ * @param MaskType
+ * @type select
+ * @option map
+ * @option menu
+ * @option black
+ * @default map
+ * @desc This screen is used for masking.
+ * 
+ * @param StopCharacter
+ * @type boolean
+ * @default false
+ * @desc During masking, the character stops moving.
+ * 
  * @param SceneList
  * @type string[]
  * @default ["Scene_Menu"]
@@ -50,7 +68,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 メニューを閉じた際の継ぎ目をなくす。
+ * @plugindesc v1.02 メニューを閉じた際の継ぎ目をなくす。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484101737.html
  *
@@ -88,6 +106,27 @@
  * @default 1
  * @desc メニューを閉じた時の継ぎ目を隠すフレーム数です。
  * 
+ * @param FadeFrame
+ * @text フェードするフレーム数
+ * @type number
+ * @default 0
+ * @desc マスクするフレーム数に加えてフェードするフレーム数です。
+ * 
+ * @param MaskType
+ * @text マスクタイプ
+ * @type select
+ * @option マップ画面 @value map
+ * @option メニュー画面 @value menu
+ * @option 黒画面 @value black
+ * @default map
+ * @desc マスクに使用する画面です。
+ * 
+ * @param StopCharacter
+ * @text キャラクター停止
+ * @type boolean
+ * @default false
+ * @desc マスク中はキャラクターの動作を停止します。
+ * 
  * @param SceneList
  * @text シーン名のリスト
  * @type string[]
@@ -115,11 +154,31 @@ function toNumber(str, def) {
     }
     return isNaN(str) ? def : +(str || def);
 }
+function toBoolean(str, def) {
+    if (str === true || str === "true") {
+        return true;
+    } else if (str === false || str === "false") {
+        return false;
+    }
+    return def;
+}
+function setDefault(str, def) {
+    if (str == undefined || str == "") {
+        return def;
+    }
+    return str;
+}
 
 const PLUGIN_NAME = "NRP_ReturnMenuMask";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pMaskFrame = toNumber(parameters["MaskFrame"], 1);
+const pFadeFrame = toNumber(parameters["FadeFrame"], 0);
+const pMaskType = setDefault(parameters["MaskType"]);
+const pStopCharacter = toBoolean(parameters["StopCharacter"], false);
 const pSceneList = parseStruct1(parameters["SceneList"]);
+
+// メニュー画面でマスクする際のビットマップ
+let mMaskMenuBitmap = null;
 
 /**
  * ●シーン開始時
@@ -144,7 +203,19 @@ Scene_Map.prototype.start = function() {
  */
 Scene_Map.prototype.createReturnMask = function() {
     this._returnMaskSprite = new Sprite();
-    this._returnMaskSprite.bitmap = SceneManager.backgroundBitmap();
+
+    // 黒画面でマスク
+    if (pMaskType == "black") {
+        this._returnMaskSprite.bitmap = new Bitmap(Graphics.width, Graphics.height);
+        this._returnMaskSprite.bitmap.fillAll("black");
+    // メニュー画面でマスク
+    } else if (pMaskType == "menu" && mMaskMenuBitmap) {
+        this._returnMaskSprite.bitmap = mMaskMenuBitmap;
+    // マップ画面でマスク
+    } else {
+        this._returnMaskSprite.bitmap = SceneManager.backgroundBitmap();
+    }
+
     this.addChild(this._returnMaskSprite);
     this._returnMaskSprite.opacity = 255;
     this._returnMaskSprite.count = 0;
@@ -160,11 +231,81 @@ Scene_Map.prototype.update = function() {
     // マスクが存在する場合
     if (this._returnMaskSprite) {
         this._returnMaskSprite.count++;
+
+        // フェード時間
+        if (this._returnMaskSprite.count >= pMaskFrame && pFadeFrame) {
+            const fadeCount = this._returnMaskSprite.count - pMaskFrame;
+            // 不透明度を調整してフェード
+            this._returnMaskSprite.opacity = 255 * (1 - fadeCount / pFadeFrame);
+        }
+
         // 指定のカウント数が過ぎれば削除
-        if (this._returnMaskSprite.count >= pMaskFrame) {
+        if (this._returnMaskSprite.count >= (pMaskFrame + pFadeFrame)) {
             this.removeChild(this._returnMaskSprite);
+            this._returnMaskSprite = null;
         }
     }
+}
+
+/**
+ * ●シーン終了時
+ */
+const _SceneManager_onSceneTerminate = SceneManager.onSceneTerminate;
+SceneManager.onSceneTerminate = function() {
+    if (pMaskType == "menu") {
+        // シーン終了時にクラス名を取得
+        const className = this._scene.constructor.name;
+        for (const sceneName of pSceneList) {
+            // マスク対象のクラス名と一致するなら
+            if (className == sceneName) {
+                mMaskMenuBitmap = SceneManager.snap();
+                break;
+            }
+        }
+    }
+    _SceneManager_onSceneTerminate.apply(this, arguments);
+};
+
+// キャラクター停止
+if (pStopCharacter) {
+    /**
+     * ●更新処理（プレイヤー）
+     */
+    const _Game_Player_update = Game_Player.prototype.update;
+    Game_Player.prototype.update = function() {
+        // マスク中は停止
+        const returnMaskSprite = SceneManager._scene._returnMaskSprite;
+        if (returnMaskSprite) {
+            return;
+        }
+        _Game_Player_update.apply(this, arguments);
+    };
+
+    /**
+     * ●更新処理（イベント）
+     */
+    const _Game_Event_update = Game_Event.prototype.update;
+    Game_Event.prototype.update = function() {
+        // マスク中は停止
+        const returnMaskSprite = SceneManager._scene._returnMaskSprite;
+        if (returnMaskSprite) {
+            return;
+        }
+        _Game_Event_update.apply(this, arguments);
+    };
+
+    /**
+     * ●更新処理（乗物）
+     */
+    const _Game_Vehicle_update = Game_Vehicle.prototype.update;
+    Game_Vehicle.prototype.update = function() {
+        // マスク中は停止
+        const returnMaskSprite = SceneManager._scene._returnMaskSprite;
+        if (returnMaskSprite) {
+            return;
+        }
+        _Game_Vehicle_update.apply(this, arguments);
+    };
 }
 
 })();
