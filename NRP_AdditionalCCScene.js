@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.101 Implemented a class change screen for multiple classes.
+ * @plugindesc v1.102 Implemented a class change screen for multiple classes.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -455,7 +455,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.101 多重職業用の転職画面を実装。
+ * @plugindesc v1.102 多重職業用の転職画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_AdditionalClasses
  * @orderAfter NRP_AdditionalClasses
@@ -1638,12 +1638,23 @@ Scene_AdditionalCC.prototype.onClassChangeOk = function() {
             }
         }
         const swapIndex = i;
+
+        // HP,MP,TPを保持
+        const keepHp = actor.hp;
+        const keepMp = actor.mp;
+        const keepTp = actor.tp;
+
         // 交換実行
-        this._actor.changeAdditionalClass(swapClassId, swapIndex);
+        actor.changeAdditionalClass(swapClassId, swapIndex);
+
+        // 一時的にHP,MP,TPが減ってしまう場合があるので再設定
+        actor._hp = keepHp;
+        actor._mp = keepMp;
+        actor._tp = keepTp;
     }
 
     // 転職実行
-    this._actor.changeAdditionalClass(classItem.id, mClassIndex);
+    actor.changeAdditionalClass(classItem.id, mClassIndex);
 
     if (pClassChangeMessage) {
         // 成功メッセージの表示
