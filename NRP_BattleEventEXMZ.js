@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.091 Extends the functionality of battle events.
+ * @plugindesc v1.092 Extends the functionality of battle events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_ChargeSkill
  * @orderBefore NRP_DynamicAnimationMZ
@@ -245,7 +245,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.091 バトルイベントの機能を拡張します。
+ * @plugindesc v1.092 バトルイベントの機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_ChargeSkill
  * @orderBefore NRP_DynamicAnimationMZ
@@ -1274,7 +1274,7 @@ Game_Action.prototype.targetsForDeadAndAlive = function(unit) {
         // シャッフルして対象をランダム化する。
         shuffleArray(plForceTargets);
         // 先頭のバトラーを対象サイドとして取得
-        return plForceTargets[0].friendsUnit().aliveMembers();
+        return plForceTargets[0].friendsUnit().members();
     }
 
     return _Game_Action_targetsForDeadAndAlive.apply(this, arguments);
