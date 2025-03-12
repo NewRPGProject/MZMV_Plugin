@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.092 Extends the functionality of battle events.
+ * @plugindesc v1.093 Extends the functionality of battle events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_ChargeSkill
  * @orderBefore NRP_DynamicAnimationMZ
@@ -245,7 +245,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.092 バトルイベントの機能を拡張します。
+ * @plugindesc v1.093 バトルイベントの機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_ChargeSkill
  * @orderBefore NRP_DynamicAnimationMZ
@@ -920,6 +920,12 @@ Window_BattleLog.prototype.startAction = function(subject, action, targets) {
  */
 const _Window_BattleLog_endAction = Window_BattleLog.prototype.endAction;
 Window_BattleLog.prototype.endAction = function(subject) {
+    // aで行動主体を参照できるようにする。
+    // ※NRP_CounterSkill.jsの競合対策
+    if (pAIsSubject) {
+        a = subject;
+    }
+
     const action = BattleManager._action;
     if (action) {
         const item = action.item();
