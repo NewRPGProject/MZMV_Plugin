@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.041 Set up various motions in side-view battle.
+ * @plugindesc v1.05 Set up various motions in side-view battle.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/475560242.html
@@ -584,11 +584,17 @@
  * @type boolean
  * @default false
  * @desc Priority is given to the escape motion even when the action is restricted.
+ * 
+ * @param missToEvade
+ * @parent <Other>
+ * @type boolean
+ * @default false
+ * @desc When an attack on the actor misses, the actor makes an evade motion.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.041 サイドビュー戦闘における各種モーション設定を行います。
+ * @plugindesc v1.05 サイドビュー戦闘における各種モーション設定を行います。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_DynamicMotionMZ
  * @url http://newrpg.seesaa.net/article/475560242.html
@@ -1223,6 +1229,13 @@
  * @type boolean
  * @default false
  * @desc 行動異常時でも逃走モーションを優先して実行します。
+ * 
+ * @param missToEvade
+ * @text ミスで回避モーション
+ * @parent <Other>
+ * @type boolean
+ * @default false
+ * @desc 攻撃がミスした際に回避モーションを実行します。
  */
 (function() {
 "use strict";
@@ -1282,6 +1295,7 @@ const pEvadeMotion = parameters["evadeMotion"];
 const pEscapeMotion = parameters["escapeMotion"];
 const pVictoryMotion = parameters["victoryMotion"];
 const pEscapePriority = toBoolean(parameters["escapePriority"], false);
+const pMissToEvade = toBoolean(parameters["missToEvade"], false);
 
 if (pStepForward) {
     /**
@@ -1590,6 +1604,18 @@ if (pEscapePriority) {
         // この中でもthis.requestMotion("escape");が呼び出されるが、
         // 競合を意識してあえてそのままにする。
         _Game_Actor_performEscape.apply(this, arguments);
+    };
+}
+
+/**
+ * ●ミスで回避モーション
+ */
+if (pMissToEvade) {
+    /**
+     * 【上書】ミスの演出
+     */
+    Window_BattleLog.prototype.performMiss = function(target) {
+        target.performEvasion();
     };
 }
 
