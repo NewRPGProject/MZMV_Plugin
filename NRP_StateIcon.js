@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.00 Adjust the display of state icons during battle.
+ * @plugindesc v1.01 Adjust the display of state icons during battle.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484023583.html
  *
@@ -14,6 +14,7 @@
  * - Fixes a bug where the icon line would remain
  *   when an unstated enemy moved.
  * - Position adjustment when using DynamicMotion together.
+ * - Set the upper Y coordinate of the enemy's icon.
  * 
  * You can turn it on/off for each item, so please adjust it.
  * 
@@ -36,11 +37,15 @@
  * @type boolean
  * @desc Position adjustment when using DynamicMotion together.
  * Adjusting the position of icons when expanding & jumping enemies, etc.
+ * 
+ * @param IconLimitY
+ * @type number
+ * @desc Y-coordinate for the upper limit of icon display. Default 20
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.00 戦闘時のステートアイコンの表示を調整する。
+ * @plugindesc v1.01 戦闘時のステートアイコンの表示を調整する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484023583.html
  *
@@ -51,6 +56,7 @@
  * ・ステートにかかっていない敵キャラが移動した際、
  * 　アイコンの線が残る不具合を修正します。
  * ・DynamicMotion併用時の位置調整
+ * ・敵のアイコン上限Ｙ座標の設定。
  * 
  * 項目毎にオン／オフできるので調整してください。
  * 
@@ -73,10 +79,22 @@
  * @type boolean
  * @desc DynamicMotionとの併用時、アイコンの位置を調整します。
  * 敵キャラの拡大＆ジャンプ時に位置が狂う不具合対応など。
+ * 
+ * @param IconLimitY
+ * @text アイコン上限Ｙ座標
+ * @type number
+ * @desc アイコンの表示上限となるＹ座標です。初期値20
+ * 敵が上側に配置された際も画面内に収まるようにします。
  */
 (function() {
 "use strict";
 
+function toNumber(str, def) {
+    if (str == undefined || str == "") {
+        return def;
+    }
+    return isNaN(str) ? def : +(str || def);
+}
 function toBoolean(str, def) {
     if (str === true || str === "true") {
         return true;
@@ -90,6 +108,7 @@ const PLUGIN_NAME = "NRP_StateIcon";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pFixIconLine = toBoolean(parameters["FixIconLine"], true);
 const pForDynamicMotion = toBoolean(parameters["ForDynamicMotion"], false);
+const pIconLimitY = toNumber(parameters["IconLimitY"]);
 
 // アイコンの線が残るバグ修正
 if (pFixIconLine) {
@@ -108,24 +127,32 @@ if (pFixIconLine) {
     };
 }
 
-// DynamicMotionに対応
-if (pForDynamicMotion) {
-    /**
-     * 【上書】ステートアイコンの位置更新
-     */
-    Sprite_Enemy.prototype.updateStateSprite = function() {
+
+/**
+ * ●ステートアイコンの位置更新
+ */
+const _Sprite_Enemy_updateStateSprite = Sprite_Enemy.prototype.updateStateSprite;
+Sprite_Enemy.prototype.updateStateSprite = function() {
+    // DynamicMotionに対応
+    if (pForDynamicMotion) {
         this._stateIconSprite.y = -Math.round((this.bitmap.height + 40) * 0.9);
 
         // DynamicMotion実行中は補正処理を行わない。
         if (this.isMotionPlaying && this.isMotionPlaying()) {
             return;
         }
+    }
 
+    // アイコン上限Ｙ座標
+    if (pIconLimitY != null) {
         this._stateIconSprite.y = -Math.round((this.bitmap.height + 40) * 0.9);
-        if (this._stateIconSprite.y < 20 - this.y) {
-            this._stateIconSprite.y = 20 - this.y;
+        if (this._stateIconSprite.y < pIconLimitY - this.y) {
+            this._stateIconSprite.y = pIconLimitY - this.y;
         }
-    };
-}
+    // 設定がない場合は元の処理を使用
+    } else {
+        _Sprite_Enemy_updateStateSprite.apply(this, arguments);
+    }
+};
 
 })();
