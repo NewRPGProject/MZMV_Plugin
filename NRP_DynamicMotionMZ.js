@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.256 When executing skills, call motion freely.
+ * @plugindesc v1.257 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -561,7 +561,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.256 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.257 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -1909,7 +1909,7 @@ BaseMotion.prototype.makeRepeatMotion = function (dynamicMotionList) {
         if (isEvery) {
             this.targets.forEach(function (target, index) {
                 // Sprite_Battlerへと引き渡すパラメータを作成
-                dynamicMotion = this.createDynamicMotion(performer, target, targetDelay);
+                dynamicMotion = this.createDynamicMotion(performer, target, targetDelay, index);
                 dynamicMotion.performerNo = performerIndex;
                 dynamicMotion.targetNo = index;
 
@@ -1995,8 +1995,8 @@ BaseMotion.prototype.makeRepeatMotion = function (dynamicMotionList) {
 /**
  * ●動的モーションデータを生成する。
  */
-BaseMotion.prototype.createDynamicMotion = function(performer, target, delay) {
-    const dynamicMotion = new DynamicMotion(this, performer, target);
+BaseMotion.prototype.createDynamicMotion = function(performer, target, delay, index) {
+    const dynamicMotion = new DynamicMotion(this, performer, target, index);
     dynamicMotion.targetDelay = delay;
 
     return dynamicMotion;
@@ -2145,12 +2145,13 @@ BaseMotion.prototype.getReferenceSubject = function () {
 /**
  * ●初期化処理
  */
-DynamicMotion.prototype.initialize = function (baseMotion, performer, target) {
+DynamicMotion.prototype.initialize = function (baseMotion, performer, target, index) {
     const r = baseMotion.r;
 
     // eval参照用
     const a = getReferenceBattler(performer);
     const spriteA = getBattlerSprite(performer);
+    const targetNo = index ?? 0;
     // モーションの対象ではなく、スキルの対象を取得
     const b = getReferenceBattler(target);
     const bm = baseMotion;
@@ -3147,6 +3148,48 @@ Sprite_Actor.prototype.refreshMotion = function() {
 
     _Sprite_Actor_refreshMotion.call(this);
 };
+
+/**
+ * ●ダメージ演出
+ */
+const _Game_Actor_performDamage = Game_Actor.prototype.performDamage;
+Game_Actor.prototype.performDamage = function() {
+    if (this.isSpriteVisible()) {
+        clearSpriteMotion(this);
+    }
+    _Game_Actor_performDamage.apply(this, arguments);
+};
+
+/**
+ * ●回避演出
+ */
+const _Game_Actor_performEvasion = Game_Actor.prototype.performEvasion;
+Game_Actor.prototype.performEvasion = function() {
+    clearSpriteMotion(this);
+    _Game_Actor_performEvasion.apply(this, arguments);
+};
+
+/**
+ * ●魔法回避演出
+ */
+const _Game_Actor_performMagicEvasion = Game_Actor.prototype.performMagicEvasion;
+Game_Actor.prototype.performMagicEvasion = function() {
+    clearSpriteMotion(this);
+    _Game_Actor_performMagicEvasion.apply(this, arguments);
+};
+
+/**
+ * ●実行中のモーション情報をクリアする。
+ */
+function clearSpriteMotion(battler) {
+    const sprite = getBattlerSprite(battler);
+    if (sprite) {
+// console.log({...sprite});
+        sprite._motionDuration = undefined;
+        sprite._motionPattern = undefined;
+        sprite._motionStartPattern = undefined;
+    }
+}
 
 // 武器タイプ
 let mWtypeId = null;
