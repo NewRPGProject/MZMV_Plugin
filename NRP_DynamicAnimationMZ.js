@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.23 Automate & super-enhance battle animations.
+ * @plugindesc v1.24 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -238,6 +238,11 @@
  * @parent <Repeat>
  * @type string
  * @desc This is an execution condition.
+ * 
+ * @param useConditionDelay
+ * @parent <Repeat>
+ * @type boolean
+ * @desc Delay processing is performed even if the execution condition is not met.
  * 
  * @param position
  * @parent <Repeat>
@@ -545,7 +550,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.23 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.24 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -815,6 +820,12 @@
  * @type string
  * @desc 実行条件です。
  * この条件を満たさない場合、アニメーションを実行しません。
+ * 
+ * @param useConditionDelay
+ * @text 条件外もディレイ
+ * @parent <Repeat>
+ * @type boolean
+ * @desc 実行条件を満たさなかった場合でもディレイ処理を行います。
  * 
  * @param position
  * @text アニメーション位置
@@ -2650,9 +2661,15 @@ DynamicAnimation.prototype.initialize = function(baseAnimation, target, index) {
     const condition = baseAnimation.condition;
     if (condition && !eval(condition)) {
         // 表示しない
-        this.frame = 0;
         this.dispAnimation = false;
         this.isNoMatchCondition = true;
+
+        // 条件を満たさない場合でもタイミングを取る。
+        if (toBoolean(baseAnimation.useConditionDelay)) {
+            return;
+        }
+
+        this.frame = 0;
         return;
     }
 

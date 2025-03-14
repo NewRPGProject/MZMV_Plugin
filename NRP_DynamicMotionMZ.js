@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.257 When executing skills, call motion freely.
+ * @plugindesc v1.26 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -218,6 +218,11 @@
  * @parent <Repeat>
  * @type string
  * @desc This is an execution condition.
+ * 
+ * @param useConditionDelay
+ * @parent <Repeat>
+ * @type boolean
+ * @desc Delay processing is performed even if the execution condition is not met.
  * 
  * @param position
  * @parent <Repeat>
@@ -561,7 +566,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.257 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.26 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -803,6 +808,12 @@
  * @type string
  * @desc 実行条件です。
  * この条件を満たさない場合、モーションを実行しません。
+ * 
+ * @param useConditionDelay
+ * @text 条件外もディレイ
+ * @parent <Repeat>
+ * @type boolean
+ * @desc 実行条件を満たさなかった場合でもディレイ処理を行います。
  * 
  * @param position
  * @text 位置
@@ -1909,7 +1920,7 @@ BaseMotion.prototype.makeRepeatMotion = function (dynamicMotionList) {
         if (isEvery) {
             this.targets.forEach(function (target, index) {
                 // Sprite_Battlerへと引き渡すパラメータを作成
-                dynamicMotion = this.createDynamicMotion(performer, target, targetDelay, index);
+                dynamicMotion = this.createDynamicMotion(performer, target, targetDelay, index, performerIndex);
                 dynamicMotion.performerNo = performerIndex;
                 dynamicMotion.targetNo = index;
 
@@ -1948,7 +1959,8 @@ BaseMotion.prototype.makeRepeatMotion = function (dynamicMotionList) {
         // その他
         } else {
             // Sprite_Battlerへと引き渡すパラメータを作成
-            dynamicMotion = this.createDynamicMotion(performer, this.targets[0], targetDelay);
+            // ※Every以外ならtargetNoにはperformerNoと同じ値を設定しておく。
+            dynamicMotion = this.createDynamicMotion(performer, this.targets[0], targetDelay, performerIndex, performerIndex);
             dynamicMotion.performerNo = performerIndex;
 
             // 条件を満たさなかった場合は処理不要
@@ -1995,8 +2007,8 @@ BaseMotion.prototype.makeRepeatMotion = function (dynamicMotionList) {
 /**
  * ●動的モーションデータを生成する。
  */
-BaseMotion.prototype.createDynamicMotion = function(performer, target, delay, index) {
-    const dynamicMotion = new DynamicMotion(this, performer, target, index);
+BaseMotion.prototype.createDynamicMotion = function(performer, target, delay, targetIndex, performerIndex) {
+    const dynamicMotion = new DynamicMotion(this, performer, target, targetIndex, performerIndex);
     dynamicMotion.targetDelay = delay;
 
     return dynamicMotion;
@@ -2145,13 +2157,14 @@ BaseMotion.prototype.getReferenceSubject = function () {
 /**
  * ●初期化処理
  */
-DynamicMotion.prototype.initialize = function (baseMotion, performer, target, index) {
+DynamicMotion.prototype.initialize = function (baseMotion, performer, target, index, performerIndex) {
     const r = baseMotion.r;
 
     // eval参照用
     const a = getReferenceBattler(performer);
     const spriteA = getBattlerSprite(performer);
     const targetNo = index ?? 0;
+    const performerNo = performerIndex ?? 0;
     // モーションの対象ではなく、スキルの対象を取得
     const b = getReferenceBattler(target);
     const bm = baseMotion;
@@ -2190,6 +2203,11 @@ DynamicMotion.prototype.initialize = function (baseMotion, performer, target, in
     // 条件が存在し、かつ満たさなければ次のループへ
     const condition = baseMotion.condition;
     if (condition && !eval(condition)) {
+        // 条件を満たさない場合でもタイミングを取る。
+        if (toBoolean(baseMotion.useConditionDelay)) {
+            return;
+        }
+
         // 表示しない
         this.maxDuration = 0;
         this.isNoMatchCondition = true;
