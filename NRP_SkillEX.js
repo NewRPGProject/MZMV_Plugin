@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.07 Extend the effect of the skill.
+ * @plugindesc v1.071 Extend the effect of the skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -161,7 +161,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.07 スキルの効果を拡張します。
+ * @plugindesc v1.071 スキルの効果を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -399,6 +399,20 @@ BattleManager.endAction = function() {
 };
 
 // ----------------------------------------------------------------------------
+// Window_BattleLog
+// ----------------------------------------------------------------------------
+
+/**
+ * ●アクション開始
+ * ※NRP_CalcResultFirst.js用の調整
+ */
+const _Window_BattleLog_startAction = Window_BattleLog.prototype.startAction;
+Window_BattleLog.prototype.startAction = function(subject, action, targets) {
+    targetNo = 0;
+    _Window_BattleLog_startAction.apply(this, arguments);
+};
+
+// ----------------------------------------------------------------------------
 // Game_Action
 // ----------------------------------------------------------------------------
 
@@ -467,6 +481,17 @@ Game_Action.prototype.apply = function(target) {
         this.makeSuccess(target);
     }
 }
+
+/**
+ * ●効果反映
+ * ※NRP_CalcResultFirst.js用
+ */
+const _Game_Action_calcResultFirst = Game_Action.prototype.calcResultFirst;
+Game_Action.prototype.calcResultFirst = function(target) {
+    _Game_Action_calcResultFirst.apply(this, arguments);
+    // 対象番号加算
+    targetNo++;
+};
 
 /**
  * ●ステートの付加

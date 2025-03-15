@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.012 Extends the substitute effect.
+ * @plugindesc v1.02 Extends the substitute effect.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_DynamicAnimationMZ
  * @url https://newrpg.seesaa.net/article/500482565.html
@@ -228,7 +228,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.012 身代わりの効果を拡張する。
+ * @plugindesc v1.02 身代わりの効果を拡張する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_DynamicAnimationMZ
  * @url https://newrpg.seesaa.net/article/500482565.html
@@ -518,6 +518,11 @@ BattleManager.startAction = function() {
     mAddWait = 0;
     mSubstituteLogData = [];
 
+    // 身代わり実行フラグのクリア
+    const subject = this._subject;
+    const action = subject.currentAction();
+    action.clearUsedSubstitute();
+
     _BattleManager_startAction.apply(this, arguments);
 
     // 演出実行用のウェイトを追加
@@ -704,6 +709,33 @@ const _Game_Action_makeTargets = Game_Action.prototype.makeTargets;
 Game_Action.prototype.makeTargets = function() {
     let targets = _Game_Action_makeTargets.apply(this, arguments);
 
+    // 身代わり実行フラグがオンならば処理しない。
+    // ※他プラグインとの連携用
+    if (this.isUsedSubstitute()) {
+        return targets;
+    }
+
+    return this.makeSubstituteTargets(targets);
+};
+
+/**
+ * 【独自】身代わり実行フラグがオンかどうか？
+ */
+Game_Action.prototype.isUsedSubstitute = function() {
+    return this._isUsedSubstitute;
+}
+
+/**
+ * 【独自】身代わり実行フラグのクリア
+ */
+Game_Action.prototype.clearUsedSubstitute = function() {
+    this._isUsedSubstitute = false;
+}
+
+/**
+ * 【独自】かばう用の対象作成
+ */
+Game_Action.prototype.makeSubstituteTargets = function(targets) {
     const actionItem = this.item();
 
     // 対象がなければ終了
@@ -770,6 +802,9 @@ Game_Action.prototype.makeTargets = function() {
                 callAnimation(substituteBattler, data.animationId, 0)
             }
         }
+
+        // 身代わり実行フラグ
+        this._isUsedSubstitute = true;
     }
 
     return targets;

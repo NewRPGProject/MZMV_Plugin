@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.05 Create special traits.
+ * @plugindesc v1.051 Create special traits.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/488957733.html
@@ -169,7 +169,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.05 特殊な特徴を実現します。
+ * @plugindesc v1.051 特殊な特徴を実現します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/488957733.html
@@ -430,6 +430,16 @@ Game_Action.prototype.apply = function(target) {
 };
 
 /**
+ * ●アクション効果適用
+ * ※NRP_CalcResultFirst.js用
+ */
+const _Game_Action_calcResultFirst = Game_Action.prototype.calcResultFirst;
+Game_Action.prototype.calcResultFirst = function(target) {
+    mTarget = target;
+    _Game_Action_calcResultFirst.apply(this, arguments);
+};
+
+/**
  * ●対象の評価
  */
 const _Game_Action_evaluateWithTarget = Game_Action.prototype.evaluateWithTarget;
@@ -461,10 +471,14 @@ Game_Action.prototype.applyVariance = function(damage, variance) {
         if (inflictedDamageRate != null && this.isValidChangeDamageRate(object)) {
             const rate = eval(inflictedDamageRate);
 
-            // スクリプトを実行
-            const inflictedDamageScript = object.meta.InflictedDamageScript;
-            if (inflictedDamageScript) {
-                eval(inflictedDamageScript);
+            // アクション時のみ実行
+            // ※NRP_CalcResultFirst.js用の調整
+            if (BattleManager._phase == "action") {
+                // スクリプトを実行
+                const inflictedDamageScript = object.meta.InflictedDamageScript;
+                if (inflictedDamageScript) {
+                    eval(inflictedDamageScript);
+                }
             }
 
             // 弱点として判定できるなら設定

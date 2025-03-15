@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.04 Change the traits (regular parameter and element rate) to an additive method.
+ * @plugindesc v1.041 Change the traits (regular parameter and element rate) to an additive method.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483215411.html
  *
@@ -193,7 +193,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 特徴（能力補正や属性有効度）を加算方式に変更する。
+ * @plugindesc v1.041 特徴（能力補正や属性有効度）を加算方式に変更する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483215411.html
  *
@@ -713,6 +713,19 @@ if (pFixHitFormula) {
         mAction = this;
 
         _Game_Action_apply.apply(this, arguments);
+    };
+
+    /**
+     * ●効果適用
+     * ※NRP_CalcResultFirst.js用
+     */
+    const _Game_Action_calcResultFirst = Game_Action.prototype.calcResultFirst;
+    Game_Action.prototype.calcResultFirst = function(target) {
+        // result.isHit()内で参照するための変数を設定
+        mApplyTarget = target;
+        mAction = this;
+
+        _Game_Action_calcResultFirst.apply(this, arguments);
     };
 
     /**
