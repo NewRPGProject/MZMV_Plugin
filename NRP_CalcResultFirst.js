@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Perform the result calculation for the skill first.
+ * @plugindesc v1.01 Perform the result calculation for the skill first.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_TraitsPlus
  * @orderBefore NRP_TraitsEX
@@ -25,7 +25,7 @@
  * 
  * BattleManager.isReservedSuccess(targetNo)
  * 
- * ◆Example: Show animation only when success.
+ * Example: Show animation only when success.
  * <D-Animation>
  * condition = BattleManager.isReservedSuccess(targetNo)
  * </D-Animation>
@@ -42,9 +42,20 @@
  * 
  * BattleManager.reservedResult(targetNo)
  * 
- * ◆Example: Animation is performed only if damage > 0
+ * Example: Animation is performed only if damage > 0
  * <D-Animation>
  * condition = BattleManager.reservedResult(targetNo).hpDamage > 0
+ * </D-Animation>
+ * 
+ * ◆Judgment of Dead
+ * The following script can be used to determine
+ * if a target has become dead.
+ * 
+ * b.isDeadReserved()
+ * 
+ * Example: Performs animation only when an enemy is defeated.
+ * <D-Animation>
+ * condition = b.isDeadReserved()
  * </D-Animation>
  * 
  * -------------------------------------------------------------------
@@ -84,7 +95,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 スキルの結果計算を演出より先に実行する。
+ * @plugindesc v1.01 スキルの結果計算を演出より先に実行する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_TraitsPlus
  * @orderBefore NRP_TraitsEX
@@ -105,7 +116,7 @@
  * 
  * BattleManager.isReservedSuccess(targetNo)
  * 
- * ◆例：成功時のみアニメーションを実行
+ * 例：成功時のみアニメーションを実行
  * <D-Animation>
  * condition = BattleManager.isReservedSuccess(targetNo)
  * </D-Animation>
@@ -121,9 +132,19 @@
  * 
  * BattleManager.reservedResult(targetNo)
  * 
- * ◆例：ダメージ > 0 の場合のみアニメーションを実行
+ * 例：ダメージ > 0 の場合のみアニメーションを実行
  * <D-Animation>
  * condition = BattleManager.reservedResult(targetNo).hpDamage > 0
+ * </D-Animation>
+ * 
+ * ◆撃破判定
+ * 以下のスクリプトで対象が戦闘不能になったかどうかを判定できます。
+ * 
+ * b.isDeadReserved()
+ * 
+ * 例：撃破時のみアニメーションを実行
+ * <D-Animation>
+ * condition = b.isDeadReserved()
  * </D-Animation>
  * 
  * -------------------------------------------------------------------
@@ -472,12 +493,8 @@ Game_Action.prototype.apply = function(target) {
                 effect.code == Game_Action.EFFECT_ADD_DEBUFF && effect.dataId == dataId).value1;
             target.addDebuff(dataId, value);
         }
-        // バフ除去
+        // バフ除去＆デバフ除去
         for (const dataId of result.removedBuffs) {
-            target.removeBuff(dataId);
-        }
-        // デバフ除去
-        for (const dataId of result.removedDebuffs) {
             target.removeBuff(dataId);
         }
 
@@ -531,6 +548,13 @@ Game_Battler.prototype.reservedResults = function() {
  */
 Game_Battler.prototype.shiftReservedResult = function() {
     return this._reservedResults.shift();
+};
+
+/**
+ * 【独自】戦闘不能予定を取得する。
+ */
+Game_Battler.prototype.isDeadReserved = function() {
+    return this._isDeadReserved;
 };
 
 //-----------------------------------------------------------------------------
