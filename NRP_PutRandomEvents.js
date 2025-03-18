@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.04 Placement automation for symbol encounters.
+ * @plugindesc v1.05 Placement automation for symbol encounters.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base TemplateEvent
  * @base EventReSpawn
@@ -195,6 +195,12 @@
  * @default 0
  * @desc Confirms that the event's placement coordinates are in an open area to the extent specified.
  * 
+ * @param CheckEventCollision
+ * @parent CheckOpenDistance
+ * @type boolean
+ * @default true
+ * @desc For CheckOpenDistance, check for event collisions.
+ * 
  * @param PassableOnly
  * @type boolean
  * @default true
@@ -231,7 +237,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.04 シンボルエンカウントの配置自動化。
+ * @plugindesc v1.05 シンボルエンカウントの配置自動化。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base TemplateEvent
  * @base EventReSpawn
@@ -444,6 +450,13 @@
  * @desc イベントの設置座標が開けた場所であることを数値分だけ確認。
  * 値が大きいと処理が重くなります。
  * 
+ * @param CheckEventCollision
+ * @parent CheckOpenDistance
+ * @text イベントの衝突確認
+ * @type boolean
+ * @default true
+ * @desc 開放確認範囲について、イベントの当たり判定の確認も行います。
+ * 
  * @param PassableOnly
  * @text 通行可能な地点のみ配置
  * @type boolean
@@ -525,6 +538,7 @@ const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pKeepPlayerDistance = toNumber(parameters["KeepPlayerDistance"]);
 const pProhibitedRegion = toNumber(parameters["ProhibitedRegion"]);
 const pCheckOpenDistance = toNumber(parameters["CheckOpenDistance"]);
+const pCheckEventCollision = toBoolean(parameters["CheckEventCollision"], true);
 const pPassableOnly = toBoolean(parameters["PassableOnly"], false);
 const pIgnoreStarTile = toBoolean(parameters["IgnoreStarTile"], false);
 
@@ -1095,6 +1109,9 @@ function getAutotileType(tileId) {
  * ●イベントが通行可能な地点かを確認
  */
 function isPassable(event, x, y, d) {
+    if (pCheckEventCollision) {
+        return event.isThrough() || event.canPass(x, y, d);
+    }
     return event.isThrough() || event.isMapPassable(x, y, d);
 }
 
