@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Perform the result calculation for the skill first.
+ * @plugindesc v1.02 Perform the result calculation for the skill first.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_TraitsPlus
  * @orderBefore NRP_TraitsEX
@@ -95,7 +95,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 スキルの結果計算を演出より先に実行する。
+ * @plugindesc v1.02 スキルの結果計算を演出より先に実行する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_TraitsPlus
  * @orderBefore NRP_TraitsEX
@@ -359,28 +359,45 @@ Game_Action.prototype.calcResultFirst = function(target) {
     result.physical = this.isPhysical();
     result.drain = this.isDrain();
 
-    // 計算用に対象を複製
-    const tmpTarget = JsonEx.makeDeepCopy(target);
-
     // 計算のために一旦targetに格納。
-    tmpTarget._result = result;
+    target._result = result;
 
     if (result.isHit()) {
         if (this.item().damage.type > 0) {
-            result.critical = Math.random() < this.itemCri(tmpTarget);
+            result.critical = Math.random() < this.itemCri(target);
             const value = this.makeDamageValue(target, result.critical);
             // ダメージ結果を格納する。
-            this.executeDamageFast(tmpTarget, value);
-            // 戦闘不能判定を引継
-            if (tmpTarget._isDeadReserved) {
-                target._isDeadReserved = true;
-            }
+            this.executeDamageFast(target, value);
         }
+
+        // バトラーの状態を保持する。
+        const keepHp = target._hp;
+        const keepMp = target._mp;
+        const keepTp = target._tp;
+        const keepStates = JsonEx.makeDeepCopy(target._states);
+        const keepStateTurns = JsonEx.makeDeepCopy(target._stateTurns);
+        const keepBuffs = JsonEx.makeDeepCopy(target._buffs);
+        const keepBuffTurns = JsonEx.makeDeepCopy(target._buffTurns);
+
         // 使用効果を格納
+        // ※ここでバトラーの状態が書き換わってしまうので影響を受けないようにする。
         for (const effect of this.item().effects) {
-            this.applyItemEffectFast(tmpTarget, effect);
+            this.applyItemEffectFast(target, effect);
         }
+
+        // バトラーの状態を再上書
+        target._hp = keepHp;
+        target._mp = keepMp;
+        target._tp = keepTp;
+        target._states = keepStates;
+        target._stateTurns = keepStateTurns;
+        target._buffs = keepBuffs;
+        target._buffTurns = keepBuffTurns;
     }
+
+    // targetのresultは分離しておく。
+    // ※同じオブジェクトを参照させない。
+    target._result = new Game_ActionResult();
 
     // 結果を格納する。
     target._reservedResults.push(result);
@@ -458,15 +475,15 @@ Game_Action.prototype.apply = function(target) {
     this.subject().clearResult();
 
     if (result.isHit()) {
+        // 重複計算されるのでクリア
+        result.hpDamage = 0;
+        result.mpDamage = 0;
+        result.tpDamage = 0;
+
         if (this.item().damage.type > 0) {
             // 計算には使用しないが処理を実行する。
             // ※NRP_TraitsEX.jsの演出用など。
             this.makeDamageValue(target, result.critical);
-
-            // 重複計算されるのでクリア
-            result.hpDamage = 0;
-            result.mpDamage = 0;
-            result.tpDamage = 0;
 
             // 計算結果を再取得
             const value = result.reservedValue;
@@ -498,10 +515,41 @@ Game_Action.prototype.apply = function(target) {
             target.removeBuff(dataId);
         }
 
+        // ステート／バフ以外の使用効果を実行
+        // ※ステート／バフは事前計算済なので実行しない。
+        for (const effect of this.item().effects) {
+            if (!isStateEffect(effect)) {
+                this.applyItemEffect(target, effect);
+            }
+        }
         this.applyItemUserEffect(target);
     }
     this.updateLastTarget(target);
 };
+
+/**
+ * ●ステートおよぶバフの使用効果かどうか？
+ */
+function isStateEffect(effect) {
+    switch (effect.code) {
+        case Game_Action.EFFECT_RECOVER_HP:
+        case Game_Action.EFFECT_RECOVER_MP:
+        case Game_Action.EFFECT_GAIN_TP:
+            return false;
+        case Game_Action.EFFECT_ADD_STATE:
+        case Game_Action.EFFECT_REMOVE_STATE:
+        case Game_Action.EFFECT_ADD_BUFF:
+        case Game_Action.EFFECT_ADD_DEBUFF:
+        case Game_Action.EFFECT_REMOVE_BUFF:
+        case Game_Action.EFFECT_REMOVE_DEBUFF:
+            return true;
+        case Game_Action.EFFECT_SPECIAL:
+        case Game_Action.EFFECT_GROW:
+        case Game_Action.EFFECT_LEARN_SKILL:
+        case Game_Action.EFFECT_COMMON_EVENT:
+            return false;
+    }
+}
 
 /**
  * ●使用効果（ステート追加）
