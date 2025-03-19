@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Extends the substitute effect.
+ * @plugindesc v1.03 Extends the substitute effect.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_DynamicAnimationMZ
  * @url https://newrpg.seesaa.net/article/500482565.html
@@ -92,6 +92,12 @@
  * <SubstituteItem> / <SubstituteItem:false>
  * Performs substitution for items as well. (Off with false)
  * If omitted, the plugin parameter settings are used.
+ * 
+ * <SubstitutePriority:1>
+ * You can specify the priority
+ * when multiple substitution effects are triggered.
+ * The higher the number, the higher the priority.
+ * If not specified, it is treated as 0. Negative values are also valid.
  * 
  * ◆Counter Group
  * <CounterGroupInclude:attack>
@@ -228,7 +234,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 身代わりの効果を拡張する。
+ * @plugindesc v1.03 身代わりの効果を拡張する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_DynamicAnimationMZ
  * @url https://newrpg.seesaa.net/article/500482565.html
@@ -308,6 +314,11 @@
  * <SubstituteItem> / <SubstituteItem:false>
  * アイテムに対しても身代わりを実行します。（falseでオフ）
  * 省略時はプラグインパラメータの設定を使用します。
+ * 
+ * <SubstitutePriority:1>
+ * 複数の身代わり効果が発動した際の優先度を指定できます。
+ * 数字が大きいほうが優先されます。
+ * 指定がない場合は0として扱われます。マイナス値も有効です。
  * 
  * ◆反撃グループ
  * <CounterGroupInclude:attack>
@@ -609,7 +620,7 @@ Game_Battler.prototype.getSubstituteData = function(action, targets) {
             continue;
         }
 
-        // かばう実行！
+        // 身代わりデータを返す
         return makeSubstituteData(this, object)
     }
 
@@ -620,7 +631,7 @@ Game_Battler.prototype.getSubstituteData = function(action, targets) {
             return null;
         }
 
-        // かばう実行！
+        // 身代わりデータを返す
         return makeSubstituteData(this, null);
     }
 
@@ -640,6 +651,7 @@ function makeSubstituteData(battler, object) {
     substituteData.animationId = eval(checkMeta(pAnimationId, object, "SubstituteAnimationId"));
     substituteData.wait = eval(checkMeta(pWait, object, "SubstituteWait"));
     substituteData.hpRate = eval(checkMeta(pSubstituteHpRate, object, "SubstituteHpRate"));
+    substituteData.priority = eval(checkMeta(0, object, "SubstitutePriority"));
     return substituteData;
 }
 
@@ -822,13 +834,19 @@ Game_Action.prototype.getSubstituteData = function(targets) {
     
     // 対象と同サイドのユニットを取得
     const unit = targets[0].friendsUnit();
+    const substituteList = [];
 
     for (const battler of unit.members()) {
-        // バトラー毎に身代わりを実行できるか判定し、データを取得する。
+        // バトラー毎に身代わりを実行できるか判定し、候補となるデータを取得する。
         const substituteData = battler.getSubstituteData(this, targets);
         if (substituteData) {
-            return substituteData;
+            substituteList.push(substituteData);
         }
+    }
+
+    // 優先度が最大のデータを取得
+    if (substituteList.length > 0) {
+        return substituteList.reduce((a, b) => a.priority > b.priority ? a : b);
     }
 
     // 誰も身代わりできない場合
