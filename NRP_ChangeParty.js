@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.06 Implemented a party change screen.
+ * @plugindesc v1.07 Implemented a party change screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/500297653.html
  *
@@ -68,6 +68,18 @@
  * 
  * @command SceneStart
  * @desc Call the change party screen.
+ * 
+ * @-----------------------------------------------------
+ * 
+ * @command ChangeMaxBattleMembers
+ * @type number
+ * @desc Change the maximum number of battlers.
+ * AllowRelease should be turned on.
+ * 
+ * @arg MaxBattleMembers
+ * @type number
+ * @desc Maximum number of battlers.
+ * If blank, initialize (Default:4).
  * 
  * @-----------------------------------------------------
  * @ [Plugin Parameters]
@@ -158,7 +170,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.06 パーティ編成画面を実装。
+ * @plugindesc v1.07 パーティ編成画面を実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/500297653.html
  *
@@ -216,6 +228,19 @@
  * @command SceneStart
  * @text シーン開始
  * @desc パーティ編成画面を呼び出します。
+ * 
+ * @-----------------------------------------------------
+ * 
+ * @command ChangeMaxBattleMembers
+ * @text 最大戦闘人数の変更
+ * @desc 最大戦闘人数を変更します。
+ * 『戦闘メンバーの空白許可』はオンにしてください。
+ * 
+ * @arg MaxBattleMembers
+ * @text 最大戦闘人数
+ * @type number
+ * @desc 最大戦闘人数です。
+ * 空欄なら初期化（通常は４）します。
  * 
  * @-----------------------------------------------------
  * @ プラグインパラメータ
@@ -384,6 +409,14 @@ PluginManager.registerCommand(PLUGIN_NAME, "SceneStart", function(args) {
 
     // シーン開始
     SceneManager.push(Scene_ChangeParty);
+});
+
+/**
+ * ●最大戦闘人数を変更
+ */
+PluginManager.registerCommand(PLUGIN_NAME, "ChangeMaxBattleMembers", function(args) {
+    const maxBattleMembers = toNumber(args.MaxBattleMembers);
+    $gameParty.setMaxBattleMembers(maxBattleMembers);
 });
 
 //-----------------------------------------------------------------------------
@@ -1072,6 +1105,11 @@ Game_Party.prototype.setMenuActor = function(actor) {
  * 【独自】最大戦闘人数を設定する。
  */
 Game_Party.prototype.setMaxBattleMembers = function(no) {
+    // 数値が無効な場合はクリア
+    if (!no) {
+        this._maxBattleMembers = null;
+        return;
+    }
     this._maxBattleMembers = no;
 };
 
