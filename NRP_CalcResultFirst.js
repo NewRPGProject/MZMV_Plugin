@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.02 Perform the result calculation for the skill first.
+ * @plugindesc v1.03 Perform the result calculation for the skill first.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_TraitsPlus
  * @orderBefore NRP_TraitsEX
@@ -95,7 +95,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.02 スキルの結果計算を演出より先に実行する。
+ * @plugindesc v1.03 スキルの結果計算を演出より先に実行する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_TraitsPlus
  * @orderBefore NRP_TraitsEX
@@ -374,10 +374,6 @@ Game_Action.prototype.calcResultFirst = function(target) {
         const keepHp = target._hp;
         const keepMp = target._mp;
         const keepTp = target._tp;
-        const keepStates = JsonEx.makeDeepCopy(target._states);
-        const keepStateTurns = JsonEx.makeDeepCopy(target._stateTurns);
-        const keepBuffs = JsonEx.makeDeepCopy(target._buffs);
-        const keepBuffTurns = JsonEx.makeDeepCopy(target._buffTurns);
 
         // 使用効果を格納
         // ※ここでバトラーの状態が書き換わってしまうので影響を受けないようにする。
@@ -389,10 +385,6 @@ Game_Action.prototype.calcResultFirst = function(target) {
         target._hp = keepHp;
         target._mp = keepMp;
         target._tp = keepTp;
-        target._states = keepStates;
-        target._stateTurns = keepStateTurns;
-        target._buffs = keepBuffs;
-        target._buffTurns = keepBuffTurns;
     }
 
     // targetのresultは分離しておく。
@@ -603,6 +595,82 @@ Game_Battler.prototype.shiftReservedResult = function() {
  */
 Game_Battler.prototype.isDeadReserved = function() {
     return this._isDeadReserved;
+};
+
+/**
+ * ●ステートの追加
+ */
+const _Game_Battler_addState = Game_Battler.prototype.addState;
+Game_Battler.prototype.addState = function(stateId) {
+    // 予約計算時はaddNewStateをしない。
+    if (mReservedResult) {
+        if (this.isStateAddable(stateId)) {
+            // resultにだけ追加する。
+            this._result.pushAddedState(stateId);
+        }
+        return;
+    }
+    _Game_Battler_addState.apply(this, arguments);
+};
+
+/**
+ * ●ステートの除去
+ */
+const _Game_Battler_removeState = Game_Battler.prototype.removeState;
+Game_Battler.prototype.removeState = function(stateId) {
+    // 予約計算時はeraseStateをしない。
+    if (mReservedResult) {
+        if (this.isStateAffected(stateId)) {
+            this._result.pushRemovedState(stateId);
+        }
+        return;
+    }
+    _Game_Battler_removeState.apply(this, arguments);
+};
+
+/**
+ * ●バフの追加
+ */
+const _Game_Battler_addBuff = Game_Battler.prototype.addBuff;
+Game_Battler.prototype.addBuff = function(paramId, turns) {
+    // 予約計算時はincreaseBuffをしない。
+    if (mReservedResult) {
+        if (this.isAlive()) {
+            this._result.pushAddedBuff(paramId);
+        }
+        return;
+    }
+    _Game_Battler_addBuff.apply(this, arguments);
+};
+
+/**
+ * ●デバフを追加
+ */
+const _Game_Battler_addDebuff = Game_Battler.prototype.addDebuff;
+Game_Battler.prototype.addDebuff = function(paramId, turns) {
+    // 予約計算時はdecreaseBuffをしない。
+    if (mReservedResult) {
+        if (this.isAlive()) {
+            this._result.pushAddedDebuff(paramId);
+        }
+        return;
+    }
+    _Game_Battler_addDebuff.apply(this, arguments);
+};
+
+/**
+ * ●バフ／デバフを削除
+ */
+const _Game_Battler_removeBuff = Game_Battler.prototype.removeBuff;
+Game_Battler.prototype.removeBuff = function(paramId) {
+    // 予約計算時はeraseBuffをしない。
+    if (mReservedResult) {
+        if (this.isAlive() && this.isBuffOrDebuffAffected(paramId)) {
+            this._result.pushRemovedBuff(paramId);
+        }
+        return;
+    }
+    _Game_Battler_removeBuff.apply(this, arguments);
 };
 
 //-----------------------------------------------------------------------------
