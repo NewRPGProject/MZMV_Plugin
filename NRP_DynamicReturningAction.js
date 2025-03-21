@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Action during the return of DynamicMotion
+ * @plugindesc v1.021 Action during the return of DynamicMotion
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicMotionMZ
  * @url https://newrpg.seesaa.net/article/499269749.html
@@ -75,7 +75,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 DynamicMotionの帰還中に行動
+ * @plugindesc v1.021 DynamicMotionの帰還中に行動
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicMotionMZ
  * @url https://newrpg.seesaa.net/article/499269749.html
@@ -216,7 +216,7 @@ BattleManager.invokeAction = function(subject, target) {
     // 行動主体のスプライトを取得
     const sprite = getBattlerSprite(this._subject);
     // スプライトが既に定位置にいる場合は処理しない。
-    if (sprite._offsetX == 0 && sprite._offsetY == 0) {
+    if (sprite.inHomePosition()) {
         return;
     }
 
@@ -241,7 +241,7 @@ Sprite.prototype.onDynamicMoveEnd = function() {
     }
 
     // 移動が終了かつ帰還中のバトラーが存在する場合
-    if (this._offsetX == 0 && this._offsetY == 0 && mReturningBattlers) {
+    if (this.inHomePosition() && mReturningBattlers) {
         // 配列から除去する。
         mReturningBattlers = mReturningBattlers.filter(battler => battler != this._battler);
     }
@@ -252,6 +252,18 @@ Sprite.prototype.onDynamicMoveEnd = function() {
 // ----------------------------------------------------------------------------
 
 /**
+ * ●ホームポジションの判定
+ */
+const _Sprite_Battler_inHomePosition = Sprite_Battler.prototype.inHomePosition;
+Sprite_Battler.prototype.inHomePosition = function() {
+    // DynamicMotionの空中Ｙ座標も参照する。
+    if (this._airY) {
+        return false;
+    }
+    return _Sprite_Battler_inHomePosition.apply(this, arguments);
+};
+
+/**
  * ●移動終了時
  */
 const _Sprite_Battler_onMoveEnd = Sprite_Battler.prototype.onMoveEnd;
@@ -259,7 +271,7 @@ Sprite_Battler.prototype.onMoveEnd = function() {
     _Sprite_Battler_onMoveEnd.apply(this, arguments);
 
     // 移動が終了かつ帰還中のバトラーが存在する場合
-    if (this._offsetX == 0 && this._offsetY == 0 && mReturningBattlers) {
+    if (this.inHomePosition() && mReturningBattlers) {
         // 配列から除去する。
         mReturningBattlers = mReturningBattlers.filter(battler => battler != this._battler);
     }
@@ -531,7 +543,7 @@ if (pWaitRegeneration) {
     Sprite_Damage.prototype.update = function() {
         // 帰還が終わるまで待つ。
         if (this._isRegenerationWait) {
-            if (this._spriteBattler.isReturning()) {
+            if (this.isReturningWait()) {
                 return;
             }
             // 帰還終了ならば表示開始
@@ -544,6 +556,17 @@ if (pWaitRegeneration) {
         }
 
         _Sprite_Damage_update.apply(this, arguments);
+    };
+
+    /**
+     * 【独自】帰還待ちの場合
+     * ※外部プラグインからの参照を想定
+     */
+    Sprite_Damage.prototype.isReturningWait = function() {
+        if (this._spriteBattler.isReturning()) {
+            return true;
+        }
+        return false;
     };
 }
 
