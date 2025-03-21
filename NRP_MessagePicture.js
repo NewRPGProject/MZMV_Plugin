@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.081 Display a picture when showing text.
+ * @plugindesc v1.09 Display a picture when showing text.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -111,6 +111,11 @@
  * @param PictureList
  * @type struct<Picture>[]
  * @desc List of pictures to be displayed.
+ * 
+ * @param DifferencePreload
+ * @type boolean
+ * @default true
+ * @desc When a picture is displayed, other difference pictures are also pre-loaded.
  * 
  * @param <PictureSetting>
  * 
@@ -396,7 +401,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.081 文章の表示時に立ち絵を表示する。
+ * @plugindesc v1.09 文章の表示時に立ち絵を表示する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -505,6 +510,12 @@
  * @text ピクチャリスト
  * @type struct<Picture>[]
  * @desc 立ち絵の表示を行うピクチャの一覧です。
+ * 
+ * @param DifferencePreload
+ * @text 差分を事前読込
+ * @type boolean
+ * @default true
+ * @desc 立ち絵のピクチャ表示時に他の差分ピクチャも事前読込します。
  * 
  * @param <PictureSetting>
  * @text ＜ピクチャ設定＞
@@ -864,6 +875,7 @@ function parseStruct2(arg) {
 const PLUGIN_NAME = "NRP_MessagePicture";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pPictureList = parseStruct2(parameters["PictureList"]);
+const pDifferencePreload = toBoolean(parameters["DifferencePreload"]);
 let pPictureId = toNumber(parameters["PictureId"]);
 const pOrigin = parameters["Origin"];
 const pX = parameters["X"];
@@ -1046,10 +1058,26 @@ Game_Screen.prototype.showMessagePicture = function(
         picture._fadeGradient = toNumber(pictureData.FadeGradient);
     }
 
-    // 差分ピクチャが存在する場合、事前にロードしておく。
+    // 付属ピクチャが存在する場合、事前にロードしておく。
     if (attachedPictures) {
         for (const diffPicture of attachedPictures) {
             ImageManager.loadPicture(diffPicture);
+        }
+    }
+
+    // 差分ピクチャが存在する場合、事前にロードしておく。
+    if (pDifferencePreload) {
+        const differenceList = parseStruct2(pictureData.DifferenceList);
+        for (const diff of differenceList) {
+            if (diff.Picture) {
+                ImageManager.loadPicture(diff.Picture);
+            }
+            if (diff.AttachedPictures) {
+                const attachedPictures = JSON.parse(diff.AttachedPictures);
+                for (const diffPicture of attachedPictures) {
+                    ImageManager.loadPicture(diffPicture);
+                }
+            }
         }
     }
 };
