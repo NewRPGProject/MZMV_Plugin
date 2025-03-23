@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.10 Chain skills together.
+ * @plugindesc v1.101 Chain skills together.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -256,7 +256,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.10 スキルを連結する。
+ * @plugindesc v1.101 スキルを連結する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -781,8 +781,8 @@ function goChainSkill(object, passiveFlg) {
     //---------------------------------------
 
     // 発動したオブジェクトを保持
-    mChainedObjects.push(object);
     if (pDisableSameSkill) {
+        mChainedObjects.push(object);
         mChainedSkillIds.push(chainSkillId);
     }
 
