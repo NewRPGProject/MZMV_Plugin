@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Change the event's passage determination.
+ * @plugindesc v1.021 Change the event's passage determination.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_EventCollisionEX
  * @url http://newrpg.seesaa.net/article/486134190.html
@@ -151,7 +151,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 イベントの通行判定を変更します。
+ * @plugindesc v1.021 イベントの通行判定を変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_EventCollisionEX
  * @url http://newrpg.seesaa.net/article/486134190.html
@@ -462,8 +462,8 @@ Game_CharacterBase.prototype.isMapPassable = function(x, y, d) {
         }
 
         // 未指定ならば、通常の判定を参照
-        passable1 = passable1 ?? $gameMap.isPassable(x, y, d);
-        passable2 = passable2 ?? $gameMap.isPassable(x2, y2, this.reverseDir(d));
+        passable1 = passable1 ? passable1 : $gameMap.isPassable(x, y, d);
+        passable2 = passable2 ? passable2 : $gameMap.isPassable(x2, y2, this.reverseDir(d));
         return passable1 && passable2;
     }
     
