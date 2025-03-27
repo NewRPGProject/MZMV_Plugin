@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.03 Perform the result calculation for the skill first.
+ * @plugindesc v1.04 Perform the result calculation for the skill first.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_TraitsPlus
  * @orderBefore NRP_TraitsEX
@@ -69,6 +69,11 @@
  * 
  * - Game_Action.prototype.apply
  * 
+ * Also, this plug-in must be used in combination
+ * with NRP_CalcResultFirstAfter.js.
+ * Please place NRP_CalcResultFirstAfter.js
+ * near the bottom of the plugin list.
+ * 
  * -------------------------------------------------------------------
  * [Terms]
  * -------------------------------------------------------------------
@@ -95,7 +100,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.03 スキルの結果計算を演出より先に実行する。
+ * @plugindesc v1.04 スキルの結果計算を演出より先に実行する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_TraitsPlus
  * @orderBefore NRP_TraitsEX
@@ -155,6 +160,10 @@
  * 該当の関数に追記するプラグインより上に配置する必要があります。
  * 
  * Game_Action.prototype.apply
+ * 
+ * また、当プラグインはNRP_CalcResultFirstAfter.jsと
+ * セットで使う必要があります。
+ * NRP_CalcResultFirstAfter.jsをプラグイン一覧の下側に配置してください。
  * 
  * -------------------------------------------------------------------
  * ■利用規約
@@ -286,22 +295,13 @@ BattleManager.pushReservedResults = function(result) {
 let mReservedResult = false;
 
 /**
- * ●スキルの対象決定
- * ※この段階で対象毎のダメージ計算を行う。
+ * 【独自】スキルの対象決定後に対象毎のダメージ計算を行う。
+ * ※NRP_CalcResultFirstAfter.jsから呼び出される。
  */
-const _Game_Action_makeTargets = Game_Action.prototype.makeTargets;
-Game_Action.prototype.makeTargets = function() {
+Game_Action.prototype.makeTargetsResultFirst = function(targets) {
     // 予約結果をクリア
     BattleManager.clearReservedResults();
     BattleManager._action = this;
-
-    let targets = _Game_Action_makeTargets.apply(this, arguments);
-
-    // かばう判定は先に実行する。
-    // ※NRP_Substitute.jsとの連携用
-    if (this.makeSubstituteTargets) {
-        targets = this.makeSubstituteTargets(targets);
-    }
 
     // 重複ターゲットを削除して再作成
     for (const member of BattleManager.allBattleMembers()) {
