@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.071 Extend the effect of the skill.
+ * @plugindesc v1.072 Extend the effect of the skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -161,7 +161,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.071 スキルの効果を拡張します。
+ * @plugindesc v1.072 スキルの効果を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -505,7 +505,7 @@ Game_Action.prototype.itemEffectAddNormalState = function(target, effect) {
         const keepEffectValue1 = effect.value1;
         // eval計算用
         const a = this.subject();
-        const b = mTarget;
+        const b = target;
 
         // 一時的にステート付加率を書き換え
         effect.value1 = eval(stateRate) / 100;
@@ -530,7 +530,7 @@ Game_Action.prototype.calcElementRate = function(target) {
         const keepElementId = this.item().damage.elementId;
         // eval計算用
         const a = this.subject();
-        const b = mTarget;
+        const b = target;
 
         // 一時的に属性ＩＤを書き換え
         this.item().damage.elementId = Number(eval(changeElement));
@@ -566,7 +566,7 @@ Game_Action.prototype.itemCri = function(target) {
     const ret = _Game_Action_itemCri.apply(this, arguments);
     // eval参照用
     const a = this.subject();
-    const b = mTarget;
+    const b = target;
 
     // 会心率を加算する場合
     const addCriticalRate = this.item().meta.AddCriticalRate;
