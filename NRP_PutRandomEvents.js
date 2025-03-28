@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.05 Placement automation for symbol encounters.
+ * @plugindesc v1.051 Placement automation for symbol encounters.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base TemplateEvent
  * @base EventReSpawn
@@ -237,7 +237,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.05 シンボルエンカウントの配置自動化。
+ * @plugindesc v1.051 シンボルエンカウントの配置自動化。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base TemplateEvent
  * @base EventReSpawn
@@ -929,7 +929,7 @@ function searchGrid(event, x, y, d, cost, coordinates, originalArgs) {
     // 既に現在値以上の残コストが入っている場合
     // または-1（移動不可）の場合は終了
     if (coordinates[x][y] >= cost || coordinates[x][y] == -1) {
-        return;
+        return false;
 
     // 移動可能の場合
     } else if (isPassable(event, x, y, d)) {
@@ -1109,10 +1109,21 @@ function getAutotileType(tileId) {
  * ●イベントが通行可能な地点かを確認
  */
 function isPassable(event, x, y, d) {
-    if (pCheckEventCollision) {
-        return event.isThrough() || event.canPass(x, y, d);
+    // 方角dの指定がある場合は元の座標を取得し、その方角への判定を確認
+    if (d) {
+        const d2 = event.reverseDir(d);
+        const x2 = $gameMap.roundXWithDirection(x, d2);
+        const y2 = $gameMap.roundYWithDirection(y, d2);
+        if (pCheckEventCollision) {
+            return event.isThrough() || event.canPass(x2, y2, d);
+        }
+        return event.isThrough() || event.isMapPassable(x2, y2, d);
     }
-    return event.isThrough() || event.isMapPassable(x, y, d);
+
+    if (pCheckEventCollision) {
+        return event.isThrough() || event.canPass(x, y);
+    }
+    return event.isThrough() || event.isMapPassable(x, y);
 }
 
 /**
