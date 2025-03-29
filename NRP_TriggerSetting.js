@@ -3,14 +3,13 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v2.01 Adjusted the behavior of event triggers.
+ * @plugindesc v2.02 Adjusted the behavior of event triggers.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/489139124.html
  * @orderAfter NRP_EventCollisionEX
  *
  * @help Adjusted the behavior of event triggers.
  * 
- * The two functions are as follows.
  * Switching by plugin parameters is also possible.
  * 
  * -------------------------------------------------------------------
@@ -70,9 +69,13 @@
  * on at the same time as “Disable Decision Touch”.
  * 
  * -------------------------------------------------------------------
- * [Usage]
+ * [Plugin Command]
  * -------------------------------------------------------------------
- * Simply enable the plugin.
+ * ◆CheckStepsEvent
+ * Check if the player is moving
+ * and in contact with the event underfoot.
+ * If the condition is met, the designated switch is turned on.
+ * Otherwise, it is turned off.
  * 
  * -------------------------------------------------------------------
  * [Terms]
@@ -82,6 +85,17 @@
  * and rights indication are also optional.
  * The author is not responsible,
  * but will deal with defects to the extent possible.
+ * 
+ * @------------------------------------------------------------------
+ * @ Plugin Command
+ * @------------------------------------------------------------------
+ * 
+ * @command CheckStepsEvent
+ * @desc Check to see if the player is in contact with the event at his feet and turn on the switch.
+ * 
+ * @arg Switch
+ * @type switch
+ * @desc This is a switch that turns on. If the condition is not met, it is turned off.
  * 
  * @-----------------------------------------------------
  * @ Plugin Parameters
@@ -108,14 +122,13 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.01 イベントトリガーの挙動を調整。
+ * @plugindesc v2.02 イベントトリガーの挙動を調整。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/489139124.html
  * @orderAfter NRP_EventCollisionEX
  *
  * @help イベントトリガーの挙動を調整します。
  * 
- * 機能は以下の２つです。
  * プラグインパラメータによる切り替えも可能です。
  * 
  * -------------------------------------------------------------------
@@ -168,11 +181,31 @@
  * 仕様上、決定ボタンによる接触無効と同時にオンにしたほうが自然です。
  * 
  * -------------------------------------------------------------------
+ * ■プラグインコマンド
+ * -------------------------------------------------------------------
+ * ◆足元イベントの確認
+ * プレイヤーが移動中かつ足元のイベントに接触しているかどうかを確認し、
+ * 指定のスイッチをオンにします。
+ * 
+ * -------------------------------------------------------------------
  * ■利用規約
  * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
+ * 
+ * @------------------------------------------------------------------
+ * @ プラグインコマンド
+ * @------------------------------------------------------------------
+ * 
+ * @command CheckStepsEvent
+ * @text 足元イベントの確認
+ * @desc プレイヤーが移動中かつ足元のイベントに接触しているかどうかを確認し、指定のスイッチをオンにします。
+ * 
+ * @arg Switch
+ * @text スイッチ
+ * @type switch
+ * @desc プレイヤーが足元のイベントに接触しているとオンにするスイッチです。条件を満たさない場合はオフになります。
  * 
  * @-----------------------------------------------------
  * @ プラグインパラメータ
@@ -223,6 +256,58 @@ const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pStrictEventTouch = toNumber(parameters["StrictEventTouch"]);
 const pDisableDecisionTouch = toBoolean(parameters["DisableDecisionTouch"]);
 const pDisableThroughCollision = toBoolean(parameters["DisableThroughCollision"]);
+
+// ----------------------------------------------------------------------------
+// ＭＺ用プラグインコマンド
+// ----------------------------------------------------------------------------
+
+// MVには存在しないため、空で定義しておかないとエラーになる。
+if (!PluginManager.registerCommand) {
+    PluginManager.registerCommand = function() {}
+}
+
+/**
+ * ●足元イベントの確認
+ */
+PluginManager.registerCommand(PLUGIN_NAME, "CheckStepsEvent", function(args) {
+    const switchNo = toNumber(args.Switch);
+
+    // プレイヤーが移動中でない場合はオフ
+    if (!$gamePlayer.isMoving()) {
+        $gameSwitches.setValue(switchNo, false);
+        return;
+    }
+
+    // プレイヤーの足元イベント（複数）を確認
+    const events = $gameMap.eventsXy($gamePlayer.x, $gamePlayer.y);
+    if (events.length > 0) {
+        // 有効なイベントを確認
+        // イベントコマンドが存在する。
+        const event = events.find(event => isTargetEvent(event));
+        if (event) {
+            $gameSwitches.setValue(switchNo, true);
+            return;
+        }
+    }
+    $gameSwitches.setValue(switchNo, false);
+});
+
+/**
+ * ●接触対象となるイベントかどうか？
+ */
+function isTargetEvent(event) {
+    // すり抜けではない。
+    // トリガーが接触系である。
+    // 出現条件を満たしている。
+    // 実行内容が存在する。
+    if (!event.isThrough()
+            && (event._trigger == 1 || event._trigger == 2)
+            && event.page()
+            && event.list().length > 1) {
+        return true;
+    }
+    return false;
+}
 
 // ----------------------------------------------------------------------------
 // イベントから接触を厳密に
