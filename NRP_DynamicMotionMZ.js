@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.26 When executing skills, call motion freely.
+ * @plugindesc v1.261 When executing skills, call motion freely.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -566,7 +566,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.26 スキル実行時、自在にモーションを呼び出す。
+ * @plugindesc v1.261 スキル実行時、自在にモーションを呼び出す。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -1496,6 +1496,28 @@ BaseMotion.prototype.setContent = function (valueLine) {
         return;
     }
 
+    // パラメータを取得（&=時）
+    index = valueLine.indexOf("&=");
+    if (index >= 0) {
+        paramType = valueLine.slice(0, index).trim();
+        // =以降をevalする。
+        paramValue = valueLine.slice(index + 2).trim();
+        // プロパティに文字列連結する。
+        this[paramType] = this[paramType] + " && " + paramValue;
+        return;
+    }
+
+    // パラメータを取得（|=時）
+    index = valueLine.indexOf("|=");
+    if (index >= 0) {
+        paramType = valueLine.slice(0, index).trim();
+        // =以降をevalする。
+        paramValue = valueLine.slice(index + 2).trim();
+        // プロパティに文字列連結する。
+        this[paramType] = this[paramType] + " || " + paramValue;
+        return;
+    }
+
     // パラメータを取得（=時）
     index = valueLine.indexOf("=");
     if (index >= 0) {
@@ -2205,9 +2227,20 @@ DynamicMotion.prototype.initialize = function (baseMotion, performer, target, in
     if (condition && !eval(condition)) {
         // 条件を満たさない場合でもタイミングを取る。
         if (toBoolean(baseMotion.useConditionDelay)) {
+            // 所要時間
+            // フレーム指定
+            if (baseMotion.frame != undefined) {
+                this.duration = eval(baseMotion.frame) * baseMotion.rate;
+            // 1/60指定
+            } else if (baseMotion.duration != undefined) {
+                this.duration = eval(baseMotion.duration);
+            // 既定値
+            } else if (baseMotion.isUseDuration()) {
+                this.duration = pDefaultDuration;
+            }
+            this.maxDuration = nvl(this.duration);
             return;
         }
-
         // 表示しない
         this.maxDuration = 0;
         this.isNoMatchCondition = true;

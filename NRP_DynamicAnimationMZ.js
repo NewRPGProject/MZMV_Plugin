@@ -4,7 +4,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.24 Automate & super-enhance battle animations.
+ * @plugindesc v1.241 Automate & super-enhance battle animations.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -550,7 +550,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.24 戦闘アニメーションを自動化＆超強化します。
+ * @plugindesc v1.241 戦闘アニメーションを自動化＆超強化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/477190310.html
  *
@@ -1862,6 +1862,28 @@ BaseAnimation.prototype.setContent = function (valueLine) {
         return;
     }
 
+    // パラメータを取得（&=時）
+    index = valueLine.indexOf("&=");
+    if (index >= 0) {
+        paramType = valueLine.slice(0, index).trim();
+        // =以降をevalする。
+        paramValue = valueLine.slice(index + 2).trim();
+        // プロパティに文字列連結する。
+        this[paramType] = this[paramType] + " && " + paramValue;
+        return;
+    }
+
+    // パラメータを取得（|=時）
+    index = valueLine.indexOf("|=");
+    if (index >= 0) {
+        paramType = valueLine.slice(0, index).trim();
+        // =以降をevalする。
+        paramValue = valueLine.slice(index + 2).trim();
+        // プロパティに文字列連結する。
+        this[paramType] = this[paramType] + " || " + paramValue;
+        return;
+    }
+    
     // パラメータを取得（=時）
     index = valueLine.indexOf("=");
     if (index >= 0) {
@@ -2666,6 +2688,9 @@ DynamicAnimation.prototype.initialize = function(baseAnimation, target, index) {
 
         // 条件を満たさない場合でもタイミングを取る。
         if (toBoolean(baseAnimation.useConditionDelay)) {
+            const duration = spriteAnimation._duration - 1;
+            this.frame = duration / this.rate;
+            this.duration = duration;
             return;
         }
 
