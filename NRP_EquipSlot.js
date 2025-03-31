@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.12 Change the equipment slots at will.
+ * @plugindesc v1.13 Change the equipment slots at will.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489626316.html
  *
@@ -171,7 +171,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.12 装備スロットを自由に変更。
+ * @plugindesc v1.13 装備スロットを自由に変更。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489626316.html
  * 
@@ -800,6 +800,42 @@ Game_BattlerBase.prototype.isEquipUnique = function(item, slotId) {
         }
     }
     return false;
+};
+
+//-----------------------------------------------------------------------------
+// スキル習得時の調整
+//-----------------------------------------------------------------------------
+
+/**
+ * ●スキルを覚える
+ */
+const _Game_Actor_learnSkill = Game_Actor.prototype.learnSkill;
+Game_Actor.prototype.learnSkill = function(skillId) {
+    _Game_Actor_learnSkill.apply(this, arguments);
+
+    if (skillId) {
+        const dataSkill = $dataSkills[skillId];
+        // スロット情報が変更された場合はリフレッシュ
+        if (dataSkill.meta.AddEquipSlot) {
+            this.refresh();
+        }
+    }
+};
+
+/**
+ * ●スキルを忘れる
+ */
+const _Game_Actor_forgetSkill = Game_Actor.prototype.forgetSkill;
+Game_Actor.prototype.forgetSkill = function(skillId) {
+    _Game_Actor_forgetSkill.apply(this, arguments);
+
+    if (skillId) {
+        const dataSkill = $dataSkills[skillId];
+        // スロット情報が変更された場合はリフレッシュ
+        if (dataSkill.meta.AddEquipSlot) {
+            this.refresh();
+        }
+    }
 };
 
 //-----------------------------------------------------------------------------
