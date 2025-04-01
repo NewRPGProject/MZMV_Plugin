@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.073 Extend the effect of the skill.
+ * @plugindesc v1.074 Extend the effect of the skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -161,7 +161,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.073 スキルの効果を拡張します。
+ * @plugindesc v1.074 スキルの効果を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -332,6 +332,9 @@ function setDefault(str, def) {
 const PLUGIN_NAME = "NRP_SkillEX";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 
+// NRP_CalcResultFirstが登録されている場合
+const mIsCalcResultFirst = PluginManager._scripts.some(name => name == "NRP_CalcResultFirst");
+
 // ----------------------------------------------------------------------------
 // BattleManager
 // ----------------------------------------------------------------------------
@@ -458,27 +461,31 @@ Game_Action.prototype.apply = function(target) {
         this.makeSuccess(target);
     }
 
-    // 追加ステートの指定がなければ終了
-    const addState = this.item().meta.AddState;
-    if (!addState) {
-        return;
-    }
-    const stateId = eval(addState);
-    // 計算結果が０ならば終了
-    if (!stateId) {
-        return;
-    }
+    // 追加ステートの処理
+    // ※NRP_CalcResultFirst.jsと併用する場合はここでは処理しない。
+    if (!mIsCalcResultFirst) {
+        // 追加ステートの指定がなければ終了
+        const addState = this.item().meta.AddState;
+        if (!addState) {
+            return;
+        }
+        const stateId = eval(addState);
+        // 計算結果が０ならば終了
+        if (!stateId) {
+            return;
+        }
 
-    // AddStateRateの値を100で割ってから計算。
-    let chance = this.item().meta.AddStateRate ? this.item().meta.AddStateRate : 100;
-    chance = eval(chance) / 100;
-    if (!this.isCertainHit()) {
-        chance *= target.stateRate(stateId);
-        chance *= this.lukEffectRate(target);
-    }
-    if (Math.random() < chance) {
-        target.addState(stateId);
-        this.makeSuccess(target);
+        // AddStateRateの値を100で割ってから計算。
+        let chance = this.item().meta.AddStateRate ? this.item().meta.AddStateRate : 100;
+        chance = eval(chance) / 100;
+        if (!this.isCertainHit()) {
+            chance *= target.stateRate(stateId);
+            chance *= this.lukEffectRate(target);
+        }
+        if (Math.random() < chance) {
+            target.addState(stateId);
+            this.makeSuccess(target);
+        }
     }
 }
 
@@ -499,7 +506,33 @@ Game_Action.prototype.testApply = function(target) {
  */
 const _Game_Action_calcResultFirst = Game_Action.prototype.calcResultFirst;
 Game_Action.prototype.calcResultFirst = function(target) {
+    const keepEffects = this.item().effects;
+
+    // 追加ステートの指定がある場合
+    const addState = this.item().meta.AddState;
+    if (addState) {
+        const stateId = eval(addState);
+        if (stateId) {
+            // AddStateRateの値を100で割ってから計算。
+            let chance = this.item().meta.AddStateRate ? this.item().meta.AddStateRate : 100;
+            chance = eval(chance) / 100;
+
+            // effectsに追加する。
+            const effect = {code: Game_Action.EFFECT_ADD_STATE, dataId: stateId, value1: chance};
+            const effects = [];
+            for (const e of this.item().effects) {
+                effects.push(e);
+            }
+            effects.push(effect);
+            this.item().effects = effects;
+        }
+    }
+
     _Game_Action_calcResultFirst.apply(this, arguments);
+
+    // effectsを元に戻す。
+    this.item().effects = keepEffects;
+
     // 対象番号加算
     targetNo++;
 };
