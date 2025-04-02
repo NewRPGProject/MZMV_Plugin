@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.39 Creates a combination skill.
+ * @plugindesc v1.391 Creates a combination skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/474570191.html
  * 
@@ -166,7 +166,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.39 合体技を実現します。
+ * @plugindesc v1.391 合体技を実現します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/474570191.html
  *
@@ -452,24 +452,24 @@ function toBoolean(val, def) {
     return val.toLowerCase() == "true";
 }
 
-var parameters = PluginManager.parameters("NRP_CombinationSkill");
-var pReactionState = toNumber(parameters["reactionState"]);
-var pAndLetter = parameters["andLetter"];
-var pPartySkillActor = toNumber(parameters["partySkillActor"]);
-var pCombinationSymbol = parameters["combinationSymbol"];
-var pCombinationName = parameters["combinationName"];
-var pShowPartyCommand = toBoolean(parameters["showPartyCommand"], false);
-var pShowPartyCommandPosition = toNumber(parameters["showPartyCommandPosition"], 1);
-var pShowMenuCommand = toBoolean(parameters["showMenuCommand"], false);
-var pShowMenuCommandPosition = toNumber(parameters["showMenuCommandPosition"], 2);
-var pHidePartyCommandSwitch = parameters["hidePartyCommandSwitch"];
-var pHideMenuCommandSwitch = parameters["hideMenuCommandSwitch"];
-var pInvalidCondition = parseStruct1(parameters["invalidCondition"]);
+const parameters = PluginManager.parameters("NRP_CombinationSkill");
+const pReactionState = toNumber(parameters["reactionState"]);
+const pAndLetter = parameters["andLetter"];
+const pPartySkillActor = toNumber(parameters["partySkillActor"]);
+const pCombinationSymbol = parameters["combinationSymbol"];
+const pCombinationName = parameters["combinationName"];
+const pShowPartyCommand = toBoolean(parameters["showPartyCommand"], false);
+const pShowPartyCommandPosition = toNumber(parameters["showPartyCommandPosition"], 1);
+const pShowMenuCommand = toBoolean(parameters["showMenuCommand"], false);
+const pShowMenuCommandPosition = toNumber(parameters["showMenuCommandPosition"], 2);
+const pHidePartyCommandSwitch = parameters["hidePartyCommandSwitch"];
+const pHideMenuCommandSwitch = parameters["hideMenuCommandSwitch"];
+const pInvalidCondition = parseStruct1(parameters["invalidCondition"]);
 
 /**
  * ●スキルを使用可能か
  */
-var _Game_BattlerBase_canUse = Game_BattlerBase.prototype.canUse;
+const _Game_BattlerBase_canUse = Game_BattlerBase.prototype.canUse;
 Game_BattlerBase.prototype.canUse = function(item) {
     if (!item) {
         return false;
@@ -493,7 +493,7 @@ Game_BattlerBase.prototype.canUse = function(item) {
  * ●合体技の使用条件を満たすかどうか？
  */
 function canUseCombinationSkill(subject, item) {
-    var csMembers = getCombinationMembers(item, subject);
+    const csMembers = getCombinationMembers(item, subject);
 
     // 空ならば実行不可
     if (!csMembers || csMembers.length == 0) {
@@ -501,7 +501,7 @@ function canUseCombinationSkill(subject, item) {
     }
 
     // 参加者毎に使用可否を判定
-    for (var member of csMembers) {
+    for (const member of csMembers) {
         // 参加者が存在しない場合
         if (!member || !member.isBattleMember()) {
             return false;
@@ -587,7 +587,7 @@ Game_BattlerBase.prototype.isCombinationSeal = function(mainUser) {
  */
 function canUseCombinationItem(subject, item) {
     // 参加者毎に使用可否を判定
-    for (var member of getCombinationMembers(item, subject)) {
+    for (const member of getCombinationMembers(item, subject)) {
         // 参加者が存在しない場合
         if (!member) {
             return false;
@@ -1002,15 +1002,15 @@ let mCombinationRestriction = false;
  * ※同一ＩＤの別キャラを考慮
  */
 function getCombinationEnemys(csEnemysMeta, subject, skill) {
-    var members = [];
+    let members = [];
 
     // 配列化
-    var enemysId = csEnemysMeta.split(",");
+    const enemysId = csEnemysMeta.split(",");
     for (let i = 0; i < enemysId.length; i++) {
-        var enemyId = convertValue(enemysId[i]);
+        const enemyId = convertValue(enemysId[i]);
 
         // まず行動主体と一致するバトラーを優先追加
-        var enemy = $gameTroop.aliveMembers().find(function(m) {
+        let enemy = $gameTroop.aliveMembers().find(function(m) {
             return members.indexOf(m) == -1 // リストに未追加
                 && m.enemyId() == enemyId   // ＩＤが一致
                 && m == subject;            // 行動主体に一致
@@ -1030,7 +1030,7 @@ function getCombinationEnemys(csEnemysMeta, subject, skill) {
 
             mCombinationRestriction = true;
             // 使用不可
-            if (!m.meetsSkillConditions(skill)) {
+            if (!m.meetsSkillConditions(skill) || m.isRestricted()) {
                 mCombinationRestriction = false;
                 return false;
             }
