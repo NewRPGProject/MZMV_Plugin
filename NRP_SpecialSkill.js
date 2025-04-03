@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.051 Implementation of the special skill system.
+ * @plugindesc v1.06 Implementation of the special skill system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_CountTimeBattle
  * @url https://newrpg.seesaa.net/article/489968387.html
@@ -195,6 +195,11 @@
  * @type boolean
  * @default false
  * @desc Multiple attacks on the same target, such as a series of techniques, do not accumulate ActionValue.
+ * 
+ * @param NoMultipleCriticalBonus
+ * @type boolean
+ * @default false
+ * @desc The gauge increase value for critical hits will not be duplicated in multi-hit skills.
  * 
  * @param MultipleAttenuation
  * @type string
@@ -446,7 +451,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.051 奥義システムの実装。
+ * @plugindesc v1.06 奥義システムの実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_CountTimeBattle
  * @url https://newrpg.seesaa.net/article/489968387.html
@@ -632,6 +637,12 @@
  * @type boolean
  * @default false
  * @desc 多段技などで同一の対象に複数攻撃を当てても、行動毎の上昇値が溜まらないようにします。
+ * 
+ * @param NoMultipleCriticalBonus
+ * @text 会心ボーナスは重複しない
+ * @type boolean
+ * @default false
+ * @desc 複数ヒットするスキルにて、会心時のゲージ上昇値が重複しないようにします。
  * 
  * @param MultipleAttenuation
  * @text 複数ヒット時に減衰
@@ -972,6 +983,7 @@ const pRecoverGauge = toBoolean(parameters["RecoverGauge"], false);
 const pPlusOnlyHit = toBoolean(parameters["PlusOnlyHit"], false);
 const pNotPlusWhenUsed = toBoolean(parameters["NotPlusWhenUsed"], false);
 const pNotPlusSameTarget = toBoolean(parameters["NotPlusSameTarget"], false);
+const pNoMultipleCriticalBonus = toBoolean(parameters["NoMultipleCriticalBonus"], false);
 const pMultipleAttenuation = parameters["MultipleAttenuation"];
 const pWaitChargedAnimation = toBoolean(parameters["WaitChargedAnimation"], true);
 const pChargedAnimationInterval = toNumber(parameters["GaugeInterval"], 0);
@@ -1009,6 +1021,8 @@ let mTargetIndexes = [];
 let mChargeList = [];
 // チャージアニメーションの管理用
 let mChargeCount = 0;
+// 会心ヒットの管理用
+let mCriticalHit = false;
 
 //-----------------------------------------------------------------------------
 // プラグインコマンド
@@ -1236,6 +1250,7 @@ const _Game_Battler_performActionStart = Game_Battler.prototype.performActionSta
 Game_Battler.prototype.performActionStart = function(action) {
     // 対象クリア
     mTargetIndexes = [];
+    mCriticalHit = false;
 
     _Game_Battler_performActionStart.apply(this, arguments);
 };
@@ -1523,10 +1538,14 @@ Game_Action.prototype.specialGaugeAfterApply = function(target) {
 
         subject.addSpecialGauge(i, value);
         // 会心ボーナス
-        if (result.critical) {
+        if (!mCriticalHit && result.critical) {
             const gaugeData = getSpecialGaugeData(i);
             if (gaugeData.CriticalValue) {
                 subject.addSpecialGauge(i, eval(gaugeData.CriticalValue));
+            }
+            // 会心ボーナスの重複禁止
+            if (pNoMultipleCriticalBonus) {
+                mCriticalHit = true;
             }
         }
     }
