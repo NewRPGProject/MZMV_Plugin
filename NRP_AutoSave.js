@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Execute Autosave at will.
+ * @plugindesc v1.01 Execute Autosave at will.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/503148042.html
  *
@@ -64,7 +64,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 オートセーブを任意に実行する。
+ * @plugindesc v1.01 オートセーブを任意に実行する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/503148042.html
  *
@@ -167,7 +167,12 @@ if (!PluginManager.registerCommand) {
  * ●オートセーブ実行
  */
 PluginManager.registerCommand(PLUGIN_NAME, "AutoSave", function(args) {
+    // 通常セーブと異なり、この時点ではGame_Interpreterのindexが加算されていない。
+    // その対策のため、indexをセーブする瞬間のみ+1しておく。
+    // さもないと、ロード時にオートセーブがもう一度走ってしまう。
+    this._index++;
     Scene_Map.prototype.executeAutosave();
+    this._index--;
 });
 
 //-----------------------------------------------------------------------------
