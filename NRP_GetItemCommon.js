@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Commonize the process of gaining items.
+ * @plugindesc v1.021 Commonize the process of gaining items.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484654978.html
  *
@@ -251,7 +251,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 アイテムの入手処理を共通化します。
+ * @plugindesc v1.021 アイテムの入手処理を共通化します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484654978.html
  *
@@ -637,12 +637,22 @@ Game_Party.prototype.gainItem = function(item, amount, includeEquip) {
         mItemId = item.id;
 
         // アイテム、武器、防具によって分岐
+        let itemCategory = 0;
+        if (DataManager.isItem(item)) {
+            itemCategory = 1;
+        } else if (DataManager.isWeapon(item)) {
+            itemCategory = 2;
+        } else if (DataManager.isArmor(item)) {
+            itemCategory = 3;
+        }
+
+        // アイテム、武器、防具によって分岐
         mType = null;
-        if (mItemCategory == 1) {
+        if (itemCategory == 1) {
             mType = item.itypeId;
-        } else if (mItemCategory == 2) {
+        } else if (itemCategory == 2) {
             mType = item.wtypeId;
-        } else if (mItemCategory == 3) {
+        } else if (itemCategory == 3) {
             mType = item.atypeId;
         }
 
@@ -650,19 +660,19 @@ Game_Party.prototype.gainItem = function(item, amount, includeEquip) {
         mItemMeta = item.meta;
 
         if (amount > 0) {
-            if (mItemCategory == 1) {
+            if (itemCategory == 1) {
                 // 初期化していないとクリア
                 if (!this._havedItems) {
                     this.clearHavedItems();
                 }
                 this._havedItems[item.id] = true;
-            } else if (mItemCategory == 2) {
+            } else if (itemCategory == 2) {
                 // 初期化していないとクリア
                 if (!this._havedWeapons) {
                     this.clearHavedItems();
                 }
                 this._havedWeapons[item.id] = true;
-            } else if (mItemCategory == 3) {
+            } else if (itemCategory == 3) {
                 // 初期化していないとクリア
                 if (!this._havedArmors) {
                     this.clearHavedItems();
