@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Forget lower level skills when learning higher level skills.
+ * @plugindesc v1.02 Forget lower level skills when learning higher level skills.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_AdditionalClasses
  * @url http://newrpg.seesaa.net/article/483693029.html
@@ -56,11 +56,16 @@
  * @type string
  * @default %1 has been enhanced to %2!
  * @desc This is the message when you rank up a skill. %1: Forget Skill, %2: Learn SKill, %3: Icon No(F), %3: Icon No(L)
+ * 
+ * @param AddDescription
+ * @type boolean
+ * @default false
+ * @desc Add a description when obtaining a skill.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 上位スキル習得時に下位スキルを消去。
+ * @plugindesc v1.02 上位スキル習得時に下位スキルを消去。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_AdditionalClasses
  * @url http://newrpg.seesaa.net/article/483693029.html
@@ -111,6 +116,12 @@
  * @type string
  * @default %1が%2へと強化された！
  * @desc ランクアップ時のメッセージです。%1:忘れるスキル, %2:覚えるスキル, %3:アイコンNo(忘), %4:アイコンNo(覚) 
+ * 
+ * @param AddDescription
+ * @text 説明文を追加
+ * @type boolean
+ * @default false
+ * @desc スキル習得時に説明文を追加します。
  */
 (function() {
 "use strict";
@@ -137,6 +148,7 @@ function setDefault(str, def) {
 const PLUGIN_NAME = "NRP_ForgetLowerSkill";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pRankUpMessage = parameters["RankUpMessage"];
+const pAddDescription = toBoolean(parameters["AddDescription"]);
 
 // スキルの配列
 let mlastSkills = [];
@@ -216,6 +228,10 @@ function displayObtainSkills(actor, newSkills) {
 
         // 通常のメッセージ（おまけ機能で%2にアイコン番号を追加）
         $gameMessage.add(TextManager.obtainSkill.format(skill.name, skill.iconIndex));
+        // 説明追加
+        if (pAddDescription) {
+            $gameMessage.add(skill.description);
+        }
     }
 }
 
