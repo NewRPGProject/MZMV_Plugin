@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.043 Customize the display after a battle victory.
+ * @plugindesc v1.05 Customize the display after a battle victory.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499138292.html
  *
@@ -133,6 +133,12 @@
  * @desc The gradient width of the end side.
  * Default: 12
  * 
+ * @param DimmerColor
+ * @parent <DimmerWindow>
+ * @type string
+ * @desc Window color tones (red, green, blue, opacity).
+ * Default: rgba(0, 0, 0, 0.6)
+ * 
  * @param <Message>
  * 
  * @param MessageSpeed
@@ -227,7 +233,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.043 戦闘勝利時の表示をカスタマイズします。
+ * @plugindesc v1.05 戦闘勝利時の表示をカスタマイズします。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499138292.html
  *
@@ -366,6 +372,13 @@
  * @type number
  * @desc ウィンドウの終了グラデーション幅です。
  * 初期値は12です。
+ * 
+ * @param DimmerColor
+ * @text 色調
+ * @parent <DimmerWindow>
+ * @type string
+ * @desc ウィンドウの色調（赤、緑、青、不透明度）です。
+ * 初期値は"rgba(0, 0, 0, 0.6)"です。
  * 
  * @param <Message>
  * @text ＜メッセージ関連＞
@@ -517,6 +530,7 @@ const pDefeatWindowBackground = toNumber(parameters["DefeatWindowBackground"]);
 const pGradientType = toNumber(parameters["GradientType"], 2);
 const pStartGradientSize = toNumber(parameters["StartGradientSize"]);
 const pEndGradientSize = toNumber(parameters["EndGradientSize"]);
+const pDimmerColor = setDefault(parameters["DimmerColor"]);
 // メッセージ関連
 const pMessageSpeed = toNumber(parameters["MessageSpeed"], 100);
 const pFontSize = toNumber(parameters["FontSize"]);
@@ -896,7 +910,7 @@ if (pVictoryWindowBackground == 1) {
 
             const m1 = startGradientSize(this);
             const m2 = endGradientSize(this);
-            const c1 = ColorManager.dimColor1();
+            const c1 = pDimmerColor ?? ColorManager.dimColor1();
             const c2 = ColorManager.dimColor2();
             bitmap.resize(windowWidth, windowHeight);
 
