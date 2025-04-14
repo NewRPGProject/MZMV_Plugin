@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.235 Change the battle system to CTB.
+ * @plugindesc v1.236 Change the battle system to CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -297,7 +297,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.235 戦闘システムをＣＴＢへ変更します。
+ * @plugindesc v1.236 戦闘システムをＣＴＢへ変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -1746,6 +1746,15 @@ Game_Action.prototype.applyItemEffect = function(target, effect) {
         // ※これをやらないと自身へステートを付加した際に反映されない。
         target._speed = this.speed();
     }
+}
+
+/**
+ * ●ＭＶでは未定義の関数なので定義する。
+ */
+if (!Game_Action.prototype.isForAliveFriend) {
+    Game_Action.prototype.isForAliveFriend = function() {
+        return this.checkItemScope([7, 8, 11, 14]);
+    };
 }
 
 //-----------------------------------------------------------------------------
