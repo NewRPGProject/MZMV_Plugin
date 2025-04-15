@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.051 Placement automation for symbol encounters.
+ * @plugindesc v1.052 Placement automation for symbol encounters.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base TemplateEvent
  * @base EventReSpawn
@@ -237,7 +237,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.051 シンボルエンカウントの配置自動化。
+ * @plugindesc v1.052 シンボルエンカウントの配置自動化。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base TemplateEvent
  * @base EventReSpawn
@@ -535,7 +535,7 @@ function setDefault(str, def) {
 
 const PLUGIN_NAME = "NRP_PutRandomEvents";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
-const pKeepPlayerDistance = toNumber(parameters["KeepPlayerDistance"]);
+const pKeepPlayerDistance = parameters["KeepPlayerDistance"];
 const pProhibitedRegion = toNumber(parameters["ProhibitedRegion"]);
 const pCheckOpenDistance = toNumber(parameters["CheckOpenDistance"]);
 const pCheckEventCollision = toBoolean(parameters["CheckEventCollision"], true);
@@ -1136,7 +1136,7 @@ function isNearPlayer(x, y) {
     }
 
     const distance = Math.abs($gamePlayer.x - x) + Math.abs($gamePlayer.y - y);
-    return distance <= pKeepPlayerDistance;
+    return distance <= eval(pKeepPlayerDistance);
 }
 
 /**
