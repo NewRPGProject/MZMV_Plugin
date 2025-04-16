@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.14 Extend the functionality of the state in various ways.
+ * @plugindesc v1.15 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -223,6 +223,11 @@
  * Check if it can be used to trigger the <StateEndSkill> above.
  * For example, if the battler is restricted, the skill will fail.
  * 
+ * <StateRateReferenceId:100>
+ * Change the ID that refers to the state rate (Resist) to 100.
+ * For example, if you create a state called poison and deadly poison,
+ * you can make the state rate of deadly poison the same as poison.
+ * 
  * <DefeatState>
  * Same as dead, subject to a defeat determination.
  * Assumes a petrification-like state
@@ -348,7 +353,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.14 ステートの機能を色々と拡張します。
+ * @plugindesc v1.15 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -556,6 +561,11 @@
  * <StateEndSkillUseCheck>
  * 上記の<StateEndSkill>を発動する際に使用判定を行います。
  * 例えば、行動制約にかかっている場合は不発するようになります。
+ * 
+ * <StateRateReferenceId:100>
+ * ステート有効度（無効化）を参照するＩＤを１００番に変更します。
+ * 例えば、毒と猛毒というステートを作った場合、
+ * 猛毒の有効度を毒と同じにすることができます。
  * 
  * <DefeatState>
  * 戦闘不能と同じように、全滅判定の対象になります。
@@ -1109,6 +1119,42 @@ function getExValue(stateEx, type, paramId) {
     }
     return 0;
 }
+
+/**
+ * ●ステート有効度
+ */
+const _Game_BattlerBase_stateRate = Game_BattlerBase.prototype.stateRate;
+Game_BattlerBase.prototype.stateRate = function(stateId) {
+    if (stateId) {
+        // 他のステートの有効度を参照する場合
+        const dataState = $dataStates[stateId];
+        const stateRateReferenceId = dataState.meta.StateRateReferenceId;
+        if (stateRateReferenceId) {
+            const a = this;
+            return _Game_BattlerBase_stateRate.call(this, eval(stateRateReferenceId));
+        }
+    }
+
+    return _Game_BattlerBase_stateRate.call(this, arguments);
+};
+
+/**
+ * ●ステート無効
+ */
+const _Game_BattlerBase_isStateResist = Game_BattlerBase.prototype.isStateResist;
+Game_BattlerBase.prototype.isStateResist = function(stateId) {
+    if (stateId) {
+        // 他のステートの無効情報を参照する場合
+        const dataState = $dataStates[stateId];
+        const stateRateReferenceId = dataState.meta.StateRateReferenceId;
+        if (stateRateReferenceId) {
+            const a = this;
+            return _Game_BattlerBase_isStateResist.call(this, eval(stateRateReferenceId));
+        }
+    }
+
+    return _Game_BattlerBase_isStateResist.apply(this, arguments);
+};
 
 // ----------------------------------------------------------------------------
 // Game_Battler
