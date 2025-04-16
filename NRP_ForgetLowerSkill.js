@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Forget lower level skills when learning higher level skills.
+ * @plugindesc v1.03 Forget lower level skills when learning higher level skills.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_AdditionalClasses
  * @url http://newrpg.seesaa.net/article/483693029.html
@@ -61,11 +61,16 @@
  * @type boolean
  * @default false
  * @desc Add a description when obtaining a skill.
+ * 
+ * @param DescriptionColor
+ * @parent AddDescription
+ * @type color
+ * @desc Specify the color of the description with a system color number.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 上位スキル習得時に下位スキルを消去。
+ * @plugindesc v1.03 上位スキル習得時に下位スキルを消去。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_AdditionalClasses
  * @url http://newrpg.seesaa.net/article/483693029.html
@@ -122,6 +127,13 @@
  * @type boolean
  * @default false
  * @desc スキル習得時に説明文を追加します。
+ * 
+ * @param DescriptionColor
+ * @parent AddDescription
+ * @text 説明文の色
+ * @type color
+ * @desc 説明文の色をシステムカラーの番号で指定します。
+ * 
  */
 (function() {
 "use strict";
@@ -149,6 +161,7 @@ const PLUGIN_NAME = "NRP_ForgetLowerSkill";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pRankUpMessage = parameters["RankUpMessage"];
 const pAddDescription = toBoolean(parameters["AddDescription"]);
+const pDescriptionColor = toNumber(parameters["DescriptionColor"], 0);
 
 // スキルの配列
 let mlastSkills = [];
@@ -230,7 +243,13 @@ function displayObtainSkills(actor, newSkills) {
         $gameMessage.add(TextManager.obtainSkill.format(skill.name, skill.iconIndex));
         // 説明追加
         if (pAddDescription) {
-            $gameMessage.add(skill.description);
+            for (const desc of skill.description.split("\n")) {
+                // 空行は表示しない。
+                if (!desc) {
+                    continue;
+                }
+                $gameMessage.add("\\c[" + pDescriptionColor + "]" + desc + "\\c[0]");
+            }
         }
     }
 }
