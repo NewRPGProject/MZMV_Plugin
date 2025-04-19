@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.074 Extend the effect of the skill.
+ * @plugindesc v1.075 Extend the effect of the skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -161,7 +161,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.074 スキルの効果を拡張します。
+ * @plugindesc v1.075 スキルの効果を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/500569896.html
  *
@@ -453,6 +453,11 @@ Game_Action.prototype.apply = function(target) {
     // eval計算用
     const a = this.subject();
     const b = target;
+
+    // 命中していない場合は中止
+    if (!target.result().isHit()) {
+        return;
+    }
 
     // ＴＰ回復
     const recoverTp = this.item().meta.RecoverTp;
