@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.044 Adjust the message window.
+ * @plugindesc v1.045 Adjust the message window.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -230,7 +230,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.044 メッセージウィンドウを調整する。
+ * @plugindesc v1.045 メッセージウィンドウを調整する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -521,7 +521,7 @@ const PLUGIN_NAME = "NRP_MessageWindow";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pWindowWidth = setDefault(parameters["WindowWidth"]);
 const pWindowHeight = setDefault(parameters["WindowHeight"]);
-const pWindowX = setDefault(parameters["WindowX"]);
+const pWindowX = setDefault(parameters["WindowX"], 0);
 const pWindowY = setDefault(parameters["WindowY"]);
 const pLineHeight = setDefault(parameters["LineHeight"]);
 const pAdjustMessageX = toNumber(parameters["AdjustMessageX"], 0);
