@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 A list-style skill learning system reservation functionality.
+ * @plugindesc v1.02 A list-style skill learning system reservation functionality.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @base NRP_LearnSkillList
  * @orderAfter NRP_LearnSkillList
@@ -67,12 +67,6 @@
  * Please refer to the Extra Feature in NRP_ForgetLowerSkill.js.
  * https://newrpg.seesaa.net/article/483693029.html
  * 
- * ◆Gaining skill points through items
- * Skill points gained by items (<AddSkillPoint>) are not supported.
- * 
- * There is no major hindrance, but skill points may remain
- * in a reserved status even though they meet the requirements.
- * 
  * ◆Reserve Members
  * If the setting is set to not display the level-up of reserve members,
  * the reserved skill learning message will also not be displayed.
@@ -110,6 +104,11 @@
  * @default true
  * @desc Allow the process of acquiring reserved skills outside of battle.
  *
+ * @param LearnTimingSpItem
+ * @type boolean
+ * @default true
+ * @desc Allow the process of acquiring reserved skills when skill points are obtained from items.
+ * 
  * @param ReserveSkillColor
  * @type string
  * @default #ffff00
@@ -206,7 +205,7 @@ Would you like to cancel?
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 リスト形式のスキル習得システムの予約機能。
+ * @plugindesc v1.02 リスト形式のスキル習得システムの予約機能。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @base NRP_LearnSkillList
  * @orderAfter NRP_LearnSkillList
@@ -263,13 +262,6 @@ Would you like to cancel?
  * おまけ機能で使えるので参考にしてください。
  * https://newrpg.seesaa.net/article/483693029.html
  * 
- * ◆アイテムによるスキルポイントの獲得
- * アイテム（<AddSkillPoint>）によって、
- * スキルポイントを加算した場合には対応していません。
- * 
- * 特に大きな支障はありませんが、スキルポイントが条件を
- * 満たしているのに予約状態のままになることがあります。
- * 
  * ◆控えメンバー
  * 控えメンバーのレベルアップを表示しない設定になっている場合は、
  * 予約スキルの習得メッセージも表示できなくなります。
@@ -308,6 +300,12 @@ Would you like to cancel?
  * @default true
  * @desc 非戦闘時に予約スキルの習得処理を行います。
  *
+ * @param LearnTimingSpItem
+ * @text ＳＰアイテムで習得
+ * @type boolean
+ * @default true
+ * @desc アイテムでスキルポイントを入手した際に予約スキルの習得処理を行います。
+ * 
  * @param ReserveSkillColor
  * @text 予約スキルの文字色
  * @type string
@@ -471,6 +469,7 @@ const PLUGIN_NAME = "NRP_LearnSkillListReserve";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pLearnTimingBattle = toBoolean(parameters["LearnTimingBattle"], false);
 const pLearnTimingNotBattle = toBoolean(parameters["LearnTimingNotBattle"], false);
+const pLearnTimingSpItem = toBoolean(parameters["LearnTimingSpItem"], false);
 const pReserveSkillColor = setDefault(parameters["ReserveSkillColor"]);
 const pReserveSkillOpacity = toNumber(parameters["ReserveSkillOpacity"]);
 const pReserveSkillSe = setDefault(parameters["ReserveSkillSe"]);
@@ -706,6 +705,17 @@ const _Scene_Map_start = Scene_Map.prototype.start;
 Scene_Map.prototype.start = function() {
     // 予約スキルを習得した場合はスキル習得画面呼び出し
     if (mReserveSkillActorId) {
+        // メッセージ表示を行う場合
+        // ※アイテムでＳＰを入手した場合を想定
+        if ($gameMessage.hasText()) {
+            // 一旦、強制呼び出しフラグをオンにしてメッセージ終了後に呼び出し
+            mForceCallFlg = true;
+            // メッセージの表示待ちを行う。
+            $gameMap._interpreter.setWaitMode("message");
+            _Scene_Map_start.apply(this, arguments);
+            return;
+        }
+
         // 一瞬マップが表示されてしまうため黒くする。
         this._fadeOpacity = 255;
         this.updateColorFilter();
@@ -956,14 +966,22 @@ let mAddSkillPoint = false;
  */
 const _Game_Action_apply = Game_Action.prototype.apply;
 Game_Action.prototype.apply = function(target) {
-    // スキルポイントを加算する設定があるかどうか？
-    const addSkillPoint = this.item().meta.AddSkillPoint;
-    if (addSkillPoint) {
-        // 予約機能は対象外にする。
-        mAddSkillPoint = true;
+    // アイテムでＳＰを獲得した場合のスキル習得を許可しない場合
+    if (!pLearnTimingSpItem) {
+        // スキルポイントを加算する設定があるかどうか？
+        const addSkillPoint = this.item().meta.AddSkillPoint;
+        if (addSkillPoint) {
+            // 予約機能は対象外にする。
+            mAddSkillPoint = true;
+        }
     }
     _Game_Action_apply.apply(this, arguments);
     mAddSkillPoint = false;
+
+    // レベルアップ表示が必要な場合、アイテムメニューを閉じる
+    if (mReserveSkillActorId && SceneManager._scene instanceof Scene_Item) {
+        SceneManager.goto(Scene_Map);
+    }
 };
 
 //-----------------------------------------------------------------------------
