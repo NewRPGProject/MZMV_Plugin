@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.001 Add an equipment command to the shop.
+ * @plugindesc v1.002 Add an equipment command to the shop.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/502768907.html
  *
@@ -32,7 +32,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.001 ショップに装備コマンドを追加
+ * @plugindesc v1.002 ショップに装備コマンドを追加
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/502768907.html
  *
@@ -98,6 +98,9 @@ let mKeepIndex;
  */
 const _Game_Interpreter_command302 = Game_Interpreter.prototype.command302;
 Game_Interpreter.prototype.command302 = function(params) {
+    // アクターはクリアしておく。
+    $gameParty._menuActorId = null;
+
     // 変数初期化
     mKeepGoods = null;
     mKeepPurchaseOnly = null;
@@ -122,9 +125,6 @@ Scene_Shop.prototype.createCommandWindow = function() {
  * 【独自】装備コマンド
  */
 Scene_Shop.prototype.commandEquip = function() {
-    // アクターはクリアしておく。
-    $gameParty._menuActorId = null;
-
     // 装備画面へ遷移
     SceneManager.push(Scene_Equip);
 
