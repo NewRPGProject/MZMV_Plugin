@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.16 Call DynamicAnimationMZ on the map.
+ * @plugindesc v1.161 Call DynamicAnimationMZ on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -285,7 +285,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.16 DynamicAnimationMZをマップ上から起動します。
+ * @plugindesc v1.161 DynamicAnimationMZをマップ上から起動します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -845,8 +845,16 @@ PluginManager.registerCommand(PLUGIN_NAME, "removeAnimation", function(args) {
         }
 
         if (removeFlg) {
-            // 再生中のアニメーションを削除
-            spriteset.removeAnimation(animationSprite);
+            // 再生中のアニメーションを削除（ＭＶ）
+            if (animationSprite.onEnd) {
+                animationSprite.onEnd();
+            // 再生中のアニメーションを削除（ＭＺ）
+            } else {
+                spriteset.removeAnimation(animationSprite);
+                // フラッシュを削除
+                animationSprite._flashDuration = 1;
+                animationSprite.updateFlash();
+            }
         }
     }
 });
@@ -924,8 +932,16 @@ PluginManager.registerCommand(PLUGIN_NAME, "removeAnimationBattle", function(arg
         }
 
         if (removeFlg) {
-            // 再生中のアニメーションを削除
-            spriteset.removeAnimation(animationSprite);
+            // 再生中のアニメーションを削除（ＭＶ）
+            if (animationSprite.onEnd) {
+                animationSprite.onEnd();
+            // 再生中のアニメーションを削除（ＭＺ）
+            } else {
+                spriteset.removeAnimation(animationSprite);
+                // フラッシュを削除
+                animationSprite._flashDuration = 1;
+                animationSprite.updateFlash();
+            }
         }
     }
 });
