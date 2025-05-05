@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.06 Apply the bush effect to the battle background.
+ * @plugindesc v1.07 Apply the bush effect to the battle background.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_ShadowAndLevitate
  * @url http://newrpg.seesaa.net/article/486468229.html
@@ -197,7 +197,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.06 戦闘背景に茂み効果を適用します。
+ * @plugindesc v1.07 戦闘背景に茂み効果を適用します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_ShadowAndLevitate
  * @url http://newrpg.seesaa.net/article/486468229.html
@@ -588,10 +588,13 @@ Sprite_Battler.prototype.updateHalfBodySprites = function() {
         this._upperBody.y = -bushDepth;
         this._lowerBody.bitmap = this._originalBitmap;
         this._lowerBody.visible = true;
-        this._upperBody.setBlendColor(this.getBlendColor());
-        this._lowerBody.setBlendColor(this.getBlendColor());
-        this._upperBody.setColorTone(this.getColorTone());
-        this._lowerBody.setColorTone(this.getColorTone());
+        // 本体のスプライトを取得
+        // ※NRP_BattlerGraphicExtend.js等の効果を反映するため
+        const mainSprite = getMainSprite(this)
+        this._upperBody.setBlendColor(mainSprite.getBlendColor());
+        this._lowerBody.setBlendColor(mainSprite.getBlendColor());
+        this._upperBody.setColorTone(mainSprite.getColorTone());
+        this._lowerBody.setColorTone(mainSprite.getColorTone());
         this._upperBody.blendMode = this.blendMode;
         this._lowerBody.blendMode = this.blendMode;
     } else if (this._upperBody) {
@@ -613,6 +616,14 @@ Sprite_Battler.prototype.bushOpacity = function() {
 Sprite_Battler.prototype.calcBushDepth = function() {
     // 定義のみ
 }
+
+/**
+ * 【独自】本体のスプライトを取得
+ * ※アクターと敵キャラで本体のスプライトが異なる。
+ */
+function getMainSprite(parent) {
+    return parent._mainSprite ? parent._mainSprite : parent;
+};
 
 //-----------------------------------------------------------------------------
 // Sprite_Actor
@@ -649,9 +660,9 @@ Sprite_Actor.prototype.updateFrame = function() {
             const sx = cx * cw; // 切り取り開始Ｘ座標
             const sy = cy * ch; // 切り取り開始Ｙ座標
 
-            // // 上半身を途中まで描画
+            // 上半身を途中まで描画
             this._upperBody.setFrame(sx, sy, cw, ch - bushDepth);
-            // // 下半身を半透明描画
+            // 下半身を半透明描画
             this._lowerBody.setFrame(sx, sy + ch - bushDepth, cw, bushDepth);
 
             // 茂み状態になっていない場合
