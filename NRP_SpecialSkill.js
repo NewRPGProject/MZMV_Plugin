@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.06 Implementation of the special skill system.
+ * @plugindesc v1.07 Implementation of the special skill system.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_CountTimeBattle
  * @url https://newrpg.seesaa.net/article/489968387.html
@@ -451,7 +451,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.06 奥義システムの実装。
+ * @plugindesc v1.07 奥義システムの実装。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_CountTimeBattle
  * @url https://newrpg.seesaa.net/article/489968387.html
@@ -1519,6 +1519,10 @@ Game_Action.prototype.specialGaugeAfterApply = function(target) {
 
     // ゲージ毎に加算
     for (let i = 0; i < pSpecialTypeList.length; i++) {
+        if (isNotPlusWhenUsed(this.item(), i)) {
+            continue;
+        }
+
         // 行動ボーナス
         let value = getActionValue(a, this.item(), i);
 
@@ -1537,6 +1541,7 @@ Game_Action.prototype.specialGaugeAfterApply = function(target) {
         }
 
         subject.addSpecialGauge(i, value);
+
         // 会心ボーナス
         if (!mCriticalHit && result.critical) {
             const gaugeData = getSpecialGaugeData(i);
@@ -2124,10 +2129,6 @@ function getDamageValue(a, skillData, gaugeData, damage) {
  * ●行動毎のゲージ加算値を取得
  */
 function getActionValue(a, skillData, index) {
-    if (pNotPlusWhenUsed && isSpecialSkill(skillData)) {
-        return 0;
-    }
-
     // <SpecialSkillActionValue>の指定がある場合は優先
     const metaValue = skillData.meta.SpecialSkillActionValue;
     if (metaValue != null) {
@@ -2148,7 +2149,7 @@ function getActionValue(a, skillData, index) {
  * ●行動終了時のゲージ加算値を取得
  */
 function getActionEndValue(a, skillData, index) {
-    if (pNotPlusWhenUsed && isSpecialSkill(skillData)) {
+    if (isNotPlusWhenUsed(skillData, index)) {
         return 0;
     }
 
@@ -2166,6 +2167,16 @@ function getActionEndValue(a, skillData, index) {
     // ゲージデータを取得
     const gaugeData = getSpecialGaugeData(index);
     return eval(gaugeData.ActionEndValue);
+}
+
+/**
+ * ●奥義使用時は加算しない場合
+ */
+function isNotPlusWhenUsed(skillData, index) {
+    if (pNotPlusWhenUsed && isSpecialSkillType(skillData, index + 1)) {
+        return true;
+    }
+    return false;
 }
 
 /**
