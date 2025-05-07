@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.391 Creates a combination skill.
+ * @plugindesc v1.40 Creates a combination skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/474570191.html
  * 
@@ -11,7 +11,9 @@
  * Can be used in normal turn-based or CTB or TPB.
  * Works on both actors and enemy.
  * 
+ * -------------------------------------------------------------------
  * [Features]
+ * -------------------------------------------------------------------
  * - When a subject uses a skill, the activation conditions,
  *   consumption and gained TP are applied to the collaborator as well.
  * - The hit rate and critical rate are averages of participants.
@@ -22,7 +24,9 @@
  * For more information, please see below.
  * http://newrpg.seesaa.net/article/474570191.html
  * 
+ * -------------------------------------------------------------------
  * [Global Functions]
+ * -------------------------------------------------------------------
  * $cs(no)
  * - Getting Participants in Combination Skills.  (1 beginning)
  * - Available for both enemies and actors.
@@ -32,7 +36,9 @@
  * $actor(id)
  * - Get the actor with the specified ID.
  * 
+ * -------------------------------------------------------------------
  * [Valid for skills notes]
+ * -------------------------------------------------------------------
  * <CS_Actors:[Actor ID],[Actor ID]>
  * - The combination skill targets a specified actor.
  * - 3 or more actors can be combined.
@@ -53,11 +59,21 @@
  * - If not specified, the value of the plugin parameter is set.
  * - In CTB, this allows you to represent the passage of a turn.
  * 
+ * <CS_ExceptState:[State ID]>
+ * - When selecting a skill, make it possible to execute it even
+ *   while in the specified state.
+ * - Skills can be executed even when a collaborator is sleeping,
+ *   for example.
+ * - Multiple specifications can be specified by separating them
+ *   with commas.
+ * 
  * <CS_UserName:[string]>
  * - The name of the user of the combination skill when displaying the message.
  * - You can also use, for example, \n[1].
  * 
+ * -------------------------------------------------------------------
  * [Valid for states notes]
+ * -------------------------------------------------------------------
  * <CS_Seal>
  * - Prohibits combination skills while in state.
  * 
@@ -73,6 +89,10 @@
  * and rights indication are also optional.
  * The author is not responsible,
  * but will deal with defects to the extent possible.
+ * 
+ * @------------------------------------------------------------------
+ * @ Plugin Parameters
+ * @------------------------------------------------------------------
  * 
  * @param <For CTB>
  * @desc This item is designed for CTB.
@@ -166,7 +186,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.391 合体技を実現します。
+ * @plugindesc v1.40 合体技を実現します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/474570191.html
  *
@@ -174,7 +194,9 @@
  * 通常のターン制でもＣＴＢでもＴＰＢ使えます。
  * アクターと敵キャラの両方に対応しています。
  * 
+ * -------------------------------------------------------------------
  * ■特徴
+ * -------------------------------------------------------------------
  * ・行動主体がスキルを使用した際、発動条件や消費、得ＴＰを協力者にも適用。
  * ・命中率やクリティカル率は参加者の平均値を取得。
  * ・協力者へ行動不能などのステートを付加し、ＣＴＢのターン経過を再現。
@@ -183,7 +205,9 @@
  * 詳細は以下をご覧ください。
  * http://newrpg.seesaa.net/article/474570191.html
  * 
+ * -------------------------------------------------------------------
  * ■グローバル関数
+ * -------------------------------------------------------------------
  * $cs(no)
  * ・合体技参加者を取得する。（1始まり）
  * ・敵味方両方で使用可能。
@@ -193,7 +217,9 @@
  * $actor(id)
  * ・指定したIDのアクターを取得する。
  * 
- * ■スキルのメモ欄で以下を指定可能です。
+ * -------------------------------------------------------------------
+ * ■スキルのメモ欄
+ * -------------------------------------------------------------------
  * <CS_Actors:[アクターID],[アクターID]>
  * ・指定したアクターを合体技の対象とする。
  * ・３人以上も可能。
@@ -213,11 +239,18 @@
  * ・指定がなければプラグインパラメータの値が設定される。
  * ・ＣＴＢではこれによってターン経過を表現できます。
  * 
+ * <CS_ExceptState:[ステートID]>
+ * ・スキル選択時、指定したステート中でも実行できるようにする。
+ * ・例えば、協力者が睡眠中でも実行できるなど。
+ * ・カンマ区切りで複数指定も可能。
+ * 
  * <CS_UserName:[文字列]>
  * ・メッセージ表示する際の合体技の使用者名です。
  * ・\n[1]なども使えます。
  * 
- * ■ステートのメモ欄で以下を指定可能です。
+ * -------------------------------------------------------------------
+ * ■ステートのメモ欄
+ * -------------------------------------------------------------------
  * <CS_Seal>
  * ・ステート中、合体技を禁止します。
  * 
@@ -231,6 +264,10 @@
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
+ * 
+ * @------------------------------------------------------------------
+ * @ プラグインパラメータ
+ * @------------------------------------------------------------------
  * 
  * @param <For CTB>
  * @text ＜ＣＴＢ関連＞
@@ -466,6 +503,9 @@ const pHidePartyCommandSwitch = parameters["hidePartyCommandSwitch"];
 const pHideMenuCommandSwitch = parameters["hideMenuCommandSwitch"];
 const pInvalidCondition = parseStruct1(parameters["invalidCondition"]);
 
+// 除外を行うステート（複数可）
+let mExceptStates = null;
+
 /**
  * ●スキルを使用可能か
  */
@@ -477,12 +517,27 @@ Game_BattlerBase.prototype.canUse = function(item) {
 
     // 合体技の場合
     if (isCombinationSkill(item)) {
-        if (DataManager.isSkill(item) && canUseCombinationSkill(this, item)) {
-            return true;
-        } else if (DataManager.isItem(item) && canUseCombinationItem(this, item)) {
-            return true;
+        let canUse = false;
+
+        // 除外を行うステート（複数可）
+        mExceptStates = [];
+        const csExceptStateMeta = item.meta.CS_ExceptState;
+        if (csExceptStateMeta) {
+            for (const stateId of csExceptStateMeta.split(",")) {
+                mExceptStates.push(Number(stateId));
+            }
         }
-        return false;
+
+        if (DataManager.isSkill(item) && canUseCombinationSkill(this, item)) {
+            canUse = true;
+        } else if (DataManager.isItem(item) && canUseCombinationItem(this, item)) {
+            canUse = true;
+        }
+
+        // 不要になったのでクリア
+        mExceptStates = null;
+
+        return canUse;
     }
 
     // 元処理実行
@@ -565,6 +620,21 @@ function canUseCombinationSkill(subject, item) {
     // 全員ＯＫならtrue
     return true;
 }
+
+/**
+ * ●ステートを取得
+ */
+const _Game_BattlerBase_states = Game_BattlerBase.prototype.states;
+Game_BattlerBase.prototype.states = function() {
+    let states = _Game_BattlerBase_states.apply(this, arguments);
+
+    // 判定時に指定ステートを除外する。
+    if (mExceptStates && mExceptStates.length > 0) {
+        states = states.filter(dataState => !mExceptStates.includes(dataState.id));
+    }
+
+    return states;
+};
 
 /**
  * 【独自実装】合体技の禁止判定
