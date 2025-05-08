@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.022 Set enemy parameters in terms of levels and percentages.
+ * @plugindesc v1.03 Set enemy parameters in terms of levels and percentages.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484538732.html
  *
@@ -79,6 +79,24 @@
  * 
  * These formulas can be adjusted in the plugin parameters.
  * You can also leave it blank to use the editor settings as is.
+ * 
+ * -------------------------------------------------------------------
+ * [Adjust Variable]
+ * -------------------------------------------------------------------
+ * You can set variables for parameter adjustment
+ * in the plugin parameters.
+ * For example, if the value of the variable set for “HpRateVariable”
+ * is set to 10, the maximum HP of all enemies will increase by 10%.
+ * 
+ * Please use this function to set the difficulty level
+ * and fine-tune the balance.
+ * 
+ * Note that only “ParamLevelVariable” is special,
+ * which increases the level related to the calculation of parameters
+ * by the specified value.
+ * It does not affect the values that can be referred to in b.level,
+ * nor the calculation of exp and gold.
+ * Negative values are possible, but cannot be less than level 1.
  * 
  * -------------------------------------------------------------------
  * [Battle Test]
@@ -171,11 +189,80 @@
  * @type boolean
  * @default false
  * @desc When used with EnemyBook, display % values instead of actual parameters.
+ * 
+ * @param <AdjustVariable>
+ * @desc Sets variables to adjust parameters.
+ * 
+ * @param ParamLevelVariable
+ * @parent <AdjustVariable>
+ * @type variable
+ * @desc Increases parameters by the specified level.
+ * Does not affect experience, etc.
+ * 
+ * @param HpRateVariable
+ * @parent <AdjustVariable>
+ * @type variable
+ * @desc Variable sets the maximum HP adjustment value.
+ * If the value of the variable is 10, it will increase by 10%.
+ * 
+ * @param MpRateVariable
+ * @parent <AdjustVariable>
+ * @type variable
+ * @desc This variable sets the maximum HP adjustment value.
+ * If the value of the variable is 10, it will increase by 10%.
+ * 
+ * @param AtkRateVariable
+ * @parent <AdjustVariable>
+ * @type variable
+ * @desc This variable sets the attack adjustment value.
+ * If the value of the variable is 10, it will increase by 10%.
+ * 
+ * @param DefRateVariable
+ * @parent <AdjustVariable>
+ * @type variable
+ * @desc This variable sets the defense adjustment value.
+ * If the value of the variable is 10, it will increase by 10%.
+ * 
+ * @param MatRateVariable
+ * @parent <AdjustVariable>
+ * @type variable
+ * @desc This variable sets the magic attack adjustment value.
+ * If the value of the variable is 10, it will increase by 10%.
+ * 
+ * @param MdfRateVariable
+ * @parent <AdjustVariable>
+ * @type variable
+ * @desc This variable sets the magic defense adjustment value.
+ * If the value of the variable is 10, it will increase by 10%.
+ * 
+ * @param AgiRateVariable
+ * @parent <AdjustVariable>
+ * @type variable
+ * @desc This variable sets the agility adjustment value.
+ * If the value of the variable is 10, it will increase by 10%.
+ * 
+ * @param LukRateVariable
+ * @parent <AdjustVariable>
+ * @type variable
+ * @desc This variable sets the luck adjustment value.
+ * If the value of the variable is 10, it will increase by 10%.
+ * 
+ * @param ExpRateVariable
+ * @parent <AdjustVariable>
+ * @type variable
+ * @desc This variable sets the experience adjustment value.
+ * If the value of the variable is 10, it will increase by 10%.
+ * 
+ * @param GoldRateVariable
+ * @parent <AdjustVariable>
+ * @type variable
+ * @desc This variable sets the gold adjustment value.
+ * If the value of the variable is 10, it will increase by 10%.
  */
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.022 敵の能力値をレベルと百分率で設定
+ * @plugindesc v1.03 敵の能力値をレベルと百分率で設定
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484538732.html
  *
@@ -251,6 +338,20 @@
  * 
  * 数式はプラグインパラメータで調整できます。
  * 空欄にすれば、エディタの設定値をそのまま使用することもできます。
+ * 
+ * -------------------------------------------------------------------
+ * ■能力値補正
+ * -------------------------------------------------------------------
+ * プラグインパラメータで能力値補正を行う変数を設定できます。
+ * 例えば、『ＨＰ補正変数』に設定した変数の値を10にすれば、
+ * 全ての敵の最大ＨＰが１０％上昇します。
+ * 
+ * 難易度設定や細かいバランス調整にご利用ください。
+ * 
+ * なお、『能力値レベル変数』のみ特殊で、これは指定した数値分だけ
+ * 能力値の計算に関するレベルを上げるというものです。
+ * b.levelで参照できる値や、経験値や所持金の計算にも影響を与えません。
+ * マイナス値も可能ですが、レベル1を下回ることはできません。
  * 
  * -------------------------------------------------------------------
  * ■戦闘テスト
@@ -343,6 +444,87 @@
  * @type boolean
  * @default false
  * @desc モンスター図鑑と併用時、実際のパラメータではなく％値を表示するようにします。
+ * 
+ * @param <AdjustVariable>
+ * @text ＜能力値補正変数＞
+ * @desc 能力値を補正するための変数を設定します。
+ * 
+ * @param ParamLevelVariable
+ * @text 能力値レベル変数
+ * @parent <AdjustVariable>
+ * @type variable
+ * @desc 指定したレベル分、能力を上昇させます。
+ * 経験値などには影響を与えません。
+ * 
+ * @param HpRateVariable
+ * @text ＨＰ補正変数
+ * @parent <AdjustVariable>
+ * @type variable
+ * @desc 最大ＨＰの補正値を設定する変数です。
+ * 変数の値が10ならば、10%上昇します。
+ * 
+ * @param MpRateVariable
+ * @text ＭＰ補正変数
+ * @parent <AdjustVariable>
+ * @type variable
+ * @desc 最大ＭＰの補正値を設定する変数です。
+ * 変数の値が10ならば、10%上昇します。
+ * 
+ * @param AtkRateVariable
+ * @text 攻撃力補正変数
+ * @parent <AdjustVariable>
+ * @type variable
+ * @desc 攻撃力の補正値を設定する変数です。
+ * 変数の値が10ならば、10%上昇します。
+ * 
+ * @param DefRateVariable
+ * @text 防御力補正変数
+ * @parent <AdjustVariable>
+ * @type variable
+ * @desc 防御力の補正値を設定する変数です。
+ * 変数の値が10ならば、10%上昇します。
+ * 
+ * @param MatRateVariable
+ * @text 魔法力補正変数
+ * @parent <AdjustVariable>
+ * @type variable
+ * @desc 魔法力の補正値を設定する変数です。
+ * 変数の値が10ならば、10%上昇します。
+ * 
+ * @param MdfRateVariable
+ * @text 魔法防御補正変数
+ * @parent <AdjustVariable>
+ * @type variable
+ * @desc 魔法防御の補正値を設定する変数です。
+ * 変数の値が10ならば、10%上昇します。
+ * 
+ * @param AgiRateVariable
+ * @text 敏捷性補正変数
+ * @parent <AdjustVariable>
+ * @type variable
+ * @desc 敏捷性の補正値を設定する変数です。
+ * 変数の値が10ならば、10%上昇します。
+ * 
+ * @param LukRateVariable
+ * @text 運補正変数
+ * @parent <AdjustVariable>
+ * @type variable
+ * @desc 運の補正値を設定する変数です。
+ * 変数の値が10ならば、10%上昇します。
+ * 
+ * @param ExpRateVariable
+ * @text 経験値補正変数
+ * @parent <AdjustVariable>
+ * @type variable
+ * @desc 経験値の補正値を設定する変数です。
+ * 変数の値が10ならば、10%上昇します。
+ * 
+ * @param GoldRateVariable
+ * @text 所持金補正変数
+ * @parent <AdjustVariable>
+ * @type variable
+ * @desc 所持金の補正値を設定する変数です。
+ * 変数の値が10ならば、10%上昇します。
  */
 
 (function() {
@@ -393,6 +575,17 @@ const pBaseExp = parameters["BaseExp"];
 const pBaseGold = parameters["BaseGold"];
 const pTestCommonEvent = toNumber(parameters["TestCommonEvent"]);
 const pSupportEnemyBook = toBoolean(parameters["SupportEnemyBook"], false);
+const pParamLevelVariable = toNumber(parameters["ParamLevelVariable"]);
+const pHpRateVariable = toNumber(parameters["HpRateVariable"]);
+const pMpRateVariable = toNumber(parameters["MpRateVariable"]);
+const pAtkRateVariable = toNumber(parameters["AtkRateVariable"]);
+const pDefRateVariable = toNumber(parameters["DefRateVariable"]);
+const pMatRateVariable = toNumber(parameters["MatRateVariable"]);
+const pMdfRateVariable = toNumber(parameters["MdfRateVariable"]);
+const pAgiRateVariable = toNumber(parameters["AgiRateVariable"]);
+const pLukRateVariable = toNumber(parameters["LukRateVariable"]);
+const pExpRateVariable = toNumber(parameters["ExpRateVariable"]);
+const pGoldRateVariable = toNumber(parameters["GoldRateVariable"]);
 
 // ----------------------------------------------------------------------------
 // Game_Enemy
@@ -460,12 +653,58 @@ Game_Enemy.prototype.paramBase = function(paramId) {
         return _Game_Enemy_paramBase.apply(this, arguments);
     }
 
+    // パラメータ計算用のレベル
+    let paramLevel = this._level;
+    if (pParamLevelVariable) {
+        paramLevel += $gameVariables.value(pParamLevelVariable);
+    }
+    // レベルは最低でも1を設定
+    if (paramLevel < 1) {
+        paramLevel = 1;
+    }
+
     // パラメータのベースとなる職業を取得
-    const baseValue = this.getParamBaseClass().params[paramId][this._level];
+    const baseValue = this.getParamBaseClass().params[paramId][paramLevel];
     // 元の値を％として使用して乗算
-    const percent = this.enemy().params[paramId]
-    return Math.round(baseValue * percent / 100);
+    const percent = this.enemy().params[paramId];
+    // さらに補正をかける。
+    const paramRate = getParamAdjustRate(paramId);
+
+    return Math.round(baseValue * (percent / 100) * (paramRate / 100));
 };
+
+/**
+ * ●能力値補正を取得
+ */
+function getParamAdjustRate(paramId) {
+    let rate = 100;
+    // 0:MHP
+    if (paramId == 0 && pHpRateVariable) {
+        rate += $gameVariables.value(pHpRateVariable);
+    // 1:MMP
+    } else if (paramId == 1 && pMpRateVariable) {
+        rate += $gameVariables.value(pMpRateVariable);
+    // 2:ATK
+    } else if (paramId == 2 && pAtkRateVariable) {
+        rate += $gameVariables.value(pAtkRateVariable);
+    // 3:DEF
+    } else if (paramId == 3 && pDefRateVariable) {
+        rate += $gameVariables.value(pDefRateVariable);
+    // 4:MAT
+    } else if (paramId == 4 && pMatRateVariable) {
+        rate += $gameVariables.value(pMatRateVariable);
+    // 5:MDF
+    } else if (paramId == 5 && pMdfRateVariable) {
+        rate += $gameVariables.value(pMdfRateVariable);
+    // 6:AGI
+    } else if (paramId == 6 && pAgiRateVariable) {
+        rate += $gameVariables.value(pAgiRateVariable);
+    // 7:LUK
+    } else if (paramId == 7 && pLukRateVariable) {
+        rate += $gameVariables.value(pLukRateVariable);
+    }
+    return rate;
+}
 
 /**
  * 【上書】経験値の取得
@@ -487,7 +726,13 @@ Game_Enemy.prototype.exp = function() {
     const baseExp = eval(pBaseExp);
     // 元の値を％として使用して乗算
     const percent = this.enemy().exp;
-    return Math.round(baseExp * percent / 100);
+    // さらに補正をかける。
+    let expRate = 100;
+    if (pExpRateVariable) {
+        expRate += $gameVariables.value(pExpRateVariable);
+    }
+
+    return Math.round(baseExp * (percent / 100) * (expRate / 100));
 };
 
 /**
@@ -510,7 +755,13 @@ Game_Enemy.prototype.gold = function() {
     const baseGold = eval(pBaseGold);
     // 元の値を％として使用して乗算
     const percent = this.enemy().gold;
-    return Math.round(baseGold * percent / 100);
+    // さらに補正をかける。
+    let goldRate = 100;
+    if (pGoldRateVariable) {
+        goldRate += $gameVariables.value(pGoldRateVariable);
+    }
+
+    return Math.round(baseGold * (percent / 100) * (goldRate / 100));
 };
 
 /**
