@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.11 Improve the enemy's action routine.
+ * @plugindesc v1.111 Improve the enemy's action routine.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/473218336.html
  *
@@ -152,7 +152,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.11 敵行動ルーチンを改善します。
+ * @plugindesc v1.111 敵行動ルーチンを改善します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/473218336.html
  *
@@ -590,7 +590,7 @@ Game_Troop.prototype.turnCount = function() {
 /**
  * ●仲間への対象選択
  */
-var _Game_Action_targetsForFriends = Game_Action.prototype.targetsForFriends;
+const _Game_Action_targetsForFriends = Game_Action.prototype.targetsForFriends;
 Game_Action.prototype.targetsForFriends = function() {
     var subject = this.subject();
 
@@ -607,14 +607,16 @@ Game_Action.prototype.targetsForFriends = function() {
             && this._targetIndex < 0 && !this.isDamage() && !this.isDrain()) {
         var targets = [];
         var target;
-        var unit = this.friendsUnit();
+        const unit = this.friendsUnit();
 
         // 回復制御を行う場合
         if (isControlRecover(subject)) {
             // HP回復の場合
             if (this.isHpRecover()) {
+                // 回復が無効でないことを確認
+                const validMembers = unit.aliveMembers().filter(m => this.calcElementRate(m) > 0);
                 // HPが最も減っている対象を選択
-                target = unit.aliveMembers().reduce(function(a, b) {
+                target = validMembers.reduce(function(a, b) {
                     return a.hpRate() < b.hpRate() ? a : b;
                 });
                 targets.push(target);
@@ -622,8 +624,10 @@ Game_Action.prototype.targetsForFriends = function() {
 
             // MP回復の場合
             } else if (this.isMpRecover()) {
+                // 回復が無効でないことを確認
+                const validMembers = unit.aliveMembers().filter(m => this.calcElementRate(m) > 0);
                 // MPが最も減っている対象を選択
-                target = unit.aliveMembers().reduce(function(a, b) {
+                target = validMembers.reduce(function(a, b) {
                     return a.mpRate() < b.mpRate() ? a : b;
                 });
                 targets.push(target);
