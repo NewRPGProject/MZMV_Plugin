@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.021 Implemented a system of recovery after action.
+ * @plugindesc v1.022 Implemented a system of recovery after action.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @orderAfter NRP_CountTimeBattle
  * @url https://newrpg.seesaa.net/article/498761194.html
@@ -201,7 +201,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.021 行動後に回復するシステムを実装。
+ * @plugindesc v1.022 行動後に回復するシステムを実装。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @orderAfter NRP_CountTimeBattle
  * @url https://newrpg.seesaa.net/article/498761194.html
@@ -917,6 +917,8 @@ Window_RecoverAction.prototype.drawItem = function(index) {
     // 該当がある場合は表示
     if (hpValue || mpValue || tpValue) {
         this.show();
+    } else {
+        this.hide();
     }
 };
 
