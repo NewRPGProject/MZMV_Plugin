@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.051 Create special traits.
+ * @plugindesc v1.06 Create special traits.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/488957733.html
@@ -78,6 +78,12 @@
  * 
  * ◆e.g.: Treat it as a weak when the damage multiplier is 1.5 or greater.
  * <WeakEffectCondition:1.5 <= rate>
+ * 
+ * -------------------------------------------------------------------
+ * [Note (skill and item)]
+ * -------------------------------------------------------------------
+ * <NoChangeDamageRate>
+ * Disables the change in damage multiplier when using a skill.
  * 
  * -------------------------------------------------------------------
  * [Change of state's duration in turns]
@@ -169,7 +175,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.051 特殊な特徴を実現します。
+ * @plugindesc v1.06 特殊な特徴を実現します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/488957733.html
@@ -241,6 +247,12 @@
  * 
  * ◆例：ダメージ倍率が１．５以上の場合に弱点として扱います。
  * <WeakEffectCondition:1.5 <= rate>
+ * 
+ * -------------------------------------------------------------------
+ * ■スキル、アイテムのメモ欄
+ * -------------------------------------------------------------------
+ * <NoChangeDamageRate>
+ * スキル使用時のダメージ倍率の変更を無効化します。
  * 
  * -------------------------------------------------------------------
  * ■ステート継続ターンの変更
@@ -456,6 +468,11 @@ Game_Action.prototype.evaluateWithTarget = function(target) {
 const _Game_Action_applyVariance = Game_Action.prototype.applyVariance;
 Game_Action.prototype.applyVariance = function(damage, variance) {
     let value = _Game_Action_applyVariance.apply(this, arguments);
+
+    // ダメージ変化無効なら終了
+    if (this.item().meta.NoChangeDamageRate) {
+        return value;
+    }
 
     const subject = this.subject();
     const target = mTarget;
