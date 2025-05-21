@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.02 A list-style skill learning system reservation functionality.
+ * @plugindesc v1.03 A list-style skill learning system reservation functionality.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @base NRP_LearnSkillList
  * @orderAfter NRP_LearnSkillList
@@ -205,7 +205,7 @@ Would you like to cancel?
 
 /*:ja
  * @target MZ
- * @plugindesc v1.02 リスト形式のスキル習得システムの予約機能。
+ * @plugindesc v1.03 リスト形式のスキル習得システムの予約機能。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @base NRP_LearnSkillList
  * @orderAfter NRP_LearnSkillList
@@ -266,7 +266,7 @@ Would you like to cancel?
  * 控えメンバーのレベルアップを表示しない設定になっている場合は、
  * 予約スキルの習得メッセージも表示できなくなります。
  * その場合は控えメンバーはスキル習得の対象外にするか、
- * もしくは習得はできても習得画面を呼ばなようにしたほうが無難だと思います。
+ * もしくは習得はできても習得画面を呼ばないほうが無難だと思います。
  * 
  * -------------------------------------------------------------------
  * ■利用規約
@@ -726,6 +726,17 @@ Scene_Map.prototype.start = function() {
     }
 
     _Scene_Map_start.apply(this, arguments);
+};
+
+/**
+ * ●フェードインを実行するかどうか？
+ */
+const _Scene_Map_needsFadeIn = Scene_Map.prototype.needsFadeIn;
+Scene_Map.prototype.needsFadeIn = function() {
+    // Scene_LearnSkillListも対象に追加する。
+    // ※戦闘後と同じフェードアウトを行う。
+    return SceneManager.isPreviousScene(Scene_LearnSkillList)
+        || _Scene_Map_needsFadeIn.apply(this, arguments);
 };
 
 //-----------------------------------------------------------------------------
