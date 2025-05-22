@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.10 Extends the functionality of battle events.
+ * @plugindesc v1.101 Extends the functionality of battle events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_ChargeSkill
  * @orderBefore NRP_DynamicAnimationMZ
@@ -255,7 +255,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.10 バトルイベントの機能を拡張します。
+ * @plugindesc v1.101 バトルイベントの機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_ChargeSkill
  * @orderBefore NRP_DynamicAnimationMZ
@@ -721,7 +721,7 @@ PluginManager.registerCommand(PLUGIN_NAME, "superForce", function(args) {
 });
 
 /**
- * ●行動判定の無効化
+ * ●スキルのランダム実行
  */
 PluginManager.registerCommand(PLUGIN_NAME, "randomSkills", function(args) {
     // 行動主体を設定
@@ -743,6 +743,10 @@ PluginManager.registerCommand(PLUGIN_NAME, "randomSkills", function(args) {
 
     // 使用不可なら中止
     if (!subject.canUse($dataSkills[skillId])) {
+        return;
+    }
+    // ＨＰ０以下かつ不死身で停止する。
+    if (stopForceActionHp0(subject)) {
         return;
     }
 
@@ -834,15 +838,6 @@ BattleManager.startAction = function() {
         return;
     }
 
-    // ＨＰ０以下で停止
-    if (pStopForceActionHp0 && subject.hp <= 0) {
-        // ステートが一致している場合
-        if (matchImmortalStates(subject)) {
-            this._phase = "action";
-            return;
-        }
-    }
-
     // 強制状態でなければ、有効判定を行う。
     if (!this.isForceEX()) {
         // かつ、戦闘行動の強制状態ならば、混乱処理を行う。
@@ -873,21 +868,6 @@ BattleManager.startAction = function() {
     // 元処理実行
     _BattleManager_startAction.apply(this);
 };
-
-/**
- * ●不死身ステートに一致するかどうか？
- */
-function matchImmortalStates(subject) {
-    // 不死身ステートの指定がないなら有効
-    if (!pTargetImmortalStates || pTargetImmortalStates.length == 0) {
-        return true;
-    }
-    // 不死身ステートに一致するなら有効
-    if (pTargetImmortalStates.some(stateId => subject._states.includes(toNumber(stateId)))) {
-        return true;
-    }
-    return false;
-}
 
 /**
  * ●強制アクション実行
@@ -1029,6 +1009,10 @@ Game_Interpreter.prototype.command339 = function(params) {
         }
 
         this.iterateBattler(isActor, subjectNo, function(battler) {
+            // ＨＰ０以下かつ不死身で停止する。
+            if (stopForceActionHp0(battler)) {
+                return;
+            }
             if (!battler.isDeathStateAffected()) {
                 battler.forceAction(params[2], targetIndex);
                 BattleManager.forceAction(battler);
@@ -1041,6 +1025,26 @@ Game_Interpreter.prototype.command339 = function(params) {
     // 元処理実行
     return _Game_Interpreter_command339.apply(this, arguments);
 };
+
+/**
+ * ●ＨＰ０以下かつ不死身で停止するかどうか？
+ */
+function stopForceActionHp0(battler) {
+    // プラグインパラメータがオンではない。
+    // または、ＨＰが０ではない。
+    if (!pStopForceActionHp0 || battler.hp > 0) {
+        return false;
+    }
+
+    // 不死身ステートの指定がないなら有効
+    if (!pTargetImmortalStates || pTargetImmortalStates.length == 0) {
+        return true;
+    // 不死身ステートに一致するなら有効
+    } else if (pTargetImmortalStates.some(stateId => battler._states.includes(toNumber(stateId)))) {
+        return true;
+    }
+    return false;
+}
 
 /**
  * ●【独自】戦闘行動の強制（引数使用）
@@ -1056,6 +1060,10 @@ Game_Interpreter.prototype.forceAction = function(subject, skillId, targetId) {
     }
 
     this.iterateBattler(subjectIsActor, subjectNo, function(battler) {
+        // ＨＰ０以下かつ不死身で停止する。
+        if (stopForceActionHp0(battler)) {
+            return;
+        }
         if (!battler.isDeathStateAffected()) {
             battler.forceAction(skillId, targetId);
             BattleManager.forceAction(battler);
