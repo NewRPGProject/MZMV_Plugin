@@ -503,7 +503,7 @@
  * @parent stopForceActionHp0
  * @text 対象となる不死身ステート
  * @type state[]
- * @desc ＨＰが０ならば強制行動時のスキルを停止するステートです。
+ * @desc ＨＰが０ならば強制行動時のスキルを停止する不死身ステートです。
  */
 
 /*~struct~Option:ja
