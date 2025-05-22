@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.093 Extends the functionality of battle events.
+ * @plugindesc v1.10 Extends the functionality of battle events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_ChargeSkill
  * @orderBefore NRP_DynamicAnimationMZ
@@ -227,6 +227,16 @@
  * @type boolean
  * @default true
  * @desc Adjusts the timing of the end process when a common event is invoked by the effect of a skill.
+ * 
+ * @param stopForceActionHp0
+ * @type boolean
+ * @default false
+ * @desc If the player is an immortal state and has 0 HP, the force action will be stopped.
+ * 
+ * @param targetImmortalStates
+ * @parent stopForceActionHp0
+ * @type state[]
+ * @desc Immortal states that stop force action when the battler's HP reaches 0.
  */
 
  /*~struct~Option:
@@ -245,7 +255,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.093 バトルイベントの機能を拡張します。
+ * @plugindesc v1.10 バトルイベントの機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_ChargeSkill
  * @orderBefore NRP_DynamicAnimationMZ
@@ -482,6 +492,18 @@
  * @default true
  * @desc スキルの使用効果でコモンイベントを呼び出した際、
  * 行動終了処理のタイミングを調整するようにします。
+ * 
+ * @param stopForceActionHp0
+ * @text ＨＰ０でスキル停止
+ * @type boolean
+ * @default false
+ * @desc 不死身ステートかつＨＰが０ならば強制行動時のスキルを停止します。
+ * 
+ * @param targetImmortalStates
+ * @parent stopForceActionHp0
+ * @text 対象となる不死身ステート
+ * @type state[]
+ * @desc ＨＰが０ならば強制行動時のスキルを停止するステートです。
  */
 
 /*~struct~Option:ja
@@ -506,6 +528,18 @@ var a;
 (function() {
 "use strict";
 
+/**
+ * ●構造体をJSで扱えるように変換
+ */
+function parseStruct1(arg) {
+    const ret = [];
+    if (arg) {
+        for (const str of JSON.parse(arg)) {
+            ret.push(str);
+        }
+    }
+    return ret;
+}
 function toNumber(str, def) {
     if (str == undefined || str == "") {
         return def;
@@ -533,6 +567,8 @@ const pActionAtFailure = toNumber(parameters["actionAtFailure"], 0);
 const pForceValidFlexible = toBoolean(parameters["forceValidFlexible"], true);
 const pAIsSubject = toBoolean(parameters["aIsSubject"], true);
 const pAdjustCommonEventActionEnd = toBoolean(parameters["adjustCommonEventActionEnd"], true);
+const pStopForceActionHp0 = toBoolean(parameters["stopForceActionHp0"], false);
+const pTargetImmortalStates = parseStruct1(parameters["targetImmortalStates"]);
 
 let mForceValid = pForceValid;
 
@@ -798,6 +834,15 @@ BattleManager.startAction = function() {
         return;
     }
 
+    // ＨＰ０以下で停止
+    if (pStopForceActionHp0 && subject.hp <= 0) {
+        // ステートが一致している場合
+        if (matchImmortalStates(subject)) {
+            this._phase = "action";
+            return;
+        }
+    }
+
     // 強制状態でなければ、有効判定を行う。
     if (!this.isForceEX()) {
         // かつ、戦闘行動の強制状態ならば、混乱処理を行う。
@@ -828,6 +873,21 @@ BattleManager.startAction = function() {
     // 元処理実行
     _BattleManager_startAction.apply(this);
 };
+
+/**
+ * ●不死身ステートに一致するかどうか？
+ */
+function matchImmortalStates(subject) {
+    // 不死身ステートの指定がないなら有効
+    if (!pTargetImmortalStates || pTargetImmortalStates.length == 0) {
+        return true;
+    }
+    // 不死身ステートに一致するなら有効
+    if (pTargetImmortalStates.some(stateId => subject._states.includes(toNumber(stateId)))) {
+        return true;
+    }
+    return false;
+}
 
 /**
  * ●強制アクション実行
