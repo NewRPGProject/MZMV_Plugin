@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.05 Implement a map selection & transfer screen.
+ * @plugindesc v1.06 Implement a map selection & transfer screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484927929.html
  *
@@ -285,6 +285,12 @@
  * @type boolean
  * @default true
  * @desc Automatically updates the variables for atlas coordinates when transferred to each spot.
+ * 
+ * @param SelectNearestSpot
+ * @parent <FieldMap>
+ * @type boolean
+ * @default false
+ * @desc When selecting a spot, the spot nearest to the player's current location is automatically selected initially.
  * 
  * @param CurrentSymbolId
  * @parent <FieldMap>
@@ -626,7 +632,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.05 マップ選択＆移動画面を実装します。
+ * @plugindesc v1.06 マップ選択＆移動画面を実装します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484927929.html
  *
@@ -896,6 +902,13 @@
  * @default true
  * @desc 各地点へ移動した際に地図座標用の変数を自動更新します。
  * 『移動先マップＩＤ』および『座標更新用マップＩＤ』が基準。
+ * 
+ * @param SelectNearestSpot
+ * @parent <FieldMap>
+ * @text 最寄の地点を初期選択
+ * @type boolean
+ * @default false
+ * @desc 地点選択時に自動で最もプレイヤーの現在地に近い地点を初期選択します。
  * 
  * @param CurrentSymbolId
  * @parent <FieldMap>
@@ -1353,6 +1366,7 @@ const pIdentifierVariable = toNumber(parameters["IdentifierVariable"]);
 // 地図情報関連
 const pUpdateWhenExitField = toBoolean(parameters["UpdateWhenExitField"]);
 const pUpdateWhenEnterSpot = toBoolean(parameters["UpdateWhenEnterSpot"]);
+const pSelectNearestSpot = toBoolean(parameters["SelectNearestSpot"]);
 const pCurrentSymbolId = toNumber(parameters["CurrentSymbolId"]);
 const pSelectedSymbolId = toNumber(parameters["SelectedSymbolId"]);
 // レイアウト関連
@@ -1567,8 +1581,8 @@ function getFieldInfo(mapId) {
  * ●地図表示が有効かを判定
  */
 function isValidField(fieldMap, mapId) {
-    // マップＩＤが一致し、かつ画像が存在する。
-    if (fieldMap.MapId == mapId && fieldMap.MapImage) {
+    // マップＩＤが一致する。
+    if (fieldMap.MapId == mapId) {
         // スイッチの指定があり、かつオフの場合は無効とする。
         if (fieldMap.ValidSwitch && !$gameSwitches.value(fieldMap.ValidSwitch)) {
             return false;
@@ -2455,6 +2469,8 @@ Windows_SelectSpots.prototype.initialize = function(rect) {
 
     // 先頭を選択しておく。
     this.select(0);
+    // 初期選択フラグ
+    this._firstSelectFlg = true;
 };
 
 /**
@@ -2462,9 +2478,28 @@ Windows_SelectSpots.prototype.initialize = function(rect) {
  */
 Windows_SelectSpots.prototype.refresh = function() {
     this.makeItemList();
+    // 初期カーソル位置を設定
+    this.setDefaultSelect();
+    Window_Selectable.prototype.refresh.call(this);
+};
+
+/**
+ * ●初期カーソル位置を設定
+ */
+Windows_SelectSpots.prototype.setDefaultSelect = function() {
+    // 初期選択以外およびデータが存在しない場合は無効
+    if (!this._firstSelectFlg || !this._data) {
+        return;
+    }
+    this._firstSelectFlg = false;
+
+    // 初期選択しない場合は無効
+    if (!pSelectNearestSpot) {
+        return;
+    }
 
     // 初期識別値の指定がある場合
-    if (mDefaultIdentifier && this._data) {
+    if (mDefaultIdentifier) {
         for (let i = 0; i < this._data.length; i++) {
             const spot = this._data[i];
             // 一致する移動先識別値が存在した場合
@@ -2475,10 +2510,67 @@ Windows_SelectSpots.prototype.refresh = function() {
             }
         }
         mDefaultIdentifier = null;
+        return;
     }
-    
-    Window_Selectable.prototype.refresh.call(this);
-};
+
+    //----------------------------------------------
+    // 最も近い点を選択
+    //----------------------------------------------
+    // プレイヤーの地図上座標を取得
+    const currentFieldMap = getCurrentFieldMap();
+    if (currentFieldMap) {
+        let bestSpot = null;
+        let bestIndex = 0;
+        let minDistance = Infinity;
+
+        const currentMapId = $gameVariables.value(currentFieldMap.currentMapIdVariable);
+        const currentX = $gameVariables.value(currentFieldMap.currentXVariable);
+        const currentY = $gameVariables.value(currentFieldMap.currentYVariable);
+
+        for (let i = 0; i < this._data.length; i++) {
+            const spot = this._data[i];
+            // マップＩＤが異なる場合は無視
+            if (currentMapId != spot.fieldMapId) {
+                continue;
+            }
+
+            // 距離を求める。
+            const deltaX = spot.fieldX - currentX;
+            const deltaY = spot.fieldY - currentY;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            if (distance < minDistance) {
+                minDistance = distance;
+                bestSpot = spot;
+                bestIndex = i;
+            }
+        }
+
+        // 最も近い点を選択する。
+        if (bestSpot) {
+            this.select(bestIndex);
+        }
+    }
+}
+
+/**
+ * ●現在のフィールド情報を取得する。
+ */
+function getCurrentFieldMap() {
+    for (const fieldMapData of pFieldMapList) {
+        const mapId = toNumber(fieldMapData.MapId);
+        const fieldMap = getFieldInfo(mapId);
+
+        // スイッチの指定があり、かつオフの場合は無効とする。
+        if (fieldMap.ValidSwitch && !$gameSwitches.value(fieldMap.ValidSwitch)) {
+            continue;
+        }
+        // マップＩＤと一致した場合
+        if (mapId == $gameVariables.value(fieldMap.currentMapIdVariable)) {
+            return fieldMap;
+        }
+    }
+    return null;
+}
 
 /**
  * ●更新
@@ -2810,7 +2902,7 @@ Windows_MapDisplay.prototype.drawAllItems = function() {
     // 一致する地図用マップ情報を取得
     const fieldMapItem = getFieldInfo(fieldMapId);
     // 地図を描画
-    if (fieldMapItem) {
+    if (fieldMapItem && fieldMapItem.MapImage) {
         this.drawMap(fieldMapItem);
         this.show();
 
