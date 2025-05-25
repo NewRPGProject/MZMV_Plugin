@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.06 Implement a map selection & transfer screen.
+ * @plugindesc v1.07 Implement a map selection & transfer screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484927929.html
  *
@@ -319,6 +319,13 @@
  * @desc The height of the help frame.
  * By default (blank), two lines are reserved; set to 0 to hide it.
  * 
+ * @param ReadOnlyGray
+ * @parent <Layout>
+ * @type boolean
+ * @default false
+ * @desc All spots are grayed out for read only.
+ * Distinguishes between travel and read only.
+ * 
  * @param <Menu Command>
  * @desc These are the related items for displaying the Travel function in the menu command.
  * 
@@ -632,7 +639,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.06 マップ選択＆移動画面を実装します。
+ * @plugindesc v1.07 マップ選択＆移動画面を実装します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484927929.html
  *
@@ -941,6 +948,14 @@
  * @type number
  * @desc 解説枠の縦幅です。
  * 初期値（空欄）では二行分を確保します。0にすると非表示。
+ * 
+ * @param ReadOnlyGray
+ * @parent <Layout>
+ * @text 参照専用時は灰色表示
+ * @type boolean
+ * @default false
+ * @desc 参照専用時は全ての地点名を灰色表示します。
+ * 移動時と参照時の区別をしたい時にどうぞ。
  * 
  * @param <Menu Command>
  * @text ＜メニューコマンド関連＞
@@ -1372,6 +1387,7 @@ const pSelectedSymbolId = toNumber(parameters["SelectedSymbolId"]);
 // レイアウト関連
 const pSpotListWidth = toNumber(parameters["SpotListWidth"], 300);
 const pHelpHeight = toNumber(parameters["HelpHeight"]);
+const pReadOnlyGray = toBoolean(parameters["ReadOnlyGray"], false);
 // メニューコマンド関連
 const pShowMenuCommand = toBoolean(parameters["ShowMenuCommand"], false);
 const pShowMenuCommandPosition = toNumber(parameters["ShowMenuCommandPosition"], 4);
@@ -2834,7 +2850,9 @@ Windows_SelectSpots.prototype.updateHelp = function() {
 function isSpotEnabled(item) {
     if (!item) {
         return false;
-
+    // 読取専用の場合
+    } else if (pReadOnlyGray && mReadOnly) {
+        return false;
     // 無効スイッチがオンの場合
     } else if (item.disableSwitch && $gameSwitches.value(item.disableSwitch)) {
         return false;
