@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.15 Extend the functionality of the state in various ways.
+ * @plugindesc v1.151 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -353,7 +353,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.15 ステートの機能を色々と拡張します。
+ * @plugindesc v1.151 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -1600,7 +1600,6 @@ if (pAlwaysUpdateState) {
         // 強制的にfalseとすることでステートの重ねを有効に
         // ※ただし、死亡は無限ループとなるので対象外。
         if (mIsStateAffectedFalse) {
-            mIsStateAffectedFalse = false;
             if (this.deathStateId() != stateId) {
                 return false;
             }
