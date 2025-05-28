@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.151 Extend the functionality of the state in various ways.
+ * @plugindesc v1.152 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -353,7 +353,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.151 ステートの機能を色々と拡張します。
+ * @plugindesc v1.152 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -1135,7 +1135,7 @@ Game_BattlerBase.prototype.stateRate = function(stateId) {
         }
     }
 
-    return _Game_BattlerBase_stateRate.call(this, arguments);
+    return _Game_BattlerBase_stateRate.apply(this, arguments);
 };
 
 /**
