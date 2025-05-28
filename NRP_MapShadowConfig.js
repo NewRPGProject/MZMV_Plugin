@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.021 Sets the settings for shadows on the map.
+ * @plugindesc v1.03 Sets the settings for shadows on the map.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/479088201.html
  *
@@ -32,12 +32,18 @@
  * Changes whether the shadow will be diagonal or not.
  * Note that true can be omitted. (Example: <DiagonalShadow>)
  * 
+ * -------------------------------------------------------------------
  * [Terms]
+ * -------------------------------------------------------------------
  * There are no restrictions.
  * Modification, redistribution freedom, commercial availability,
  * and rights indication are also optional.
  * The author is not responsible,
  * but we will respond to defects as far as possible.
+ * 
+ * @-----------------------------------------------------
+ * @ [Plugin Parameters]
+ * @-----------------------------------------------------
  * 
  * @param DiagonalShadow
  * @type boolean
@@ -57,7 +63,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.021 マップの影に関する設定を行います。
+ * @plugindesc v1.03 マップの影に関する設定を行います。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/479088201.html
  *
@@ -86,10 +92,16 @@
  * 影を斜めにするかどうかを変更します。
  * ちなみにtrueは省略できます。（例：<DiagonalShadow>）
  * 
+ * -------------------------------------------------------------------
  * ■利用規約
+ * -------------------------------------------------------------------
  * 特に制約はありません。
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
+ * 
+ * @-----------------------------------------------------
+ * @ プラグインパラメータ
+ * @-----------------------------------------------------
  * 
  * @param DiagonalShadow
  * @text 影を斜めにする
@@ -327,35 +339,17 @@ function isDiagonalShadow() {
 }
 
 /**
- * ●マップ情報の設定
+ * ●マップデータのロード完了時
  */
-const _Game_Map_setup = Game_Map.prototype.setup;
-Game_Map.prototype.setup = function(mapId) {
-    _Game_Map_setup.apply(this, arguments);
-    
+const _Scene_Map_onMapLoaded = Scene_Map.prototype.onMapLoaded;
+Scene_Map.prototype.onMapLoaded = function() {
+    _Scene_Map_onMapLoaded.apply(this, arguments);
+
     // 影を斜めにするかを設定
-    // ※影の描画は常駐処理なので、極力処理はこちらでやっておく。
-    const tileset = this.tileset();
+    const tileset = $gameMap.tileset();
     if (!tileset) {
         return;
     }
-
-    tileset.isDiagonalShadow = getDiagonalShadow(tileset);
-};
-
-/**
- * ●タイルセットの変更
- */
-const _Game_Map_changeTileset = Game_Map.prototype.changeTileset;
-Game_Map.prototype.changeTileset = function(tilesetId) {
-    _Game_Map_changeTileset.apply(this, arguments);
-
-    // 影を斜めにするかを設定
-    const tileset = this.tileset();
-    if (!tileset) {
-        return;
-    }
-
     tileset.isDiagonalShadow = getDiagonalShadow(tileset);
 };
 
@@ -363,13 +357,12 @@ Game_Map.prototype.changeTileset = function(tilesetId) {
  * ●影を斜めにするかどうかを設定
  */
 function getDiagonalShadow(tileset) {
-    const isDiagonalShadow = tileset.meta.DiagonalShadow;
+    const isDiagonalShadow = toBoolean(tileset.meta.DiagonalShadow);
 
     // 指定がなければ設定値
     if (isDiagonalShadow === undefined) {
         return pDiagonalShadow;
     }
-
     // 個別の指定があれば優先
     if (isDiagonalShadow == true) {
         return true;
