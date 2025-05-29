@@ -100,6 +100,14 @@
  * This is useful for guard and other situations
  * where you want the effect to expire at the start of input.
  * 
+ * ◆<SelfStatePlusTurn:true>
+ * State added to oneself has +1 turn of duration.
+ * See [Extended State to Self] for more information.
+ * 
+ * ◆<SelfStatePlusTurn:false>
+ * State added to oneself does not have +1 turn of duration.
+ * See [Extended State to Self] for more information.
+ * 
  * -------------------------------------------------------------------
  * [Note (actor, enemy, class, equipment, state, skill, item)]
  * -------------------------------------------------------------------
@@ -406,6 +414,14 @@
  * 自動解除のタイミングが行動終了時のステートに対して、
  * ターン開始時（入力開始時）にステートの自動解除を発生させます。
  * 防御など入力開始時に効果を切れさせたい場合に有効です。
+ * 
+ * ◆<SelfStatePlusTurn:true>
+ * ステートを自分にかけた際、継続ターンを+1します。
+ * 詳細は『自身へのステートターン+1』をご覧ください。
+ * 
+ * ◆<SelfStatePlusTurn:false>
+ * ステートを自分にかけた際、継続ターンを+1しません。
+ * 詳細は『自身へのステートターン+1』をご覧ください。
  * 
  * -------------------------------------------------------------------
  * ■アクター、エネミー、職業、装備、ステート、スキルのメモ欄
