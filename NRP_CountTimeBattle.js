@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.236 Change the battle system to CTB.
+ * @plugindesc v1.24 Change the battle system to CTB.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -119,6 +119,33 @@
  * <ReviveWt:[Number]>
  * For the revive skill, set the waiting time (Base: 100) when reviving.
  * If <ReviveWt:50>, the action starts in 1/2 turn.
+ * 
+ * -------------------------------------------------------------------
+ * [Extended State to Self]
+ * -------------------------------------------------------------------
+ * By default, it extends the state (buff/debuff)
+ * applied to oneself by +1 turn.
+ * ※This applies to items with Auto-removal Timing set to [Action End].
+ * 
+ * This is an adjustment because the user's turn ends immediately
+ * after the skill is used.
+ * (For example, it can address the problem of states
+ *  with Duration in Turns set to 1 being cut off instantly.)
+ * 
+ * On the other hand, a state that takes effect at the end of an action,
+ * such as regeneration, has the problem
+ * that the number of times it takes effect increases,
+ * so it can be toggled on a per-state basis.
+ * 
+ * Fill in the following in the note field of the state.
+ * ※If not specified, the value of the plugin parameter setting
+ *   will be used.
+ * 
+ * <SelfStatePlusTurn:true>
+ * State added to oneself has +1 turn of duration.
+ * 
+ * <SelfStatePlusTurn:false>
+ * State added to oneself does not have +1 turn of duration.
  * 
  * -------------------------------------------------------------------
  * [Continuous action skill]
@@ -263,14 +290,14 @@
  * @parent <State&Buf>
  * @type boolean
  * @default true
- * @desc The state put on self has a +1 continuation turn.
+ * @desc State added to oneself has +1 turn of duration.
  * The timing of the automatic cancellation must be "Action End".
  * 
  * @param selfBufPlusTurn
  * @parent <State&Buf>
  * @type boolean
  * @default true
- * @desc The buf put on self has a +1 continuation turn.
+ * @desc Buf added to oneself has +1 turn of duration.
  * How to deal with a problem whose effect on self quickly disappears.
  * 
  * @param reviveWT
@@ -297,7 +324,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.236 戦闘システムをＣＴＢへ変更します。
+ * @plugindesc v1.24 戦闘システムをＣＴＢへ変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_VisualTurn
  * @orderBefore NRP_VisualTurn
@@ -397,6 +424,29 @@
  * <ReviveWt:[数値]>
  * 蘇生スキルに対して、蘇生時の待ち時間（基準:100）を設定します。
  * <ReviveWt:50>ならば、1/2ターンで行動開始します。
+ * 
+ * -------------------------------------------------------------------
+ * ■自身へのステートターン+1
+ * -------------------------------------------------------------------
+ * 初期設定では自身にかけたステート（強化／弱体）の効果を
+ * ＋１ターン延長する仕様になっています。
+ * ※自動解除のタイミングが『行動終了時』のものが対象です。
+ * 
+ * これはスキル使用直後に自身のターンが終了してしまうための調整です。
+ * （例えば、継続ターン数が１のステートが瞬時に切れてしまう問題への対応。）
+ * 
+ * 一方で再生系のような行動終了時に効果を発揮するステートは、
+ * 回数が増えてしまうという問題があるため、
+ * ステート毎に切り替えられるようにしています。
+ * 
+ * 以下をステートのメモ欄に記入してください。
+ * ※指定がない場合、プラグインパラメータの設定値が使用されます。
+ * 
+ * <SelfStatePlusTurn:true>
+ * ステートを自分にかけた際、継続ターンを+1します。
+ * 
+ * <SelfStatePlusTurn:false>
+ * ステートを自分にかけた際、継続ターンを+1しません。
  * 
  * -------------------------------------------------------------------
  * ■連続行動技
@@ -1338,15 +1388,30 @@ Game_BattlerBase.prototype.resetStateCounts = function(stateId) {
     // 元処理呼び出し
     _Game_BattlerBase_prototype_resetStateCounts.apply(this, arguments);
     
+    const dataState = $dataStates[stateId];
+
     // 対象者が行動者自身の場合は有効ターン＋１
     // そうしておかないと、行動終了と同時にターン経過してしまうため。
-    if (pSelfStatePlusTurn && this == BattleManager._subject) {
-        // 自動解除が『行動終了時』のステートを対象とする。
-        if ($dataStates[stateId].autoRemovalTiming == 1) {
+    // ※自動解除が『行動終了時』のステートを対象とする。
+    if (this == BattleManager._subject && dataState.autoRemovalTiming == 1) {
+        if (isSelfStatePlusTurn(dataState)) {
             this._stateTurns[stateId]++;
         }
     }
 };
+
+/**
+ * ●自身へのステートを延長するか？
+ */
+function isSelfStatePlusTurn(dataState) {
+    const isSelfStatePlusTurn = toBoolean(dataState.meta.SelfStatePlusTurn);
+    if (isSelfStatePlusTurn === true) {
+        return true;
+    } else if (isSelfStatePlusTurn === false) {
+        return false;
+    }
+    return pSelfStatePlusTurn;
+}
 
 /**
  * ●能力変化有効ターンの設定
