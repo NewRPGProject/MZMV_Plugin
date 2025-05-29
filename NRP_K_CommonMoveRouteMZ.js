@@ -10,7 +10,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.03 Set events' custom move by common event
+ * @plugindesc v1.031 Set events' custom move by common event
  * @author Sasuke KANNAZUKI(Thx to terunon)(mod Takeshi Sunagawa)
  *
  * @command set
@@ -101,10 +101,9 @@
  * @default true
  * @desc Prohibits self movement by this plugin for events that are currently running.
  *
- * @param LockOtherEvents
- * @type boolean
- * @default false
- * @desc When an event is running, self movement by this plugin is prohibited for all events.
+ * @param LockOtherEventsSwitch
+ * @type switch
+ * @desc When the switch is on and an event is running, this plugin disables autonomous movement of all events. 0 (none) always stops.
  *
  * @help
  * CommonMoveRouteMZ.js is a launch plugin for RPG Maker MZ
@@ -200,7 +199,7 @@
  */
 /*:ja
  * @target MZ
- * @plugindesc v1.03 複数イベントの移動ルートをひとつのコモンイベントで制御可能
+ * @plugindesc v1.031 複数イベントの移動ルートをひとつのコモンイベントで制御可能
  * @author 神無月サスケ（原案：terunon）（改造：砂川赳）
  *
  * @command set
@@ -294,7 +293,7 @@
  * @param LockOtherEventsSwitch
  * @text 他イベント停止スイッチ
  * @type switch
- * @desc スイッチがオンの間、当プラグインによる全イベントの自律移動を禁止します。0（なし）なら常に停止。
+ * @desc スイッチがオンかつイベント実行時、当プラグインによる全イベントの自律移動を禁止します。0（なし）なら常に停止。
  * 
  * @help
  * このプラグインは神無月サスケ様（原案：terunon様）による
