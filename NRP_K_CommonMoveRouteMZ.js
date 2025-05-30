@@ -10,7 +10,7 @@
 
 /*:
  * @target MZ
- * @plugindesc v1.031 Set events' custom move by common event
+ * @plugindesc v1.04 Set events' custom move by common event
  * @author Sasuke KANNAZUKI(Thx to terunon)(mod Takeshi Sunagawa)
  *
  * @command set
@@ -199,7 +199,7 @@
  */
 /*:ja
  * @target MZ
- * @plugindesc v1.031 複数イベントの移動ルートをひとつのコモンイベントで制御可能
+ * @plugindesc v1.04 複数イベントの移動ルートをひとつのコモンイベントで制御可能
  * @author 神無月サスケ（原案：terunon）（改造：砂川赳）
  *
  * @command set
@@ -641,12 +641,17 @@ function toNumber(str, def) {
         this._moveRouteInterpreter = null;
       }
     }
-
     _Game_Character_updateRoutineMove.call(this);
   };
 
   const _Game_Event_setupPageSettings = Game_Event.prototype.setupPageSettings;
   Game_Event.prototype.setupPageSettings = function() {
+    // 当プラグインによる命令中の場合、強制ルートフラグをオフにする。ADD Sunagawa
+    // ※そうしないとページが切り替わっても命令が終わらない。
+    if (this._moveRouteInterpreter) {
+      this._moveRouteForcing = false;
+    }
+
     _Game_Event_setupPageSettings.call(this);
     this._moveRouteInterpreter = null;
   };
