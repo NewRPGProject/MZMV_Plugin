@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.001 Assist in target selection of recovery skills.
+ * @plugindesc v1.002 Assist in target selection of recovery skills.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/506049329.html
  *
@@ -68,7 +68,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.001 回復スキルの対象選択をアシストします。
+ * @plugindesc v1.002 回復スキルの対象選択をアシストします。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/506049329.html
  *
@@ -211,7 +211,7 @@ function setAssistTarget(action, win) {
     }
 
     // 蘇生の場合
-    if (pApplyRevive && action.isForDeadFriend()) {
+    if (pApplyRevive && isRevive(action)) {
         // 先頭の戦闘不能者を取得し、存在すれば選択
         const member = $gameParty.deadMembers()[0];
         if (member) {
@@ -249,6 +249,20 @@ function setAssistTarget(action, win) {
             return;
         }
     }
+}
+
+/**
+ * ●蘇生の場合
+ */
+function isRevive(action) {
+    // 範囲が味方単体（戦闘不能）の場合
+    if (action.isForDeadFriend()) {
+        return true;
+    }
+    // それ以外でも、使用効果に戦闘不能ステートの解除がある場合
+    const deathStateId = action.subject().deathStateId();
+    return action.item().effects.some(effect => effect.code == Game_Action.EFFECT_REMOVE_STATE
+        && effect.dataId === deathStateId);
 }
 
 /**
