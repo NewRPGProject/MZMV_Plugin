@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v2.001 Read the definition of DynamicAnimation&Motion from txt file.
+ * @plugindesc v2.01 Read the definition of DynamicAnimation&Motion from txt file.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -141,7 +141,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.001 DynamicAnimation&Motionの定義をtxtから読み込みます。
+ * @plugindesc v2.01 DynamicAnimation&Motionの定義をtxtから読み込みます。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -586,12 +586,22 @@ DataManager.loadDynamicTextAll = function() {
  * ●対象とするフォルダを取得
  */
 function getReaddirTarget(fs) {
+    let folder;
+
+    // 暗号ファイルを参照する場合
+    if (isWatchEncrypt()) {
+        folder = pEncryptFolder;
+    // それ以外
+    } else {
+        folder = pReadTxtFolder;
+    }
+
     // 本番時、wwwフォルダがあればそちらを参照
     // ※ＭＶ本番では参照先が変わるため
     if (!isPlaytest() && fs.existsSync("www")) {
-        return "www" + "/" + pReadTxtFolder;
+        return "www" + "/" + folder;
     }
-    return pReadTxtFolder;
+    return folder;
 }
 
 /**
@@ -604,10 +614,19 @@ function readdirDynamicTextFile(err, dynamicFileNames) {
         process.exit(1);
     }
     
+    let ext;
+    // 暗号ファイルを参照する場合
+    if (isWatchEncrypt()) {
+        ext = ENCRYPT_EXT;
+    // それ以外
+    } else {
+        ext = TXT_EXT;
+    }
+
     // .txtファイルだけに絞り込み
     // ※フォルダ名に.txtを付けると誤検出するけど気にしない。
     const dynamicTextFileNames = dynamicFileNames.filter(function(fileName) {
-        return fileName.endsWith(TXT_EXT);
+        return fileName.endsWith(ext);
     });
 
     // デバッグ用の時間計測処理
