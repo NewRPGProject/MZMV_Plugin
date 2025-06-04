@@ -3,8 +3,9 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.05 Resize the entire game window & add to the options.
+ * @plugindesc v1.051 Resize the entire game window & add to the options.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
+ * @orderBefore StartUpFullScreen
  * @url http://newrpg.seesaa.net/article/475413177.html
  *
  * @help Change the window size of the entire game.
@@ -169,8 +170,9 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.05 ゲーム全体のウィンドウサイズを変更＆オプションに追加
+ * @plugindesc v1.051 ゲーム全体のウィンドウサイズを変更＆オプションに追加
  * @author 砂川赳（http://newrpg.seesaa.net/）
+ * @orderBefore StartUpFullScreen
  * @url http://newrpg.seesaa.net/article/475413177.html
  *
  * @help ゲーム全体のウィンドウサイズを変更します。
