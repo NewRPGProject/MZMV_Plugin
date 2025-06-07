@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.021 Action during the return of DynamicMotion
+ * @plugindesc v1.03 Action during the return of DynamicMotion
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicMotionMZ
  * @url https://newrpg.seesaa.net/article/499269749.html
@@ -75,7 +75,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.021 DynamicMotionの帰還中に行動
+ * @plugindesc v1.03 DynamicMotionの帰還中に行動
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicMotionMZ
  * @url https://newrpg.seesaa.net/article/499269749.html
@@ -224,6 +224,39 @@ BattleManager.invokeAction = function(subject, target) {
     mReturningBattlers.push(this._subject);
 };
 
+/**
+ * ●戦闘終了のチェック
+ */
+const _BattleManager_checkBattleEnd = BattleManager.checkBattleEnd;
+BattleManager.checkBattleEnd = function() {
+    // 帰還中のバトラーが存在する場合
+    // チェック処理を停止してタイミングを遅らせる。
+    if (mReturningBattlers && mReturningBattlers.length) {
+        // 戦闘終了のチェック処理を予約する。
+        this._returningReserveCheckBattleEnd = true;
+        // 処理停止
+        return false;
+    }
+    return _BattleManager_checkBattleEnd.apply(this, arguments);
+};
+
+/**
+ * ●イベント更新
+ */
+const _BattleManager_updateEvent = BattleManager.updateEvent;
+BattleManager.updateEvent = function() {
+    // 戦闘終了のチェック処理が予約されている場合
+    if (this._returningReserveCheckBattleEnd) {
+        // 帰還中のバトラーが存在しない場合
+        if (!mReturningBattlers || mReturningBattlers.length == 0) {
+            this._returningReserveCheckBattleEnd = false;
+            // 戦闘終了判定を実行
+            return this.checkBattleEnd();
+        }
+    }
+    return _BattleManager_updateEvent.apply(this, arguments);
+};
+
 // ----------------------------------------------------------------------------
 // Sprite
 // ----------------------------------------------------------------------------
@@ -274,6 +307,13 @@ Sprite_Battler.prototype.onMoveEnd = function() {
     if (this.inHomePosition() && mReturningBattlers) {
         // 配列から除去する。
         mReturningBattlers = mReturningBattlers.filter(battler => battler != this._battler);
+
+        // 戦闘不能演出を実行
+        const battler = this._battler;
+        if (battler._returningReserveCollapse && battler.isDead()) {
+            battler._returningReserveCollapse = false;
+            battler.performCollapse();
+        }
     }
 };
 
@@ -311,12 +351,7 @@ Sprite_Battler.prototype.updateDynamicMotion = function() {
  * 【独自】帰還中かどうかの判定。
  */
 Sprite_Battler.prototype.isReturning = function() {
-    // 帰還中のバトラーが存在する場合
-    if (mReturningBattlers && mReturningBattlers.length) {
-        // 帰還中のバトラーに含まれるなら
-        return mReturningBattlers.includes(this._battler);
-    }
-    return false;
+    return this._battler.isReturning();
 };
 
 /**
@@ -456,6 +491,22 @@ if (pKeepReturningMotion) {
 }
 
 // ----------------------------------------------------------------------------
+// Game_Battler
+// ----------------------------------------------------------------------------
+
+/**
+ * 【独自】帰還中かどうかの判定。
+ */
+Game_Battler.prototype.isReturning = function() {
+    // 帰還中のバトラーが存在する場合
+    if (mReturningBattlers && mReturningBattlers.length) {
+        // 帰還中のバトラーに含まれるなら
+        return mReturningBattlers.includes(this);
+    }
+    return false;
+};
+
+// ----------------------------------------------------------------------------
 // Spriteset_Battle
 // ----------------------------------------------------------------------------
 
@@ -567,6 +618,34 @@ if (pWaitRegeneration) {
             return true;
         }
         return false;
+    };
+
+    /**
+     * ●撃破処理
+     */
+    const _Game_Actor_performCollapse = Game_Actor.prototype.performCollapse;
+    Game_Actor.prototype.performCollapse = function() {
+        // 帰還中は処理しない。
+        if (this.isReturning()) {
+            // 戦闘不能演出を予約し、帰還後に実行
+            this._returningReserveCollapse = true;
+            return;
+        }
+        _Game_Actor_performCollapse.apply(this, arguments);
+    };
+
+    /**
+     * ●撃破処理
+     */
+    const _Game_Enemy_performCollapse = Game_Enemy.prototype.performCollapse;
+    Game_Enemy.prototype.performCollapse = function() {
+        // 帰還中は処理しない。
+        if (this.isReturning()) {
+            // 戦闘不能演出を予約し、帰還後に実行
+            this._returningReserveCollapse = true;
+            return;
+        }
+        _Game_Enemy_performCollapse.apply(this, arguments);
     };
 }
 
