@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.001 Change the effect when an enemy collapses.
+ * @plugindesc v1.002 Change the effect when an enemy collapses.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @orderAfter NRP_DamageTiming
  * @url https://newrpg.seesaa.net/article/501277851.html
@@ -157,7 +157,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.001 敵消滅時の演出を変更する。
+ * @plugindesc v1.002 敵消滅時の演出を変更する。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @orderAfter NRP_DamageTiming
  * @url https://newrpg.seesaa.net/article/501277851.html
@@ -417,8 +417,6 @@ Game_Enemy.prototype.originalCollapseData = function() {
     // 演出の指定があった場合
     const originalCollapseId = this.originalCollapseId();
     if (originalCollapseId != null) {
-        Game_Battler.prototype.performCollapse.call(this);
-
         // 条件を満たす消滅データを取得
         return pCollapseList.find(collapseData => collapseData.Id == originalCollapseId);
     }
