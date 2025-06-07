@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Action during the return of DynamicMotion
+ * @plugindesc v1.031 Action during the return of DynamicMotion
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicMotionMZ
  * @url https://newrpg.seesaa.net/article/499269749.html
@@ -75,7 +75,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 DynamicMotionの帰還中に行動
+ * @plugindesc v1.031 DynamicMotionの帰還中に行動
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicMotionMZ
  * @url https://newrpg.seesaa.net/article/499269749.html
@@ -351,7 +351,7 @@ Sprite_Battler.prototype.updateDynamicMotion = function() {
  * 【独自】帰還中かどうかの判定。
  */
 Sprite_Battler.prototype.isReturning = function() {
-    return this._battler.isReturning();
+    return this._battler && this._battler.isReturning();
 };
 
 /**
