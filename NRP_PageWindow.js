@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.071 The windows can be page-turned left and right.
+ * @plugindesc v1.08 The windows can be page-turned left and right.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475347742.html
  *
@@ -175,7 +175,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.071 各種ウィンドウを左右でページ切替できるようにします。
+ * @plugindesc v1.08 各種ウィンドウを左右でページ切替できるようにします。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475347742.html
  *
@@ -458,7 +458,7 @@ Window_Selectable.prototype.pageCells = function() {
  * 【独自】合計ページ数
  */
 Window_Selectable.prototype.pageCount = function() {
-    var pageCount = Math.floor((this.maxCells() - 1) / this.maxPageItems()) + 1;
+    const pageCount = Math.floor((this.maxCells() - 1) / this.maxPageItems()) + 1;
     return Math.max(pageCount, 1); // 最低でも１
 };
 
@@ -466,7 +466,7 @@ Window_Selectable.prototype.pageCount = function() {
  * 【独自】現在ページ番号（0～）
  */
 Window_Selectable.prototype.pageNo = function() {
-    var pageNo = Math.floor(this.index() / this.maxPageItems());
+    const pageNo = Math.floor(this.index() / this.maxPageItems());
     return Math.max(pageNo, 0); // 最低でも０
 };
 
@@ -858,10 +858,10 @@ Window_Selectable.prototype.select = function(index) {
 /**
  * ●初期表示時のスクロール位置を調整
  */
-var _Window_Selectable_ensureCursorVisible = Window_Selectable.prototype.ensureCursorVisible;
+const _Window_Selectable_ensureCursorVisible = Window_Selectable.prototype.ensureCursorVisible;
 Window_Selectable.prototype.ensureCursorVisible = function() {
-    var row = this.row();
-    
+    const row = this.row();
+
     // ページ有、かつ２ページ目以降の場合
     if (this.existPage() && row > this.bottomRow()) {
         // index値を元に現在ページを取得
@@ -885,72 +885,6 @@ Window_Selectable.prototype.cursorPagedown = function() {
 Window_Selectable.prototype.cursorPageup = function() {
     // 処理なし
 };
-
-// スキルタイプの切替はとりあえず保留
-// /**
-//  * 【独自】スキルタイプウィンドウの設定
-//  */
-// Window_SkillList.prototype.setSkillTypeWindow = function(skillTypeWindow) {
-//     this._skillTypeWindow = skillTypeWindow;
-// };
-
-// /**
-//  * ●スキルウィンドウの設定
-//  */
-// var _Window_SkillType_setSkillWindow = Window_SkillType.prototype.setSkillWindow;
-// Window_SkillType.prototype.setSkillWindow = function(skillWindow) {
-//     // 相互参照できるように設定
-//     skillWindow.setSkillTypeWindow(this);
-
-//     _Window_SkillType_setSkillWindow.call(this, skillWindow);
-// };
-
-// /**
-//  * 【オーバーライド】ページダウン
-//  */
-// Window_SkillList.prototype.cursorPagedown = function() {
-//     if (this._skillTypeWindow) {
-//         // 次のスキルタイプへ
-//         this._skillTypeWindow.nextSkillType();
-//         // カーソル位置をクリア
-//         this.select(0);
-//     }
-// };
-
-// /**
-//  * 【オーバーライド】ページアップ
-//  */
-// Window_SkillList.prototype.cursorPageup = function() {
-//     if (this._skillTypeWindow) {
-//         // 前のスキルタイプへ
-//         this._skillTypeWindow.preSkillType();
-//         // カーソル位置をクリア
-//         this.select(0);
-//     }
-// }
-
-// /**
-//  * 【独自】次のスキルタイプへ
-//  */
-// Window_SkillType.prototype.nextSkillType = function() {
-//     var skillTypes = this._actor.addedSkillTypes();
-
-//     this._index = (this._index + 1) % skillTypes.length;
-//     this.refresh();
-//     this.select(this._index);
-// };
-
-// /**
-//  * 【独自】前のスキルタイプへ
-//  */
-// Window_SkillType.prototype.preSkillType = function() {
-//     var skillTypes = this._actor.addedSkillTypes();
-
-//     // マイナスにならないよう調整
-//     this._index = (this._index - 1 + skillTypes.length) % skillTypes.length;
-//     this.refresh();
-//     this.select(this._index);
-// };
 
 /**
  * 【独自】端で止まるかどうか？
@@ -1028,6 +962,23 @@ Window_Selectable.prototype.hide = function() {
         this.clearScrollStatus();
     }
     _Window_Selectable_hide.apply(this, arguments);
+};
+
+/**
+ * ●ウィンドウの選択を外す。
+ */
+const _Window_Selectable_deselect = Window_Selectable.prototype.deselect;
+Window_Selectable.prototype.deselect = function() {
+    _Window_Selectable_deselect.apply(this, arguments);
+    // スクロール状態をクリア
+    if (this.isUsePage()) {
+        this._scrollX = 0;
+        this._scrollY = 0;
+        this._scrollBaseX = 0;
+        this._scrollBaseY = 0;
+        this.clearScrollStatus();
+        this.refresh();
+    }
 };
 
 // ----------------------------------------------------------------------------
@@ -1219,17 +1170,17 @@ if (Utils.RPGMAKER_NAME != "MV") {
         // ページ未使用時は元処理のまま
         return _Window_Selectable_overallHeight.apply(this, arguments);;
     };
+}
 
-    /**
-     * 【上書】装備画面で初期位置にスクロールしない不具合修正
-     */
-    Scene_Equip.prototype.onSlotOk = function() {
-        this._slotWindow.hide();
-        this._itemWindow.show();
-        this._itemWindow.activate();
+// ----------------------------------------------------------------------------
+// 【MV用】
+// ----------------------------------------------------------------------------
 
-        this._itemWindow.smoothSelect(0);
-        // this._itemWindow.select(0);
+/**
+ * ●ＭＶに存在しないメソッドを定義
+ */
+if (!Window_Selectable.prototype.clearScrollStatus) {
+    Window_Selectable.prototype.clearScrollStatus = function() {
     };
 }
 
