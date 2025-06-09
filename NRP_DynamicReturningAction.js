@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.04 Action during the return of DynamicMotion
+ * @plugindesc v1.041 Action during the return of DynamicMotion
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicMotionMZ
  * @url https://newrpg.seesaa.net/article/499269749.html
@@ -75,7 +75,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.04 DynamicMotionの帰還中に行動
+ * @plugindesc v1.041 DynamicMotionの帰還中に行動
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicMotionMZ
  * @url https://newrpg.seesaa.net/article/499269749.html
@@ -422,20 +422,20 @@ function isPoisonWait(battler) {
         // 追加値がある場合は通常の数式に加算
         if (exValue != 0) {
             const value1 = Math.max(Math.floor(battler.mhp * battler.hrg + exValue), minRecover);
-            // 戦闘不能になる場合はtrue
-            if (battler.hp + value1 <= 0) {
+            // 毒の場合はtrue
+            if (value1 < 0) {
                 return true;
             }
+            return false;
         }
     }
 
     // それ以外は通常のＨＰ再生式
     const value2 = Math.max(Math.floor(battler.mhp * battler.hrg), minRecover);
-    // 戦闘不能になる場合はtrue
-    if (battler.hp + value2 <= 0) {
+    // 毒の場合はtrue
+    if (value2 < 0) {
         return true;
     }
-
     return false;
 }
 
