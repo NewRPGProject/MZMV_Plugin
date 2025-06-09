@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.031 Action during the return of DynamicMotion
+ * @plugindesc v1.04 Action during the return of DynamicMotion
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicMotionMZ
  * @url https://newrpg.seesaa.net/article/499269749.html
@@ -75,7 +75,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.031 DynamicMotionの帰還中に行動
+ * @plugindesc v1.04 DynamicMotionの帰還中に行動
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicMotionMZ
  * @url https://newrpg.seesaa.net/article/499269749.html
@@ -224,39 +224,6 @@ BattleManager.invokeAction = function(subject, target) {
     mReturningBattlers.push(this._subject);
 };
 
-/**
- * ●戦闘終了のチェック
- */
-const _BattleManager_checkBattleEnd = BattleManager.checkBattleEnd;
-BattleManager.checkBattleEnd = function() {
-    // 帰還中のバトラーが存在する場合
-    // チェック処理を停止してタイミングを遅らせる。
-    if (mReturningBattlers && mReturningBattlers.length) {
-        // 戦闘終了のチェック処理を予約する。
-        this._returningReserveCheckBattleEnd = true;
-        // 処理停止
-        return false;
-    }
-    return _BattleManager_checkBattleEnd.apply(this, arguments);
-};
-
-/**
- * ●イベント更新
- */
-const _BattleManager_updateEvent = BattleManager.updateEvent;
-BattleManager.updateEvent = function() {
-    // 戦闘終了のチェック処理が予約されている場合
-    if (this._returningReserveCheckBattleEnd) {
-        // 帰還中のバトラーが存在しない場合
-        if (!mReturningBattlers || mReturningBattlers.length == 0) {
-            this._returningReserveCheckBattleEnd = false;
-            // 戦闘終了判定を実行
-            return this.checkBattleEnd();
-        }
-    }
-    return _BattleManager_updateEvent.apply(this, arguments);
-};
-
 // ----------------------------------------------------------------------------
 // Sprite
 // ----------------------------------------------------------------------------
@@ -307,13 +274,6 @@ Sprite_Battler.prototype.onMoveEnd = function() {
     if (this.inHomePosition() && mReturningBattlers) {
         // 配列から除去する。
         mReturningBattlers = mReturningBattlers.filter(battler => battler != this._battler);
-
-        // 戦闘不能演出を実行
-        const battler = this._battler;
-        if (battler._returningReserveCollapse && battler.isDead()) {
-            battler._returningReserveCollapse = false;
-            battler.performCollapse();
-        }
     }
 };
 
@@ -351,7 +311,12 @@ Sprite_Battler.prototype.updateDynamicMotion = function() {
  * 【独自】帰還中かどうかの判定。
  */
 Sprite_Battler.prototype.isReturning = function() {
-    return this._battler && this._battler.isReturning();
+    // 帰還中のバトラーが存在する場合
+    if (mReturningBattlers && mReturningBattlers.length) {
+        // 帰還中のバトラーに含まれるなら
+        return mReturningBattlers.includes(this._battler);
+    }
+    return false;
 };
 
 /**
@@ -405,6 +370,11 @@ Sprite_Battler.prototype.canReturningAction = function() {
         }
     }
 
+    // 毒の際はウェイト
+    if (isPoisonWait(this._battler)) {
+        return false;
+    }
+
     const targets = BattleManager._targets;
     // 対象が存在する場合
     // ※つまり、帰還中に次のアクションが実行された。
@@ -426,6 +396,48 @@ Sprite_Battler.prototype.canReturningAction = function() {
     // それ以外はアクション可能
     return true;
 };
+
+/**
+ * ●毒（ＨＰ再生がマイナス）によってウェイトするかどうかの判定
+ */
+function isPoisonWait(battler) {
+    // 『スリップダメージで戦闘不能』がオフの場合は常に対象外。
+    if (battler.hp > battler.maxSlipDamage()) {
+        return false;
+    }
+
+    const minRecover = -battler.maxSlipDamage();
+
+    // NR_StateEXの追加値にも対応
+    if (battler.statesEx) {
+        let exValue = 0;
+
+        for (const stateEx of battler.statesEx()) {
+            // ＨＰ再生値があれば加算
+            if (stateEx.regenerateHp && stateEx.regenerateHp.value) {
+                exValue += stateEx.regenerateHp.value;
+            }
+        }
+
+        // 追加値がある場合は通常の数式に加算
+        if (exValue != 0) {
+            const value1 = Math.max(Math.floor(battler.mhp * battler.hrg + exValue), minRecover);
+            // 戦闘不能になる場合はtrue
+            if (battler.hp + value1 <= 0) {
+                return true;
+            }
+        }
+    }
+
+    // それ以外は通常のＨＰ再生式
+    const value2 = Math.max(Math.floor(battler.mhp * battler.hrg), minRecover);
+    // 戦闘不能になる場合はtrue
+    if (battler.hp + value2 <= 0) {
+        return true;
+    }
+
+    return false;
+}
 
 // ----------------------------------------------------------------------------
 // Sprite_Actor
@@ -489,22 +501,6 @@ if (pKeepReturningMotion) {
         }
     };
 }
-
-// ----------------------------------------------------------------------------
-// Game_Battler
-// ----------------------------------------------------------------------------
-
-/**
- * 【独自】帰還中かどうかの判定。
- */
-Game_Battler.prototype.isReturning = function() {
-    // 帰還中のバトラーが存在する場合
-    if (mReturningBattlers && mReturningBattlers.length) {
-        // 帰還中のバトラーに含まれるなら
-        return mReturningBattlers.includes(this);
-    }
-    return false;
-};
 
 // ----------------------------------------------------------------------------
 // Spriteset_Battle
@@ -618,34 +614,6 @@ if (pWaitRegeneration) {
             return true;
         }
         return false;
-    };
-
-    /**
-     * ●撃破処理
-     */
-    const _Game_Actor_performCollapse = Game_Actor.prototype.performCollapse;
-    Game_Actor.prototype.performCollapse = function() {
-        // 帰還中は処理しない。
-        if (this.isReturning()) {
-            // 戦闘不能演出を予約し、帰還後に実行
-            this._returningReserveCollapse = true;
-            return;
-        }
-        _Game_Actor_performCollapse.apply(this, arguments);
-    };
-
-    /**
-     * ●撃破処理
-     */
-    const _Game_Enemy_performCollapse = Game_Enemy.prototype.performCollapse;
-    Game_Enemy.prototype.performCollapse = function() {
-        // 帰還中は処理しない。
-        if (this.isReturning()) {
-            // 戦闘不能演出を予約し、帰還後に実行
-            this._returningReserveCollapse = true;
-            return;
-        }
-        _Game_Enemy_performCollapse.apply(this, arguments);
     };
 }
 
