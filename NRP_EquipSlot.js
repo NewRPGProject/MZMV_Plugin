@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.13 Change the equipment slots at will.
+ * @plugindesc v1.14 Change the equipment slots at will.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/489626316.html
  *
@@ -171,7 +171,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.13 装備スロットを自由に変更。
+ * @plugindesc v1.14 装備スロットを自由に変更。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/489626316.html
  * 
@@ -835,6 +835,35 @@ Game_Actor.prototype.forgetSkill = function(skillId) {
         if (dataSkill.meta.AddEquipSlot) {
             this.refresh();
         }
+    }
+};
+
+//-----------------------------------------------------------------------------
+// 標準の装備コマンドの調整
+//-----------------------------------------------------------------------------
+
+/**
+ * 【上書】装備（イベントコマンド）
+ */
+Game_Actor.prototype.changeEquipById = function(etypeId, itemId) {
+    let slotId = 0;
+
+    // 現在のスロット構成を確認
+    const slots = this.equipSlots();
+    for (let i = 0; i < slots.length; i++) {
+        const tmpEtypeId = slots[i];
+        // 最初に装備タイプが一致するスロットを取得
+        if (tmpEtypeId == etypeId) {
+            slotId = i;
+            break;
+        }
+    }
+
+    // 装備タイプが1ならば武器、それ以外は防具として判定
+    if (etypeId === 1) {
+        this.changeEquip(slotId, $dataWeapons[itemId]);
+    } else {
+        this.changeEquip(slotId, $dataArmors[itemId]);
     }
 };
 
