@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.002 Assist in target selection of recovery skills.
+ * @plugindesc v1.01 Assist in target selection of recovery skills.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/506049329.html
  *
@@ -21,6 +21,15 @@
  * For example, if a skill can recover HP and poison at the same time,
  * select the actor with the least amount of HP,
  * not the actor who is poisoned.
+ * 
+ * -------------------------------------------------------------------
+ * [Note of State]
+ * -------------------------------------------------------------------
+ * <TargetAssistPostpone>
+ * Reduce the selection priority of the target.
+ * Mainly combined with invincibility states such as “hide”
+ * to prevent initial selection as an attack or recovery target.
+ * ※Selection itself is possible.
  * 
  * -------------------------------------------------------------------
  * [Terms]
@@ -68,7 +77,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.002 回復スキルの対象選択をアシストします。
+ * @plugindesc v1.01 回復スキルの対象選択をアシストします。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/506049329.html
  *
@@ -86,6 +95,15 @@
  * 例えば、ＨＰと毒を同時に回復できるスキルならば、
  * 毒ステートにかかっている対象ではなく、
  * 最もＨＰが減っている対象を優先して選択します。
+ * 
+ * -------------------------------------------------------------------
+ * ■ステートのメモ欄
+ * -------------------------------------------------------------------
+ * <TargetAssistPostpone>
+ * 対象の選択優先度を下げます。
+ * 主に「隠れる」などの無敵ステートと組み合わせることで、
+ * 攻撃・回復対象として初期選択されないようにします。
+ * ※選択自体は可能です。
  * 
  * -------------------------------------------------------------------
  * ■利用規約
@@ -178,6 +196,24 @@ Scene_Battle.prototype.startActorSelection = function() {
     setAssistTarget(action, this._actorWindow);
 };
 
+/**
+ * ●敵キャラの選択開始
+ */
+const _Scene_Battle_startEnemySelection = Scene_Battle.prototype.startEnemySelection;
+Scene_Battle.prototype.startEnemySelection = function() {
+    _Scene_Battle_startEnemySelection.apply(this, arguments);
+
+    // 戦闘時に適用しない場合
+    if (!pApplyBattle) {
+        return;
+    }
+
+    // スキルデータを取得
+    const action = BattleManager.inputtingAction();
+    // 対象をアシスト選択
+    setAssistTargetEnemy(action, this._enemyWindow);
+};
+
 //-----------------------------------------------------------------------------
 // Window_MenuActor
 //-----------------------------------------------------------------------------
@@ -201,9 +237,28 @@ Window_MenuActor.prototype.selectForItem = function(item) {
 };
 
 //-----------------------------------------------------------------------------
+// Game_Battler
+//-----------------------------------------------------------------------------
+
+/**
+ * 【独自】除外対象かどうか？
+ */
+Game_Battler.prototype.isTargetAssistPostpone = function() {
+    for (const state of this.states()) {
+        if (state.meta.TargetAssistPostpone) {
+            return true;
+        }
+    }
+    return false;
+};
+
+//-----------------------------------------------------------------------------
 // 共通関数
 //-----------------------------------------------------------------------------
 
+/**
+ * ●アクター選択のアシスト
+ */
 function setAssistTarget(action, win) {
     // 単体かつ仲間が対象以外は処理しない。
     if (action.isForUser() || !action.isForOne() || !action.isForFriend()) {
@@ -213,7 +268,7 @@ function setAssistTarget(action, win) {
     // 蘇生の場合
     if (pApplyRevive && isRevive(action)) {
         // 先頭の戦闘不能者を取得し、存在すれば選択
-        const member = $gameParty.deadMembers()[0];
+        const member = deadPartyMembers()[0];
         if (member) {
             win.select(member.index());
             return;
@@ -249,6 +304,43 @@ function setAssistTarget(action, win) {
             return;
         }
     }
+
+    // それ以外
+    // 現在選択されているバトラーを取得
+    const selectedMember = $gameParty.members().find(m => m.isSelected());
+    // 選択されているバトラーが低優先度の場合
+    if (selectedMember && selectedMember.isTargetAssistPostpone()) {
+        // 他に有効な対象がいれば選択
+        for (const member of $gameParty.members()) {
+            if (!member.isTargetAssistPostpone()) {
+                win.select(member.index());
+                return;
+            }
+        }
+    }
+}
+
+/**
+ * ●エネミー選択のアシスト
+ */
+function setAssistTargetEnemy(action, win) {
+    // 単体以外は処理しない。
+    if (action.isForUser() || !action.isForOne()) {
+        return;
+    }
+
+    // 現在選択されているバトラーを取得
+    const selectedMember = $gameTroop.members().find(m => m.isSelected());
+    // 選択されているバトラーが低優先度の場合
+    if (selectedMember && selectedMember.isTargetAssistPostpone()) {
+        // 他に有効な対象がいれば選択
+        for (const member of $gameTroop.members()) {
+            if (!member.isTargetAssistPostpone()) {
+                win.select(member.index());
+                return;
+            }
+        }
+    }
 }
 
 /**
@@ -277,11 +369,25 @@ function isHpRecover(action) {
 }
 
 /**
+ * ●対象となる戦闘不能メンバーを取得
+ */
+function deadPartyMembers() {
+    return $gameParty.deadMembers().filter(m => !m.isTargetAssistPostpone());
+}
+
+/**
+ * ●対象となる生存メンバーを取得
+ */
+function alivePartyMembers() {
+    return $gameParty.aliveMembers().filter(m => !m.isTargetAssistPostpone());
+}
+
+/**
  * ●ＨＰ回復対象を取得
  */
 function getHpRecoverTarget() {
     // 対象の中で、ＨＰの割合が最も低い者
-    const member = $gameParty.aliveMembers().reduce(function(a, b) {
+    const member = alivePartyMembers().reduce(function(a, b) {
         return a.hpRate() <= b.hpRate() ? a : b;
     });
 
@@ -309,7 +415,7 @@ function isMpRecover(action) {
  */
 function getMpRecoverTarget() {
     // 最大ＭＰが１以上のアクターを取得
-    const mpMembers = $gameParty.aliveMembers().filter(m => m.mmp > 0);
+    const mpMembers = alivePartyMembers().filter(m => m.mmp > 0);
     if (mpMembers.length > 0) {
         // 対象の中で、ＭＰの割合が最も低い者
         const member = mpMembers.reduce(function(a, b) {
@@ -346,7 +452,7 @@ function getRemoveStateTarget(action) {
         // ステート解除の場合
         if (effect.code == Game_Action.EFFECT_REMOVE_STATE) {
             // 該当ステートのメンバーがいれば返す
-            const member = $gameParty.aliveMembers().find(m => m.isStateAffected(effect.dataId));
+            const member = alivePartyMembers().find(m => m.isStateAffected(effect.dataId));
             if (member) {
                 return member;
             }
@@ -354,7 +460,7 @@ function getRemoveStateTarget(action) {
         // 弱体解除の場合
         } else if (effect.code == Game_Action.EFFECT_REMOVE_DEBUFF) {
             // 該当弱体のメンバーがいれば返す
-            const member = $gameParty.aliveMembers().find(m => m.isDebuffAffected(effect.dataId));
+            const member = alivePartyMembers().find(m => m.isDebuffAffected(effect.dataId));
             if (member) {
                 return member;
             }
