@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.021 It enables the "Auto Heal" command.
+ * @plugindesc v1.03 It enables the "Auto Heal" command.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/480069638.html
  * 
@@ -270,6 +270,12 @@
  * @default You can't recover!
  * @desc The message when the healing process fails.
  * 
+ * @param MessageWait
+ * @parent <Message>
+ * @type boolean
+ * @default true
+ * @desc Wait for the message to be processed until it is finished.
+ * 
  * @param <Sound>
  * @desc This is an item related to sound effects.
  * 
@@ -331,7 +337,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.021 自動回復コマンド（まんたん）を実現
+ * @plugindesc v1.03 自動回復コマンド（まんたん）を実現
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/480069638.html
  *
@@ -604,6 +610,13 @@
  * @default 回復できません！
  * @desc 回復に失敗した際のメッセージです。
  * 
+ * @param MessageWait
+ * @text メッセージ中はウェイト
+ * @parent <Message>
+ * @type boolean
+ * @default true
+ * @desc メッセージが終了するまで処理を待ちます。
+ * 
  * @param <Sound>
  * @text ＜効果音関連＞
  * @desc 効果音関連の項目です。
@@ -726,6 +739,7 @@ const pMessageBackgroundType = toNumber(parameters["MessageBackgroundType"], 0);
 const pMessageSuccess = parameters["MessageSuccess"];
 const pMessageUnnecessary = parameters["MessageUnnecessary"];
 const pMessageFailure = parameters["MessageFailure"];
+const pMessageWait = toBoolean(parameters["MessageWait"], true);
 
 const pSoundSuccess = parameters["SoundSuccess"];
 const pSoundFailure = parameters["SoundFailure"];
@@ -1533,6 +1547,11 @@ function successMessage(message) {
             m_bigWindowFlg = true;
         }
 
+        // メッセージの終了までウェイト
+        if (pMessageWait) {
+            $gameMap._interpreter.setWaitMode("message");
+        }
+
         // メッセージウィンドウにフォーカス
         if (window) {
             window.activate();
@@ -1563,6 +1582,10 @@ function failureMessage(message) {
         // ウィンドウ背景の設定
         $gameMessage.setBackground(pMessageBackgroundType);
         $gameMessage.add(message);
+        // メッセージの終了までウェイト
+        if (pMessageWait) {
+            $gameMap._interpreter.setWaitMode("message");
+        }
 
         // メッセージウィンドウにフォーカス
         if (scene._messageWindow) {
