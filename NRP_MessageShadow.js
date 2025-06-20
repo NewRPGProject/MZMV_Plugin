@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Add shadows to messages.
+ * @plugindesc v1.02 Add shadows to messages.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/491354306.html
  *
@@ -19,7 +19,7 @@
  * [About the Targets]
  * -------------------------------------------------------------------
  * You can change the range of shadows applied to the message.
- * Please note that by default, it is applied to all windows.
+ * Please note that by default, it is applied to all characters.
  * 
  * -------------------------------------------------------------------
  * [Terms]
@@ -61,6 +61,12 @@
  * 
  * @param <Target>
  * 
+ * @param All
+ * @parent <Target>
+ * @type boolean
+ * @default true
+ * @desc Shadow all characters. If this is on, all subsequent items are also treated as on.
+ * 
  * @param AllWindows
  * @parent <Target>
  * @type boolean
@@ -96,7 +102,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 文章に影をつける。
+ * @plugindesc v1.02 文章に影をつける。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/491354306.html
  *
@@ -112,7 +118,7 @@
  * ■対象について
  * -------------------------------------------------------------------
  * 文字に影をつける範囲を変更可能です。
- * 初期状態では全てのウィンドウに適用されますので、ご注意ください。
+ * 初期状態では全ての文字に適用されますので、ご注意ください。
  * 
  * -------------------------------------------------------------------
  * ■利用規約
@@ -158,6 +164,14 @@
  * 
  * @param <Target>
  * @text ＜対象＞
+ * 
+ * @param All
+ * @parent <Target>
+ * @text 全て
+ * @type boolean
+ * @default true
+ * @desc 全ての文字に影をつけます。
+ * これがオンの場合は以降の項目も全てオンとして扱います。
  * 
  * @param AllWindows
  * @parent <Target>
@@ -226,6 +240,7 @@ const pShadowAdjustX = toNumber(parameters["ShadowAdjustX"], 0);
 const pShadowAdjustY = toNumber(parameters["ShadowAdjustY"], 0);
 const pShadowColor = parameters["ShadowColor"];
 // 対象
+const pAll = toBoolean(parameters["All"]);
 const pAllWindows = toBoolean(parameters["AllWindows"]);
 const pMessageWindow = toBoolean(parameters["MessageWindow"]);
 const pNameWindow = toBoolean(parameters["NameWindow"]);
@@ -273,6 +288,18 @@ Bitmap.prototype._drawTextOutline = function(text, tx, ty, maxWidth) {
  */
 Bitmap.prototype.setMessageShadow = function(flg) {
     this._isMessageShadow = flg;
+}
+
+if (pAll) {
+    /**
+     * ●bitmapへの文字描画
+     */
+    const _Bitmap_drawText = Bitmap.prototype.drawText;
+    Bitmap.prototype.drawText = function(text, x, y, maxWidth, lineHeight, align) {
+        // 文字の影表示を設定
+        this.setMessageShadow(true);
+        _Bitmap_drawText.apply(this, arguments);
+    }
 }
 
 // ----------------------------------------------------------------------------
