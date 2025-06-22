@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Displays the play record.
+ * @plugindesc v1.02 Displays the play record.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/503391609.html
  * @orderAfter NRP_EnemyCollapse
@@ -101,6 +101,11 @@
  * @desc The height of a single line of the window.
  * If blank, the original setting is used.
  * 
+ * @param ValidControlCharacter
+ * @type boolean
+ * @default true
+ * @desc Enables control characters with respect to the contents of the play record.
+ * 
  * @param ValueRightAligned
  * @type boolean
  * @default true
@@ -179,7 +184,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 戦歴（プレイレコード）を表示します。
+ * @plugindesc v1.02 戦歴（プレイレコード）を表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/503391609.html
  * @orderAfter NRP_EnemyCollapse
@@ -277,6 +282,12 @@
  * @type number
  * @desc ウィンドウの一行の縦幅です。
  * 空欄なら元の設定を使用します。
+ * 
+ * @param ValidControlCharacter
+ * @text 制御文字を有効化
+ * @type boolean
+ * @default true
+ * @desc 戦歴の内容に関して制御文字を有効化します。
  * 
  * @param ValueRightAligned
  * @text 値を右寄せ
@@ -425,6 +436,7 @@ const pWindowBackgroundType = toNumber(parameters["WindowBackgroundType"], 0);
 const pWindowWidth = setDefault(parameters["WindowWidth"]);
 const pWindowHeight = setDefault(parameters["WindowHeight"]);
 const pWindowLineHeight = toNumber(parameters["WindowLineHeight"]);
+const pValidControlCharacter = toBoolean(parameters["ValidControlCharacter"], true);
 const pValueRightAligned = toBoolean(parameters["ValueRightAligned"], true);
 const pValueX = toNumber(parameters["ValueX"], 0);
 const pValueAdjustX = toNumber(parameters["ValueAdjustX"], 0);
@@ -551,16 +563,43 @@ Window_PlayRecord.prototype.drawItem = function(index) {
     } else if (record.Variable) {
         value = $gameVariables.value(record.Variable);
     }
+    // 制御文字を反映
+    value = this.convertEscapeCharacters(String(value));
+
     // 末尾の文字列
     if (record.Suffix) {
         value += " " + record.Suffix;
     }
 
     const drawWidth = this.width - (rect.x + valueX) - 40;
-    const align = pValueRightAligned ? "right" : "left";
-    this.drawText(value, rect.x + valueX + pValueAdjustX, rect.y, drawWidth, align);
+    let x = rect.x + valueX + pValueAdjustX;
+
+    // 制御文字が有効な場合はdrawTextExを使用
+    if (pValidControlCharacter) {
+        // 右寄せをするために文字幅を計算する。
+        if (pValueRightAligned) {
+            x += drawWidth - this.textWidth(changeControlText(String(value)));
+        }
+        this.drawTextEx(String(value), x, rect.y, drawWidth);
+
+    // それ以外はdrawTextを使用
+    } else {
+        const align = pValueRightAligned ? "right" : "left";
+        this.drawText(value, x, rect.y, drawWidth, align);
+    }
 };
 
+/**
+ * ●制御文字を除外したテキスト
+ */
+function changeControlText(originalText) {
+    // \i[0]を半角スペース二つに変換
+    let retText = originalText.replaceAll(/\x1bi\[\d+\]/g, "  ");
+    // \c[0]を空白に変換
+    retText = retText.replaceAll(/\x1bc\[\d+\]/g, "");
+    return retText;
+}
+    
 /**
  * ●文字列描画処理
  * ※Window_Base.prototype.drawTextExとほぼ同じだがフォントリセットしない。
