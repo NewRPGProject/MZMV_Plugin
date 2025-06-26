@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.152 Extend the functionality of the state in various ways.
+ * @plugindesc v1.16 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -353,7 +353,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.152 ステートの機能を色々と拡張します。
+ * @plugindesc v1.16 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -1589,6 +1589,21 @@ if (pAlwaysUpdateState) {
         mIsStateAffectedFalse = true;
         _Game_Battler_addState.apply(this, arguments);
         mIsStateAffectedFalse = false;
+    };
+
+    /**
+     * ●ステートの除去
+     */
+    const _Game_Battler_removeState_2 = Game_Battler.prototype.removeState;
+    Game_Battler.prototype.removeState = function(stateId) {
+        // 値を保持しておく。
+        const keepIsStateAffectedFalse = mIsStateAffectedFalse
+        // remove時はisStateAffected(stateId)を強制falseにしない。
+        mIsStateAffectedFalse = false;
+        // ↓でisStateAffectedが呼ばれる。
+        _Game_Battler_removeState_2.apply(this, arguments);
+        // 値を戻す。
+        mIsStateAffectedFalse = keepIsStateAffectedFalse;
     };
 
     /**
