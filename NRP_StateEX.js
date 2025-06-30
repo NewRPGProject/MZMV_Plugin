@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.16 Extend the functionality of the state in various ways.
+ * @plugindesc v1.161 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -353,7 +353,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.16 ステートの機能を色々と拡張します。
+ * @plugindesc v1.161 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -781,6 +781,8 @@ function createStateExTable() {
 let mRecoverAllFlg = false;
 // 戦闘不能判定フラグ
 let mDeadFlg = false;
+// ステートを常に更新用のフラグ
+let mIsStateAffectedFalse = false;
 
 /**
  * ●全回復
@@ -880,6 +882,12 @@ Game_BattlerBase.prototype.addNewState = function(stateId) {
     const a = getSkillUser();
     const b = this;
     const meta = $dataStates[stateId].meta;
+
+    // 値を保持しておく。
+    const keepIsStateAffectedFalse = mIsStateAffectedFalse
+    // isStateAffected(stateId)を強制falseにしない。
+    // 以降のeval処理に影響を与えないための措置。
+    mIsStateAffectedFalse = false;
 
     // <RemoveState:number>があれば、そのステートを設定
     const metaRemoveState = $dataStates[stateId].meta.RemoveState;
@@ -990,6 +998,9 @@ Game_BattlerBase.prototype.addNewState = function(stateId) {
     }
 
     _Game_BattlerBase_addNewState.apply(this, arguments);
+
+    // 値を戻す。
+    mIsStateAffectedFalse = keepIsStateAffectedFalse;
 };
 
 /**
@@ -1572,8 +1583,6 @@ Game_Unit.prototype.surviveMembers = function() {
 // ----------------------------------------------------------------------------
 
 if (pAlwaysUpdateState) {
-    let mIsStateAffectedFalse = false;
-
     /**
      * ●ステートの追加
      */
