@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.12 Setting the battler's shadow & adding the levitation effect
+ * @plugindesc v1.121 Setting the battler's shadow & adding the levitation effect
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base animatedSVEnemies
  * @base NRP_DynamicMotionMZ
@@ -285,7 +285,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.12 バトラーの影を設定＆浮遊効果の追加
+ * @plugindesc v1.121 バトラーの影を設定＆浮遊効果の追加
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @orderAfter animatedSVEnemies
  * @orderAfter NRP_DynamicMotionMZ
@@ -1381,6 +1381,7 @@ Sprite_Battler.prototype.updatePosition = function() {
         this.floatSwing =
             Math.sin(this._floatTime / this._floatPeriodicTime * Math.PI * 2) * this._floatAmplitude;
         this.y += this.floatSwing;
+        this.y = Math.round(this.y); // 四捨五入
         // 時間を進める。
         this._floatTime++;
     }
