@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.06 Create special traits.
+ * @plugindesc v1.061 Create special traits.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/488957733.html
@@ -175,7 +175,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.06 特殊な特徴を実現します。
+ * @plugindesc v1.061 特殊な特徴を実現します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/488957733.html
@@ -654,6 +654,17 @@ Game_Action.prototype.itemEffectAddState = function(target, effect) {
     _Game_Action_itemEffectAddState.apply(this, arguments);
     mStateAction = null;
 };
+
+/**
+ * ●スキルの効果反映
+ * ※NRP_CalcResultFirst.js用の調整
+ */
+const _Game_Action_apply_2 = Game_Action.prototype.apply;
+Game_Action.prototype.apply = function(target) {
+    mStateAction = this;
+    _Game_Action_apply_2.apply(this, arguments);
+    mStateAction = null;
+}
 
 /**
  * ●ステート継続ターンの再設定
