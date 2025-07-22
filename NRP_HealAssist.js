@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Assist in target selection of recovery skills.
+ * @plugindesc v1.011 Assist in target selection of recovery skills.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/506049329.html
  *
@@ -77,7 +77,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 回復スキルの対象選択をアシストします。
+ * @plugindesc v1.011 回復スキルの対象選択をアシストします。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/506049329.html
  *
@@ -334,11 +334,13 @@ function setAssistTargetEnemy(action, win) {
     // 選択されているバトラーが低優先度の場合
     if (selectedMember && selectedMember.isTargetAssistPostpone()) {
         // 他に有効な対象がいれば選択
-        for (const member of $gameTroop.members()) {
+        let index = 0;
+        for (const member of win._enemies) {
             if (!member.isTargetAssistPostpone()) {
-                win.select(member.index());
+                win.select(index);
                 return;
             }
+            index++;
         }
     }
 }
