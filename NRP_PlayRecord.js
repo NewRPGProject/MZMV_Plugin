@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.02 Displays the play record.
+ * @plugindesc v1.03 Displays the play record.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/503391609.html
  * @orderAfter NRP_EnemyCollapse
@@ -180,11 +180,15 @@
  * @param Suffix
  * @type string
  * @desc The string to be displayed at the end.
+ * 
+ * @param ValidControlCharacter
+ * @type boolean
+ * @desc Enables control characters with respect to the contents of the play record.
  */
 
 /*:ja
  * @target MZ
- * @plugindesc v1.02 戦歴（プレイレコード）を表示します。
+ * @plugindesc v1.03 戦歴（プレイレコード）を表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/503391609.html
  * @orderAfter NRP_EnemyCollapse
@@ -378,6 +382,12 @@
  * @text 末尾
  * @type string
  * @desc 末尾に表示する文字列です。
+ * 
+ * @param ValidControlCharacter
+ * @text 制御文字を有効化
+ * @type boolean
+ * @desc 戦歴の内容に関して制御文字を有効化します。
+ * 指定がない場合は全体設定を使用します。
  */
 
 //-----------------------------------------------------------------------------
@@ -575,12 +585,16 @@ Window_PlayRecord.prototype.drawItem = function(index) {
     let x = rect.x + valueX + pValueAdjustX;
 
     // 制御文字が有効な場合はdrawTextExを使用
-    if (pValidControlCharacter) {
+    if (isValidControlCharacter(record)) {
+        let x2 = x;
         // 右寄せをするために文字幅を計算する。
         if (pValueRightAligned) {
-            x += drawWidth - this.textWidth(changeControlText(String(value)));
+            x2 += drawWidth - this.textWidth(changeControlText(String(value)));
+            if (x2 < 0) {
+                x2 = x;
+            }
         }
-        this.drawTextEx(String(value), x, rect.y, drawWidth);
+        this.drawTextEx(String(value), x2, rect.y, drawWidth);
 
     // それ以外はdrawTextを使用
     } else {
@@ -588,6 +602,16 @@ Window_PlayRecord.prototype.drawItem = function(index) {
         this.drawText(value, x, rect.y, drawWidth, align);
     }
 };
+
+/**
+ * ●制御文字を有効にするかどうか？
+ */
+function isValidControlCharacter(record) {
+    if (record.ValidControlCharacter) {
+        return toBoolean(record.ValidControlCharacter);
+    }
+    return pValidControlCharacter;
+}
 
 /**
  * ●制御文字を除外したテキスト
