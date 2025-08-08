@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.051 Manage audio files.
+ * @plugindesc v1.06 Manage audio files.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/483999181.html
  *
@@ -94,6 +94,31 @@
  * @max 100 @min -100
  * @default 0
  * @desc The pan of the BGM.
+ * 0 is the default value.
+ * 
+ * @-----------------------------------------------------
+ * 
+ * @command ChangeCurrentBgsSetting
+ * @desc Changes the volume, pitch, and pan of the currently playing BGS.
+ * 
+ * @arg Volume
+ * @type number
+ * @max 400
+ * @default 90
+ * @desc The volume of the BGS.
+ * 90 is the default value.
+ * 
+ * @arg Pitch
+ * @type number
+ * @default 100
+ * @desc The pitch of the BGS.
+ * 100 is the default value.
+ * 
+ * @arg Pan
+ * @type number
+ * @max 100 @min -100
+ * @default 0
+ * @desc The pan of the BGS.
  * 0 is the default value.
  * 
  * @-----------------------------------------------------
@@ -336,7 +361,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.051 音声ファイルの管理を行う。
+ * @plugindesc v1.06 音声ファイルの管理を行う。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/483999181.html
  *
@@ -424,6 +449,35 @@
  * @max 100 @min -100
  * @default 0
  * @desc ＢＧＭの位相です。
+ * 0が初期値です。
+ * 
+ * @-----------------------------------------------------
+ * 
+ * @command ChangeCurrentBgsSetting
+ * @text 現在のＢＧＳ設定を変更
+ * @desc 現在演奏中のＢＧＳの音量やピッチ、位相を変更します。
+ * 
+ * @arg Volume
+ * @text 音量
+ * @type number
+ * @max 400
+ * @default 90
+ * @desc ＢＧＳの音量です。
+ * 90が初期値です。
+ * 
+ * @arg Pitch
+ * @text ピッチ
+ * @type number
+ * @default 100
+ * @desc ＢＧＳのピッチです。
+ * 100が初期値です。
+ * 
+ * @arg Pan
+ * @text 位相
+ * @type number
+ * @max 100 @min -100
+ * @default 0
+ * @desc ＢＧＳの位相です。
  * 0が初期値です。
  * 
  * @-----------------------------------------------------
@@ -766,19 +820,22 @@ if (!PluginManager.registerCommand) {
 PluginManager.registerCommand(PLUGIN_NAME, "ChangeCurrentBgmSetting", function(args) {
     // 現在演奏中のＢＧＭ情報を引き継ぎ
     const bgmData = AudioManager.saveBgm();
+    if (!bgmData) {
+        return;
+    }
     const oldPitch = bgmData.pitch;
 
-    const volume = toNumber(args.Volume);
+    const volume = eval(args.Volume);
     if (volume != null) {
-        bgmData.volume = volume;
+        bgmData.volume = Math.max(volume, 0);
     }
 
-    const pitch = toNumber(args.Pitch);
+    const pitch = eval(args.Pitch);
     if (pitch != null) {
         bgmData.pitch = pitch;
     }
 
-    const pan = toNumber(args.Pan);
+    const pan = eval(args.Pan);
     if (pan != null) {
         bgmData.pan = pan;
     }
@@ -798,6 +855,47 @@ PluginManager.registerCommand(PLUGIN_NAME, "ChangeCurrentBgmSetting", function(a
     }
 });
 
+/**
+ * ●現在のＢＧＳ設定を変更
+ */
+PluginManager.registerCommand(PLUGIN_NAME, "ChangeCurrentBgsSetting", function(args) {
+    // 現在演奏中のＢＧＳ情報を引き継ぎ
+    const bgsData = AudioManager.saveBgs();
+    if (!bgsData) {
+        return;
+    }
+    const oldPitch = bgsData.pitch;
+
+    const volume = eval(args.Volume);
+    if (volume != null) {
+        bgsData.volume = Math.max(volume, 0);
+    }
+
+    const pitch = eval(args.Pitch);
+    if (pitch != null) {
+        bgsData.pitch = pitch;
+    }
+
+    const pan = eval(args.Pan);
+    if (pan != null) {
+        bgsData.pan = pan;
+    }
+
+    // 変更した情報を反映
+    if (AudioManager._bgsBuffer) {
+        // ピッチの変更がある場合
+        if (pitch && oldPitch != pitch) {
+            AudioManager.updateBgsParameters(bgsData);
+            AudioManager._bgsBuffer.play(true, bgsData.pos);
+            AudioManager.updateCurrentBgs(bgsData, bgsData.pos);
+        // ピッチの変更が必要ない場合は通常演奏
+        // ※こちらのほうが処理が安定する模様。
+        } else {
+            AudioManager.updateBgsParameters(bgsData);
+        }
+    }
+});
+
 //-----------------------------------------------------------------------------
 // ＢＧＭ
 //-----------------------------------------------------------------------------
@@ -807,9 +905,8 @@ PluginManager.registerCommand(PLUGIN_NAME, "ChangeCurrentBgmSetting", function(a
  */
 const _AudioManager_playBgm = AudioManager.playBgm;
 AudioManager.playBgm = function(bgm, pos) {
-    // nullの場合はそのまま
+    // nullの場合は処理しない。
     if (!bgm) {
-        _AudioManager_playBgm.apply(this, arguments);
         return;
     }
 
@@ -892,9 +989,8 @@ AudioManager.isCurrentBgm = function(bgm) {
  */
 const _AudioManager_playBgs = AudioManager.playBgs;
 AudioManager.playBgs = function(bgs, pos) {
-    // nullの場合はそのまま
+    // nullの場合は処理しない。
     if (!bgs) {
-        _AudioManager_playBgs.apply(this, arguments);
         return;
     }
 
@@ -977,9 +1073,8 @@ AudioManager.isCurrentBgs = function(bgs) {
  */
 const _AudioManager_playMe = AudioManager.playMe;
 AudioManager.playMe = function(me) {
-    // nullの場合はそのまま
+    // nullの場合は処理しない。
     if (!me) {
-        _AudioManager_playMe.apply(this, arguments);
         return;
     }
 
@@ -1033,9 +1128,8 @@ AudioManager.updateMeParameters = function(me) {
  */
 const _AudioManager_playSe = AudioManager.playSe;
 AudioManager.playSe = function(se) {
-    // nullの場合はそのまま
+    // nullの場合は処理しない。
     if (!se) {
-        _AudioManager_playSe.apply(this, arguments);
         return;
     }
 
