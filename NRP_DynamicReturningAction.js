@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.041 Action during the return of DynamicMotion
+ * @plugindesc v1.05 Action during the return of DynamicMotion
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicMotionMZ
  * @url https://newrpg.seesaa.net/article/499269749.html
@@ -75,7 +75,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.041 DynamicMotionの帰還中に行動
+ * @plugindesc v1.05 DynamicMotionの帰還中に行動
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @base NRP_DynamicMotionMZ
  * @url https://newrpg.seesaa.net/article/499269749.html
@@ -216,7 +216,7 @@ BattleManager.invokeAction = function(subject, target) {
     // 行動主体のスプライトを取得
     const sprite = getBattlerSprite(this._subject);
     // スプライトが既に定位置にいる場合は処理しない。
-    if (sprite.inHomePosition()) {
+    if (sprite.inHomePositionReturning()) {
         return;
     }
 
@@ -241,7 +241,7 @@ Sprite.prototype.onDynamicMoveEnd = function() {
     }
 
     // 移動が終了かつ帰還中のバトラーが存在する場合
-    if (this.inHomePosition() && mReturningBattlers) {
+    if (this.inHomePositionReturning() && mReturningBattlers) {
         // 配列から除去する。
         mReturningBattlers = mReturningBattlers.filter(battler => battler != this._battler);
     }
@@ -252,15 +252,17 @@ Sprite.prototype.onDynamicMoveEnd = function() {
 // ----------------------------------------------------------------------------
 
 /**
- * ●ホームポジションの判定
+ * 【独自】ホームポジションの判定
  */
-const _Sprite_Battler_inHomePosition = Sprite_Battler.prototype.inHomePosition;
-Sprite_Battler.prototype.inHomePosition = function() {
+Sprite_Battler.prototype.inHomePositionReturning = function() {
+    // 誤動作防止のため、10ピクセルまでは許容する。
+    const margin = 10;
+
     // DynamicMotionの空中Ｙ座標も参照する。
-    if (this._airY) {
+    if (this._airY && Math.abs(this._airY) >= margin) {
         return false;
     }
-    return _Sprite_Battler_inHomePosition.apply(this, arguments);
+    return Math.abs(this._offsetX) < margin && Math.abs(this._offsetY) < margin;
 };
 
 /**
@@ -271,7 +273,7 @@ Sprite_Battler.prototype.onMoveEnd = function() {
     _Sprite_Battler_onMoveEnd.apply(this, arguments);
 
     // 移動が終了かつ帰還中のバトラーが存在する場合
-    if (this.inHomePosition() && mReturningBattlers) {
+    if (this.inHomePositionReturning() && mReturningBattlers) {
         // 配列から除去する。
         mReturningBattlers = mReturningBattlers.filter(battler => battler != this._battler);
     }
