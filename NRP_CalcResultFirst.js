@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.04 Perform the result calculation for the skill first.
+ * @plugindesc v1.05 Perform the result calculation for the skill first.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_TraitsPlus
  * @orderBefore NRP_TraitsEX
@@ -100,7 +100,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.04 スキルの結果計算を演出より先に実行する。
+ * @plugindesc v1.05 スキルの結果計算を演出より先に実行する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_TraitsPlus
  * @orderBefore NRP_TraitsEX
@@ -360,6 +360,7 @@ Game_Action.prototype.calcResultFirst = function(target) {
     result.drain = this.isDrain();
 
     // 計算のために一旦targetに格納。
+    const keepResult = target._result;
     target._result = result;
 
     if (result.isHit()) {
@@ -387,9 +388,8 @@ Game_Action.prototype.calcResultFirst = function(target) {
         target._tp = keepTp;
     }
 
-    // targetのresultは分離しておく。
-    // ※同じオブジェクトを参照させない。
-    target._result = new Game_ActionResult();
+    // targetのresultは戻しておく。
+    target._result = keepResult;
 
     // 結果を格納する。
     target._reservedResults.push(result);
