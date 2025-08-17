@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.061 Create special traits.
+ * @plugindesc v1.07 Create special traits.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/488957733.html
@@ -119,6 +119,11 @@
  * <StateTurnType:poison>
  * 
  * -------------------------------------------------------------------
+ * The following is only valid in the skill's note field.
+ * Extends the duration of the state imposed by that skill by 1 turn.
+ * <AddStateTurn:1>
+ * 
+ * -------------------------------------------------------------------
  * [Invincible]
  * -------------------------------------------------------------------
  * Specify the following in the notes field of the state.
@@ -175,7 +180,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.061 特殊な特徴を実現します。
+ * @plugindesc v1.07 特殊な特徴を実現します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/488957733.html
@@ -283,6 +288,11 @@
  * 
  * 毒ステートのメモ欄に以下を指定
  * <StateTurnType:poison>
+ * 
+ * -------------------------------------------------------------------
+ * 以下はスキルのメモ欄のみ有効です。
+ * そのスキルで与えたステートの継続ターンを1延長します。
+ * <AddStateTurn:1>
  * 
  * -------------------------------------------------------------------
  * ■無敵
@@ -690,21 +700,30 @@ Game_BattlerBase.prototype.resetStateCounts = function(stateId) {
         const receivedStateTurn = object.meta.ReceivedStateTurn;
         if (receivedStateTurn != null && isMatchStateTurnType(stateTurnTypes, object)) {
             this._stateTurns[stateId] += eval(receivedStateTurn);
-            // 最低でも１ターン
-            this._stateTurns[stateId] = Math.max(this._stateTurns[stateId], 1);
         }
     }
 
     // 与えたステートの継続ターンを延長
     if (subject) {
+        // スキルの設定
+        const item = mStateAction.item();
+        const addStateTurn = item.meta.AddStateTurn;
+        if (addStateTurn != null) {
+            this._stateTurns[stateId] += eval(addStateTurn);
+        }
+
+        // 特徴による設定
         for (const object of getTraitObjects(subject)) {
             const inflictedStateTurn = object.meta.InflictedStateTurn;
             if (inflictedStateTurn != null && isMatchStateTurnType(stateTurnTypes, object)) {
                 this._stateTurns[stateId] += eval(inflictedStateTurn);
-                // 最低でも１ターン
-                this._stateTurns[stateId] = Math.max(this._stateTurns[stateId], 1);
             }
         }
+    }
+
+    // 最低でも１ターン
+    if (this._stateTurns[stateId] < 1) {
+        this._stateTurns[stateId] = 1;
     }
 };
 
