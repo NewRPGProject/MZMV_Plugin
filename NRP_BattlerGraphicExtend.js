@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.05 Extend the graphics of the battler.
+ * @plugindesc v1.051 Extend the graphics of the battler.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/500642681.html
  *
@@ -127,7 +127,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.05 バトラーのグラフィックを拡張します。
+ * @plugindesc v1.051 バトラーのグラフィックを拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/500642681.html
  *
@@ -643,6 +643,7 @@ if (pNoFlashStateIcon) {
      */
     const _Spriteset_Battle_createEnemies = Spriteset_Battle.prototype.createEnemies;
     Spriteset_Battle.prototype.createEnemies = function() {
+        // 戦闘開始時はSceneManagerから取得できないのでここで設定
         mSpriteset = this;
         _Spriteset_Battle_createEnemies.apply(this, arguments);
         mSpriteset = null;
@@ -655,12 +656,17 @@ if (pNoFlashStateIcon) {
     Sprite_Enemy.prototype.createStateIconSprite = function() {
         _Sprite_Enemy_createStateIconSprite.apply(this, arguments);
 
-        if (mSpriteset) {
+        // mSpritesetが取得できるならそのまま使用。
+        // 空でもSceneManagerから取得できる場合はそちらを使う。
+        // ※途中出現の場合を想定
+        const spriteset = mSpriteset || getSpriteset();
+
+        if (spriteset) {
             // 新しいステートアイコンを作成する。
             this._stateIconSprite2 = new Sprite_StateIcon();
             // Sprite_Enemyではなく、battleFieldに追加することで、
             // 色調変更の影響を受けないようにする。
-            mSpriteset._battleField.addChild(this._stateIconSprite2);
+            spriteset._battleField.addChild(this._stateIconSprite2);
             // Ｚ座標を設定
             this._stateIconSprite2.z = pStateIconZ;
             // 本来のステートアイコンは非表示
