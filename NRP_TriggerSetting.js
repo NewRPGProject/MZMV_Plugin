@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v2.02 Adjusted the behavior of event triggers.
+ * @plugindesc v2.03 Adjusted the behavior of event triggers.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/489139124.html
  * @orderAfter NRP_EventCollisionEX
@@ -97,6 +97,10 @@
  * @type switch
  * @desc This is a switch that turns on. If the condition is not met, it is turned off.
  * 
+ * @arg CheckStop
+ * @type boolean
+ * @desc Check even when the player is not moving.
+ * 
  * @-----------------------------------------------------
  * @ Plugin Parameters
  * @-----------------------------------------------------
@@ -122,7 +126,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.02 イベントトリガーの挙動を調整。
+ * @plugindesc v2.03 イベントトリガーの挙動を調整。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/489139124.html
  * @orderAfter NRP_EventCollisionEX
@@ -207,6 +211,11 @@
  * @type switch
  * @desc プレイヤーが足元のイベントに接触しているとオンにするスイッチです。条件を満たさない場合はオフになります。
  * 
+ * @arg CheckStop
+ * @text 停止時もチェック
+ * @type boolean
+ * @desc プレイヤーが移動中でない場合でもチェック対象とする。
+ * 
  * @-----------------------------------------------------
  * @ プラグインパラメータ
  * @-----------------------------------------------------
@@ -271,9 +280,10 @@ if (!PluginManager.registerCommand) {
  */
 PluginManager.registerCommand(PLUGIN_NAME, "CheckStepsEvent", function(args) {
     const switchNo = toNumber(args.Switch);
+    const checkStop = toBoolean(args.CheckStop);
 
     // プレイヤーが移動中でない場合はオフ
-    if (!$gamePlayer.isMoving()) {
+    if (!checkStop && !$gamePlayer.isMoving()) {
         $gameSwitches.setValue(switchNo, false);
         return;
     }
