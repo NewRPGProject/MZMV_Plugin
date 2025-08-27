@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Extend the specification of magic reflection.
+ * @plugindesc v1.03 Extend the specification of magic reflection.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_DamageTiming
  * @url http://newrpg.seesaa.net/article/483027532.html
@@ -44,6 +44,13 @@
  * by specifying the following in the skill's note field.
  * 
  * <NoMagicRefrection>
+ * 
+ * In addition, if you set the following,
+ * skills will not be reflected during that state.
+ * This is intended for cases where you want to prohibit reflection
+ * during invincible states such as jumping.
+ * 
+ * <NoRefrectionState>
  * 
  * -------------------------------------------------------------------
  * [Note of objects]
@@ -159,7 +166,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 魔法反射の仕様を拡張します。
+ * @plugindesc v1.03 魔法反射の仕様を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_DamageTiming
  * @url http://newrpg.seesaa.net/article/483027532.html
@@ -190,6 +197,11 @@
  * 
  * ※[]は含めないでください。
  * ※標準とは異なり、命中タイプは無視するようになります。
+ * 
+ * また、以下を設定するとそのステート中はスキルを反射しなくなります。
+ * ジャンプなどの無敵系ステート時に反射を禁止したい場合を想定しています。
+ * 
+ * <NoRefrectionState>
  * 
  * -------------------------------------------------------------------
  * ■スキルのメモ欄
@@ -607,6 +619,11 @@ Game_Action.prototype.itemMrf = function(target) {
         }
     }
 
+    // 反射無効ステートの場合
+    if (isNoRefrectionState(target._states)) {
+        return 0;
+    }
+
     // 該当の設定が存在するかどうか？
     const setting = getMatchSetting(target._states);
     if (setting) {
@@ -623,20 +640,34 @@ Game_Action.prototype.itemMrf = function(target) {
 };
 
 /**
+ * ●反射無効ステート
+ */
+function isNoRefrectionState(states) {
+    for (const stateId of states) {
+        // 魔法反射禁止ステート<NoRefrectionState>があれば終了
+        const metaNoRefrectionState = $dataStates[stateId].meta.NoRefrectionState;
+        if (metaNoRefrectionState) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
  * ●反射対象となる設定を取得
  */
 function getMatchSetting(states) {
     for (const stateId of states) {
         // <MagicRefrection>の指定を取得
-        const metaValue = $dataStates[stateId].meta.MagicRefrection;
-        if (!metaValue) {
+        const metaMagicRefrection = $dataStates[stateId].meta.MagicRefrection;
+        if (!metaMagicRefrection) {
             continue;
         }
 
         // 条件に一致する設定を抽出する。
         for (const setting of pSettingList) {
             // 有効な設定ＩＤかどうかを確認
-            if (metaValue == setting.settingId) {
+            if (metaMagicRefrection == setting.settingId) {
                 return setting;
             }
         }
