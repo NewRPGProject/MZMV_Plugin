@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.021 Added parameter display and direction at level-up.
+ * @plugindesc v1.022 Added parameter display and direction at level-up.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @orderAfter NRP_VictoryRewards
  * @url https://newrpg.seesaa.net/article/499197962.html
@@ -132,7 +132,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.021 レベルアップ時にパラメータ表示や演出を追加
+ * @plugindesc v1.022 レベルアップ時にパラメータ表示や演出を追加
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @orderAfter NRP_VictoryRewards
  * @url https://newrpg.seesaa.net/article/499197962.html
@@ -366,7 +366,7 @@ Game_Actor.prototype.displayLevelUp = function(newSkills) {
             // パラメータ上昇量を取得
             const value = this.param(paramId) - mOldParams[paramId];
             // パラメータ名
-            const paramName = setDefault(paramData.DisplayName) ?? TextManager.param(paramId);
+            const paramName = setDefault(paramData.DisplayName, TextManager.param(paramId));
             // メッセージを追加
             tempMessage += pDisplayFormat.format(paramName, value);
 
