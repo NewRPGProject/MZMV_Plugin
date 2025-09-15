@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.012 Change the cursor to loop up, down, left and right.
+ * @plugindesc v1.013 Change the cursor to loop up, down, left and right.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475238742.html
  *
@@ -41,7 +41,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.012 カーソルが上下左右にループするよう挙動を変更します。
+ * @plugindesc v1.013 カーソルが上下左右にループするよう挙動を変更します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475238742.html
  *
@@ -160,7 +160,7 @@ if (pLoopLR) {
             // 末尾の空欄が有効でない場合、
             // かつ、最大項目数を超えている場合は調整
             if (!pSelectOverLastSpace && index >= this.maxItems()) {
-                index -= (maxCols - 1);
+                index -= (Math.min(maxCols - 1, this.maxItems()));
             }
 
             this.select(index);
