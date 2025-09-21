@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.101 Extends the functionality of battle events.
+ * @plugindesc v1.11 Extends the functionality of battle events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_ChargeSkill
  * @orderBefore NRP_DynamicAnimationMZ
@@ -251,11 +251,15 @@
  * @option opponents
  * @option friends
  * @option all
+ * 
+ * @param autoClear
+ * @desc Clear settings after action execution.
+ * @type boolean
  */
 
 /*:ja
  * @target MZ
- * @plugindesc v1.101 バトルイベントの機能を拡張します。
+ * @plugindesc v1.11 バトルイベントの機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_ChargeSkill
  * @orderBefore NRP_DynamicAnimationMZ
@@ -520,6 +524,11 @@
  * @option opponents #相手
  * @option friends #自軍
  * @option all #敵味方無差別
+ * 
+ * @param autoClear
+ * @text 実行後にクリア
+ * @desc 行動実行後に設定をクリアします。
+ * @type boolean
  */
 
 // バトルイベントから使えるように変数定義しておく。
@@ -589,6 +598,7 @@ var plForceCompareCondition = undefined;
 var plForceTargets = undefined;
 var plTargetLimit = undefined;
 var plSideChange = undefined;
+var plAutoClear = undefined;
 
 /**
  * ●変数クリア
@@ -607,6 +617,8 @@ function clearParam() {
     plTargetLimit = undefined;
     // 対象サイド反転
     plSideChange = undefined;
+    // 実行後にクリア
+    plAutoClear = undefined;
 }
 
 /**
@@ -645,6 +657,7 @@ PluginManager.registerCommand(PLUGIN_NAME, "forceTargetFilter", function(args) {
 
         plTargetLimit = toBoolean(option.targetLimit);
         plSideChange = getCommandValue(option.sideChange);
+        plAutoClear = toBoolean(option.autoClear);
     }
 });
 
@@ -666,6 +679,7 @@ PluginManager.registerCommand(PLUGIN_NAME, "forceTargetMost", function(args) {
 
         plTargetLimit = toBoolean(option.targetLimit);
         plSideChange = getCommandValue(option.sideChange);
+        plAutoClear = toBoolean(option.autoClear);
     }
 });
 
@@ -1225,6 +1239,11 @@ Game_Unit.prototype.randomTarget = function() {
             }
         });
 
+        // 実行後にクリアする場合
+        if (plAutoClear) {
+            clearParam();
+        }
+
         // 対象が取得できた場合だけreturnする。
         // 取得できなければ通常のターゲット処理に移る。
         if (target) {
@@ -1258,6 +1277,11 @@ Game_Unit.prototype.smoothTarget = function(index) {
                 target = member;
             }
         });
+
+        // 実行後にクリアする場合
+        if (plAutoClear) {
+            clearParam();
+        }
 
         // 対象が取得できた場合だけreturnする。
         // 取得できなければ通常のターゲット処理に移る。
