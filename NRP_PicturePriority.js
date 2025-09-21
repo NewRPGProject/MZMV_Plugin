@@ -71,6 +71,24 @@
  * Z-coordinates can also be specified as a decimal number.
  * 
  * -------------------------------------------------------------------
+ * [Notice]
+ * -------------------------------------------------------------------
+ * ◆About Battle
+ * By default, setting the Z coordinate for a picture during battle
+ * does not change its display priority.
+ * It must be combined with plugins that control display priority,
+ * such as NRP_DynamicMotionMZ.js.
+ * 
+ * ◆Regarding the Release of the Z-Coordinate
+ * Note that once the Z coordinate is specified,
+ * the setting remains active until it is canceled.
+ * ※Even if the picture's scale or opacity is set to 0,
+ *   the picture continues to exist internally.
+ * 
+ * The ‘ReleaseOnTransfer’ plugin parameter will only be
+ * automatically released when moving locations if it is enabled.
+ * 
+ * -------------------------------------------------------------------
  * [Terms]
  * -------------------------------------------------------------------
  * There are no restrictions.
