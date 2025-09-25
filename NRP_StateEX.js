@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.161 Extend the functionality of the state in various ways.
+ * @plugindesc v1.17 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -260,6 +260,10 @@
  * Can be used for jumping skills with DynamicMotion.
  * https://newrpg.seesaa.net/article/479020531.html
  * 
+ * <SlipDeath> / <SlipDeath:false>
+ * Toggles the Death by Slip Damage setting.
+ * This setting takes precedence over the value set in System 1.
+ * 
  * -------------------------------------------------------------------
  * [Original Parameters]
  * -------------------------------------------------------------------
@@ -353,7 +357,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.161 ステートの機能を色々と拡張します。
+ * @plugindesc v1.17 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -596,6 +600,10 @@
  * バトラーを非表示にします。
  * DynamicMotionによるジャンプ系スキルに使えます。
  * https://newrpg.seesaa.net/article/479020531.html
+ * 
+ * <SlipDeath> / <SlipDeath:false>
+ * スリップダメージで戦闘不能にするかどうかの設定を切り替えます。
+ * これはシステム1の設定値よりも優先されます。
  * 
  * -------------------------------------------------------------------
  * ■オリジナルパラメータ
@@ -1254,15 +1262,36 @@ Game_Battler.prototype.regenerateTp = function() {
     _Game_Battler_regenerateTp.apply(this, arguments);
 };
 
-// スリップダメージ無制限
-if (pSlipOverKill) {
-    /**
-     * 【上書】スリップダメージの最大値
-     */
-    Game_Battler.prototype.maxSlipDamage = function() {
+/**
+ * ●スリップダメージの最大値
+ */
+const _Game_Battler_maxSlipDamage = Game_Battler.prototype.maxSlipDamage;
+Game_Battler.prototype.maxSlipDamage = function() {
+    // スリップダメージで戦闘不能の設定
+    for (const stateId of this._states) {
+        const state = $dataStates[stateId];
+        const slipDeath = toBoolean(state.meta.SlipDeath);
+        // 戦闘不能許可の場合：<SlipDeath>
+        if (slipDeath) {
+            // スリップダメージ無制限
+            if (pSlipOverKill) {
+                return Infinity;
+            // 通常
+            } else {
+                return this.hp;
+            }
+        // 戦闘不能禁止の場合：<SlipDeath:false>
+        } else if (slipDeath === false) {
+            return Math.max(this.hp - 1, 0);
+        }
+    }
+
+    // スリップダメージ無制限
+    if (pSlipOverKill) {
         return $dataSystem.optSlipDeath ? Infinity : Math.max(this.hp - 1, 0);
-    };
-}
+    }
+    return _Game_Battler_maxSlipDamage.apply(this, arguments);
+};
 
 // ----------------------------------------------------------------------------
 // ステート解除時にスキル発動
