@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Create a store using your original currency.
+ * @plugindesc v1.011 Create a store using your original currency.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/498394064.html
  *
@@ -177,7 +177,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 独自通貨を使用した店を作成します。
+ * @plugindesc v1.011 独自通貨を使用した店を作成します。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/498394064.html
  *
@@ -674,6 +674,19 @@ Window_ShopSell.prototype.includes = function(item) {
 };
 
 /**
+ * ●カテゴリウィンドウの領域
+ */
+const _Scene_Shop_categoryWindowRect = Scene_Shop.prototype.categoryWindowRect;
+Scene_Shop.prototype.categoryWindowRect = function() {
+    const rect = _Scene_Shop_categoryWindowRect.apply(this, arguments);
+    // 独自通貨使用時かつカテゴリが無効な場合は高さを０として扱う
+    if (isOriginalShop() && pNoCategory) {
+        rect.height = 0;
+    }
+    return rect;
+};
+
+/**
  * ●独自通貨対象アイテムかどうか？
  */
 function isOriginalShopItem(item) {
@@ -789,7 +802,7 @@ function isLimitTarget() {
  */
 function isOriginalShop() {
     // シーンがショップまたはマップであること
-    // ※マップは\$による通過表示用
+    // ※マップは\$による通貨表示用
     if (SceneManager._scene instanceof Scene_Shop || SceneManager._scene instanceof Scene_Map) {
         // かつ、スイッチを満たしていること
         return $gameSwitches.value(pSwitch);
