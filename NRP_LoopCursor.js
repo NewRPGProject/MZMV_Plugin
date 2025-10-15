@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v1.013 Change the cursor to loop up, down, left and right.
+ * @plugindesc v1.014 Change the cursor to loop up, down, left and right.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475238742.html
  *
@@ -41,7 +41,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.013 カーソルが上下左右にループするよう挙動を変更します。
+ * @plugindesc v1.014 カーソルが上下左右にループするよう挙動を変更します。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/475238742.html
  *
@@ -202,9 +202,18 @@ if (pLoopLR) {
 var _Window_Selectable_select = Window_Selectable.prototype.select;
 Window_Selectable.prototype.select = function(index) {
     if (!pSelectOverLastSpace) {
+        // initialize内で呼ばれた際に、
+        // maxItemsが取得できないことがあるので、その場合は0を設定する。
+        let maxItems;
+        try {
+            maxItems = this.maxItems();
+        } catch {
+            maxItems = 0;
+        }
+
         // 最終要素を超えた場合は、最終要素へカーソルを移動
-        if (index + 1 > this.maxItems()) {
-            index = this.maxItems() - 1;
+        if (index + 1 > maxItems) {
+            index = maxItems - 1;
             // ただしマイナスにはならない
             index = Math.max(index, 0);
         }
@@ -228,19 +237,6 @@ Window_Selectable.prototype.isCurrentItemEnabled = function() {
     }
 
     return _Window_Selectable_isCurrentItemEnabled.apply(this, arguments);
-};
-
-/**
- * ●【MZ用】不具合対応
- */
-var _Window_Command_maxItems = Window_Command.prototype.maxItems;
-Window_Command.prototype.maxItems = function() {
-    // listが取得できなければ0を返す。
-    if (!this._list) {
-        return 0;
-    }
-
-    return _Window_Command_maxItems.apply(this, arguments);
 };
 
 /**
