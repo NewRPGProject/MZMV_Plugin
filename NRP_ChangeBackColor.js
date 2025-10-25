@@ -51,7 +51,7 @@
  * plugin = NRP.ChangeBackColor 128 128 128 15
  * </D-Motion>
  * 
- * <D-Animation/>
+ * <D-Animation:wait/>
  * 
  * // Return to original.
  * <D-Motion>
@@ -137,7 +137,7 @@
  * plugin = NRP.ChangeBackColor 128 128 128 15
  * </D-Motion>
  * 
- * <D-Animation/>
+ * <D-Animation:wait/>
  * 
  * // 元に戻す。
  * <D-Motion>
