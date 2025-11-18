@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.03 Forget lower level skills when learning higher level skills.
+ * @plugindesc v1.031 Forget lower level skills when learning higher level skills.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_AdditionalClasses
  * @url http://newrpg.seesaa.net/article/483693029.html
@@ -70,7 +70,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.03 上位スキル習得時に下位スキルを消去。
+ * @plugindesc v1.031 上位スキル習得時に下位スキルを消去。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_AdditionalClasses
  * @url http://newrpg.seesaa.net/article/483693029.html
@@ -182,12 +182,13 @@ const _Game_Actor_learnSkill = Game_Actor.prototype.learnSkill;
 Game_Actor.prototype.learnSkill = function(skillId) {
     // 忘却指定のあるスキルを取得
     const forgetSkillId = toNumber($dataSkills[skillId].meta.ForgetSkill);
+
+    _Game_Actor_learnSkill.apply(this, arguments);
+
     // 既に習得済みのスキルの場合、忘却処理を行う。
     if (forgetSkillId && this.isLearnedSkill(forgetSkillId)) {
         this.forgetSkill(forgetSkillId);
     }
-
-    _Game_Actor_learnSkill.apply(this, arguments);
 };
 
 /**
