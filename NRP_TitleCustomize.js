@@ -113,7 +113,7 @@
  * 
  * @param Url
  * @type string
- * @desc When a command is selected, the browser opens and the URL is called.
+ * @desc When a command is selected, another window opens and the URL is called.
  */
 
 /*:ja
@@ -240,7 +240,7 @@
  * @param Url
  * @text ＵＲＬ
  * @type string
- * @desc コマンド決定時にブラウザを開き、ＵＲＬを呼び出します。
+ * @desc コマンド決定時に別枠を開き、ＵＲＬを呼び出します。
  */
 
 (function() {
