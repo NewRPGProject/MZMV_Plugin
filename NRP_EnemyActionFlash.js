@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Adjust the flash when the enemy acts.
+ * @plugindesc v1.011 Adjust the flash when the enemy acts.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/500973022.html
  *
@@ -54,7 +54,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 敵の行動時のフラッシュを調整します。
+ * @plugindesc v1.011 敵の行動時のフラッシュを調整します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/500973022.html
  *
@@ -179,7 +179,9 @@ Sprite_Enemy.prototype.startWhiten = function() {
     const action = BattleManager._action
     // フラッシュ禁止の場合
     if (action && action.item().meta.NoEnemyActionFlash) {
-        this._effectDuration = 0;
+        // 0にすると特定条件下でフリーズするので1を設定
+        // ※1でも点滅はしないので問題なし。
+        this._effectDuration = 1;
         return;
     }
     _Sprite_Enemy_startWhiten.apply(this, arguments);
