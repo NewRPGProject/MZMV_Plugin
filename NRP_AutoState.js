@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.02 Automatically adds the state.
+ * @plugindesc v1.021 Automatically adds the state.
  * @orderAfter NRP_StateEX
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/500375292.html
@@ -71,7 +71,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.02 自動でステートを付加する。
+ * @plugindesc v1.021 自動でステートを付加する。
  * @orderAfter NRP_StateEX
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/500375292.html
@@ -373,6 +373,28 @@ Game_Battler.prototype.onBattleStart = function(advantageous) {
     }
     
     _Game_Battler_onBattleStart.apply(this, arguments);
+};
+
+//-----------------------------------------------------------------------------
+// Game_Interpreter
+//-----------------------------------------------------------------------------
+
+/**
+ * ●スキルの増減
+ */
+const _Game_Interpreter_command318 = Game_Interpreter.prototype.command318;
+Game_Interpreter.prototype.command318 = function(params) {
+    const ret = _Game_Interpreter_command318.apply(this, arguments);
+
+    // 戦闘時以外も有効かつ戦闘中以外の場合
+    // ※戦闘中は都度refreshが走るので不要
+    if (ret && !pAutoStateOnlyBattle && !$gameParty.inBattle()) {
+        this.iterateActorEx(params[0], params[1], actor => {
+            // 自動ステートの更新
+            actor.updateAutoStates();
+        });
+    }
+    return ret;
 };
 
 })();
