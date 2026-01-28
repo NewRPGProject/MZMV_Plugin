@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v2.041 The order of actions is displayed on the battle screen.
+ * @plugindesc v2.05 The order of actions is displayed on the battle screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -299,6 +299,12 @@
  * @desc Correct scale. Formula is possible.
  * e.g.: index == 0 ? 100 : 50
  * 
+ * @param frontLayer
+ * @parent useSprite
+ * @type boolean
+ * @default true
+ * @desc Display the symbol on the front layer to prevent it from being affected by screen effects (e.g.:shake).
+ * 
  * @param <Enemy Symbol Image>
  *
  * @param enemyGraphicMode
@@ -434,7 +440,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.041 行動順序を戦闘画面へ表示します。
+ * @plugindesc v2.05 行動順序を戦闘画面へ表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/472840225.html
  *
@@ -747,6 +753,13 @@
  * @desc 拡大率を補正（背景画像含む）します。数式可。
  * 例：index == 0 ? 100 : 50
  * 
+ * @param frontLayer
+ * @text 前面レイヤー表示
+ * @parent useSprite
+ * @type boolean
+ * @default true
+ * @desc シンボルを最前面に表示し、画面効果（シェイクなど）の影響を受けなくします。
+ * 
  * @param <Enemy Symbol Image>
  * @text ＜敵の画像関連＞
  * @desc 見出しです。
@@ -959,7 +972,8 @@ const pSymbolAdjustY = setDefault(parameters["symbolAdjustY"], 0);
 const pImageShiftX = setDefault(parameters["imageShiftX"], 0);
 const pImageShiftY = setDefault(parameters["imageShiftY"], 0);
 const pAdjustZoom = setDefault(parameters["adjustZoom"], 100);
-    
+const pFrontLayer = toBoolean(parameters["frontLayer"], false);
+
 const pEnemyFileName = setDefault(parameters["enemyFileName"], "Monster");
 const pEnemyFileIndex = toNumber(parameters["enemyFileIndex"], 6);
 const pEnemyZoom = toNumber(parameters["enemyZoom"], toNumber(parameters["zoom"], 100)) / 100;
@@ -1024,6 +1038,19 @@ BattleManager.makeActionOrders = function() {
 BattleManager.displayActionOrders = function() {
     NrpVisualTurn.visualTurnList(this._actionBattlers);
 }
+
+const _BattleManager_startBattle = BattleManager.startBattle;
+BattleManager.startBattle = function() {
+    // 「スプライト表示がオン」かつ「前面表示がオン」の場合
+    if (pUseSprite && pFrontLayer) {
+        // ちらつきを抑えるため先に表示処理を実行
+        this.makeActionOrders();
+        // 非表示にしておく。
+        NrpVisualTurn._ctbWindow.hide();
+    }
+    
+    _BattleManager_startBattle.apply(this, arguments);
+};
 
 /**
  * ●CTB用ウィンドウの定義
@@ -1102,6 +1129,13 @@ NrpVisualTurn.setCtbWindow = function(ctbWindow) {
  */
 const _Scene_Battle_prototype_createAllWindows = Scene_Battle.prototype.createAllWindows;
 Scene_Battle.prototype.createAllWindows = function() {
+    // 「スプライト表示がオン」かつ「前面表示がオン」の場合の行動順序用の表示領域
+    if (pUseSprite && pFrontLayer) {
+        this._visualTurnSpriteset = new Sprite();
+        // 1:WindowLayerより下に表示
+        this.addChildAt(this._visualTurnSpriteset, 1);
+    }
+
     _Scene_Battle_prototype_createAllWindows.apply(this, arguments);
     
     this.createCtbWindow();
@@ -1184,11 +1218,13 @@ NrpVisualTurn.visualTurnList = function(actionBattlers) {
 
     // 順序表示用のスプライトをクリア
     const spriteset = getSpriteset();
+    const symbolLayerSprite = getSymbolLayerSprite(spriteset);
+
     // 順序表示用のスプライトが作成済の場合
     if (spriteset._visualTurnSprites) {
         // 削除処理を行う。
         for (const sprite of spriteset._visualTurnSprites) {
-            spriteset._battleField.removeChild(sprite);
+            symbolLayerSprite.removeChild(sprite);
         }
     }
     spriteset._visualTurnSprites = [];
@@ -1283,6 +1319,14 @@ NrpVisualTurn.visualTurnList = function(actionBattlers) {
             } else {
                 x += eval(pWidth);
             }
+        }
+    }
+
+    // 順序表示用のスプライトが作成済の場合
+    if (spriteset._visualTurnSprites) {
+        // 画面への追加処理を行う。
+        for (const sprite of spriteset._visualTurnSprites) {
+            symbolLayerSprite.addChild(sprite);
         }
     }
 }
@@ -1910,7 +1954,6 @@ Window_BattleCtb.prototype.drawSymbolCommon = function(drawArgs, index) {
 
         // 画面表示に追加
         spriteset._visualTurnSprites.push(sprite);
-        spriteset._battleField.addChild(sprite);
 
         let maskImage = pActorMaskImage;
         if (battler.isEnemy() && pEnemyMaskImage) {
@@ -1929,7 +1972,6 @@ Window_BattleCtb.prototype.drawSymbolCommon = function(drawArgs, index) {
             maskSprite.scale.x = adjustZoom;
             maskSprite.scale.y = adjustZoom;
             spriteset._visualTurnSprites.push(maskSprite);
-            spriteset._battleField.addChild(maskSprite);
             sprite.mask = maskSprite;
         }
 
@@ -2229,7 +2271,6 @@ Window_BattleCtb.prototype.drawEnemyVisualId = function(battler, sprite, drawArg
         visualIdSprite.z = 10002;
         visualIdSprite.bitmap.drawText(battler.visualId(), 0, 0, 48, 48, "left");
         spriteset._visualTurnSprites.push(visualIdSprite);
-        spriteset._battleField.addChild(visualIdSprite);
         return;
     }
 
@@ -2342,7 +2383,6 @@ Window_BattleCtb.prototype.drawWindowBackImage = function() {
         sprite.z = 10000;
         // 画面に追加
         spriteset._visualTurnSprites.push(sprite);
-        spriteset._battleField.addChild(sprite);
         return;
     }
 
@@ -2382,7 +2422,6 @@ Window_BattleCtb.prototype.drawPersonalBackImage = function(battler, x, y, index
         sprite.z = 10001;
         // 画面に追加
         spriteset._visualTurnSprites.push(sprite);
-        spriteset._battleField.addChild(sprite);
 
     // ウィンドウ表示
     } else {
@@ -2944,6 +2983,16 @@ function getBitmapContext(bitmap) {
  */
 function getSpriteset() {
     return SceneManager._scene._spriteset;
+}
+
+/**
+ * ●シンボルを表示するレイヤーとなるスプライトを取得する。
+ */
+function getSymbolLayerSprite(spriteset) {
+    if (pFrontLayer) {
+        return SceneManager._scene._visualTurnSpriteset;
+    }
+    return spriteset._battleField;
 }
 
 //-----------------------------------------------------------------------------
