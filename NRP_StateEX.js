@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.17 Extend the functionality of the state in various ways.
+ * @plugindesc v1.171 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -357,7 +357,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.17 ステートの機能を色々と拡張します。
+ * @plugindesc v1.171 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -791,6 +791,8 @@ let mRecoverAllFlg = false;
 let mDeadFlg = false;
 // ステートを常に更新用のフラグ
 let mIsStateAffectedFalse = false;
+// ターン終了済フラグ
+let mTurnEnd = false;
 
 /**
  * ●全回復
@@ -1437,6 +1439,12 @@ Game_Battler.prototype.stateEndForceAction = function(skillId, targetIndex) {
 
     // アクター位置の自動設定を禁止解除（DynamicMotion）
     BattleManager._noUpdateTargetPosition = false;
+
+    // 既にターン終了時の場合
+    if (BattleManager.isTurnEnd()) {
+        // 処理を重複しないためのフラグを立てる。
+        mTurnEnd = true;
+    }
 };
 
 /**
@@ -1479,6 +1487,7 @@ const _BattleManager_startTurn = BattleManager.startTurn;
 BattleManager.startTurn = function() {
     // フラグを解除
     mEndStateSkillId = null;
+    mTurnEnd = false;
     _BattleManager_startTurn.apply(this, arguments);
 };
 
@@ -1490,6 +1499,28 @@ BattleManager.endTurn = function() {
     // フラグを解除
     mEndStateSkillId = null;
     _BattleManager_endTurn.apply(this, arguments);
+};
+
+/**
+ * ●ターン終了時（ステートターンの経過など）
+ */
+const _BattleManager_endAllBattlersTurn = BattleManager.endAllBattlersTurn;
+BattleManager.endAllBattlersTurn = function() {
+    // 既に処理済みならターン終了処理を行わない。
+    if (mTurnEnd) {
+        mTurnEnd = false; // 解除
+        return;
+    }
+    _BattleManager_endAllBattlersTurn.apply(this, arguments);
+};
+
+const _BattleManager_endBattlerActions = BattleManager.endBattlerActions;
+BattleManager.endBattlerActions = function(battler) {
+    // 既に処理済みならターン終了処理を行わない。
+    if (mTurnEnd) {
+        return;
+    }
+    _BattleManager_endBattlerActions.apply(this, arguments);
 };
 
 /**
