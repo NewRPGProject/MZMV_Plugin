@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.171 Extend the functionality of the state in various ways.
+ * @plugindesc v1.172 Extend the functionality of the state in various ways.
  * @orderAfter NRP_TraitsPlus
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -357,7 +357,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.171 ステートの機能を色々と拡張します。
+ * @plugindesc v1.172 ステートの機能を色々と拡張します。
  * @orderAfter NRP_TraitsPlus
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/488957733.html
@@ -791,8 +791,6 @@ let mRecoverAllFlg = false;
 let mDeadFlg = false;
 // ステートを常に更新用のフラグ
 let mIsStateAffectedFalse = false;
-// ターン終了済フラグ
-let mTurnEnd = false;
 
 /**
  * ●全回復
@@ -1305,6 +1303,13 @@ let mIsRemoveStatesAuto = false;
 let mStateEndSkillAdjustMotion = false;
 // ターン経過によるステート状況表示のクリアを抑制
 let mdisplayAutoAffectedStatusNotClear = false;
+// ターン終了済フラグ
+let mTurnEnd = false;
+// ステート解除スキル予約リスト
+let mStateEndSkillList = [];
+// ステート終了スキルの実行判定用のＩＤ
+// ※ＣＴＢなどシステムによっては挙動が変わるので、念入りに解除処理を挿入している。
+let mEndStateSkillId = null;
 
 /**
  * ●ステートのターン経過による解除
@@ -1340,15 +1345,22 @@ Game_Battler.prototype.removeState = function(stateId) {
             const action = new Game_Action(this, true);
             action.setSkill(skillId);
 
+            // 既に実行中のスキルが存在する場合はスキルデータの構造体を作成してリストに追加
+            // ※同時に実行できないため順番に実行する。
+            if (mEndStateSkillId) {
+                const skillData = {};
+                skillData.subject = this;
+                skillData.skillId = skillId;
+                mStateEndSkillList.push(skillData);
+                // 処理終了
+                return;
+            }
+
             // 戦闘行動の強制を実行
             goStateSkill(this, skillId);
         }
     }
 };
-
-// ステート終了スキルの実行判定用のＩＤ
-// ※ＣＴＢなどシステムによっては挙動が変わるので、念入りに解除処理を挿入している。
-let mEndStateSkillId = null;
 
 /**
  * ●ステート終了時のスキルを実行
@@ -1488,6 +1500,7 @@ BattleManager.startTurn = function() {
     // フラグを解除
     mEndStateSkillId = null;
     mTurnEnd = false;
+    mStateEndSkillList = [];
     _BattleManager_startTurn.apply(this, arguments);
 };
 
@@ -1514,8 +1527,19 @@ BattleManager.endAllBattlersTurn = function() {
     _BattleManager_endAllBattlersTurn.apply(this, arguments);
 };
 
+/**
+ * ●バトラー毎の行動終了時
+ */
 const _BattleManager_endBattlerActions = BattleManager.endBattlerActions;
 BattleManager.endBattlerActions = function(battler) {
+    // 次のスキルが予約されているならば実行
+    if (mStateEndSkillList && mStateEndSkillList.length > 0) {
+        const skillData = mStateEndSkillList.shift();
+        // 戦闘行動の強制を実行
+        goStateSkill(skillData.subject, skillData.skillId);
+        return;
+    }
+
     // 既に処理済みならターン終了処理を行わない。
     if (mTurnEnd) {
         return;
