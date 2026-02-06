@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.11 Extends the functionality of battle events.
+ * @plugindesc v1.111 Extends the functionality of battle events.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_ChargeSkill
  * @orderBefore NRP_DynamicAnimationMZ
@@ -259,7 +259,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.11 バトルイベントの機能を拡張します。
+ * @plugindesc v1.111 バトルイベントの機能を拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_ChargeSkill
  * @orderBefore NRP_DynamicAnimationMZ
@@ -619,6 +619,15 @@ function clearParam() {
     plSideChange = undefined;
     // 実行後にクリア
     plAutoClear = undefined;
+}
+
+/**
+ * ●変数クリア（自動）
+ */
+function clearParamAuto() {
+    if (plAutoClear) {
+        clearParam();
+    }
 }
 
 /**
@@ -1239,18 +1248,13 @@ Game_Unit.prototype.randomTarget = function() {
             }
         });
 
-        // 実行後にクリアする場合
-        if (plAutoClear) {
-            clearParam();
-        }
+        const isTargetLimit = plTargetLimit;
+        // 実行後に変数クリア
+        clearParamAuto();
 
         // 対象が取得できた場合だけreturnする。
-        // 取得できなければ通常のターゲット処理に移る。
-        if (target) {
-            return target;
-
-        // 対象制限時は値が空でもそのまま返す
-        } else if (plTargetLimit) {
+        // ただし、対象制限時は値が空でもそのまま返す
+        if (target || isTargetLimit) {
             return target;
         }
     }
@@ -1278,18 +1282,13 @@ Game_Unit.prototype.smoothTarget = function(index) {
             }
         });
 
-        // 実行後にクリアする場合
-        if (plAutoClear) {
-            clearParam();
-        }
+        const isTargetLimit = plTargetLimit;
+        // 実行後に変数クリア
+        clearParamAuto();
 
         // 対象が取得できた場合だけreturnする。
-        // 取得できなければ通常のターゲット処理に移る。
-        if (target) {
-            return target;
-
-        // 対象制限時は値が空でもそのまま返す
-        } else if (plTargetLimit) {
+        // ただし、対象制限時は値が空でもそのまま返す
+        if (target || isTargetLimit) {
             return target;
         }
 
@@ -1302,6 +1301,32 @@ Game_Unit.prototype.smoothTarget = function(index) {
     
     // 元処理実行
     return _Game_Unit_smoothTarget.call(this, index);
+};
+
+/**
+ * ●ターゲット不能時に補正を行う（戦闘不能者）
+ */
+const _Game_Unit_smoothDeadTarget = Game_Unit.prototype.smoothDeadTarget;
+Game_Unit.prototype.smoothDeadTarget = function(index) {
+    /*
+     * 強制対象リストの指定があれば、そちらで判定を行う。
+     */
+    if (plForceTargets) {
+        const target = plForceTargets.length ? plForceTargets[Math.randomInt(plForceTargets.length)] : null;
+
+        const isTargetLimit = plTargetLimit;
+        // 実行後に変数クリア
+        clearParamAuto();
+
+        // 対象が取得できた場合だけreturnする。
+        // ただし、対象制限時は値が空でもそのまま返す
+        if (target || isTargetLimit) {
+            return target;
+        }
+    }
+
+    // 元処理実行
+    return _Game_Unit_smoothDeadTarget.apply(this, arguments);
 };
 
 /**
