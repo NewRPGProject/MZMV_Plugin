@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.101 Chain skills together.
+ * @plugindesc v1.102 Chain skills together.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -256,7 +256,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.101 スキルを連結する。
+ * @plugindesc v1.102 スキルを連結する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter SimpleMsgSideViewMZ
  * @orderAfter NRP_CountTimeBattle
@@ -695,6 +695,20 @@ BattleManager.startAction = function() {
     if (!mOriginalAction) {
         mOriginalTargets = [...this._targets];
     }
+};
+
+/**
+ * ●行動終了時
+ */
+const _BattleManager_endBattlerActions = BattleManager.endBattlerActions;
+BattleManager.endBattlerActions = function(battler) {
+    // 連結スキル発動中の場合
+    if (battler == mChainBattler) {
+        // 終了処理を実行しない。
+        // ※行動終了時のステート解除をさせないため
+        return;
+    }
+    _BattleManager_endBattlerActions.apply(this, arguments);
 };
 
 /**
@@ -1151,17 +1165,6 @@ Game_Action.prototype.makeTargets = function() {
         return [mConfusedTarget];
     }
     return _Game_Action_makeTargets.apply(this, arguments);
-    // const targets = [];
-    // if (!this._forcing && this.subject().isConfused()) {
-    //     targets.push(this.confusionTarget());
-    // } else if (this.isForEveryone()) {
-    //     targets.push(...this.targetsForEveryone());
-    // } else if (this.isForOpponent()) {
-    //     targets.push(...this.targetsForOpponents());
-    // } else if (this.isForFriend()) {
-    //     targets.push(...this.targetsForFriends());
-    // }
-    // return this.repeatTargets(targets);
 };
 
 // ----------------------------------------------------------------------------
