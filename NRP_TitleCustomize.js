@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Customize the title scene.
+ * @plugindesc v1.02 Customize the title scene.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderAfter NRP_N_TitleMap
  * @url https://newrpg.seesaa.net/article/501426741.html
@@ -114,11 +114,17 @@
  * @param Url
  * @type string
  * @desc When a command is selected, another window opens and the URL is called.
+ * 
+ * @param UseDefaultBrowser
+ * @parent Url
+ * @type boolean
+ * @default false
+ * @desc If enabled, the URL will be opened in the default browser.
  */
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 タイトル画面をカスタマイズします。
+ * @plugindesc v1.02 タイトル画面をカスタマイズします。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_N_TitleMap
  * @url https://newrpg.seesaa.net/article/501426741.html
@@ -241,6 +247,13 @@
  * @text ＵＲＬ
  * @type string
  * @desc コマンド決定時に別枠を開き、ＵＲＬを呼び出します。
+ * 
+ * @param UseDefaultBrowser
+ * @text 既定ブラウザを使用
+ * @parent Url
+ * @type boolean
+ * @default false
+ * @desc オンの場合、既定ブラウザでＵＲＬを呼び出します。
  */
 
 (function() {
@@ -360,23 +373,22 @@ Scene_Title.prototype.callAddCommand = function(command) {
     // ＵＲＬの呼び出し
     if (command.Url) {
         const url = command.Url;
-        window.open(url);
+        const useDefaultBrowser = toBoolean(command.UseDefaultBrowser);
 
         // 既定ブラウザで起動する場合
-        // ※なぜか作者環境では起動が異様に遅いので保留
-        // if (Utils.isNwjs()) {
-        //     const exec = require("child_process").exec;
-        //     switch (process.platform) {
-        //         case "win32":
-        //             exec("start rundll32.exe url.dll,FileProtocolHandler \"" + url + "\"");
-        //             break;
-        //         default:
-        //             exec("open \"" + url + "\"");
-        //             break;
-        //     }
-        // } else {
-        //     window.open(url);
-        // }
+        if (Utils.isNwjs() && useDefaultBrowser) {
+            const exec = require("child_process").exec;
+            switch (process.platform) {
+                case "win32":
+                    exec("start rundll32.exe url.dll,FileProtocolHandler \"" + url + "\"");
+                    break;
+                default:
+                    exec("open \"" + url + "\"");
+                    break;
+            }
+        } else {
+            window.open(url);
+        }
     }
 };
 
