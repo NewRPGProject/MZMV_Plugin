@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.051 Resize the entire game window & add to the options.
+ * @plugindesc v1.06 Resize the entire game window & add to the options.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore StartUpFullScreen
  * @url http://newrpg.seesaa.net/article/475413177.html
@@ -15,9 +15,6 @@
  * - Window size can be set independently from resolution.
  * - Window size change function can be added to the options screen.
  *   If changed, the change will be reflected at startup thereafter.
- * 
- * Note that it does not make sense on mobile or browser activation.
- * This plugin is automatically disabled.
  * 
  * -------------------------------------------------------------------
  * [Notice (for MZ)]
@@ -87,6 +84,12 @@
  * @------------------------------------------------------------------
  * @ [Plugin Parameters]
  * @------------------------------------------------------------------
+ * 
+ * @param disabledBrowser
+ * @type boolean
+ * @default false
+ * @desc Disable this plugin in the browser environment.
+ * 
  * @param windowWidth
  * @type string
  * @default Graphics.width
@@ -159,6 +162,22 @@
  * @desc The unit of change in window size.
  * The default value is 25(%).
  * 
+ * @param <optionBrowser>
+ * 
+ * @param windowSizeMinBrowser
+ * @parent <optionBrowser>
+ * @type string
+ * @default 100
+ * @desc The minimum window size in browser mode.
+ * The default value is 50(%).
+ * 
+ * @param windowSizeMaxBrowser
+ * @parent <optionBrowser>
+ * @type string
+ * @default
+ * @desc The maximum window size in browser mode.
+ * The default value is blank (same as usual).
+ * 
  * @param <cooperation>
  * 
  * @param overWriteSceneManagerRun
@@ -170,7 +189,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.051 ゲーム全体のウィンドウサイズを変更＆オプションに追加
+ * @plugindesc v1.06 ゲーム全体のウィンドウサイズを変更＆オプションに追加
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore StartUpFullScreen
  * @url http://newrpg.seesaa.net/article/475413177.html
@@ -182,9 +201,6 @@
  * ・解像度とは別に独立してウィンドウサイズを設定可能。
  * ・オプション画面にウィンドウサイズの変更機能を追加可能。
  * 　変更すると以降、起動時にも反映されます。
- *
- * なお、モバイルやブラウザ起動では意味がないので、
- * このプラグインは自動で無効化されます。
  * 
  * -------------------------------------------------------------------
  * ■注意点（ＭＺ向け）
@@ -245,6 +261,12 @@
  * @------------------------------------------------------------------
  * @ プラグインパラメータ
  * @------------------------------------------------------------------
+ * 
+ * @param disabledBrowser
+ * @text ブラウザ環境で無効
+ * @type boolean
+ * @default false
+ * @desc ブラウザ環境で当プラグインを無効化します。
  * 
  * @param windowWidth
  * @text ウィンドウ横幅
@@ -330,6 +352,25 @@
  * @desc ウィンドウサイズの変更単位です。
  * 初期値は25(%)です。
  * 
+ * @param <optionBrowser>
+ * @text ＜ｵﾌﾟｼｮﾝ（ﾌﾞﾗｳｻﾞ時）＞
+ * 
+ * @param windowSizeMinBrowser
+ * @text 最小ウィンドウサイズ
+ * @parent <optionBrowser>
+ * @type string
+ * @default 100
+ * @desc ブラウザモード時の最小ウィンドウサイズです。
+ * 初期値は100(%)です。
+ * 
+ * @param windowSizeMaxBrowser
+ * @text 最大ウィンドウサイズ
+ * @parent <optionBrowser>
+ * @type string
+ * @default
+ * @desc ブラウザモード時の最大のウィンドウサイズです。
+ * 初期値は空欄（通常時と同じ）です。
+ * 
  * @param <cooperation>
  * @text ＜外部連携＞
  * 
@@ -359,6 +400,7 @@ function toBoolean(str) {
 
 const parameters = PluginManager.parameters("NRP_GameWindowSize");
 // 基本項目
+const pDisabledBrowser = toBoolean(parameters["disabledBrowser"], false);
 const pWindowWidth = parameters["windowWidth"];
 const pWindowHeight = parameters["windowHeight"];
 const pScreenWidth = parameters["screenWidth"];
@@ -371,6 +413,9 @@ const pOptionDispType = parameters["optionDispType"];
 const pWindowSizeMin = setDefault(parameters["windowSizeMin"], 50);
 const pWindowSizeMax = setDefault(parameters["windowSizeMax"], 150);
 const pWindowSizeOffset = setDefault(parameters["windowSizeOffset"], 25);
+// オプション（ブラウザ時）
+const pWindowSizeMinBrowser = setDefault(parameters["windowSizeMinBrowser"], pWindowSizeMin);
+const pWindowSizeMaxBrowser = setDefault(parameters["windowSizeMaxBrowser"], pWindowSizeMax);
 // 外部連携
 const pOverWriteSceneManagerRun = toBoolean(parameters["overWriteSceneManagerRun"]);
 
@@ -421,7 +466,7 @@ Scene_Boot.prototype.start = function() {
  */
 function changeWindowSize() {
     // ローカル実行以外では機能無効
-    if (!Utils.isNwjs()) {
+    if (!Utils.isNwjs() && pDisabledBrowser) {
         return;
     }
 
@@ -473,7 +518,7 @@ function getWindowSizeRate() {
 }
 
 // ローカル実行以外では機能無効
-if (!Utils.isNwjs()) {
+if (!Utils.isNwjs() && pDisabledBrowser) {
     return;
 }
 
@@ -488,6 +533,11 @@ if (!pUseOption) {
  * ●オプション用ウィンドウサイズの最小値
  */
 function windowSizeMin() {
+    // ブラウザモード
+    if (!Utils.isNwjs()) {
+        return eval(pWindowSizeMinBrowser);
+    }
+    // 標準時
     return eval(pWindowSizeMin);
 }
 
@@ -495,6 +545,11 @@ function windowSizeMin() {
  * ●オプション用ウィンドウサイズの最大値
  */
 function windowSizeMax() {
+    // ブラウザモード
+    if (!Utils.isNwjs()) {
+        return eval(pWindowSizeMaxBrowser);
+    }
+    // 標準時
     return eval(pWindowSizeMax);
 }
 
