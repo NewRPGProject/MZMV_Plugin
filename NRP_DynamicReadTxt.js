@@ -4,7 +4,7 @@
 
 /*:
  * @target MV MZ
- * @plugindesc v2.01 Read the definition of DynamicAnimation&Motion from txt file.
+ * @plugindesc v2.02 Read the definition of DynamicAnimation&Motion from txt file.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -45,6 +45,7 @@
  * that the strength of the encryption is only for peace of mind.
  * You can avoid a situation in which the contents of the file
  * can be discovered simply by opening it in a text editor.
+ * Also, this feature will result in an error in browser mode.
  * 
  * ◆Procedure
  * 1. Specify a folder outside the project for the "ReadTxtFolder".
@@ -111,6 +112,12 @@
  * @desc Folder to place the encrypted txt file.
  * The default setting is "data/D-Txt-Encrypt/".
  * 
+ * @param ForceEncryptProduct
+ * @parent UseEncrypt
+ * @type boolean
+ * @default false
+ * @desc Even if UseEncrypt is off, encryption is forced in production. This prevents forgetting the setting.
+ * 
  * @param DynamicReadOnTest
  * @type boolean
  * @default true
@@ -141,7 +148,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v2.01 DynamicAnimation&Motionの定義をtxtから読み込みます。
+ * @plugindesc v2.02 DynamicAnimation&Motionの定義をtxtから読み込みます。
  * @author 砂川赳 (http://newrpg.seesaa.net/)
  * @base NRP_DynamicAnimationMZ
  * @orderAfter NRP_DynamicAnimationMZ
@@ -179,6 +186,7 @@
  * 
  * ただし、暗号化の強度は気休め程度なのでご了承ください。
  * txtを開くだけで中身が分かるという状況は避けられます。
+ * また、ブラウザモードだとこの機能はエラーになります。
  * 
  * ◆手順
  * １．『txt配置フォルダ』にプロジェクト外のフォルダを指定する。
@@ -243,6 +251,13 @@
  * @desc 暗号化したtxtファイルを配置するフォルダです。
  * 初期設定は"data/D-Txt-Encrypt/"です。
  * 
+ * @param ForceEncryptProduct
+ * @parent UseEncrypt
+ * @text 本番では強制暗号化
+ * @type boolean
+ * @default false
+ * @desc 『暗号化を使用』がオフの場合でも本番では強制的に暗号化を行います。設定忘れ防止のための機能です。
+ * 
  * @param DynamicReadOnTest
  * @text テスト時は毎回読込
  * @type boolean
@@ -305,6 +320,7 @@ const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pReadTxtFolder = setDefault(parameters["ReadTxtFolder"], "data/D-Txt/");
 const pUseEncrypt = toBoolean(parameters["UseEncrypt"], false);
 const pEncryptFolder = setDefault(parameters["EncryptFolder"], "data/D-Txt-Encrypt/");
+const pForceEncryptProduct = toBoolean(parameters["ForceEncryptProduct"], false);
 const pDynamicReadOnTest = toBoolean(parameters["DynamicReadOnTest"], true);
 const pMakeBrowserFileList = toBoolean(parameters["MakeBrowserFileList"], true);
 const pProductionMode = toBoolean(parameters["ProductionMode"], false);
@@ -318,16 +334,36 @@ const TXT_EXT = ".txt";
 // 暗号化版の拡張子
 const ENCRYPT_EXT = ".drtxt";
 
-// Node.jsの暗号化機能を呼び出し
-const mCrypto = require("crypto");
 // 暗号化アルゴリズム（AES）
 const ALGORISM = "aes-256-cbc";
 // パスワード（適当）
 const PASSWORD = "DYNAMIC_READ_TXT";
 // SALT（適当）
 const SALT = "RPG_TCOOL_MZ"
+// Node.jsの暗号化機能を呼び出し
+const mCrypto = getCrypto();
 // 鍵を生成
-const mCryptKey = mCrypto.scryptSync(PASSWORD, SALT, 32);
+const mCryptKey = getCryptKey();
+
+function getCrypto() {
+    // ローカル実行の場合
+    if (Utils.isNwjs()) {
+        // Node.jsの暗号化機能を呼び出し
+        return require("crypto");
+    }
+    // ブラウザ実行の場合
+    return null;
+}
+
+function getCryptKey() {
+    // ローカル実行の場合
+    if (mCrypto) {
+        // 鍵を生成
+        return mCrypto.scryptSync(PASSWORD, SALT, 32);
+    }
+    // ブラウザ実行の場合
+    return null;
+}
 
 /************************************************
  * 以下、共通処理
@@ -356,7 +392,7 @@ function isPlaytest() {
  */
 function isWatchEncrypt() {
     // 本番かつ暗号使用
-    if (!isPlaytest() && pUseEncrypt) {
+    if (!isPlaytest() && (pUseEncrypt || pForceEncryptProduct)) {
         return true;
     }
     return false;
