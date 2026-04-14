@@ -27,7 +27,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.05 Use a map as title screen.
+ * @plugindesc v1.06 Use a map as title screen.
  * @author Takeshi Sunagawa（Original: Nolonar）
  * @orderAfter ExtraGauge
  * @url https://github.com/Nolonar/RM_Plugins
@@ -152,7 +152,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.05 マップをタイトル画面として使用する。
+ * @plugindesc v1.06 マップをタイトル画面として使用する。
  * @author 砂川赳（オリジナル：Nolonar様）
  * @orderAfter ExtraGauge
  * @url https://github.com/Nolonar/RM_Plugins
@@ -323,17 +323,8 @@
                 this._initFlg = true;
             }
 
-            // セーブファイルを参照する場合
-            if (this._initFlg && parameters.readSaveFile) {
-                DataManager.loadGame(parameters.saveFileId)
-                    .then(() => this.onLoadSuccess())
-                    .catch(() => this.onLoadFailure());
-            }
-
+            // タイトル用のマップデータを読込
             DataManager.loadMapData(parameters.mapId);
-            this.createCommandWindow();
-            // Scene_Map will create its own window layer later on.
-            this.removeChild(this._windowLayer);
 
             // Needed to avoid player character from appearing on TitleMap when
             // player returns to Title.
@@ -341,6 +332,32 @@
                 DataManager.setupNewGame();
             }
 
+            // セーブファイルを参照する場合
+            if (this._initFlg && parameters.readSaveFile) {
+                DataManager.loadGame(parameters.saveFileId)
+                    .then(() => {
+                        this.onLoadSuccess();
+                        // 処理完了後に表示処理を実行
+                        this.createDisplay();
+                    })
+                    .catch(() => {
+                        this.onLoadFailure();
+                        // ロード失敗時はデータが空になるので初期化
+                        DataManager.setupNewGame();
+                        // 処理完了後に表示処理を実行
+                        this.createDisplay();
+                    });
+                return;
+            }
+
+            // 表示処理
+            this.createDisplay();
+        }
+
+        createDisplay() {
+            this.createCommandWindow();
+            // Scene_Map will create its own window layer later on.
+            this.removeChild(this._windowLayer);
             // 場所移動中のままになっているのでクリア
             $gamePlayer.clearTransferInfo();
         }
