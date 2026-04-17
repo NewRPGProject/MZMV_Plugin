@@ -27,7 +27,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.06 Use a map as title screen.
+ * @plugindesc v1.061 Use a map as title screen.
  * @author Takeshi Sunagawa（Original: Nolonar）
  * @orderAfter ExtraGauge
  * @url https://github.com/Nolonar/RM_Plugins
@@ -152,7 +152,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.06 マップをタイトル画面として使用する。
+ * @plugindesc v1.061 マップをタイトル画面として使用する。
  * @author 砂川赳（オリジナル：Nolonar様）
  * @orderAfter ExtraGauge
  * @url https://github.com/Nolonar/RM_Plugins
@@ -332,6 +332,9 @@
                 DataManager.setupNewGame();
             }
 
+            // コマンドウィンドウの作成
+            this.createCommandWindow();
+
             // セーブファイルを参照する場合
             if (this._initFlg && parameters.readSaveFile) {
                 DataManager.loadGame(parameters.saveFileId)
@@ -355,7 +358,6 @@
         }
 
         createDisplay() {
-            this.createCommandWindow();
             // Scene_Map will create its own window layer later on.
             this.removeChild(this._windowLayer);
             // 場所移動中のままになっているのでクリア
