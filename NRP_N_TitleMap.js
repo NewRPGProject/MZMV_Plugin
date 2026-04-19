@@ -27,7 +27,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.061 Use a map as title screen.
+ * @plugindesc v1.07 Use a map as title screen.
  * @author Takeshi Sunagawa（Original: Nolonar）
  * @orderAfter ExtraGauge
  * @url https://github.com/Nolonar/RM_Plugins
@@ -152,7 +152,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.061 マップをタイトル画面として使用する。
+ * @plugindesc v1.07 マップをタイトル画面として使用する。
  * @author 砂川赳（オリジナル：Nolonar様）
  * @orderAfter ExtraGauge
  * @url https://github.com/Nolonar/RM_Plugins
@@ -305,6 +305,9 @@
     parameters.saveFileId = Number(parameters.saveFileId) || 0;
     parameters.disabledParallelCommon = toBoolean(parameters.disabledParallelCommon, true);
 
+    // タイトルマップ用のフラグ
+    mTitleMapFlg = false;
+
     //=========================================================================
     // Scene_TitleMap
     //=========================================================================
@@ -312,6 +315,9 @@
     Scene_Title = class Scene_TitleMap extends Scene_Map {
         create() {
             Scene_Base.prototype.create.call(this);
+
+            // ロード完了フラグを初期化
+            this._dataLoaded = false;
 
             // 既にマップが読み込まれている場合
             // ※コンティニューやオプションから戻った場合。かつマップリセットしない場合
@@ -321,47 +327,34 @@
             // ※起動時やゲーム中からタイトルへ戻った場合
             } else {
                 this._initFlg = true;
-            }
-
-            // タイトル用のマップデータを読込
-            DataManager.loadMapData(parameters.mapId);
-
-            // Needed to avoid player character from appearing on TitleMap when
-            // player returns to Title.
-            if (this._initFlg) {
-                DataManager.setupNewGame();
+                // $dataMapをクリア（$dataMapの有無でonMapLoadedが実行される）
+                $dataMap = null;
             }
 
             // コマンドウィンドウの作成
             this.createCommandWindow();
 
-            // セーブファイルを参照する場合
-            if (this._initFlg && parameters.readSaveFile) {
-                DataManager.loadGame(parameters.saveFileId)
-                    .then(() => {
-                        this.onLoadSuccess();
-                        // 処理完了後に表示処理を実行
-                        this.createDisplay();
-                    })
-                    .catch(() => {
-                        this.onLoadFailure();
-                        // ロード失敗時はデータが空になるので初期化
-                        DataManager.setupNewGame();
-                        // 処理完了後に表示処理を実行
-                        this.createDisplay();
-                    });
+            // Needed to avoid player character from appearing on TitleMap when
+            // player returns to Title.
+            if (this._initFlg) {
+                // タイトル用のマップデータを読込
+                DataManager.loadMapData(parameters.mapId);
+                // Game_Player.prototype.setupForNewGameを呼び出し
+                mTitleMapFlg = true;
+                DataManager.setupNewGame();
+                mTitleMapFlg = false;
                 return;
             }
-
+            
             // 表示処理
             this.createDisplay();
         }
 
         createDisplay() {
-            // Scene_Map will create its own window layer later on.
-            this.removeChild(this._windowLayer);
             // 場所移動中のままになっているのでクリア
             $gamePlayer.clearTransferInfo();
+            // ロード完了フラグ
+            this._dataLoaded = true;
         }
 
         createCommandWindow() {
@@ -388,13 +381,6 @@
         }
 
         onMapLoaded() {
-            // 初期化時以外は演奏しない。
-            if (this._initFlg) {
-                $gameMap.setup(parameters.mapId);
-                $dataMap.autoplayBgm = false; // Use Title Scene BGM instead.
-                $gameMap.autoplay();
-            }
-
             // 開始位置を設定
             if (parameters.startX != null) {
                 $gamePlayer.center(parameters.startX, parameters.startY);
@@ -402,8 +388,44 @@
                 $gamePlayer.center($gameMap.width() / 2, $gameMap.height() / 2);
             }
 
+            // 初期化時
+            if (this._initFlg) {
+                // ＢＧＭを再生
+                $dataMap.autoplayBgm = false; // Use Title Scene BGM instead.
+                $gameMap.autoplay();
+
+                // セーブファイルを参照する場合
+                if (parameters.readSaveFile) {
+                    DataManager.loadGame(parameters.saveFileId)
+                        .then(() => {
+                            this.onLoadSuccess();
+                        })
+                        .catch(() => {
+                            this.onLoadFailure();
+                            // ロード失敗時はデータが空になるので初期化
+                            // Game_Player.prototype.setupForNewGameを呼び出し
+                            mTitleMapFlg = true;
+                            DataManager.setupNewGame();
+                            mTitleMapFlg = false;
+                        })
+                        .finally(() => {
+                            // マップのセットアップを実行
+                            $gameMap.setup(parameters.mapId);
+                            super.onMapLoaded();
+                            Scene_Title_old.prototype.createForeground.call(this);
+                            // 処理完了後に表示処理を実行
+                            this.createDisplay();
+                        });
+                    return;
+                }
+
+                // セーブファイルを参照しない場合はそのままセットアップを実行
+                $gameMap.setup(parameters.mapId);
+            }
             super.onMapLoaded();
             Scene_Title_old.prototype.createForeground.call(this);
+            // 処理完了後に表示処理を実行
+            this.createDisplay();
         }
 
         start() {
@@ -414,6 +436,12 @@
             }
         }
 
+        // start()を実行する条件
+        isReady() {
+            // 処理が完了済であること
+            return super.isReady() && this._dataLoaded;
+        };
+
         // セーブファイルのロード成功時
         onLoadSuccess() {
             // 以下はクリアしておく。
@@ -422,8 +450,6 @@
             $gameMap = new Game_Map();
             $gameScreen = new Game_Screen();
             $gameTimer = new Game_Timer();
-
-            this._loadSuccess = true;
         };
 
         // セーブファイルのロード失敗時
@@ -542,6 +568,26 @@
             return _Game_Map_parallelCommonEvents.apply(this, arguments);
         };
     }
+
+    //=========================================================================
+    // Game_Player
+    //=========================================================================
+
+    /**
+     * ●初期設定
+     */
+    const _Game_Player_setupForNewGame = Game_Player.prototype.setupForNewGame;
+    Game_Player.prototype.setupForNewGame = function() {
+        // タイトルマップ用に初期設定を行う。
+        if (mTitleMapFlg) {
+            const mapId = parameters.mapId;
+            const x = parameters.startX;
+            const y = parameters.startY;
+            this.reserveTransfer(mapId, x, y, 2, 0);
+            return;
+        }
+        _Game_Player_setupForNewGame.apply(this, arguments);
+    };
 
     //=========================================================================
     // ExtraGauge.jsとの競合解決
