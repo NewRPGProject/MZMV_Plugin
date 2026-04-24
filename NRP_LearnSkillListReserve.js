@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.03 A list-style skill learning system reservation functionality.
+ * @plugindesc v1.031 A list-style skill learning system reservation functionality.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @base NRP_LearnSkillList
  * @orderAfter NRP_LearnSkillList
@@ -37,6 +37,18 @@
  * Executing this command after learning a reserved skill
  * calls up the skill learning scene.
  * If there is no applicable skill, it will be ignored.
+ * 
+ * -------------------------------------------------------------------
+ * [Script]
+ * -------------------------------------------------------------------
+ * ◆Clear Skill Reserve Status
+ * actor.clearReserveSkill();
+ * 
+ * Example: Clear the skill reserve status for all party members.
+ * 
+ * for (const member of $gameParty.members()) {
+ *     member.clearReserveSkill();
+ * }
  * 
  * -------------------------------------------------------------------
  * [Notice]
@@ -205,7 +217,7 @@ Would you like to cancel?
 
 /*:ja
  * @target MZ
- * @plugindesc v1.03 リスト形式のスキル習得システムの予約機能。
+ * @plugindesc v1.031 リスト形式のスキル習得システムの予約機能。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @base NRP_LearnSkillList
  * @orderAfter NRP_LearnSkillList
@@ -232,6 +244,18 @@ Would you like to cancel?
  * ◆予約スキル習得後に画面呼出
  * 予約スキル習得後にこのコマンドを実行すると、スキル習得画面を呼び出します。
  * 該当スキルがない場合は無視されます。
+ * 
+ * -------------------------------------------------------------------
+ * ■スクリプト
+ * -------------------------------------------------------------------
+ * ◆スキルの予約状況をクリア
+ * actor.clearReserveSkill();
+ * 
+ * 例：パーティ全員のスキルの予約状況をクリア
+ * 
+ * for (const member of $gameParty.members()) {
+ *     member.clearReserveSkill();
+ * }
  * 
  * -------------------------------------------------------------------
  * ■注意点
@@ -1026,6 +1050,24 @@ Game_Actor.prototype.reserveSkillId = function() {
 let mIsLevelUp = false;
 // スキル習得のメッセージ表示用
 let mDisplayLearnSkillId = false;
+
+/**
+ * ●経験値の変更
+ * ※レベルアップ処理の前に必ず通る想定
+ */
+const _Game_Actor_changeExp = Game_Actor.prototype.changeExp;
+Game_Actor.prototype.changeExp = function(exp, show) {
+    // レベルアップを表示しない場合は判定用の値を維持する。
+    if (!show) {
+        let keepDisplayLearnSkillId = mDisplayLearnSkillId;
+        let keepReserveSkillActorId = mReserveSkillActorId;
+        _Game_Actor_changeExp.apply(this, arguments);
+        mDisplayLearnSkillId = keepDisplayLearnSkillId;
+        mReserveSkillActorId = keepReserveSkillActorId;
+        return;
+    }
+    _Game_Actor_changeExp.apply(this, arguments);
+};
 
 /**
  * ●レベルアップ時
