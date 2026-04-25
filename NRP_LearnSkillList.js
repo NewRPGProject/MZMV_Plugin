@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.081 A list-style skill learning system.
+ * @plugindesc v1.082 A list-style skill learning system.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -456,7 +456,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.081 リスト形式のスキル習得システム。
+ * @plugindesc v1.082 リスト形式のスキル習得システム。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -1551,6 +1551,11 @@ Scene_LearnSkillList.prototype.onSkillListCancel = function() {
 Scene_LearnSkillList.prototype.onActorChange = function() {
     Scene_MenuBase.prototype.onActorChange.call(this);
     this.refreshActor();
+    // カーソル位置に対応するデータが存在しない場合は先頭へ移動
+    if (this._skillListWindow.index() >= this._skillListWindow.maxItems()) {
+        this._skillListWindow.select(0);
+        this._helpWindow.clear();
+    }
     this._skillListWindow.activate();
 };
 
