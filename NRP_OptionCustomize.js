@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.001 Customize the display of the options scene.
+ * @plugindesc v1.01 Customize the display of the options scene.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/502777639.html
  *
@@ -57,6 +57,11 @@
  * @desc Width of the options window.
  * Default value is 400.
  * 
+ * @param ValueWidth
+ * @type number
+ * @desc Width of the option status values.
+ * Default value is 120.
+ * 
  * @param WindowBackgroundType
  * @type select
  * @option Normal @value 0
@@ -88,7 +93,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.001 オプション画面の表示をカスタマイズ
+ * @plugindesc v1.01 オプション画面の表示をカスタマイズ
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/502777639.html
  *
@@ -143,6 +148,12 @@
  * @type number
  * @desc オプションウィンドウの横幅です。
  * 初期値は400
+ * 
+ * @param ValueWidth
+ * @text 値の幅
+ * @type number
+ * @desc オプションのステータス（ON/OFFや音量）を表示する幅です。
+ * 初期値は120
  * 
  * @param WindowBackgroundType
  * @text ウィンドウ背景
@@ -221,6 +232,7 @@ const pSeparateList = parseStruct2(parameters["SeparateList"]);
 const pSeparateCenter = toBoolean(parameters["SeparateCenter"], false);
 const pMaxVisibleCommands = toNumber(parameters["MaxVisibleCommands"]);
 const pWindowWidth = toNumber(parameters["WindowWidth"]);
+const pValueWidth = toNumber(parameters["ValueWidth"]);
 const pWindowBackgroundType = toNumber(parameters["WindowBackgroundType"], 0);
 const pVolumeOffset = toNumber(parameters["VolumeOffset"]);
 const pMagnifiedVolume = toNumber(parameters["MagnifiedVolume"]);
@@ -491,6 +503,15 @@ Window_Options.prototype.refreshCursor = function() {
     }
     _Window_Options_refreshCursor.apply(this, arguments);
 };
+
+if (pValueWidth) {
+    /**
+     * ●値の幅（ステータス幅）の設定
+     */
+    Window_Options.prototype.statusWidth = function() {
+        return pValueWidth;
+    };
+}
 
 if (pVolumeOffset) {
     /**
