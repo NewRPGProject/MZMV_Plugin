@@ -15,8 +15,31 @@
  * ・セーブデータのSteamクラウド保存と読み込み
  * 
  * 利用にはGreenworksのセットアップが必要です。
- * 
  * なお、Steam以外の環境では、これらの機能は無効化されます。
+ * 
+ * -------------------------------------------------------------------
+ * ■Greenworksの導入
+ * -------------------------------------------------------------------
+ * 以下からGreenworksをダウンロードして導入します。
+ * https://github.com/greenheartgames/greenworks/releases
+ * 
+ * ※Windowsの場合は、greenworks-vX.XX.X-nw-vX.XX.X-win-64.zip 
+ * 　みたいなファイル名になるはずです。
+ * 
+ * 注意点としては、GreenworksとNW.jsのバージョンを合わせる必要があります。
+ * 以下はMac版でNW.jsを差し替える方法ですが、Windows版でも大体同じです。
+ * https://rpgtkool.hatenablog.com/entry/2024/10/23/140944
+ * 
+ * ただし、NW.jsを差し替えてもツクールＭＺが動かなくなったりと不安定です。
+ * 色々試した結果、作者環境では以下の組み合わせで動くことを確認しました。
+ * 
+ * ◆Greenworks v0.17.0 for NW.js v0.89.0
+ * https://github.com/greenheartgames/greenworks/releases/tag/v0.17.0
+ * https://dl.nwjs.io/v0.89.0/
+ * 
+ * ※Windowsの場合は以下のファイル名になるかと思います。
+ * ・greenworks-v0.17.0-nw-v0.89.0-win-64.zip 
+ * ・nwjs-v0.89.0-win-x64.zip
  * 
  * -------------------------------------------------------------------
  * ■クラウドセーブの設定
