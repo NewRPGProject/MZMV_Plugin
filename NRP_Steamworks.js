@@ -8,8 +8,7 @@
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/520883817.html
  *
- * @help Implements Steam Achievements and Steam Cloud Save
- * using Greenworks.
+ * @help Using Greenworks, you can access the following Steam features.
  *
  * Features:
  * - Unlock Steam Achievements
@@ -252,8 +251,7 @@
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/520883817.html
  *
- * @help Greenworksを利用して、
- * Steam実績の達成やSteamクラウドセーブを実装します。
+ * @help Greenworksを利用して、Steamの以下機能を利用します。
  * 
  * ・Steam実績の達成
  * ・セーブデータのSteamクラウド保存と読み込み
@@ -417,7 +415,7 @@
  * ※{64BitSteamID} はSteamのユーザＩＤに変換されます。
  * 
  * SteamworksのSteamクラウドの共有クラウドストレージを設定すれば、
- * 体験版から自動でセーブを引き継ぐこともできます。
+ * 体験版から製品版へ自動でセーブを引き継ぐこともできます。
  * ※共有クラウドストレージは体験版側に設定するのが基本っぽいです。
  * 
  * ただし、製品版と体験版のセーブデータは双方向で反映される仕様のようです。
