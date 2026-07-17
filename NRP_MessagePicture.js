@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.09 Display a picture when showing text.
+ * @plugindesc v1.10 Display a picture when showing text.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -401,7 +401,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.09 文章の表示時に立ち絵を表示する。
+ * @plugindesc v1.10 文章の表示時に立ち絵を表示する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/489210228.html
  *
@@ -1127,7 +1127,9 @@ function getMatchPictureData(name) {
     // 名前欄に指定されている登録ＩＤ
     let nameResistId = null;
     // 名前欄に対する\MP[登録ＩＤ]の一致状況を取得
-    const matchStrs = upperName.match(".*\\" + pControlCharacterPicture + "\\[(.*?)\\].*");
+    const matchStrs = upperName.match(
+        ".*\\\\" + pControlCharacterPicture + "\\[([^\\]]*)\\].*"
+    );
     if (matchStrs) {
         // 登録ＩＤを抜き出す。
         nameResistId = matchStrs[1];
@@ -1205,7 +1207,9 @@ function getMatchDifferenceData(name, pictureData) {
     let nameDiffId = null;
 
     // 名前欄に対する\MPD[差分ＩＤ]の一致状況を取得
-    const matchStrs = upperName.match(".*\\" + pControlCharacterDifference + "\\[(.*)\\].*");
+    const matchStrs = upperName.match(
+        ".*\\\\" + pControlCharacterDifference + "\\[([^\\]]*)\\].*"
+    );
     if (matchStrs) {
         // 差分ＩＤを抜き出す。
         nameDiffId = matchStrs[1];
