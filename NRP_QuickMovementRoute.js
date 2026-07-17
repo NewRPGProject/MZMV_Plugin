@@ -3,9 +3,9 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.01 Immediately execute commands for Movement Route.
+ * @plugindesc v1.02 Immediately execute commands for Movement Route.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
- * @url http://newrpg.seesaa.net/article/484920665.html
+ * @url https://newrpg.seesaa.net/article/484920665.html
  *
  * @help When "Set Movement Route" is called in the event command,
  * each command is designed to be executed every 1/60th of a second.
@@ -64,7 +64,7 @@
  * 
  * @param MaxImmediate
  * @type number
- * @default 5
+ * @default 10
  * @desc The maximum number of simultaneous immediate operations.
  * 
  * @param ApplyMoveTypeCustom
@@ -82,9 +82,9 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.01 移動ルートの設定用コマンド（画像の変更など）を即時実行。
+ * @plugindesc v1.02 移動ルートの設定用コマンド（画像の変更など）を即時実行。
  * @author 砂川赳（http://newrpg.seesaa.net/）
- * @url http://newrpg.seesaa.net/article/484920665.html
+ * @url https://newrpg.seesaa.net/article/484920665.html
  *
  * @help イベントコマンドで『移動ルートの設定』を呼び出した場合、
  * 各コマンドは1/60秒毎に実行される仕様になっています。
@@ -139,7 +139,7 @@
  * @param MaxImmediate
  * @text 最大同時処理数
  * @type number
- * @default 5
+ * @default 10
  * @desc 即時処理を同時に行う最大数です。
  * 
  * @param ApplyMoveTypeCustom
@@ -248,7 +248,7 @@ Game_Event.prototype.moveTypeCustom = function() {
 function isSoonTarget(command) {
     const gc = Game_Character;
 
-    // 移動系、ウェイト、スクリプト以外が対象
+    // 移動系、ウェイト以外が対象
     switch (command.code) {
         case gc.ROUTE_TURN_DOWN:
         case gc.ROUTE_TURN_LEFT:
@@ -279,6 +279,7 @@ function isSoonTarget(command) {
         case gc.ROUTE_CHANGE_OPACITY:
         case gc.ROUTE_CHANGE_BLEND_MODE:
         case gc.ROUTE_PLAY_SE:
+        case gc.ROUTE_SCRIPT:
             return true;
     }
 };
