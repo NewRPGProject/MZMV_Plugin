@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Automatically wraps text by words.
+ * @plugindesc v1.01 Automatically wraps text by words.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/521244368.html
  *
@@ -82,7 +82,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 文章を単語単位で自動改行する。
+ * @plugindesc v1.01 文章を単語単位で自動改行する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/521244368.html
  *
@@ -372,6 +372,19 @@ Window_Base.prototype.processCharacter = function(textState) {
         return;
     }
     _Window_Base_processCharacter.apply(this, arguments);
+};
+
+// 独自の drawTextEx() を持つ対象ウィンドウでも、幅未指定の描画を折り返せるようにする。
+const _Window_Base_createTextState = Window_Base.prototype.createTextState;
+Window_Base.prototype.createTextState = function(text, x, y, width) {
+    const textState = _Window_Base_createTextState.apply(this, arguments);
+    if (
+        isTargetWindow(this) &&
+        (width === undefined || width === null || width <= 0)
+    ) {
+        textState.width = Math.max(0, this.contentsWidth() - x);
+    }
+    return textState;
 };
 
 // 幅を省略する外部ウィンドウにも有効幅を渡し、独自の文字単位改行を使わない。
