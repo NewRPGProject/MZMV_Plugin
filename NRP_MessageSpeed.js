@@ -2,8 +2,8 @@
 // NRP_MessageSpeed.js
 //=============================================================================
 /*:
- * @target MV MZ
- * @plugindesc v1.04 Changes the message speed.
+ * @target MZ
+ * @plugindesc v1.05 Changes the message speed.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/485101364.html
  *
@@ -36,6 +36,10 @@
  * The author is not responsible,
  * but will deal with defects to the extent possible.
  * 
+ * @------------------------------------------------------------------
+ * @ Plugin Parameters
+ * @------------------------------------------------------------------
+ * 
  * @param DefaultSpeed
  * @type number
  * @default 100
@@ -51,6 +55,11 @@
  * @type switch
  * @desc Disables instantaneous message display while the switch is on.
  * Always disabled if 0 (none) is specified. Disabled if blank (DEL).
+ * 
+ * @param AdjustSpeed
+ * @type number
+ * @desc Adjusts the overall message playback speed.
+ * For example, a setting of 150 means 1.5x speed.
  * 
  * @param <Option>
  * @desc Option-related items.
@@ -87,8 +96,8 @@
  */
 
 /*:ja
- * @target MV MZ
- * @plugindesc v1.04 メッセージ速度を変更します。
+ * @target MZ
+ * @plugindesc v1.05 メッセージ速度を変更します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/485101364.html
  *
@@ -117,6 +126,10 @@
  * 改変、再配布自由、商用可、権利表示も任意です。
  * 作者は責任を負いませんが、不具合については可能な範囲で対応します。
  * 
+ * @------------------------------------------------------------------
+ * @ プラグインパラメータ
+ * @------------------------------------------------------------------
+ * 
  * @param DefaultSpeed
  * @text 標準メッセージ速度
  * @type number
@@ -135,6 +148,12 @@
  * @type switch
  * @desc スイッチがオンの間、キー押下時の瞬間表示を禁止します。
  * 0（なし）を指定すると常に禁止。空白（DEL）なら無効。
+ * 
+ * @param AdjustSpeed
+ * @text 調整メッセージ速度
+ * @type number
+ * @desc 全体のメッセージ速度を調整します。
+ * 例えば、150なら1.5倍速となります。
  * 
  * @param <Option>
  * @text ＜オプション関連＞
@@ -211,6 +230,7 @@ const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pDefaultSpeed = toNumber(parameters["DefaultSpeed"], 100);
 const pSpeedVariable = toNumber(parameters["SpeedVariable"]);
 const pDisableShowFastSwitch = toNumber(parameters["DisableShowFastSwitch"]);
+const pAdjustSpeed = toNumber(parameters["AdjustSpeed"], 100);
 const pOptionPosition = toNumber(parameters["OptionPosition"]);
 const pOptionName = parameters["OptionName"];
 const pMessageSpeedList = parseStruct2(parameters["MessageSpeedList"]);
@@ -308,16 +328,19 @@ Window_Message.prototype.updateShowFast = function() {
  * ●メッセージ速度を取得
  */
 function getMessageSpeed() {
+    // 調整倍率
+    const adjustSpeed = pAdjustSpeed / 100;
+
     // 変数指定がある場合はそちらを優先
     if (pSpeedVariable && $gameVariables.value(pSpeedVariable)) {
-        return $gameVariables.value(pSpeedVariable);
+        return $gameVariables.value(pSpeedVariable) * adjustSpeed;
 
     // オプション指定がある場合
     } else if (ConfigManager.messageSpeed) {
-        return ConfigManager.messageSpeed;
+        return ConfigManager.messageSpeed * adjustSpeed;
     }
     // それ以外はデフォルト値を使用
-    return pDefaultSpeed;
+    return pDefaultSpeed * adjustSpeed;
 }
 
 /**
