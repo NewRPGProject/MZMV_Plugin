@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Multi-language support.
+ * @plugindesc v1.01 Multi-language support.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/521162546.html
  *
@@ -138,6 +138,16 @@
  * Example (original column = “Alex”, ja column = “アレックス”):
  *   Name field “Alex” → “アレックス” in Japanese
  * 
+ * ◆Script
+ * 
+ * If you want to reference it from a script,
+ * you can use the following function.
+ * Note1: Please note that you must pass the ID as a string.
+ * Note2: The rules for sheet names, etc., are the same as for \lan[id].
+ * 
+ * $lan(id)
+ * Example: $lan("town01.001")
+ * 
  * -------------------------------------------------------------------
  * [Language projects]
  * -------------------------------------------------------------------
@@ -254,7 +264,16 @@
  * SheetJS Community Edition -- https://sheetjs.com/
  * Copyright (C) 2012-present SheetJS LLC
  * Licensed under the Apache License, Version 2.0
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * ◆Add
+ * According to the official Apache License documentation,
+ * it seems they recommend creating a license file rather than
+ * including the text directly.
+ * I've created one for SheetJS below; just place it somewhere
+ * in your project where it can be referenced, and you're all set.
+ * 
+ * https://newrpg.up.seesaa.net/image/SheetJS-LICENSE.txt
  * 
  * -------------------------------------------------------------------
  * [Terms] (NRP_MultiLanguage.js)
@@ -525,7 +544,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 多言語対応
+ * @plugindesc v1.01 多言語対応
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/521162546.html
  *
@@ -629,6 +648,15 @@
  * 例（original列 = "アレックス"、en列 = "Alex"）：
  *   名前欄「アレックス」→ 英語時「Alex」
  * 
+ * ◆スクリプト
+ * 
+ * スクリプトから参照したい場合は、以下の関数を使用できます。
+ * ※文字列としてIDを渡す必要があることに注意してください。
+ * ※シート名などのルールは他と同じです。
+ * 
+ * $lan(id)
+ * 例：$lan("town01.001")
+ * 
  * -------------------------------------------------------------------
  * ■別プロジェクトの参照
  * -------------------------------------------------------------------
@@ -728,7 +756,15 @@
  * SheetJS Community Edition -- https://sheetjs.com/
  * Copyright (C) 2012-present SheetJS LLC
  * Licensed under the Apache License, Version 2.0
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * ◆追記
+ * Apache License公式によれば、
+ * 記載するよりもライセンスファイルの作成を推奨しているようです。
+ * 以下にSheetJS用のものを作成したので、
+ * どこか作品内の参照できる場所に配置しておけばＯＫです。
+ * 
+ * https://newrpg.up.seesaa.net/image/SheetJS-LICENSE.txt
  * 
  * -------------------------------------------------------------------
  * ■利用規約（NRP_MultiLanguage.js）
@@ -1247,6 +1283,28 @@ window.NRP_MultiLanguage = {
         const name = entry ? setDefault(entry.FolderName, "") : "";
         return name ? "data/" + name : "";
     }
+};
+
+/**
+ * スクリプトから \lan[] と同じ辞書テキストを取得する。
+ * @param {string|number} id "sheet.id" または、シート名省略時のID
+ * @returns {string} 対応テキスト。存在しない場合は空文字。
+ */
+window.$lan = function(id) {
+    const key = id == null ? "" : String(id);
+    const separatorIndex = key.indexOf(".");
+
+    // \lan[sheet.id] と同じく、最初のドットだけをシート名の区切りにする。
+    if (separatorIndex >= 0) {
+        const sheet = key.slice(0, separatorIndex);
+        const textId = key.slice(separatorIndex + 1);
+// alert(sheetName + " / " + textId);
+        return sheet && textId ? _getLocalizeText(sheet, textId) : "";
+    }
+
+    // \lan[id] と同じく、シート名変数が未設定なら空文字を返す。
+    const sheet = _currentSheetName();
+    return sheet && key ? _getLocalizeText(sheet, key) : "";
 };
 
 //-----------------------------------------------------------------------------
