@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Multi-language support.
+ * @plugindesc v1.02 Multi-language support.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/521162546.html
  *
@@ -379,6 +379,12 @@
  * @desc During test play, copy files from each language project automatically.
  * This has no effect when Use Language Project is OFF.
  *
+ * @param DelString
+ * @parent UseLanguageProject
+ * @type string
+ * @default [DEL]
+ * @desc String to set when the language project wants to override a plugin parameter by leaving it blank.
+ * 
  * @param <NoteTagMerge>
  * @parent <UseLanguageProject>
  * @text <Note Tag Merge>
@@ -544,7 +550,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 多言語対応
+ * @plugindesc v1.02 多言語対応
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/521162546.html
  *
@@ -867,6 +873,13 @@
  * @default true
  * @desc テストプレイ起動時に言語プロジェクトから自動コピーします。「言語プロジェクトを使用」がOFFなら無効。
  * 
+ * @param DelString
+ * @parent UseLanguageProject
+ * @text 削除用文字列
+ * @type string
+ * @default [DEL]
+ * @desc 言語プロジェクト側でプラグインパラメータを空欄で上書きしたい場合に設定する文字列です。
+ * 
  * @param <NoteTagMerge>
  * @parent UseLanguageProject
  * @text ＜メモタグのマージ＞
@@ -1108,6 +1121,7 @@ const pDefaultSheetName = parameters["DefaultSheetName"] !== undefined
 const pDefaultLanguage  = setDefault(parameters["DefaultLanguage"], "en");
 const pUseLanguageProject = toBoolean(parameters["UseLanguageProject"], true);
 const pAutoCopy          = toBoolean(parameters["AutoCopy"],           true);
+const pDelString         = setDefault(parameters["DelString"],          "[DEL]");
 const pMergeActorNotes   = toBoolean(parameters["MergeActorNotes"],   false);
 const pMergeClassNotes   = toBoolean(parameters["MergeClassNotes"],   false);
 const pMergeSkillNotes   = toBoolean(parameters["MergeSkillNotes"],   false);
@@ -2060,6 +2074,7 @@ function _resolveParameterJson(value) {
 /**
  * 【独自】デフォルトパラメータオブジェクトに言語パラメータをマージして返す。
  * 言語側の値が空文字の場合はデフォルト値を使う。
+ * 削除用文字列の場合は、元の型に応じた空値で上書きする。
  * @param {Object} defaultParams デフォルト言語のパラメータ
  * @param {Object} langParams    言語フォルダのパラメータ
  * @returns {Object} マージ済みパラメータ
@@ -2073,11 +2088,37 @@ function _mergeParams(defaultParams, langParams) {
 }
 
 /**
+ * 【独自】言語側の値が削除用文字列かを判定する。
+ * 前後の空白を無視せず、完全一致した場合だけ削除として扱う。
+ */
+function _isDeleteParamValue(value) {
+    return typeof value === "string" && pDelString !== "" && value === pDelString;
+}
+
+/**
+ * 【独自】削除時に使う空値を返す。
+ * JSON形式の配列・構造体は、プラグイン側のJSON.parse()でエラーにならない値を維持する。
+ */
+function _deletedParamValue(defVal) {
+    if (Array.isArray(defVal)) return [];
+    if (defVal !== null && typeof defVal === "object") return {};
+    if (typeof defVal !== "string") return "";
+
+    const trimmed = defVal.trim();
+    if (trimmed.startsWith("[") && trimmed.endsWith("]")) return "[]";
+    if (trimmed.startsWith("{") && trimmed.endsWith("}")) return "{}";
+    return "";
+}
+
+/**
  * 【独自】パラメータ値を再帰的にマージする。
  * lang 側が空文字・null・undefined の場合は default 値を返す。
  * 両方がJSON文字列（オブジェクト・配列）の場合は再帰的にマージする。
  */
 function _mergeParamValue(defVal, langVal) {
+    if (_isDeleteParamValue(langVal)) {
+        return _deletedParamValue(defVal);
+    }
     if (langVal === undefined || langVal === null || langVal === "") {
         return defVal;
     }
@@ -2104,6 +2145,9 @@ function _mergeParamValue(defVal, langVal) {
  * 【独自】パース済みオブジェクト・配列を再帰的にマージする。
  */
 function _mergeParamDeep(def, lang) {
+    if (_isDeleteParamValue(lang)) {
+        return _deletedParamValue(def);
+    }
     if (lang === undefined || lang === null || lang === "") {
         return def;
     }
@@ -2442,6 +2486,7 @@ function _applyStates(json) {
 function _applySystem(json) {
     if (!json || !$dataSystem) return;
     _ow(json, $dataSystem, "gameTitle");
+    _ow(json, $dataSystem, "currencyUnit");
     for (const key of ["elements", "skillTypes", "weaponTypes", "armorTypes", "equipTypes"]) {
         if (Array.isArray(json[key]) && Array.isArray($dataSystem[key])) {
             json[key].forEach((value, index) => {
