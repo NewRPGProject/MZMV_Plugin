@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.031 A list-style skill learning system reservation functionality.
+ * @plugindesc v1.04 A list-style skill learning system reservation functionality.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @base NRP_LearnSkillList
  * @orderAfter NRP_LearnSkillList
@@ -141,7 +141,7 @@
  * @type multiline_string
  * @default Not enough %2.
 Would you like to reserve %3?
- * @desc Confirmation message for reserving a skill. %1:Consume SP, %2:SP Name, %3:Skill Name
+ * @desc Confirmation message for reserving a skill. %1:Consume SP, %2:SP Name, %3:Skill Name, %4=Icon Index
  *
  * @param ReserveYesText
  * @type string
@@ -157,7 +157,7 @@ Would you like to reserve %3?
  * @type multiline_string
  * @default %3 is reserved.
 Would you like to cancel?
- * @desc A confirmation text for canceling a reservation for a skill. %1:Consume SP, %2:SP Name, %3:Skill Name
+ * @desc A confirmation text for canceling a reservation for a skill. %1:Consume SP, %2:SP Name, %3:Skill Name, %4=Icon Index
  *
  * @param ReserveCancelYesText
  * @type string
@@ -217,7 +217,7 @@ Would you like to cancel?
 
 /*:ja
  * @target MZ
- * @plugindesc v1.031 リスト形式のスキル習得システムの予約機能。
+ * @plugindesc v1.04 リスト形式のスキル習得システムの予約機能。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @base NRP_LearnSkillList
  * @orderAfter NRP_LearnSkillList
@@ -354,8 +354,8 @@ Would you like to cancel?
  * @text 予約時の文章（確認）
  * @type multiline_string
  * @default %2が不足しています。
-%3を予約しますか？
- * @desc スキルを予約する際の確認用文章です。%1:消費するSP値, %2:SP名, %3:取得するスキル名
+%4%3を予約しますか？
+ * @desc スキルを予約する際の確認用文章です。%1:消費するSP値, %2:SP名, %3:取得するスキル名, %4=アイコン番号
  *
  * @param ReserveYesText
  * @text 予約時の文章（はい）
@@ -374,7 +374,7 @@ Would you like to cancel?
  * @type multiline_string
  * @default %3は予約中です。
 取り消しますか？
- * @desc スキルの予約を取り消す際の確認用文章です。%1:消費するSP値, %2:SP名, %3:取得するスキル名
+ * @desc スキルの予約を取り消す際の確認用文章です。%1:消費するSP値, %2:SP名, %3:取得するスキル名, %4=アイコン番号
  *
  * @param ReserveCancelYesText
  * @text 予約取消時の文章（はい）
@@ -513,8 +513,10 @@ const pBenchMemberNotCallScene = toBoolean(parameters["BenchMemberNotCallScene"]
 const PLUGIN_NAME_BASE = "NRP_LearnSkillList";
 const baseParameters = PluginManager.parameters(PLUGIN_NAME_BASE);
 const pSkillPointName = setDefault(baseParameters["SkillPointName"], "");
-const pSkillPointType = setDefault(parameters["SkillPointType"]);
+const pSkillPointType = setDefault(baseParameters["SkillPointType"]);
 const pSkillPointVariable = setDefault(baseParameters["SkillPointVariable"]);
+const pConfirmWindowOpacity = toNumber(baseParameters["ConfirmWindowOpacity"]);
+const pConfirmLineHeight = toNumber(baseParameters["ConfirmLineHeight"]);
 
 // 定数
 const SKILL_POINT_KEY = "skillPoint";
@@ -837,6 +839,24 @@ function Window_LearnSkillReserveConfirm() {
 Window_LearnSkillReserveConfirm.prototype = Object.create(Window_LearnSkillConfirm.prototype);
 Window_LearnSkillReserveConfirm.prototype.constructor = Window_LearnSkillReserveConfirm;
 
+/**
+ * ●ウィンドウの不透明度
+ */
+if (pConfirmWindowOpacity) {
+    Window_LearnSkillReserveConfirm.prototype.updateBackOpacity = function() {
+        this.backOpacity = pConfirmWindowOpacity;
+    };
+}
+
+/**
+ * ●一行の高さ
+ */
+if (pConfirmLineHeight) {
+    Window_LearnSkillReserveConfirm.prototype.lineHeight = function() {
+        return pConfirmLineHeight;
+    };
+}
+
 Window_LearnSkillReserveConfirm.prototype.makeCommandList = function() {
     this.addCommand(pReserveYesText, "ok");
     this.addCommand(pReserveNoText, "cancel");
@@ -910,6 +930,24 @@ function Window_LearnSkillReserveCancelConfirm() {
 
 Window_LearnSkillReserveCancelConfirm.prototype = Object.create(Window_LearnSkillConfirm.prototype);
 Window_LearnSkillReserveCancelConfirm.prototype.constructor = Window_LearnSkillReserveCancelConfirm;
+
+/**
+ * ●ウィンドウの不透明度
+ */
+if (pConfirmWindowOpacity) {
+    Window_LearnSkillReserveCancelConfirm.prototype.updateBackOpacity = function() {
+        this.backOpacity = pConfirmWindowOpacity;
+    };
+}
+
+/**
+ * ●一行の高さ
+ */
+if (pConfirmLineHeight) {
+    Window_LearnSkillReserveCancelConfirm.prototype.lineHeight = function() {
+        return pConfirmLineHeight;
+    };
+}
 
 Window_LearnSkillReserveCancelConfirm.prototype.makeCommandList = function() {
     this.addCommand(pReserveCancelYesText, "ok");

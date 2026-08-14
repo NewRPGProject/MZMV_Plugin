@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.082 A list-style skill learning system.
+ * @plugindesc v1.09 A list-style skill learning system.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -335,6 +335,19 @@
  * @default Decision5
  * @desc The sound effect when the learning of a skill is confirmed.
  * 
+ * @param ConfirmWindowOpacity
+ * @parent <ConfirmWindow>
+ * @type number
+ * @min 0
+ * @max 255
+ * @desc The background opacity of the confirmation window. Leave blank to keep the current value.
+ * 
+ * @param ConfirmLineHeight
+ * @parent <ConfirmWindow>
+ * @type number
+ * @min 1
+ * @desc The height of one line in the confirmation window. Leave blank to use the standard value.
+ * 
  * @param <Menu Command>
  * @desc This is the relevant section for displaying the skill system in the menu commands.
  * 
@@ -456,7 +469,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.082 リスト形式のスキル習得システム。
+ * @plugindesc v1.09 リスト形式のスキル習得システム。
  * @author 砂川赳（https://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/499059518.html
  *
@@ -829,6 +842,22 @@
  * @default Decision5
  * @desc スキルの習得を確定した際の効果音です。
  * 
+ * @param ConfirmWindowOpacity
+ * @text ウィンドウの不透明度
+ * @parent <ConfirmWindow>
+ * @type number
+ * @min 0
+ * @max 255
+ * @desc 確認ウィンドウの背景不透明度です。
+ * 空欄ならシステムの既定値を維持します。
+ * 
+ * @param ConfirmLineHeight
+ * @text 一行の高さ
+ * @parent <ConfirmWindow>
+ * @type number
+ * @min 1
+ * @desc 確認ウィンドウの一行の高さです。空欄なら標準の高さを使用します。
+ * 
  * @param <Menu Command>
  * @text ＜メニューコマンド関連＞
  * @desc メニューコマンドにスキルシステムを表示する際の関連項目です。
@@ -1090,6 +1119,8 @@ const pConfirmMessage = parameters["ConfirmMessage"];
 const pConfirmButtonOk = parameters["ConfirmButtonOk"];
 const pConfirmButtonCancel = parameters["ConfirmButtonCancel"];
 const pConfirmOkSe = setDefault(parameters["ConfirmOkSe"]);
+const pConfirmWindowOpacity = toNumber(parameters["ConfirmWindowOpacity"]);
+const pConfirmLineHeight = toNumber(parameters["ConfirmLineHeight"]);
 // メニューコマンド関連
 const pShowMenuCommandPosition = toNumber(parameters["ShowMenuCommandPosition"]);
 const pCommandName = parameters["CommandName"];
@@ -2008,6 +2039,24 @@ Window_LearnSkillConfirm.prototype.initialize = function(rect) {
 };
 
 /**
+ * ●ウィンドウの不透明度
+ */
+if (pConfirmWindowOpacity) {
+    Window_LearnSkillConfirm.prototype.updateBackOpacity = function() {
+        this.backOpacity = pConfirmWindowOpacity;
+    };
+}
+
+/**
+ * ●一行の高さ
+ */
+if (pConfirmLineHeight) {
+    Window_LearnSkillConfirm.prototype.lineHeight = function() {
+        return pConfirmLineHeight;
+    };
+}
+
+/**
  * ●スキルデータの設定
  * ※dataSkillではなくプラグインパラメータのSkillData
  */
@@ -2111,6 +2160,23 @@ Window_LearnSkillConfirm.prototype.drawTextEx = function(text, x, y, width) {
     const textState = this.createTextState(text, x, y, width);
     this.processAllText(textState);
     return textState.outputWidth;
+};
+
+/**
+ * ●アイコンの描画
+ */
+Window_LearnSkillConfirm.prototype.processDrawIcon = function(iconIndex, textState) {
+    const deltaX = ImageManager.standardIconWidth - ImageManager.iconWidth;
+    // アイコンのＹ座標に高さを考慮
+    const deltaY = this.lineHeight() - 4 - ImageManager.iconHeight;
+    // const deltaY = ImageManager.standardIconHeight - ImageManager.iconHeight;
+
+    if (textState.drawing) {
+        const x = textState.x + deltaX / 2 + 2;
+        const y = textState.y + deltaY / 2 + 2;
+        this.drawIcon(iconIndex, x, y);
+    }
+    textState.x += ImageManager.standardIconWidth + 4;
 };
 
 //-----------------------------------------------------------------------------
