@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.051 Extend the graphics of the battler.
+ * @plugindesc v1.06 Extend the graphics of the battler.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/500642681.html
  *
@@ -45,6 +45,16 @@
  * 
  * - Example: <BattlerMotionRate:150>
  * ※This setting is valid only for actors.
+ * 
+ * ◆Battler's opacity
+ * <BattlerOpacity:n>
+ * n:Opacity(0~255)
+ * 
+ * - Example(Half Transparent): <BattlerOpacity:128>
+ * ※If other plugins (e.g. NRP_DynamicMotionMZ.js) also
+ *   change the opacity of the same battler, the values
+ *   will be multiplied together.
+ *   e.g. 50% (this plugin) x 50% (DynamicMotion) = 25%
  * 
  * -------------------------------------------------------------------
  * [Flash Specifications]
@@ -127,7 +137,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.051 バトラーのグラフィックを拡張します。
+ * @plugindesc v1.06 バトラーのグラフィックを拡張します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/500642681.html
  *
@@ -170,6 +180,17 @@
  * 
  * ・例：<BattlerMotionRate:150>
  * ※この設定はアクターのみ有効です。
+ * 
+ * ◆バトラーの不透明度
+ * <BattlerOpacity:n>
+ * n:不透明度(0~255)
+ * 
+ * ・例（半透明）：<BattlerOpacity:128>
+ * ※他のプラグイン（NRP_DynamicMotionMZ.jsなど）が
+ * 　同じバトラーの不透明度を変更する場合、
+ * 　両方の値を乗算した結果が反映されます。
+ * 　例：当プラグインで50%、DynamicMotionで50%の場合、
+ * 　　　結果は50%×50%＝25%になります。
  * 
  * -------------------------------------------------------------------
  * ■フラッシュの仕様
@@ -332,6 +353,7 @@ Game_BattlerBase.prototype.refreshGraphicInfo = function() {
     this.refreshTone();
     this.refreshBlendColor();
     this.refreshMotionRate();
+    this.refreshBattlerOpacity();
     this._refreshExecute = true;
 };
 
@@ -341,6 +363,14 @@ Game_BattlerBase.prototype.refreshGraphicInfo = function() {
 Game_BattlerBase.prototype.refreshMotionRate = function() {
     const rate = getMetaValue(this, "BattlerMotionRate");
     this._motionRate = rate || 100;
+};
+
+/**
+ * 【独自】不透明度をリフレッシュ
+ */
+Game_BattlerBase.prototype.refreshBattlerOpacity = function() {
+    const opacity = getMetaValue(this, "BattlerOpacity");
+    this._battlerOpacity = opacity != null ? toNumber(opacity, 255) : null;
 };
 
 /**
@@ -431,6 +461,14 @@ Game_BattlerBase.prototype.getMotionRate = function() {
 };
 
 /**
+ * 【独自】不透明度を取得（0~255）
+ * ※未設定時は255（不透明）を返す。
+ */
+Game_BattlerBase.prototype.getBattlerOpacity = function() {
+    return this._battlerOpacity != null ? this._battlerOpacity : 255;
+};
+
+/**
  * 【独自】リフレッシュを実行するか？
  */
 Game_BattlerBase.prototype.isRefreshExecuted = function() {
@@ -496,6 +534,7 @@ Sprite_Battler.prototype.updateProperty = function() {
         this.updateTone();
         this.updateBlendColor();
     }
+    this.updateBattlerOpacity();
 };
 
 /**
@@ -589,6 +628,46 @@ Sprite_Battler.prototype.updateBlendColor = function() {
         this._flashListIndex++;
     }
 };
+
+/**
+ * 【独自】不透明度を更新
+ * ※note欄のBattlerOpacityによる倍率を反映する。
+ * 　他プラグイン（NRP_DynamicMotionMZ.jsなど）がopacityを
+ * 　変更している場合は、その値と乗算される。
+ */
+Sprite_Battler.prototype.updateBattlerOpacity = function() {
+    this._nrpOpacityRate = this._battler.getBattlerOpacity() / 255;
+    this.refreshNrpOpacity();
+};
+
+/**
+ * 【独自】不透明度の実反映
+ * ※他プラグインが設定したopacityの値（基準値）に対して、
+ * 　当プラグインの倍率を乗算した上でalphaへ反映する。
+ */
+Sprite_Battler.prototype.refreshNrpOpacity = function() {
+    const base = this._nrpOpacityBase != undefined ? this._nrpOpacityBase : 255;
+    const rate = this._nrpOpacityRate != undefined ? this._nrpOpacityRate : 1;
+    this.alpha = base.clamp(0, 255) / 255 * rate;
+};
+
+/**
+ * 【独自】opacityプロパティの上書き
+ * ※他プラグインがopacityを設定した際、その値を基準値として保持し、
+ * 　BattlerOpacityの倍率を乗算した結果を実際の不透明度（alpha）に反映する。
+ * 　これにより、複数プラグインでの不透明度指定が上書きにならず、
+ * 　乗算で合成されるようになる。
+ */
+Object.defineProperty(Sprite_Battler.prototype, "opacity", {
+    get: function() {
+        return this._nrpOpacityBase != undefined ? this._nrpOpacityBase : 255;
+    },
+    set: function(value) {
+        this._nrpOpacityBase = value;
+        this.refreshNrpOpacity();
+    },
+    configurable: true
+});
 
 /**
  * 【独自】戦闘不能時のエフェクトが必要か？
