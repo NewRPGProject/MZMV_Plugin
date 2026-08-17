@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.03 Multi-language support.
+ * @plugindesc v1.031 Multi-language support.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/521162546.html
  *
@@ -582,7 +582,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.03 多言語対応
+ * @plugindesc v1.031 多言語対応
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/521162546.html
  *
@@ -2526,6 +2526,16 @@ function _loadLangDatabase(onComplete) {
 // Scene_Boot.isReady() をフックして独自フラグで管理する。
 //-----------------------------------------------------------------------------
 
+// 言語用System.jsonをマージしてから、正しいフォントファイルを読み込む。
+const _Scene_Boot_loadGameFonts = Scene_Boot.prototype.loadGameFonts;
+Scene_Boot.prototype.loadGameFonts = function() {
+    if (pUseLanguageProject) {
+        this._nrpDeferredGameFonts = true;
+        return;
+    }
+    _Scene_Boot_loadGameFonts.apply(this, arguments);
+};
+
 /**
  * ●Scene_Boot.isReady() のフック
  * 標準の isReady が true になった後に、辞書と言語DBのロードを同時に開始し、
@@ -2546,9 +2556,13 @@ Scene_Boot.prototype.isReady = function() {
 
     if (!DataManager._nrpLangLoaded && !DataManager._nrpLangLoading) {
         DataManager._nrpLangLoading = true;
-        _loadLangDatabase(function() {
+        _loadLangDatabase(() => {
             DataManager._nrpLangLoaded  = true;
             DataManager._nrpLangLoading = false;
+            if (this._nrpDeferredGameFonts) {
+                this._nrpDeferredGameFonts = false;
+                _Scene_Boot_loadGameFonts.call(this);
+            }
         });
     }
 
@@ -2655,6 +2669,16 @@ function _applySystem(json) {
     if (!json || !$dataSystem) return;
     _ow(json, $dataSystem, "gameTitle");
     _ow(json, $dataSystem, "currencyUnit");
+    if (json.advanced && $dataSystem.advanced) {
+        for (const key of [
+            "mainFontFilename",
+            "numberFontFilename",
+            "fallbackFonts",
+            "fontSize",
+        ]) {
+            _ow(json.advanced, $dataSystem.advanced, key);
+        }
+    }
     const language = findLangByCode(_currentLangCode);
     if (language && language.Locale) {
         $dataSystem.locale = language.Locale;
