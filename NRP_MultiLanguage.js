@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.02 Multi-language support.
+ * @plugindesc v1.03 Multi-language support.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/521162546.html
  *
@@ -169,7 +169,7 @@
  *   layout-related parameters based on the language.
  * 
  * Please register the relevant “Language Code,”
- * “Folder Name,” and “Language Project Path”
+ * “Locale,” “Folder Name,” and “Language Project Path”
  * in the “Language List” section of the plugin parameters.
  * 
  * When you run a test playthrough, the respective JSON files and
@@ -291,7 +291,7 @@
  * @param LanguageList
  * @text Language List
  * @type struct<Language>[]
- * @default ["{\"LangNo\":\"0\",\"LangName\":\"English\",\"LangCode\":\"en\",\"FolderName\":\"\",\"LangProjectPath\":\"\"}","{\"LangNo\":\"1\",\"LangName\":\"Japanese\",\"LangCode\":\"ja\",\"FolderName\":\"data_ja\",\"LangProjectPath\":\"\"}"]
+ * @default ["{\"LangNo\":\"0\",\"LangName\":\"English\",\"LangCode\":\"en\",\"Locale\":\"en_US\",\"FolderName\":\"\",\"LangProjectPath\":\"\"}","{\"LangNo\":\"1\",\"LangName\":\"Japanese\",\"LangCode\":\"ja\",\"Locale\":\"ja_JP\",\"FolderName\":\"data_ja\",\"LangProjectPath\":\"\"}"]
  * @desc Configure the languages available to the player.
  *
  * @param LanguageVariable
@@ -342,6 +342,33 @@
  * @default en
  * @desc Used when the OS language does not match an entry in Language List.
  * Also used on the first launch.
+ *
+ * @param OriginalLanguage
+ * @text Original Language
+ * @type select
+ * @option Japanese @value ja
+ * @option English @value en
+ * @option Chinese (Simplified) @value zh-CN
+ * @option Chinese (Traditional) @value zh-TW
+ * @option Korean @value ko
+ * @option French @value fr
+ * @option German @value de
+ * @option Spanish @value es
+ * @option Italian @value it
+ * @option Portuguese @value pt
+ * @option Russian @value ru
+ * @option Arabic @value ar
+ * @option Turkish @value tr
+ * @option Dutch @value nl
+ * @option Polish @value pl
+ * @option Swedish @value sv
+ * @option Norwegian @value no
+ * @option Danish @value da
+ * @option Finnish @value fi
+ * @option Czech @value cs
+ * @option Hungarian @value hu
+ * @default en
+ * @desc The source language of this project. Images are not switched when it matches the current language.
  *
  * @param <Option>
  * @text <Options>
@@ -494,7 +521,7 @@
  * level and ** to include subfolders (for example, pictures/Help/*).
  */
 
-/*~struct~Language:en
+/*~struct~Language:
  * @param LangNo
  * @text Language Number
  * @type number
@@ -530,9 +557,14 @@
  * @option Finnish @value fi
  * @option Czech @value cs
  * @option Hungarian @value hu
- * @default ja
- * @desc Language code used to select a matching column in xlsx files and a
- * language project.
+ * @default en
+ * @desc Language code used to select a matching column in xlsx files and a language project.
+ *
+ * @param Locale
+ * @text Locale
+ * @type string
+ * @desc Value assigned to $dataSystem.locale when using a language project.
+ * For example: ja_JP, en_US.
  *
  * @param FolderName
  * @text Folder Name
@@ -550,7 +582,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.02 多言語対応
+ * @plugindesc v1.03 多言語対応
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/521162546.html
  *
@@ -681,7 +713,7 @@
  * ※言語によって、レイアウト系のパラメータを調整するといったことも可能です。
  * 
  * プラグインパラメータの『言語リスト』に対象の『言語コード』や
- * 『フォルダ名』『言語プロジェクトのパス』を登録してください。
+ * 『ロケール』『フォルダ名』『言語プロジェクトのパス』を登録してください。
  * 
  * テストプレイ実行時に自動的に各JSONおよび、
  * plugins.js（プラグインパラメータ）がコピーされます。
@@ -786,7 +818,7 @@
  * @param LanguageList
  * @text 言語リスト
  * @type struct<Language>[]
- * @default ["{\"LangNo\":\"0\",\"LangName\":\"Japanese\",\"LangCode\":\"ja\",\"FolderName\":\"\",\"LangProjectPath\":\"\"}","{\"LangNo\":\"1\",\"LangName\":\"English\",\"LangCode\":\"en\",\"FolderName\":\"data_en\",\"LangProjectPath\":\"\"}"]
+ * @default ["{\"LangNo\":\"0\",\"LangName\":\"Japanese\",\"LangCode\":\"ja\",\"Locale\":\"ja_JP\",\"FolderName\":\"\",\"LangProjectPath\":\"\"}","{\"LangNo\":\"1\",\"LangName\":\"English\",\"LangCode\":\"en\",\"Locale\":\"en_US\",\"FolderName\":\"data_en\",\"LangProjectPath\":\"\"}"]
  * @desc 使用する言語の一覧です。
  * 
  * @param LanguageVariable
@@ -837,6 +869,33 @@
  * @default en
  * @desc OS の言語設定が言語リストに一致しない場合の初期言語です。
  * 初回起動時にのみ使用されます。
+ * 
+ * @param OriginalLanguage
+ * @text オリジナル言語
+ * @type select
+ * @option 日本語 @value ja
+ * @option 英語 @value en
+ * @option 中国語（簡体字） @value zh-CN
+ * @option 中国語（繁体字） @value zh-TW
+ * @option 韓国語 @value ko
+ * @option フランス語 @value fr
+ * @option ドイツ語 @value de
+ * @option スペイン語 @value es
+ * @option イタリア語 @value it
+ * @option ポルトガル語 @value pt
+ * @option ロシア語 @value ru
+ * @option アラビア語 @value ar
+ * @option トルコ語 @value tr
+ * @option オランダ語 @value nl
+ * @option ポーランド語 @value pl
+ * @option スウェーデン語 @value sv
+ * @option ノルウェー語 @value no
+ * @option デンマーク語 @value da
+ * @option フィンランド語 @value fi
+ * @option チェコ語 @value cs
+ * @option ハンガリー語 @value hu
+ * @default ja
+ * @desc このプロジェクトのオリジナル言語です。現在の言語と一致する場合、画像の自動切替を行いません。
  * 
  * @param <Option>
  * @text ＜オプション＞
@@ -1024,9 +1083,14 @@
  * @option フィンランド語 @value fi
  * @option チェコ語 @value cs
  * @option ハンガリー語 @value hu
- * @default ja
+ * @default en
  * @desc この言語に対応する言語コードです。
  * 現在の言語判定に使用します。
+ * 
+ * @param Locale
+ * @text ロケール
+ * @type string
+ * @desc 言語プロジェクト使用時に$dataSystem.localeへ設定する値です。例：ja_JP、en_US
  * 
  * @param FolderName
  * @text フォルダ名
@@ -1111,7 +1175,7 @@ function imagePatternToRegExp(pattern) {
 
 const PLUGIN_NAME = "NRP_MultiLanguage";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
-const pOptionLabel      = setDefault(parameters["OptionLabel"], "言語設定");
+let pOptionLabel        = setDefault(parameters["OptionLabel"], "言語設定");
 const pInsertPosition   = toNumber(parameters["InsertPosition"], 0);
 const pLanguageList     = parseStruct2(parameters["LanguageList"]);
 const pLanguageVariable = toNumber(parameters["LanguageVariable"], 0);
@@ -1119,6 +1183,7 @@ const pSheetVariable    = toNumber(parameters["SheetVariable"],    0);
 const pDefaultSheetName = parameters["DefaultSheetName"] !== undefined
     ? parameters["DefaultSheetName"] : null; // nullは未設定、""は空欄指定
 const pDefaultLanguage  = setDefault(parameters["DefaultLanguage"], "en");
+const pOriginalLanguage = setDefault(parameters["OriginalLanguage"], "ja");
 const pUseLanguageProject = toBoolean(parameters["UseLanguageProject"], true);
 const pAutoCopy          = toBoolean(parameters["AutoCopy"],           true);
 const pDelString         = setDefault(parameters["DelString"],          "[DEL]");
@@ -1139,6 +1204,22 @@ const pAutoChangeImageList = new Set(
 );
 const pAutoChangePatternList = parseImagePathList(parameters["AutoChangePatternList"])
     .map(imagePatternToRegExp).filter(Boolean);
+
+// 【検証用】起動時の多言語処理にかかった時間をコンソールへ出力する。
+// ※使用しない場合（通常）はfalseにしておく。
+const UseLogStartupTime = true;
+function _startupNow() {
+    if (UseLogStartupTime) {
+        return performance.now();
+    }
+    return 0;
+}
+function _logStartupTime(label, startTime) {
+    // テストプレイ時専用
+    if (UseLogStartupTime && Utils.isOptionValid("test")) {
+        console.log(`NRP_MultiLanguage [Startup] ${label}: ${(performance.now() - startTime).toFixed(1)} ms`);
+    }
+}
 
 // 言語設定のシンボル
 const SYMBOL_LANGUAGE = "nrpLanguage";
@@ -1351,6 +1432,7 @@ window.$lan = function(id) {
 
         const languageCode = _currentLangCode;
         if (!languageCode) return null;
+        if (languageCode.toLowerCase() === pOriginalLanguage.toLowerCase()) return null;
 
         const pathParts = url.split("/");
         if (pathParts.length < 3) return null;
@@ -1382,11 +1464,14 @@ window.$lan = function(id) {
 
     if (!pUseLanguageProject) return;
     // Keep copied language plugins.js current before reading its parameters.
+    const copyStartTime = _startupNow();
     _copyLangFiles();
+    _logStartupTime("Auto-copy language data", copyStartTime);
     const folder = NRP_MultiLanguage.currentFolder();
     if (!folder) return;
 
     let text = null;
+    const pluginsLoadStartTime = _startupNow();
     try {
         const xhr = new XMLHttpRequest();
         xhr.open("GET", folder + "/plugins.js", false); // 同期
@@ -1399,8 +1484,10 @@ window.$lan = function(id) {
         return;
     }
     if (!text) return;
+    _logStartupTime("Load language plugins.js", pluginsLoadStartTime);
 
     let langPlugins = null;
+    const pluginsMergeStartTime = _startupNow();
     try {
         const match = text.match(/var\s+\$plugins\s*=\s*(\[[\s\S]*\])\s*;/);
         if (!match) return;
@@ -1427,7 +1514,13 @@ window.$lan = function(id) {
         // 登録済みプラグインはここでマージして即時上書き
         const merged = _mergeParams(defaultParams, langPlugin.parameters);
         PluginManager.setParameters(langPlugin.name, merged);
+
+        // 自身のパラメータは既に初期化済みなので、翻訳対象の項目名だけを反映する。
+        if (name === PLUGIN_NAME.toLowerCase()) {
+            pOptionLabel = setDefault(merged["OptionLabel"], pOptionLabel);
+        }
     }
+    _logStartupTime("Parse and merge language plugin parameters", pluginsMergeStartTime);
 })();
 
 //-----------------------------------------------------------------------------
@@ -1454,14 +1547,17 @@ function _loadSheetJs(onLoad) {
     // 既にscriptタグを挿入済みなら重複挿入しない
     if (_xlsxLoadCallbacks.length > 1) return;
 
+    const sheetJsLoadStartTime = _startupNow();
     const script = document.createElement("script");
     script.src = "js/libs/xlsx.full.min.js";
     script.onload = function() {
         _xlsxLoaded = true;
+        _logStartupTime("Load SheetJS", sheetJsLoadStartTime);
         for (const cb of _xlsxLoadCallbacks) cb();
         _xlsxLoadCallbacks.length = 0;
     };
     script.onerror = function() {
+        _logStartupTime("Load SheetJS (failed)", sheetJsLoadStartTime);
         console.warn("NRP_MultiLanguage: Failed to load xlsx.full.min.js.");
         console.warn("  Please place js/libs/xlsx.full.min.js in the appropriate location.");
         console.warn("  DL: https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js");
@@ -1500,20 +1596,26 @@ function _loadLocalizeDictionary(onComplete) {
     }
     _dictLoading = true;
     _localizeDictionary = new Map();
+    const dictionaryLoadStartTime = _startupNow();
 
     _loadSheetJs(function() {
         if (typeof XLSX === "undefined") {
             _dictLoaded  = true;
             _dictLoading = false;
+            _logStartupTime("Load localization dictionary (SheetJS unavailable)", dictionaryLoadStartTime);
             onComplete();
             return;
         }
         if (Utils.isNwjs()) {
-            _loadLocalizeNwjs(onComplete);
+            _loadLocalizeNwjs(function() {
+                _logStartupTime("Load localization dictionary", dictionaryLoadStartTime);
+                onComplete();
+            });
         } else {
             // ブラウザ環境は未対応（空辞書で続行）
             _dictLoaded  = true;
             _dictLoading = false;
+            _logStartupTime("Load localization dictionary (browser)", dictionaryLoadStartTime);
             onComplete();
         }
     });
@@ -1538,6 +1640,7 @@ function _loadLocalizeNwjs(onComplete) {
 
         const files = fs.readdirSync(dir).filter(f => f.endsWith(".xlsx"));
         for (const file of files) {
+            const fileLoadStartTime = _startupNow();
             try {
                 const buf      = fs.readFileSync(path.join(dir, file));
                 const workbook = XLSX.read(buf, { type: "buffer" });
@@ -1545,6 +1648,7 @@ function _loadLocalizeNwjs(onComplete) {
             } catch (e) {
                 console.warn(`NRP_MultiLanguage: Failed to read ${file}.`, e);
             }
+            _logStartupTime(`Load xlsx: ${file}`, fileLoadStartTime);
         }
     } catch (e) {
         console.warn("NRP_MultiLanguage: Failed to load data/localize/.", e);
@@ -1555,6 +1659,39 @@ function _loadLocalizeNwjs(onComplete) {
 }
 
 /**
+ * 【独自】実データセルの最終位置までにシート範囲を縮める。
+ * 表計算ソフトの不要な書式により !ref が最終行まで伸びている場合でも、
+ * 空行を大量に走査しないようにする。
+ */
+function _effectiveSheetRange(sheet) {
+    if (!sheet || !sheet["!ref"]) return null;
+
+    const declaredRange = XLSX.utils.decode_range(sheet["!ref"]);
+    let lastRow = -1;
+    let lastColumn = -1;
+
+    for (const address of Object.keys(sheet)) {
+        if (address.startsWith("!")) continue;
+        const cell = sheet[address];
+        // 値も数式もない書式用セルは、実データ範囲に含めない。
+        if (!cell || (cell.v === undefined && cell.f === undefined)) continue;
+
+        const position = XLSX.utils.decode_cell(address);
+        lastRow = Math.max(lastRow, position.r);
+        lastColumn = Math.max(lastColumn, position.c);
+    }
+
+    if (lastRow < declaredRange.s.r || lastColumn < declaredRange.s.c) return null;
+    return {
+        s: declaredRange.s,
+        e: {
+            r: Math.min(lastRow, declaredRange.e.r),
+            c: Math.min(lastColumn, declaredRange.e.c),
+        },
+    };
+}
+
+/**
  * 【独自】ワークブックの全シートを走査して辞書に登録する。
  * ヘッダ行（1行目）：「ID」という文字列の列がID列、言語コードの列が各言語テキスト列。
  * データ行（2行目以降）：ID列=ID、各言語列=テキスト
@@ -1562,7 +1699,13 @@ function _loadLocalizeNwjs(onComplete) {
 function _parseWorkbook(workbook) {
     for (const sheetName of workbook.SheetNames) {
         const sheet = workbook.Sheets[sheetName];
-        const rows  = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+        const range = _effectiveSheetRange(sheet);
+        if (!range) continue;
+        const rows = XLSX.utils.sheet_to_json(sheet, {
+            header: 1,
+            defval: "",
+            range: range,
+        });
         if (rows.length < 2) continue;
 
         // ヘッダ行からID列と現在の言語コードの列インデックスを特定
@@ -1608,13 +1751,10 @@ DataManager._nrpDictLoaded  = false;
 DataManager._nrpDictLoading = false;
 
 /**
- * ●Scene_Boot.isReady のフック（辞書ロード待ちを追加）
+ * 【独自】ローカライズ辞書のロードを開始する。
+ * 言語データベースのロードと同時に開始し、両方の完了を待つ。
  */
-const _Scene_Boot_isReady_dict = Scene_Boot.prototype.isReady;
-Scene_Boot.prototype.isReady = function() {
-    if (!_Scene_Boot_isReady_dict.apply(this, arguments)) {
-        return false;
-    }
+function _startLocalizeDictionaryLoad() {
     if (!DataManager._nrpDictLoaded && !DataManager._nrpDictLoading) {
         DataManager._nrpDictLoading = true;
         DataManager._nrpLoadDict(function() {
@@ -1622,8 +1762,7 @@ Scene_Boot.prototype.isReady = function() {
             DataManager._nrpDictLoading = false;
         });
     }
-    return DataManager._nrpDictLoaded;
-};
+}
 
 //-----------------------------------------------------------------------------
 // 名前欄自動置換
@@ -1695,7 +1834,9 @@ const _loadLocalizeDictionaryOrig = _loadLocalizeDictionary;
 // SheetJSロード完了後に名前置換辞書のロードと自動シート選択を行う
 const _loadLocalizeDictionaryWithName = function(onComplete) {
     _loadLocalizeDictionaryOrig(function() {
+        const nameReplaceLoadStartTime = _startupNow();
         _loadNameReplaceDictionary();
+        _logStartupTime("Load name replacement dictionary", nameReplaceLoadStartTime);
         // シートが1つだけの場合は自動選択
         _autoSelectSheet();
         onComplete();
@@ -2239,6 +2380,7 @@ DataManager.loadGame = function(savefileId) {
 // 言語ロード完了フラグ（Scene_Boot.isReady で参照）
 DataManager._nrpLangLoaded  = false;
 DataManager._nrpLangLoading = false;
+DataManager._nrpLanguageBootTimeLogged = false;
 
 /**
  * 【独自】テストプレイ時に言語プロジェクトからファイルをコピーする。
@@ -2345,16 +2487,28 @@ function _loadLangDatabase(onComplete) {
 
     if (files.length === 0) { onComplete(); return; }
 
+    const databaseLoadStartTime = _startupNow();
     let remaining = files.length;
     function onFileComplete() {
         remaining--;
-        if (remaining <= 0) onComplete();
+        if (remaining <= 0) {
+            _logStartupTime("Load and merge language database", databaseLoadStartTime);
+            onComplete();
+        }
     }
     for (const file of files) {
+        const fileLoadStartTime = _startupNow();
         fetch(folder + "/" + file.name + ".json")
             .then(r => r.ok ? r.json() : null)
-            .then(json => { if (json) file.apply(json); onFileComplete(); })
-            .catch(() => onFileComplete());
+            .then(json => {
+                if (json) file.apply(json);
+                _logStartupTime(`Load and merge ${file.name}.json`, fileLoadStartTime);
+                onFileComplete();
+            })
+            .catch(() => {
+                _logStartupTime(`Load ${file.name}.json (failed)`, fileLoadStartTime);
+                onFileComplete();
+            });
     }
 }
 
@@ -2374,14 +2528,22 @@ function _loadLangDatabase(onComplete) {
 
 /**
  * ●Scene_Boot.isReady() のフック
- * 標準の isReady が true になった後に言語DBロードを開始し、
- * 完了するまで待機する。
+ * 標準の isReady が true になった後に、辞書と言語DBのロードを同時に開始し、
+ * 両方の完了まで待機する。
  */
 const _Scene_Boot_isReady = Scene_Boot.prototype.isReady;
 Scene_Boot.prototype.isReady = function() {
     if (!_Scene_Boot_isReady.apply(this, arguments)) {
         return false;
     }
+
+    if (DataManager._nrpLanguageBootStartTime === undefined) {
+        DataManager._nrpLanguageBootStartTime = _startupNow();
+    }
+
+    // xlsx辞書と各言語JSONの取得は相互に依存しないため、並列で開始する。
+    _startLocalizeDictionaryLoad();
+
     if (!DataManager._nrpLangLoaded && !DataManager._nrpLangLoading) {
         DataManager._nrpLangLoading = true;
         _loadLangDatabase(function() {
@@ -2389,7 +2551,13 @@ Scene_Boot.prototype.isReady = function() {
             DataManager._nrpLangLoading = false;
         });
     }
-    return DataManager._nrpLangLoaded;
+
+    const isReady = DataManager._nrpDictLoaded && DataManager._nrpLangLoaded;
+    if (isReady && !DataManager._nrpLanguageBootTimeLogged) {
+        DataManager._nrpLanguageBootTimeLogged = true;
+        _logStartupTime("Total multi-language boot wait", DataManager._nrpLanguageBootStartTime);
+    }
+    return isReady;
 };
 
 //-----------------------------------------------------------------------------
@@ -2487,6 +2655,10 @@ function _applySystem(json) {
     if (!json || !$dataSystem) return;
     _ow(json, $dataSystem, "gameTitle");
     _ow(json, $dataSystem, "currencyUnit");
+    const language = findLangByCode(_currentLangCode);
+    if (language && language.Locale) {
+        $dataSystem.locale = language.Locale;
+    }
     for (const key of ["elements", "skillTypes", "weaponTypes", "armorTypes", "equipTypes"]) {
         if (Array.isArray(json[key]) && Array.isArray($dataSystem[key])) {
             json[key].forEach((value, index) => {
