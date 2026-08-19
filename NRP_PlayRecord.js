@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.03 Displays the play record.
+ * @plugindesc v1.04 Displays the play record.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/503391609.html
  * @orderAfter NRP_EnemyCollapse
@@ -46,10 +46,24 @@
  * Get maximum damage.
  * 
  * ◆$gameSystem.maxDamageActorName();
- * Get the name of the actor who did the maximum damage.
+ * Get the name of the actor name who did the maximum damage.
+ * 
+ * ◆$gameSystem.maxDamageActorId();
+ * Get the name of the actorId who did the maximum damage.
  * 
  * ◆$gameSystem.maxDamageSkillName();
- * Get the name of the skill that caused the maximum damage.
+ * Get the name of the skill name that caused the maximum damage.
+ * 
+ * ◆$gameSystem.maxDamageSkillId();
+ * Get the name of the skillId that caused the maximum damage.
+ * 
+ * ◆$gameSystem.maxDamageItemId();
+ * Get the name of the itemId that caused the maximum damage.
+ * 
+ * Note: Only one of the SkillId or ItemId will be set.
+ *  For example, if the maximum damage is dealt by an item,
+ *  the SkillId will be left blank.
+ *  The item name will be used as the SkillName.
  * 
  * -------------------------------------------------------------------
  * [Terms]
@@ -73,7 +87,7 @@
  * 
  * @param Records
  * @type struct<Record>[]
- * @default ["{\"ItemName\":\"Play Time\",\"Variable\":\"\",\"Script\":\"$gameSystem.playtimeText()\",\"Suffix\":\"\"}","{\"ItemName\":\"Battle Count\",\"Variable\":\"\",\"Script\":\"$gameSystem.battleCount()\",\"Suffix\":\"\"}","{\"ItemName\":\"Victory Count\",\"Variable\":\"\",\"Script\":\"$gameSystem.winCount()\",\"Suffix\":\"\"}","{\"ItemName\":\"Escape Count\",\"Variable\":\"\",\"Script\":\"$gameSystem.escapeCount()\",\"Suffix\":\"\"}","{\"ItemName\":\"Defeated Enemies\",\"Variable\":\"\",\"Script\":\"$gameSystem.killEnemyCount()\",\"Suffix\":\"\"}","{\"ItemName\":\"Max Damage\",\"Variable\":\"\",\"Script\":\"$gameSystem.maxDamage()\",\"Suffix\":\"\"}","{\"ItemName\":\"\",\"Variable\":\"\",\"Script\":\"$gameSystem.maxDamage() ? $gameSystem.maxDamageSkillName() + \\\" (\\\" + $gameSystem.maxDamageActorName() + \\\")\\\" : \\\"\\\"\",\"Suffix\":\"\"}","{\"ItemName\":\"Step Count\",\"Variable\":\"\",\"Script\":\"$gameParty.steps()\",\"Suffix\":\"\"}"]
+ * @default ["{\"ItemName\":\"Play Time\",\"Variable\":\"\",\"Script\":\"$gameSystem.playtimeText()\",\"Suffix\":\"\"}","{\"ItemName\":\"Battle Count\",\"Variable\":\"\",\"Script\":\"$gameSystem.battleCount()\",\"Suffix\":\"\"}","{\"ItemName\":\"Victory Count\",\"Variable\":\"\",\"Script\":\"$gameSystem.winCount()\",\"Suffix\":\"\"}","{\"ItemName\":\"Escape Count\",\"Variable\":\"\",\"Script\":\"$gameSystem.escapeCount()\",\"Suffix\":\"\"}","{\"ItemName\":\"Defeated Enemies\",\"Variable\":\"\",\"Script\":\"$gameSystem.killEnemyCount()\",\"Suffix\":\"\"}","{\"ItemName\":\"Max Damage\",\"Variable\":\"\",\"Script\":\"$gameSystem.maxDamage()\",\"Suffix\":\"\"}","{\"ItemName\":\"\",\"Variable\":\"\",\"Script\":\"maxDamageActorAndSkill()\",\"Suffix\":\"\",\"ValidControlCharacter\":\"\"}","{\"ItemName\":\"Step Count\",\"Variable\":\"\",\"Script\":\"$gameParty.steps()\",\"Suffix\":\"\"}"]
  * @desc The play record item to be displayed.
  * 
  * @param WindowBackgroundType
@@ -188,7 +202,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.03 戦歴（プレイレコード）を表示します。
+ * @plugindesc v1.04 戦歴（プレイレコード）を表示します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/503391609.html
  * @orderAfter NRP_EnemyCollapse
@@ -228,11 +242,24 @@
  * ◆$gameSystem.maxDamage();
  * 最大ダメージを取得する。
  * 
+ * ◆$gameSystem.maxDamageActorId();
+ * 最大ダメージを与えたアクターＩＤを取得する。
+ * 
  * ◆$gameSystem.maxDamageActorName();
  * 最大ダメージを与えたアクター名を取得する。
  * 
  * ◆$gameSystem.maxDamageSkillName();
  * 最大ダメージを与えたスキル名を取得する。
+ * 
+ * ◆$gameSystem.maxDamageSkillId();
+ * 最大ダメージを与えたスキルＩＤを取得する。
+ * 
+ * ◆$gameSystem.maxDamageItemId();
+ * 最大ダメージを与えたアイテムＩＤを取得する。
+ * 
+ * ※スキルＩＤとアイテムＩＤは片方しか設定されません。
+ * 　例えば、最大ダメージをアイテムで与えた場合はスキルＩＤは空になります。
+ * 　スキル名については、アイテム名がそのまま設定されます。
  * 
  * -------------------------------------------------------------------
  * ■利用規約
@@ -256,7 +283,7 @@
  * @param Records
  * @text 項目一覧
  * @type struct<Record>[]
- * @default ["{\"ItemName\":\"プレイ時間\",\"Variable\":\"\",\"Script\":\"$gameSystem.playtimeText()\",\"Suffix\":\"\"}","{\"ItemName\":\"戦闘回数\",\"Variable\":\"\",\"Script\":\"$gameSystem.battleCount()\",\"Suffix\":\"\"}","{\"ItemName\":\"勝利回数\",\"Variable\":\"\",\"Script\":\"$gameSystem.winCount()\",\"Suffix\":\"\"}","{\"ItemName\":\"逃走回数\",\"Variable\":\"\",\"Script\":\"$gameSystem.escapeCount()\",\"Suffix\":\"\"}","{\"ItemName\":\"倒した敵の数\",\"Variable\":\"\",\"Script\":\"$gameSystem.killEnemyCount()\",\"Suffix\":\"\"}","{\"ItemName\":\"最大ダメージ\",\"Variable\":\"\",\"Script\":\"$gameSystem.maxDamage()\",\"Suffix\":\"\"}","{\"ItemName\":\"\",\"Variable\":\"\",\"Script\":\"$gameSystem.maxDamage() ? $gameSystem.maxDamageSkillName() + \\\"（\\\" + $gameSystem.maxDamageActorName() + \\\"）\\\" : \\\"\\\"\",\"Suffix\":\"\"}","{\"ItemName\":\"歩数\",\"Variable\":\"\",\"Script\":\"$gameParty.steps()\",\"Suffix\":\"\"}"]
+ * @default ["{\"ItemName\":\"プレイ時間\",\"Variable\":\"\",\"Script\":\"$gameSystem.playtimeText()\",\"Suffix\":\"\"}","{\"ItemName\":\"戦闘回数\",\"Variable\":\"\",\"Script\":\"$gameSystem.battleCount()\",\"Suffix\":\"\"}","{\"ItemName\":\"勝利回数\",\"Variable\":\"\",\"Script\":\"$gameSystem.winCount()\",\"Suffix\":\"\"}","{\"ItemName\":\"逃走回数\",\"Variable\":\"\",\"Script\":\"$gameSystem.escapeCount()\",\"Suffix\":\"\"}","{\"ItemName\":\"倒した敵の数\",\"Variable\":\"\",\"Script\":\"$gameSystem.killEnemyCount()\",\"Suffix\":\"\"}","{\"ItemName\":\"最大ダメージ\",\"Variable\":\"\",\"Script\":\"$gameSystem.maxDamage()\",\"Suffix\":\"\"}","{\"ItemName\":\"\",\"Variable\":\"\",\"Script\":\"maxDamageActorAndSkill()\",\"Suffix\":\"\",\"ValidControlCharacter\":\"\"}","{\"ItemName\":\"歩数\",\"Variable\":\"\",\"Script\":\"$gameParty.steps()\",\"Suffix\":\"\"}"]
  * @desc 表示する戦歴の項目です。
  * 
  * @param WindowBackgroundType
@@ -727,9 +754,15 @@ Game_System.prototype.initialize = function() {
     // 最大ダメージ
     this._maxDamage = 0;
     // 最大ダメージアクター名
-    this._maxDamageActor = "";
+    this._maxDamageActorName = "";
     // 最大ダメージスキル名
-    this._maxDamageSkill = "";
+    this._maxDamageSkillName = "";
+    // 最大ダメージアクターＩＤ
+    this._maxDamageActorId = null;
+    // 最大ダメージスキルＩＤ
+    this._maxDamageSkillId = null;
+    // 最大ダメージアイテムＩＤ
+    this._maxDamageItemId = null;
 };
 
 /**
@@ -763,13 +796,34 @@ Game_System.prototype.maxDamage = function() {
 };
 
 /**
+ * 【独自】最大ダメージを与えたアクターＩＤ
+ */
+Game_System.prototype.maxDamageActorId = function() {
+    if (!this._maxDamageActorId) {
+        this._maxDamageActorId = null;
+    }
+    return this._maxDamageActorId;
+};
+
+/**
  * 【独自】最大ダメージを与えたアクター名
  */
 Game_System.prototype.maxDamageActorName = function() {
-    if (!this._maxDamageActorName) {
-        this._maxDamageActorName = "";
-    }
     return this._maxDamageActorName;
+};
+
+/**
+ * 【独自】最大ダメージを与えたスキルＩＤ
+ */
+Game_System.prototype.maxDamageSkillId = function() {
+    return this._maxDamageSkillId;
+};
+
+/**
+ * 【独自】最大ダメージを与えたアイテムＩＤ
+ */
+Game_System.prototype.maxDamageItemId = function() {
+    return this._maxDamageItemId;
 };
 
 /**
@@ -785,7 +839,7 @@ Game_System.prototype.maxDamageSkillName = function() {
 /**
  * 【独自】最大ダメージ更新
  */
-Game_System.prototype.updateMaxDamage = function(damage, actorName, skillName) {
+Game_System.prototype.updateMaxDamage = function(damage, actorName, skillName, actorId, skillId, itemId) {
     // 更新停止の場合
     if (pNoMaxDamageSwitch && $gameSwitches.value(pNoMaxDamageSwitch)) {
         return;
@@ -800,8 +854,42 @@ Game_System.prototype.updateMaxDamage = function(damage, actorName, skillName) {
         this._maxDamage = damage;
         this._maxDamageActorName = actorName;
         this._maxDamageSkillName = skillName;
+        this._maxDamageActorId = actorId;
+        this._maxDamageSkillId = skillId;
+        this._maxDamageItemId = itemId;
     }
 };
+
+/**
+ * ●最大ダメージスキルとアクター名
+ * ※スクリプトから参照する・
+ */
+function maxDamageActorAndSkill() {
+    let skillName;
+    let actorName;
+
+    // 有効なアイテムＩＤが存在する場合
+    if ($gameSystem.maxDamageItemId()) {
+        // アイテム名とアクター名に変換
+        skillName = $dataItems[$gameSystem.maxDamageItemId()].name;
+        actorName = $dataActors[$gameSystem.maxDamageActorId()].name;
+    // 有効なスキルＩＤが存在する場合
+    } else if ($gameSystem.maxDamageSkillId()) {
+        // スキル名とアクター名に変換
+        skillName = $dataSkills[$gameSystem.maxDamageSkillId()].name;
+        actorName = $dataActors[$gameSystem.maxDamageActorId()].name;
+    // 有効なスキル名が存在する場合（旧方式）
+    } else if ($gameSystem.maxDamageSkillName()) {
+        skillName = $gameSystem.maxDamageSkillName();
+        actorName = $gameSystem.maxDamageActorName();
+    }
+
+    // 有効なスキル名が存在する場合は表示
+    if (skillName) {
+        return skillName + "（" + actorName + "）";
+    }
+    return "";
+}
 
 //-----------------------------------------------------------------------------
 // Game_Enemy
@@ -826,14 +914,21 @@ Game_Enemy.prototype.performCollapse = function() {
  */
 const _Game_Battler_onDamage = Game_Battler.prototype.onDamage;
 Game_Battler.prototype.onDamage = function(value) {
-    // 戦闘中、かつ対象が敵、行動者がアクター
+    // 戦闘中、かつ対象が敵、行動者がアクター、行動がスキルまたはアイテム
     if ($gameParty.inBattle() && this.isEnemy()
-            && BattleManager._subject && BattleManager._subject.isActor() && BattleManager._action) {
+            && BattleManager._subject && BattleManager._subject.isActor()
+            && BattleManager._action
+            && (BattleManager._action.isSkill() || BattleManager._action.isItem())) {
         // アクター名を取得
         const actorName = BattleManager._subject.name();
-        // スキル名を取得
-        const skillName = BattleManager._action.item().name;
-        $gameSystem.updateMaxDamage(value, actorName, skillName);
+        // アクターＩＤを取得
+        const actorId = BattleManager._subject.actorId();
+        // スキルまたはアイテムを取得
+        const item = BattleManager._action.item();
+        const skillName = item.name;
+        const skillId = BattleManager._action.isSkill() ? item.id : null;
+        const itemId = BattleManager._action.isItem() ? item.id : null;
+        $gameSystem.updateMaxDamage(value, actorName, skillName, actorId, skillId, itemId);
     }
     _Game_Battler_onDamage.apply(this, arguments);
 };
