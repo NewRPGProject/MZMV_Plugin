@@ -99,18 +99,19 @@
  * 
  * @param <Prohibited Characters>
  * 
+ * @param BeginingProhibitedType
+ * @parent <Prohibited Characters>
+ * @type select
+ * @option Disabled @value 0
+ * @option Eviction @value 1
+ * @option Final Push @value 2
+ * @default 0
+ * @desc Here's how to handle leading characters. For “Final Push,” you need to leave some space at the right edge of the window.
+ * 
  * @param BeginingProhibitedCharacters
  * @parent <Prohibited Characters>
  * @type string
  * @desc These are characters that are prohibited from appearing at the beginning of a line.
- * 
- * @param BeginingProhibitedType
- * @parent <Prohibited Characters>
- * @type select
- * @option Eviction @value 0
- * @option Final Push @value 1
- * @default 0
- * @desc Here's how to handle leading characters. For “Final Push,” you need to leave some space at the right edge of the window.
  */
 
 /*:ja
@@ -151,7 +152,7 @@
  * https://note.morisawa.co.jp/n/nc9e6aac69336
  * 
  * 行頭禁則文字に設定した文字を「追い出し」または「追い込み」の対象に
- * することができます。ただし「追い込み」を使用する場合は、
+ * することができます。無効にすることも可能です。ただし「追い込み」を使用する場合は、
  * 行末にある程度のスペースがないと不自然になります。
  * 
  * ※初期設定では「。、」のみ対象にしています。
@@ -209,22 +210,23 @@
  * @param <Prohibited Characters>
  * @text ＜禁則文字＞
  * 
+ * @param BeginingProhibitedType
+ * @parent <Prohibited Characters>
+ * @text 行頭禁則の方法
+ * @type select
+ * @option 無効 @value 0
+ * @option 追い出し @value 1
+ * @option 追い込み @value 2
+ * @default 0
+ * @desc 行頭文字の対処方法です。
+ * 追い込みの場合はウィンドウ右端に余白が必要です。
+ * 
  * @param BeginingProhibitedCharacters
  * @parent <Prohibited Characters>
  * @text 行頭禁則文字
  * @type string
  * @default 。、
  * @desc 行頭への使用を禁止する文字です。
- * 
- * @param BeginingProhibitedType
- * @parent <Prohibited Characters>
- * @text 行頭禁則の方法
- * @type select
- * @option 追い出し @value 0
- * @option 追い込み @value 1
- * @default 0
- * @desc 行頭文字の対処方法です。
- * 追い込みの場合はウィンドウ右端に余白が必要です。
  */
 
 (function() {
@@ -437,7 +439,7 @@ function shouldWrapBeforeBeginingProhibitedCharacter(textState) {
         !isTargetWindow(this) ||
         textState.rtl ||
         textState.width <= 0 ||
-        pBeginingProhibitedType !== 0
+        pBeginingProhibitedType !== 1
     ) {
         return false;
     }
@@ -479,7 +481,7 @@ function shouldWrapAtCjkCharacter(textState) {
     // 文字幅・字間は変更しない。
     return !(
         exceedsLine &&
-        pBeginingProhibitedType === 1 &&
+        pBeginingProhibitedType === 2 &&
         isBeginingProhibitedCharacter(character)
     ) && exceedsLine;
 }
@@ -526,7 +528,7 @@ Window_Base.prototype.processCharacter = function(textState) {
     const character = textState.text[textState.index];
     if (
         isTargetWindow(this) &&
-        pBeginingProhibitedType === 1 &&
+        pBeginingProhibitedType === 2 &&
         isBeginingProhibitedCharacter(character) &&
         isCjkCharacter(character)
     ) {
