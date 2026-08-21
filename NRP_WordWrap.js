@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.01 Automatically wraps text by words.
+ * @plugindesc v1.02 Automatically wraps text by words.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/521244368.html
  *
@@ -26,6 +26,24 @@
  * 
  * If the target plugin uses a custom text-rendering implementation,
  * this plugin may replace that processing.
+ * 
+ * Additionally, depending on how the external plugin is implemented,
+ * this plugin may not be able to support it.
+ * 
+ * -------------------------------------------------------------------
+ * [About Beginning Prohibited Characters]
+ * -------------------------------------------------------------------
+ * One of the rules for writing in Japanese is that
+ * certain characters—such as punctuation marks (。、)—should be
+ * positioned so they do not appear at the beginning of a line.
+ * 
+ * ◆Reference: Explanation of Prohibited Characters, Final Push, and Eviction
+ * https://note.morisawa.co.jp/n/nc9e6aac69336
+ * 
+ * You can designate characters set in "BeginningProhibitedCharacters"
+ * as targets for "Eviction" or "Final Push.""
+ * However, when using “Final Push,” the text will look unnatural
+ * unless there is a certain amount of space at the end of the line.
  * 
  * -------------------------------------------------------------------
  * [Terms]
@@ -78,11 +96,26 @@
  * @type string[]
  * @desc Adds window class names to the wrapping targets.
  * Example: Window_Glossary
+ * 
+ * @param <Prohibited Characters>
+ * 
+ * @param BeginingProhibitedCharacters
+ * @parent <Prohibited Characters>
+ * @type string
+ * @desc These are characters that are prohibited from appearing at the beginning of a line.
+ * 
+ * @param BeginingProhibitedType
+ * @parent <Prohibited Characters>
+ * @type select
+ * @option Eviction @value 0
+ * @option Final Push @value 1
+ * @default 0
+ * @desc Here's how to handle leading characters. For “Final Push,” you need to leave some space at the right edge of the window.
  */
 
 /*:ja
  * @target MZ
- * @plugindesc v1.01 文章を単語単位で自動改行する。
+ * @plugindesc v1.02 文章を単語単位で自動改行する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/521244368.html
  *
@@ -104,6 +137,24 @@
  * 
  * 注意点として、対象プラグインが文字列の描画について、
  * 独自の実装をしている場合は、処理を上書きしてしまう可能性があります。
+ * 
+ * また、外部プラグインの実装内容によっては、
+ * このプラグインでは対応できないこともあります。
+ * 
+ * -------------------------------------------------------------------
+ * ■行頭禁則文字について
+ * -------------------------------------------------------------------
+ * 日本語の文章ルールとして句読点（。、）を始めとした一部の文字は、
+ * 行頭に来ないように調整するというものがあります。
+ * 
+ * ◆参考：禁則文字・追い込み・追い出しを解説 
+ * https://note.morisawa.co.jp/n/nc9e6aac69336
+ * 
+ * 行頭禁則文字に設定した文字を「追い出し」または「追い込み」の対象に
+ * することができます。ただし「追い込み」を使用する場合は、
+ * 行末にある程度のスペースがないと不自然になります。
+ * 
+ * ※初期設定では「。、」のみ対象にしています。
  * 
  * -------------------------------------------------------------------
  * ■利用規約
@@ -154,6 +205,26 @@
  * @type string[]
  * @desc 対象となるウィンドウ名を追加します。
  * 例：Window_Glossary
+ * 
+ * @param <Prohibited Characters>
+ * @text ＜禁則文字＞
+ * 
+ * @param BeginingProhibitedCharacters
+ * @parent <Prohibited Characters>
+ * @text 行頭禁則文字
+ * @type string
+ * @default 。、
+ * @desc 行頭への使用を禁止する文字です。
+ * 
+ * @param BeginingProhibitedType
+ * @parent <Prohibited Characters>
+ * @text 行頭禁則の方法
+ * @type select
+ * @option 追い出し @value 0
+ * @option 追い込み @value 1
+ * @default 0
+ * @desc 行頭文字の対処方法です。
+ * 追い込みの場合はウィンドウ右端に余白が必要です。
  */
 
 (function() {
@@ -199,6 +270,8 @@ const pWindow_Message = toBoolean(parameters["Window_Message"], false);
 const pWindow_Help = toBoolean(parameters["Window_Help"], false);
 const pWindow_ScrollText = toBoolean(parameters["Window_ScrollText"], false);
 const pAddWindowList = parseStruct1(parameters["AddWindowList"]);
+const pBeginingProhibitedCharacters = setDefault(parameters["BeginingProhibitedCharacters"], "");
+const pBeginingProhibitedType = toNumber(parameters["BeginingProhibitedType"], 0);
 
 /**
  * ●ウィンドウが折返し対象かどうか
@@ -215,6 +288,18 @@ function isTargetWindow(window) {
         (pWindow_ScrollText && windowName === "Window_ScrollText") ||
         pAddWindowList.includes(windowName)
     );
+}
+
+/**
+ * ●実際に描画できる横幅を取得
+ *
+ * 一部の外部プラグインはウィンドウ全体の幅を渡すが、drawTextEx の幅は
+ * 描画開始位置 x から右端までの値でなければならない。内容領域を越えない
+ * ように制限する。
+ */
+function drawableTextWidth(window, x, width) {
+    const availableWidth = Math.max(0, window.contentsWidth() - x);
+    return width > 0 ? Math.min(width, availableWidth) : availableWidth;
 }
 
 /**
@@ -322,6 +407,54 @@ function isCjkCharacter(character) {
 }
 
 /**
+ * ●行頭禁則文字かどうか
+ */
+function isBeginingProhibitedCharacter(character) {
+    return character && pBeginingProhibitedCharacters.includes(character);
+}
+
+/**
+ * ●追い込み後、次の表示文字の直前で改行すべきか
+ */
+function shouldWrapAfterChasingIn(textState) {
+    const character = textState.text[textState.index];
+    return (
+        textState._wordWrapChasingIn &&
+        character &&
+        character !== "\n" &&
+        character !== "\x1b"
+    );
+}
+
+/**
+ * ●追い出し時、禁則文字の直前で改行すべきか
+ *
+ * 次の文字が行頭禁則文字で、その2文字が行に収まらない場合は、
+ * 現在の文字から次行へ送る。これにより禁則文字を行頭に置かない。
+ */
+function shouldWrapBeforeBeginingProhibitedCharacter(textState) {
+    if (
+        !isTargetWindow(this) ||
+        textState.rtl ||
+        textState.width <= 0 ||
+        pBeginingProhibitedType !== 0
+    ) {
+        return false;
+    }
+
+    const character = textState.text[textState.index];
+    const nextCharacter = textState.text[textState.index + 1];
+    if (!isCjkCharacter(character) || !isBeginingProhibitedCharacter(nextCharacter)) {
+        return false;
+    }
+
+    const currentX = textState.x + this.textWidth(textState.buffer);
+    const lineEndX = textState.startX + textState.width;
+    const pairWidth = this.textWidth(character) + this.textWidth(nextCharacter);
+    return currentX > textState.startX && currentX + pairWidth > lineEndX;
+}
+
+/**
  * ●CJK文字を行末で折り返すべきか
  */
 function shouldWrapAtCjkCharacter(textState) {
@@ -334,12 +467,21 @@ function shouldWrapAtCjkCharacter(textState) {
         return false;
     }
 
+    const character = textState.text[textState.index];
     const currentX = textState.x + this.textWidth(textState.buffer);
-    const characterWidth = this.textWidth(textState.text[textState.index]);
+    const characterWidth = this.textWidth(character);
     const lineEndX = textState.startX + textState.width;
-    return (
+    const exceedsLine = (
         currentX > textState.startX && currentX + characterWidth > lineEndX
     );
+
+    // 追い込みは禁則文字を前行へ残し、その次の文字の直前で改行する。
+    // 文字幅・字間は変更しない。
+    return !(
+        exceedsLine &&
+        pBeginingProhibitedType === 1 &&
+        isBeginingProhibitedCharacter(character)
+    ) && exceedsLine;
 }
 
 /**
@@ -347,12 +489,7 @@ function shouldWrapAtCjkCharacter(textState) {
  */
 function processWordWrapText(textState) {
     while (textState.index < textState.text.length) {
-        if (shouldWrapAtCjkCharacter.call(this, textState)) {
-            this.flushTextState(textState);
-            this.processNewLine(textState);
-        } else {
-            this.processCharacter(textState);
-        }
+        this.processCharacter(textState);
     }
     this.flushTextState(textState);
 }
@@ -360,6 +497,20 @@ function processWordWrapText(textState) {
 // スペースを読む直前に次の単語を計測し、必要ならスペースを改行へ置き換える。
 const _Window_Base_processCharacter = Window_Base.prototype.processCharacter;
 Window_Base.prototype.processCharacter = function(textState) {
+    if (shouldWrapAfterChasingIn(textState)) {
+        textState._wordWrapChasingIn = false;
+        this.flushTextState(textState);
+        this.processNewLine(textState);
+        return;
+    }
+    if (textState._wordWrapChasingIn && textState.text[textState.index] === "\n") {
+        textState._wordWrapChasingIn = false;
+    }
+    if (shouldWrapBeforeBeginingProhibitedCharacter.call(this, textState)) {
+        this.flushTextState(textState);
+        this.processNewLine(textState);
+        return;
+    }
     if (shouldWrapAtCjkCharacter.call(this, textState)) {
         this.flushTextState(textState);
         this.processNewLine(textState);
@@ -370,6 +521,20 @@ Window_Base.prototype.processCharacter = function(textState) {
         this.flushTextState(textState);
         this.processNewLine(textState);
         return;
+    }
+
+    const character = textState.text[textState.index];
+    if (
+        isTargetWindow(this) &&
+        pBeginingProhibitedType === 1 &&
+        isBeginingProhibitedCharacter(character) &&
+        isCjkCharacter(character)
+    ) {
+        const currentX = textState.x + this.textWidth(textState.buffer);
+        const lineEndX = textState.startX + textState.width;
+        if (currentX > textState.startX && currentX + this.textWidth(character) > lineEndX) {
+            textState._wordWrapChasingIn = true;
+        }
     }
     _Window_Base_processCharacter.apply(this, arguments);
 };
@@ -395,7 +560,7 @@ Window_Base.prototype.drawTextEx = function(text, x, y, width) {
     }
 
     this.resetFontSettings();
-    const textWidth = width > 0 ? width : this.contentsWidth() - x;
+    const textWidth = drawableTextWidth(this, x, width);
     const textState = this.createTextState(text, x, y, textWidth);
     processWordWrapText.call(this, textState);
     return textState.outputWidth;
