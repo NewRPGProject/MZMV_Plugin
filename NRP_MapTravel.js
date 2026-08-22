@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.07 Implement a map selection & transfer screen.
+ * @plugindesc v1.08 Implement a map selection & transfer screen.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url http://newrpg.seesaa.net/article/484927929.html
  *
@@ -11,24 +11,25 @@
  * ※This function is equivalent to so-called fast travel.
  * 
  * ◆Main features
- * - Correspondence between the field and atlas to display each spot.
- * - Atlas image can be output from the editor.
+ * - Links Field Maps and Travel Maps to display each spot.
+ * - A Travel Map image can be exported from the editor.
  * - Can be directed by common event.
  * - Can be added to the menu screen.
  * - The icon can be displayed next to the spot name by switching it.
  * 　For example, it can notify the spot where an event is occurring.
- * - Can be used as a simple atlas if movement is prohibited.
+ * - Can be used as a simple Travel Map when player transfer is prohibited.
  * 
  * To avoid confusing you, I'll say no first.
  * In this plugin, terms are used with the following meanings.
  * 
- * - Map: The stage of the game. Data corresponding to MapXXX.json.
- * - Atlas: A map in a general sense,
- *          a diagram to know the location and terrain.
- * - Field: A map that corresponds to an atlas and is the parent of spots.
- * - Spot: A spot that is a child of the field (mostly town and dungeon).
+ * - Game Map: A map created in RPG Maker. Corresponds to MapXXX.json.
+ * - Travel Map: An image that shows locations
+ *               and terrain on the travel screen.
+ * - Field Map: A Game Map linked to a Travel Map
+ *              and used as the parent of spots.
+ * - Spot: A destination on a Field Map, such as a town or dungeon.
  * 
- * Basically, I'm assuming that you want to map fields to spots,
+ * Basically, this plugin assumes that you assign spots to Field Maps,
  * but you can create a movement screen
  * that maps a town to facilities, for example.
  * 
@@ -37,7 +38,7 @@
  * -------------------------------------------------------------------
  * Since this is a plugin with a lot of settings,
  * I will explain it in stages.
- * I will start with a method that does not use atlas.
+ * I will start with a method that does not use a Travel Map.
  * 
  * ◆Basic
  * First, register to SpotList in the plugin parameters.
@@ -79,31 +80,31 @@
  * You can also do something unusual, such as sending the user
  * to a different location if the transfer fails.
  * 
- * ◆Display Atlas
- * The atlas corresponding to the field can be displayed,
- * and each spot can be displayed as a point (symbol) on the atlas.
+ * ◆Display Travel Map
+ * The Travel Map linked to a Field Map can be displayed,
+ * and each spot can be displayed as a point (symbol) on the Travel Map.
  * 
- * First, you need to prepare an atlas image.
- * The easiest way to do this is to select the map you want
- * to create an atlas for in the map tree,
+ * First, you need to prepare a Travel Map image.
+ * The easiest way to do this is to select the Game Map you want
+ * to create a Travel Map for in the map tree,
  * and right-click and select "Save as Image" to output it.
  * Register the prepared image as a picture in the "FieldMapList"
- * and link it to the map ID.
+ * and link it to the Game Map ID.
  * 
- * You can also process the atlas by yourself
+ * You can also edit the Travel Map image yourself
  * or create it completely by yourself.
- * The size of the atlas is also free,
+ * The size of the Travel Map is also unrestricted,
  * as long as the proportions are correct.
  * 
- * ◆Display Spots on Atlas
- * If the coordinates on the field are set in
+ * ◆Display Spots on the Travel Map
+ * If the coordinates on the Field Map are set in
  * "TransferMapId", "TransferX", and "TransferY",
- * the spots will be displayed as symbols on atlas at this point.
+ * the spots will be displayed as symbols at those positions on the Travel Map.
  * 
- * The problem is when the destination is not a field,
+ * The problem is when the destination is not a Field Map,
  * such as in a town.
  * In this case, you need to enter the coordinates corresponding
- * to atlas for each spot.
+ * to the Travel Map for each spot.
  * 
  * - FieldMapId
  * - FieldX
@@ -117,13 +118,13 @@
  * 
  * ◆Display of Current Location
  * Displaying the player's current location
- * on atlas is surprisingly difficult.
+ * on the Travel Map is surprisingly difficult.
  * 
- * If the player is on the field, it will just refer to
+ * If the player is on the Field Map, it will just refer to
  * the current coordinates, but if the player is in a spot
  * such as a town or dungeon, it will not.
  * 
- * Therefore, the coordinate information of the field
+ * Therefore, the coordinate information of the Field Map
  * needs to be kept by you even when you are in the spot.
  * First, set the following items in the plugin parameter FieldMapList
  * to determine the variables to be retained.
@@ -135,26 +136,26 @@
  * This plugin provides the following two automation methods.
  * 
  * 1. Retain the coordinates when the player is transferred
- *    from the field to the spot.
+ *    from the Field Map to the spot.
  * However, this does not apply when a player is transferred
  * from spot to spot due to an event.
  * The coordinates of the first spot you enter will be retained.
  * 
  * Also note that if you temporarily transfer a player
- * to the field during the staging of an event,
+ * to the Field Map during the staging of an event,
  * it will be targeted by this process.
  * 
  * 2. When a player is transferred to a spot,
- *    the coordinates for atlas are acquired.
+ *    the coordinates for the Travel Map are acquired.
  * The judgment whether it is a corresponding spot
  * is done by "TransferMapId".
  * If it is not enough, it can be added to "LocationUpdateMapId".
  * 
- * It is impractical to register all maps that belong to a spot.
- * Only maps that may be transferred from outside are sufficient.
+ * It is impractical to register all Game Maps that belong to a spot.
+ * Only Game Maps that may be transferred from outside are sufficient.
  * 
  * ※If you want to register a spot that will not be displayed
- *   on the atlas, such as a dungeon, leave "TransferMapId" blank,
+ *   on the Travel Map, such as a dungeon, leave "TransferMapId" blank,
  *   and then set only "LocationUpdateMapId".
  * ※This function does not work for spots added
  *   with the "AddSpotList" plugin command for MZ. Please note this.
@@ -173,7 +174,7 @@
  * -------------------------------------------------------------------
  * ◆SceneStart
  * Display the spots selection screen.
- * It can also be used purely as atlas by specifying display-only.
+ * It can also be used purely as a Travel Map by specifying display-only.
  * 
  * It is also possible to add your own list by specifying "AddSpotList".
  * 
@@ -212,7 +213,7 @@
  * @arg ReadOnly
  * @type boolean
  * @desc Player transfer is prohibited.
- * Intended for purely atlas use.
+ * Intended for Travel Map display only.
  * 
  * @arg HideCommonList
  * @type boolean
@@ -233,13 +234,13 @@
  * 
  * @param FieldMapList
  * @type struct<FieldMap>[]
- * @desc This is a list of fields to be displayed as atlas.
- * Please register map IDs and images.
+ * @desc A list of Field Maps and their Travel Map images.
+ * Please register Game Map IDs and images.
  * 
  * @param SymbolList
  * @type struct<Symbol>[]
  * @default ["{\"SymbolId\":\"-1\",\"Memo\":\"Current Location\",\"SymbolImage\":\"\",\"BlinkPeriod\":\"60\",\"Opacity\":\"255\",\"<NoImage>\":\"\",\"SymbolColor\":\"rgb(0, 255, 255)\",\"SymbolRadius\":\"8\"}","{\"SymbolId\":\"0\",\"Memo\":\"Selected Spot\",\"SymbolImage\":\"\",\"BlinkPeriod\":\"\",\"Opacity\":\"128\",\"<NoImage>\":\"\",\"SymbolColor\":\"rgb(255, 0, 0)\",\"SymbolRadius\":\"12\"}","{\"SymbolId\":\"1\",\"Memo\":\"Each Spot\",\"SymbolImage\":\"\",\"BlinkPeriod\":\"120\",\"Opacity\":\"510\",\"<NoImage>\":\"\",\"SymbolColor\":\"rgb(255, 255, 255)\",\"SymbolRadius\":\"5\"}"]
- * @desc A list of symbols (Each Spot, Selected Spot, and Current Location) that are displayed on atlas.
+ * @desc A list of symbols (Each Spot, Selected Spot, and Current Location) displayed on the Travel Map.
  * 
  * @param <TransferCommonEvent>
  * @desc Related to common events that are executed when transferring players.
@@ -253,7 +254,7 @@
  * @param MapIdVariable
  * @parent <TransferCommonEvent>
  * @type variable
- * @desc This variable is used to store the map ID of the transfer destination after spot selection.
+ * @desc Stores the destination Game Map ID after spot selection.
  * 
  * @param XVariable
  * @parent <TransferCommonEvent>
@@ -272,19 +273,19 @@
  * Useful if you want to do some processing for each spot.
  * 
  * @param <FieldMap>
- * @desc Items related to atlas and its corresponding field.
+ * @desc Items related to Travel Maps and their corresponding Field Maps.
  * 
  * @param UpdateWhenExitField
  * @parent <FieldMap>
  * @type boolean
  * @default true
- * @desc Automatically update variables for atlas coordinates when transferring from a field to another map.
+ * @desc Automatically updates Travel Map coordinate variables when transferring from a Field Map to another Game Map.
  * 
  * @param UpdateWhenEnterSpot
  * @parent <FieldMap>
  * @type boolean
  * @default true
- * @desc Automatically updates the variables for atlas coordinates when transferred to each spot.
+ * @desc Automatically updates Travel Map coordinate variables when transferred to each spot.
  * 
  * @param SelectNearestSpot
  * @parent <FieldMap>
@@ -313,11 +314,35 @@
  * @default 300
  * @desc The width of the spot list.
  * 
+ * @param SpotListLineHeight
+ * @parent <Layout>
+ * @type number
+ * @min 1
+ * @desc The height of one line in the spot list. Blank uses the standard value.
+ * 
+ * @param SpotListFontSize
+ * @parent <Layout>
+ * @type number
+ * @min 1
+ * @desc The font size of the spot list. Blank uses the standard value.
+ * 
  * @param HelpHeight
  * @parent <Layout>
  * @type number
  * @desc The height of the help frame.
  * By default (blank), two lines are reserved; set to 0 to hide it.
+ * 
+ * @param HelpTextAdjustY
+ * @parent <Layout>
+ * @type number
+ * @default 0
+ * @desc The Y-coordinate offset for the help text.
+ * 
+ * @param HelpTextFontSize
+ * @parent <Layout>
+ * @type number
+ * @min 1
+ * @desc The font size of the help text. Blank uses the standard value.
  * 
  * @param ReadOnlyGray
  * @parent <Layout>
@@ -376,7 +401,7 @@
  * @type boolean
  * @default false
  * @desc Makes the Travel command reference-only.
- * Intended for use as atlas.
+ * Intended for use as a Travel Map.
  * 
  * @param <Other>
  * @desc Other items.
@@ -400,7 +425,7 @@
  * 
  * @param TransferMapId
  * @type text
- * @desc The map ID to transfer to. Can be a formula.
+ * @desc The destination Game Map ID. Can be a formula.
  * If left blank, it will not appear in the list.
  * 
  * @param TransferX
@@ -440,30 +465,30 @@
  * e.g. to let the player know that an event is taking place.
  * 
  * @param <FieldMap>
- * @desc This is an item related to atlas information.
+ * @desc Items related to Travel Map information.
  * 
  * @param FieldMapId
  * @parent <FieldMap>
  * @type text
- * @desc The map ID of the field corresponding to atlas. Can be a formula.
+ * @desc The Field Map's Game Map ID, corresponding to the Travel Map. Can be a formula.
  * If left blank, "TransferMapId" will be used.
  * 
  * @param FieldX
  * @parent <FieldMap>
  * @type text
- * @desc The X of the field corresponding to atlas. Can be a formula.
+ * @desc The X coordinate on the Field Map, corresponding to the Travel Map. Can be a formula.
  * If left blank, "TransferX" will be used.
  * 
  * @param FieldY
  * @parent <FieldMap>
  * @type text
- * @desc The Y of the field corresponding to atlas. Can be a formula.
+ * @desc The Y coordinate on the Field Map, corresponding to the Travel Map. Can be a formula.
  * If left blank, "TransferY" will be used.
  * 
  * @param LocationUpdateMapId
  * @parent <FieldMap>
  * @type text
- * @desc Map ID for updating atlas coordinates. Multiple OK.
+ * @desc Game Map IDs that update Travel Map coordinates. Multiple IDs are allowed.
  * ExampleA: 1,2,3 ExampleB: 1~3
  * 
  * @param SymbolId
@@ -484,7 +509,7 @@
  * @param PointSwitch
  * @parent Condition
  * @type switch
- * @desc This switch is used to display spot as a point on atlas.
+ * @desc This switch is used to display the spot as a point on the Travel Map.
  * If blank, it is always displayed.
  * 
  * @param DisableSwitch
@@ -497,33 +522,33 @@
 /*~struct~FieldMap:
  * @param MapId
  * @type number
- * @desc The map ID of the field corresponding to atlas.
+ * @desc The Field Map's Game Map ID, corresponding to the Travel Map.
  * 
  * @param MapImage
  * @type file
  * @dir img/pictures
- * @desc This image is used as atlas.
+ * @desc The image used as the Travel Map.
  * 
  * @param BackgroundColor
  * @type text
- * @desc The background color of atlas. e.g.: rgb(255, 255, 255)
+ * @desc The Travel Map's background color. e.g.: rgb(255, 255, 255)
  * Values correspond to red, green, and blue. Transparent if blank.
  * 
  * @param CurrentMapIdVariable
  * @type variable
- * @desc A variable that stores the map ID for displaying the current location on atlas.
+ * @desc Stores the Game Map ID for displaying the current location on the Travel Map.
  * 
  * @param CurrentXVariable
  * @type variable
- * @desc A variable that stores the X coordinate for displaying the current location on atlas.
+ * @desc Stores the X coordinate for displaying the current location on the Travel Map.
  * 
  * @param CurrentYVariable
  * @type variable
- * @desc A variable that stores the Y coordinate for displaying the current location on atlas.
+ * @desc Stores the Y coordinate for displaying the current location on the Travel Map.
  * 
  * @param ValidSwitch
  * @type switch
- * @desc Switch to enable the map. If blank, always show. Priority is given to the upper side of the list.
+ * @desc Switch to enable the Travel Map. If blank, always show. Entries nearer the top of the list take priority.
  */
 
 /*~struct~Symbol:
@@ -584,7 +609,7 @@
  * 
  * @param TransferMapId
  * @type text
- * @desc The map ID to transfer to. Can be a formula.
+ * @desc The destination Game Map ID. Can be a formula.
  * If left blank, it will not appear in the list.
  * 
  * @param TransferX
@@ -639,7 +664,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.07 マップ選択＆移動画面を実装します。
+ * @plugindesc v1.08 マップ選択＆移動画面を実装します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url http://newrpg.seesaa.net/article/484927929.html
  *
@@ -942,12 +967,40 @@
  * @default 300
  * @desc 地点一覧の横幅です。
  * 
+ * @param SpotListLineHeight
+ * @parent <Layout>
+ * @text 地点一覧の一行の縦幅
+ * @type number
+ * @min 1
+ * @desc 地点一覧の一行の縦幅です。未指定なら標準値です。
+ * 
+ * @param SpotListFontSize
+ * @parent <Layout>
+ * @text 地点一覧のフォントサイズ
+ * @type number
+ * @min 1
+ * @desc 地点一覧のフォントサイズです。未指定なら標準値です。
+ * 
  * @param HelpHeight
  * @parent <Layout>
  * @text 解説枠の縦幅
  * @type number
  * @desc 解説枠の縦幅です。
  * 初期値（空欄）では二行分を確保します。0にすると非表示。
+ * 
+ * @param HelpTextAdjustY
+ * @parent <Layout>
+ * @text 解説文のＹ座標補正
+ * @type number
+ * @default 0
+ * @desc 解説文の描画Ｙ座標への補正値です。初期値は0です。
+ * 
+ * @param HelpTextFontSize
+ * @parent <Layout>
+ * @text 解説文のフォントサイズ
+ * @type number
+ * @min 1
+ * @desc 解説文のフォントサイズです。未指定なら標準値です。
  * 
  * @param ReadOnlyGray
  * @parent <Layout>
@@ -1386,7 +1439,11 @@ const pCurrentSymbolId = toNumber(parameters["CurrentSymbolId"]);
 const pSelectedSymbolId = toNumber(parameters["SelectedSymbolId"]);
 // レイアウト関連
 const pSpotListWidth = toNumber(parameters["SpotListWidth"], 300);
+const pSpotListLineHeight = toNumber(parameters["SpotListLineHeight"]);
+const pSpotListFontSize = toNumber(parameters["SpotListFontSize"]);
 const pHelpHeight = toNumber(parameters["HelpHeight"]);
+const pHelpTextAdjustY = toNumber(parameters["HelpTextAdjustY"], 0);
+const pHelpTextFontSize = toNumber(parameters["HelpTextFontSize"]);
 const pReadOnlyGray = toBoolean(parameters["ReadOnlyGray"], false);
 // メニューコマンド関連
 const pShowMenuCommand = toBoolean(parameters["ShowMenuCommand"], false);
@@ -1924,14 +1981,22 @@ if (Utils.RPGMAKER_NAME == "MV") {
         }
     };
 
-    Scene_SelectSpots.prototype.createHelpWindow = function() {
-        this._helpWindow = new Window_Help();
-        this.addWindow(this._helpWindow);
+}
+
+/**
+ * ●ヘルプウィンドウの生成
+ */
+Scene_SelectSpots.prototype.createHelpWindow = function() {
+    if (Utils.RPGMAKER_NAME == "MV") {
+        this._helpWindow = new Window_MapTravelHelp();
         if (pHelpHeight != undefined) {
             this._helpWindow.height = pHelpHeight;
         }
-    };
-}
+    } else {
+        this._helpWindow = new Window_MapTravelHelp(this.helpWindowRect());
+    }
+    this.addWindow(this._helpWindow);
+};
 
 /**
  * ●ヘルプウィンドウの縦幅
@@ -1945,6 +2010,41 @@ Scene_SelectSpots.prototype.helpAreaHeight = function() {
         return this._helpWindow.height;
     }
     return Scene_MenuBase.prototype.helpAreaHeight.call(this);
+};
+
+//-----------------------------------------------------------------------------
+// Window_MapTravelHelp
+//
+// マップ移動用のヘルプウィンドウ
+
+function Window_MapTravelHelp() {
+    this.initialize(...arguments);
+}
+
+Window_MapTravelHelp.prototype = Object.create(Window_Help.prototype);
+Window_MapTravelHelp.prototype.constructor = Window_MapTravelHelp;
+
+if (Utils.RPGMAKER_NAME == "MV") {
+    Window_MapTravelHelp.prototype.standardFontSize = function() {
+        return pHelpTextFontSize || Window_Help.prototype.standardFontSize.call(this);
+    };
+} else {
+    Window_MapTravelHelp.prototype.resetFontSettings = function() {
+        Window_Help.prototype.resetFontSettings.call(this);
+        if (pHelpTextFontSize) {
+            this.contents.fontSize = pHelpTextFontSize;
+        }
+    };
+}
+
+Window_MapTravelHelp.prototype.refresh = function() {
+    this.contents.clear();
+    if (Utils.RPGMAKER_NAME == "MV") {
+        this.drawTextEx(this._text, this.textPadding(), pHelpTextAdjustY);
+    } else {
+        const rect = this.baseTextRect();
+        this.drawTextEx(this._text, rect.x, rect.y + pHelpTextAdjustY, rect.width);
+    }
 };
 
 //----------------------------------------
@@ -2482,11 +2582,32 @@ Windows_SelectSpots.prototype.initialize = function(rect) {
     } else {
         Window_Selectable.prototype.initialize.call(this, rect);
     }
+    this.resetFontSettings();
 
     // 先頭を選択しておく。
     this.select(0);
     // 初期選択フラグ
     this._firstSelectFlg = true;
+};
+
+/**
+ * ●一行の縦幅
+ */
+Windows_SelectSpots.prototype.lineHeight = function() {
+    if (pSpotListLineHeight != undefined) {
+        return pSpotListLineHeight;
+    }
+    return Window_Selectable.prototype.lineHeight.call(this);
+};
+
+/**
+ * ●フォント設定
+ */
+Windows_SelectSpots.prototype.resetFontSettings = function() {
+    Window_Selectable.prototype.resetFontSettings.call(this);
+    if (pSpotListFontSize != undefined) {
+        this.contents.fontSize = pSpotListFontSize;
+    }
 };
 
 /**
