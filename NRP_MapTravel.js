@@ -1988,14 +1988,45 @@ if (Utils.RPGMAKER_NAME == "MV") {
  */
 Scene_SelectSpots.prototype.createHelpWindow = function() {
     if (Utils.RPGMAKER_NAME == "MV") {
-        this._helpWindow = new Window_MapTravelHelp();
+        this._helpWindow = new Window_Help();
         if (pHelpHeight != undefined) {
             this._helpWindow.height = pHelpHeight;
         }
     } else {
-        this._helpWindow = new Window_MapTravelHelp(this.helpWindowRect());
+        this._helpWindow = new Window_Help(this.helpWindowRect());
     }
+    this.applyHelpWindowAdjustments();
     this.addWindow(this._helpWindow);
+};
+
+/**
+ * ●ヘルプウィンドウの個別調整
+ */
+Scene_SelectSpots.prototype.applyHelpWindowAdjustments = function() {
+    const helpWindow = this._helpWindow;
+
+    // 既存のrefresh処理を維持したまま、解説文の描画位置を補正する。
+    if (pHelpTextAdjustY) {
+        const _drawTextEx = helpWindow.drawTextEx;
+        helpWindow.drawTextEx = function(text, x, y, width) {
+            return _drawTextEx.call(this, text, x, y + pHelpTextAdjustY, width);
+        };
+    }
+
+    if (pHelpTextFontSize) {
+        if (Utils.RPGMAKER_NAME == "MV") {
+            const _standardFontSize = helpWindow.standardFontSize;
+            helpWindow.standardFontSize = function() {
+                return pHelpTextFontSize || _standardFontSize.call(this);
+            };
+        } else {
+            const _resetFontSettings = helpWindow.resetFontSettings;
+            helpWindow.resetFontSettings = function() {
+                _resetFontSettings.call(this);
+                this.contents.fontSize = pHelpTextFontSize;
+            };
+        }
+    }
 };
 
 /**
@@ -2010,41 +2041,6 @@ Scene_SelectSpots.prototype.helpAreaHeight = function() {
         return this._helpWindow.height;
     }
     return Scene_MenuBase.prototype.helpAreaHeight.call(this);
-};
-
-//-----------------------------------------------------------------------------
-// Window_MapTravelHelp
-//
-// マップ移動用のヘルプウィンドウ
-
-function Window_MapTravelHelp() {
-    this.initialize(...arguments);
-}
-
-Window_MapTravelHelp.prototype = Object.create(Window_Help.prototype);
-Window_MapTravelHelp.prototype.constructor = Window_MapTravelHelp;
-
-if (Utils.RPGMAKER_NAME == "MV") {
-    Window_MapTravelHelp.prototype.standardFontSize = function() {
-        return pHelpTextFontSize || Window_Help.prototype.standardFontSize.call(this);
-    };
-} else {
-    Window_MapTravelHelp.prototype.resetFontSettings = function() {
-        Window_Help.prototype.resetFontSettings.call(this);
-        if (pHelpTextFontSize) {
-            this.contents.fontSize = pHelpTextFontSize;
-        }
-    };
-}
-
-Window_MapTravelHelp.prototype.refresh = function() {
-    this.contents.clear();
-    if (Utils.RPGMAKER_NAME == "MV") {
-        this.drawTextEx(this._text, this.textPadding(), pHelpTextAdjustY);
-    } else {
-        const rect = this.baseTextRect();
-        this.drawTextEx(this._text, rect.x, rect.y + pHelpTextAdjustY, rect.width);
-    }
 };
 
 //----------------------------------------
