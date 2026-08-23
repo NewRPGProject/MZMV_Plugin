@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.045 Adjust the message window.
+ * @plugindesc v1.05 Adjust the message window.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -181,6 +181,21 @@
  * @parent <NameBoxWindow>
  * @desc Y-coordinate correction value for the name field.
  * 
+ * @param NameBoxLineHeight
+ * @parent <NameBoxWindow>
+ * @desc The vertical height per line in the name field.
+ * If left blank, the standard vertical height is used.
+ * 
+ * @param NameBoxAdjustTextX
+ * @parent <NameBoxWindow>
+ * @type number @min -9999 @max 9999
+ * @desc Adjust the X-coordinate of the text in the name field.
+ * 
+ * @param NameBoxAdjustTextY
+ * @parent <NameBoxWindow>
+ * @type number @min -9999 @max 9999
+ * @desc Adjust the Y-coordinate of the text in the name field.
+ * 
  * @param NameBoxFontSize
  * @parent <NameBoxWindow>
  * @desc The font size of the name field.
@@ -230,7 +245,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.045 メッセージウィンドウを調整する。
+ * @plugindesc v1.05 メッセージウィンドウを調整する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -423,6 +438,24 @@
  * @text 名前欄のＹ座標補正
  * @desc 名前欄のＹ座標補正値です。
  * 
+ * @param NameBoxLineHeight
+ * @parent <NameBoxWindow>
+ * @text 名前欄の一行の縦幅
+ * @desc 名前欄の一行当たりの縦幅です。
+ * 空欄なら標準の縦幅を使用します。
+ * 
+ * @param NameBoxAdjustTextX
+ * @parent <NameBoxWindow>
+ * @text 名前欄文章のＸ座標補正
+ * @type number @min -9999 @max 9999
+ * @desc 名前欄文章のＸ座標を調整します。
+ * 
+ * @param NameBoxAdjustTextY
+ * @parent <NameBoxWindow>
+ * @text 名前欄文章のＹ座標補正
+ * @type number @min -9999 @max 9999
+ * @desc 名前欄文章のＹ座標を調整します。
+ * 
  * @param NameBoxFontSize
  * @parent <NameBoxWindow>
  * @text 名前欄のフォントサイズ
@@ -538,6 +571,9 @@ const pNoMaskOpacity = setDefault(parameters["NoMaskOpacity"]);
 const pFixIconY = toBoolean(parameters["FixIconY"]);
 const pNameBoxAdjustX = setDefault(parameters["NameBoxAdjustX"]);
 const pNameBoxAdjustY = setDefault(parameters["NameBoxAdjustY"]);
+const pNameBoxLineHeight = setDefault(parameters["NameBoxLineHeight"]);
+const pNameBoxAdjustTextX = toNumber(parameters["NameBoxAdjustTextX"]);
+const pNameBoxAdjustTextY = toNumber(parameters["NameBoxAdjustTextY"]);
 const pNameBoxFontSize = setDefault(parameters["NameBoxFontSize"]);
 const pNameBoxOpacity = setDefault(parameters["NameBoxOpacity"]);
 const pHideNameBoxFrame = toBoolean(parameters["HideNameBoxFrame"], false);
@@ -948,6 +984,31 @@ if (pFixChoiceX) {
 // ＭＺのみのクラスなので存在しない場合は無視
 if (typeof Window_NameBox !== "undefined") {
     /**
+     * ●名前欄の一行当たりの縦幅
+     */
+    if (pNameBoxLineHeight != null) {
+        Window_NameBox.prototype.lineHeight = function() {
+            return eval(pNameBoxLineHeight);
+        };
+    }
+
+    /**
+     * ●名前欄文章の座標補正
+     */
+    if (pNameBoxAdjustTextX || pNameBoxAdjustTextY) {
+        const _Window_NameBox_drawTextEx = Window_NameBox.prototype.drawTextEx;
+        Window_NameBox.prototype.drawTextEx = function(text, x, y, width) {
+            return _Window_NameBox_drawTextEx.call(
+                this,
+                text,
+                x + pNameBoxAdjustTextX,
+                y + pNameBoxAdjustTextY,
+                width
+            );
+        };
+    }
+
+    /**
      * ●名前欄の初期化
      */
     const _Window_NameBox_initialize = Window_NameBox.prototype.initialize;
@@ -1014,7 +1075,7 @@ if (typeof Window_NameBox !== "undefined") {
         /**
          * ●フォントサイズの設定
          */
-        const _Window_NameBox_resetFontSettings = Window_Message.prototype.resetFontSettings;
+        const _Window_NameBox_resetFontSettings = Window_NameBox.prototype.resetFontSettings;
         Window_NameBox.prototype.resetFontSettings = function() {
             _Window_NameBox_resetFontSettings.apply(this, arguments);
 
@@ -1064,20 +1125,23 @@ if (typeof Window_NameBox !== "undefined") {
     };
 }
 
-// ----------------------------------------------------------------------------
-// Scene_Message
-// ----------------------------------------------------------------------------
-
 // 名前欄の重なり対応
 if (pOverlapNameBox) {
     /**
-     * ●名前ウィンドウの生成
+     * ●名前欄をウィンドウレイヤーの外へ移動
+     *
+     * 名前欄が追加される経路を限定せず、addWindow() 経由で追加された
+     * Window_NameBox を対象にする。
+     * これにより、他プラグインが名前欄を再利用して addWindow() した場合も
+     * メッセージ枠との重なりを正しく描画できる。
      */
-    const _Scene_Message_createNameBoxWindow = Scene_Message.prototype.createNameBoxWindow;
-    Scene_Message.prototype.createNameBoxWindow = function() {
-        _Scene_Message_createNameBoxWindow.apply(this, arguments);
-        // 名前ウィンドウの下が消えないよう調整
-        this.addChild(this._windowLayer.removeChild(this._nameBoxWindow));
+    const _Scene_Base_addWindow = Scene_Base.prototype.addWindow;
+    Scene_Base.prototype.addWindow = function(window) {
+        _Scene_Base_addWindow.apply(this, arguments);
+
+        if (window instanceof Window_NameBox && window.parent === this._windowLayer) {
+            this.addChild(this._windowLayer.removeChild(window));
+        }
     };
 }
 
