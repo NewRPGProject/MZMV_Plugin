@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.05 Adjust the message window.
+ * @plugindesc v1.051 Adjust the message window.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -245,7 +245,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.05 メッセージウィンドウを調整する。
+ * @plugindesc v1.051 メッセージウィンドウを調整する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/492543897.html
  *
@@ -572,8 +572,8 @@ const pFixIconY = toBoolean(parameters["FixIconY"]);
 const pNameBoxAdjustX = setDefault(parameters["NameBoxAdjustX"]);
 const pNameBoxAdjustY = setDefault(parameters["NameBoxAdjustY"]);
 const pNameBoxLineHeight = setDefault(parameters["NameBoxLineHeight"]);
-const pNameBoxAdjustTextX = toNumber(parameters["NameBoxAdjustTextX"]);
-const pNameBoxAdjustTextY = toNumber(parameters["NameBoxAdjustTextY"]);
+const pNameBoxAdjustTextX = toNumber(parameters["NameBoxAdjustTextX"], 0);
+const pNameBoxAdjustTextY = toNumber(parameters["NameBoxAdjustTextY"], 0);
 const pNameBoxFontSize = setDefault(parameters["NameBoxFontSize"]);
 const pNameBoxOpacity = setDefault(parameters["NameBoxOpacity"]);
 const pHideNameBoxFrame = toBoolean(parameters["HideNameBoxFrame"], false);
