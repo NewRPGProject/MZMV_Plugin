@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.031 Multi-language support.
+ * @plugindesc v1.04 Multi-language support.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/521162546.html
  *
@@ -147,6 +147,13 @@
  * 
  * $lan(id)
  * Example: $lan("town01.001")
+ * 
+ * You can also specify a string to display if no matches are found.
+ * This is useful if you don't want Excel to retain
+ * the original language values.
+ * 
+ * $lan(id, Default Value)
+ * Example: $lan("town01.001", "Hello!")
  * 
  * -------------------------------------------------------------------
  * [Language projects]
@@ -370,6 +377,19 @@
  * @default en
  * @desc The source language of this project. Images are not switched when it matches the current language.
  *
+ * @param SkipXlsxForOriginalLanguage
+ * @text Skip xlsx for Original Language
+ * @type boolean
+ * @default false
+ * @desc Skip SheetJS and xlsx loading when the current language is the original language.
+ *
+ * @param DisableFeature
+ * @text [Dev]Disable Feature
+ * @type boolean
+ * @default false
+ * @desc This will disable the features of this plugin.
+ * Use this if you want to disable a feature during development.
+ *
  * @param <Option>
  * @text <Options>
  *
@@ -582,7 +602,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.031 多言語対応
+ * @plugindesc v1.04 多言語対応
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/521162546.html
  *
@@ -694,6 +714,12 @@
  * 
  * $lan(id)
  * 例：$lan("town01.001")
+ * 
+ * また、該当がなかった場合の文字列を指定することもできます。
+ * Excelにオリジナル言語の値を持たせたくない場合は特に便利です。
+ * 
+ * $lan(id, デフォルト値)
+ * 例：$lan("town01.001", "おはよう！")
  * 
  * -------------------------------------------------------------------
  * ■別プロジェクトの参照
@@ -897,6 +923,19 @@
  * @default ja
  * @desc このプロジェクトのオリジナル言語です。現在の言語と一致する場合、画像の自動切替を行いません。
  * 
+ * @param SkipXlsxForOriginalLanguage
+ * @text オリジナル言語はxlsx未使用
+ * @type boolean
+ * @default false
+ * @desc 現在の言語がオリジナル言語ならば、SheetJSとxlsxを読み込みません。
+ * 
+ * @param DisableFeature
+ * @text [Dev]機能を無効化
+ * @type boolean
+ * @default false
+ * @desc 本プラグインの機能を無効化します。
+ * 開発途中に機能を無効化したい場合にどうぞ。
+ *
  * @param <Option>
  * @text ＜オプション＞
  * 
@@ -1175,7 +1214,7 @@ function imagePatternToRegExp(pattern) {
 
 const PLUGIN_NAME = "NRP_MultiLanguage";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
-let pOptionLabel        = setDefault(parameters["OptionLabel"], "言語設定");
+let pOptionLabel        = setDefault(parameters["OptionLabel"]);
 const pInsertPosition   = toNumber(parameters["InsertPosition"], 0);
 const pLanguageList     = parseStruct2(parameters["LanguageList"]);
 const pLanguageVariable = toNumber(parameters["LanguageVariable"], 0);
@@ -1183,7 +1222,10 @@ const pSheetVariable    = toNumber(parameters["SheetVariable"],    0);
 const pDefaultSheetName = parameters["DefaultSheetName"] !== undefined
     ? parameters["DefaultSheetName"] : null; // nullは未設定、""は空欄指定
 const pDefaultLanguage  = setDefault(parameters["DefaultLanguage"], "en");
-const pOriginalLanguage = setDefault(parameters["OriginalLanguage"], "ja");
+const pOriginalLanguage = setDefault(parameters["OriginalLanguage"]);
+const pDisableFeature   = toBoolean(parameters["DisableFeature"], false);
+const pSkipXlsxForOriginalLanguage =
+    toBoolean(parameters["SkipXlsxForOriginalLanguage"], false);
 const pUseLanguageProject = toBoolean(parameters["UseLanguageProject"], true);
 const pAutoCopy          = toBoolean(parameters["AutoCopy"],           true);
 const pDelString         = setDefault(parameters["DelString"],          "[DEL]");
@@ -1360,6 +1402,34 @@ function _detectOsLanguage() {
 // ConfigManager より先に決定されるため、独自プロパティとして保持する。
 let _currentLangCode = _loadLangCode();
 
+// 開発用の無効化中は、指定がある場合に限りオリジナル言語へ固定する。
+if (pDisableFeature && pOriginalLanguage) {
+    const originalEntry = findLangByCode(pOriginalLanguage);
+    const originalCode = originalEntry ? originalEntry.LangCode : pOriginalLanguage;
+    if (!_currentLangCode
+            || _currentLangCode.toLowerCase() !== originalCode.toLowerCase()) {
+        _saveLangCode(originalCode);
+    }
+    _currentLangCode = originalCode;
+}
+
+/**
+ * 無効化中の表示用に、本プラグイン固有の制御文字だけを除去する。
+ */
+function _stripLanguageControlCharacters(text) {
+    if (typeof text !== "string") return text;
+    return text.replace(/\\lan[cm]?\[[^\]]*\]/gi, "");
+}
+
+/**
+ * 【独自】現在の言語がプロジェクトのオリジナル言語かを返す。
+ * @returns {boolean}
+ */
+function _isOriginalLanguage() {
+    return !!_currentLangCode && !!pOriginalLanguage
+        && _currentLangCode.toLowerCase() === pOriginalLanguage.toLowerCase();
+}
+
 /**
  * 【独自】外部から現在の言語情報にアクセスするためのグローバルオブジェクト。
  */
@@ -1383,9 +1453,12 @@ window.NRP_MultiLanguage = {
 /**
  * スクリプトから \lan[] と同じ辞書テキストを取得する。
  * @param {string|number} id "sheet.id" または、シート名省略時のID
- * @returns {string} 対応テキスト。存在しない場合は空文字。
+ * @param {*} [defaultValue=""] 対応テキストが存在しない場合の値
+ * @returns {*} 対応テキスト。存在しない場合はdefaultValue。
  */
-window.$lan = function(id) {
+window.$lan = function(id, defaultValue) {
+    const fallback = arguments.length >= 2 ? defaultValue : "";
+    if (pDisableFeature) return fallback;
     const key = id == null ? "" : String(id);
     const separatorIndex = key.indexOf(".");
 
@@ -1393,13 +1466,16 @@ window.$lan = function(id) {
     if (separatorIndex >= 0) {
         const sheet = key.slice(0, separatorIndex);
         const textId = key.slice(separatorIndex + 1);
-// alert(sheetName + " / " + textId);
-        return sheet && textId ? _getLocalizeText(sheet, textId) : "";
+        if (!sheet || !textId) return fallback;
+        const text = _getLocalizeText(sheet, textId);
+        return text !== "" ? text : fallback;
     }
 
-    // \lan[id] と同じく、シート名変数が未設定なら空文字を返す。
+    // \lan[id] と同じくシート名変数を参照し、取得できなければ既定値を返す。
     const sheet = _currentSheetName();
-    return sheet && key ? _getLocalizeText(sheet, key) : "";
+    if (!sheet || !key) return fallback;
+    const text = _getLocalizeText(sheet, key);
+    return text !== "" ? text : fallback;
 };
 
 //-----------------------------------------------------------------------------
@@ -1422,6 +1498,7 @@ window.$lan = function(id) {
  */
 (function _applyLangPluginsJs() {
     function localizedImageUrl(url) {
+        if (pDisableFeature) return null;
         if (!url || !url.startsWith("img/")) return null;
         if (url.includes("/localize/")) return null;
 
@@ -1432,7 +1509,8 @@ window.$lan = function(id) {
 
         const languageCode = _currentLangCode;
         if (!languageCode) return null;
-        if (languageCode.toLowerCase() === pOriginalLanguage.toLowerCase()) return null;
+        if (pOriginalLanguage
+                && languageCode.toLowerCase() === pOriginalLanguage.toLowerCase()) return null;
 
         const pathParts = url.split("/");
         if (pathParts.length < 3) return null;
@@ -1462,7 +1540,7 @@ window.$lan = function(id) {
         _Bitmap_onError.apply(this, arguments);
     };
 
-    if (!pUseLanguageProject) return;
+    if (pDisableFeature || !pUseLanguageProject) return;
     // Keep copied language plugins.js current before reading its parameters.
     const copyStartTime = _startupNow();
     _copyLangFiles();
@@ -1538,6 +1616,10 @@ const _xlsxLoadCallbacks = [];
  * @param {Function} onLoad ロード完了時コールバック
  */
 function _loadSheetJs(onLoad) {
+    if (pDisableFeature) {
+        onLoad();
+        return;
+    }
     if (_xlsxLoaded || typeof XLSX !== "undefined") {
         _xlsxLoaded = true;
         onLoad();
@@ -1587,6 +1669,13 @@ const LOCALIZE_DIR = "data/localize/";
  * @param {Function} onComplete 完了コールバック
  */
 function _loadLocalizeDictionary(onComplete) {
+    if (pDisableFeature) {
+        _localizeDictionary = new Map();
+        _dictLoaded = true;
+        _dictLoading = false;
+        onComplete();
+        return;
+    }
     if (_dictLoaded) { onComplete(); return; }
     if (_dictLoading) {
         const wait = setInterval(function() {
@@ -1780,6 +1869,7 @@ let _nameReplaceDictionary = null;
  */
 function _loadNameReplaceDictionary() {
     _nameReplaceDictionary = new Map();
+    if (pDisableFeature) return;
     if (!pNameAutoReplaceFile) return;
     if (typeof XLSX === "undefined") return;
     if (!Utils.isNwjs()) return;
@@ -1833,6 +1923,26 @@ const _loadLocalizeDictionaryOrig = _loadLocalizeDictionary;
 
 // SheetJSロード完了後に名前置換辞書のロードと自動シート選択を行う
 const _loadLocalizeDictionaryWithName = function(onComplete) {
+    if (pDisableFeature) {
+        _localizeDictionary = new Map();
+        _nameReplaceDictionary = new Map();
+        _dictLoaded = true;
+        _dictLoading = false;
+        onComplete();
+        return;
+    }
+
+    if (pSkipXlsxForOriginalLanguage && _isOriginalLanguage()) {
+        const skipStartTime = _startupNow();
+        _localizeDictionary = new Map();
+        _nameReplaceDictionary = new Map();
+        _dictLoaded = true;
+        _dictLoading = false;
+        _logStartupTime("Skip xlsx for original language", skipStartTime);
+        onComplete();
+        return;
+    }
+
     _loadLocalizeDictionaryOrig(function() {
         const nameReplaceLoadStartTime = _startupNow();
         _loadNameReplaceDictionary();
@@ -1877,6 +1987,7 @@ function _setSheetName(name) {
  * ゲーム起動時（辞書ロード完了後）に呼ばれる。
  */
 function _autoSelectSheet() {
+    if (pDisableFeature) return;
     if (!pSheetVariable || pSheetVariable <= 0) return;
 
     // pDefaultSheetName が設定されている場合はそちらを使用
@@ -1900,6 +2011,7 @@ function _autoSelectSheet() {
  * メモ欄がない場合は _nrpAutoSheet（デフォルトシート名 or 自動選択）を使う。
  */
 function _applySheetFromMap() {
+    if (pDisableFeature) return;
     if (!pSheetVariable || pSheetVariable <= 0) return;
     if (!$dataMap || !$gameVariables) return;
 
@@ -1927,63 +2039,70 @@ Game_Player.prototype.performTransfer = function() {
 //-----------------------------------------------------------------------------
 
 /**
- * ●Game_Interpreter.prototype.setupChoices のフック
+ * 【独自】選択肢テキストを翻訳する。
  * 選択肢テキストを辞書で部分一致置換する（案C）。
  * \lanc[] による前方クリア置換も行う（案B）。
- * pReplaceChoices が false の場合はどちらもスキップ。
+ * @param {string} choice 選択肢テキスト
+ * @returns {string} 翻訳後の選択肢テキスト
  */
-const _Game_Interpreter_setupChoices = Game_Interpreter.prototype.setupChoices;
-Game_Interpreter.prototype.setupChoices = function(params) {
-    if (pReplaceChoices) {
-        const LANC_FULL  = /\\lanc\[([^\.]+)\.([^\]]+)\]/i;
-        const LANC_SHORT = /\\lanc\[([^\]\.]+)\]/i;
-        const choices = params[0];
+function _localizeChoiceText(choice) {
+    if (pDisableFeature) return _stripLanguageControlCharacters(choice);
+    let text = choice;
+    const LANC_FULL  = /\\lanc\[([^\.]+)\.([^\]]+)\]/i;
+    const LANC_SHORT = /\\lanc\[([^\]\.]+)\]/i;
 
-        for (let i = 0; i < choices.length; i++) {
-            let text = choices[i];
+    // --- 案B：\lanc[] による前方クリア置換 ---
+    const matchFull  = text.match(LANC_FULL);
+    const matchShort = !matchFull ? text.match(LANC_SHORT) : null;
+    const matchLanc  = matchFull || matchShort;
 
-            // --- 案B：\lanc[] による前方クリア置換 ---
-            const matchFull  = text.match(LANC_FULL);
-            const matchShort = !matchFull ? text.match(LANC_SHORT) : null;
-            const matchLanc  = matchFull || matchShort;
+    if (matchLanc) {
+        const sheet = matchFull
+            ? matchFull[1]
+            : _currentSheetName();
+        const id    = matchFull
+            ? matchFull[2]
+            : matchShort[1];
 
-            if (matchLanc) {
-                const sheet = matchFull
-                    ? matchFull[1]
-                    : _currentSheetName();
-                const id    = matchFull
-                    ? matchFull[2]
-                    : matchShort[1];
-
-                if (sheet) {
-                    const langText = _getLocalizeText(sheet, id);
-                    if (langText !== "") {
-                        // 前方クリア + 置換
-                        const after = text.slice(matchLanc.index + matchLanc[0].length);
-                        text = langText + after;
-                    } else {
-                        // データなし：\lanc[] のみ除去
-                        text = text.replace(matchLanc[0], "");
-                    }
-                } else {
-                    // シート名未設定：\lanc[] のみ除去
-                    text = text.replace(matchLanc[0], "");
-                }
+        if (sheet) {
+            const langText = _getLocalizeText(sheet, id);
+            if (langText !== "") {
+                // 前方クリア + 置換
+                const after = text.slice(matchLanc.index + matchLanc[0].length);
+                text = langText + after;
+            } else {
+                // データなし：\lanc[] のみ除去
+                text = text.replace(matchLanc[0], "");
             }
-
-            // --- 案C：辞書による部分一致置換 ---
-            if (_nameReplaceDictionary && _nameReplaceDictionary.size > 0) {
-                for (const [key, val] of _nameReplaceDictionary) {
-                    if (text.includes(key)) {
-                        text = text.split(key).join(val);
-                    }
-                }
-            }
-
-            choices[i] = text;
+        } else {
+            // シート名未設定：\lanc[] のみ除去
+            text = text.replace(matchLanc[0], "");
         }
     }
-    _Game_Interpreter_setupChoices.apply(this, arguments);
+
+    // --- 案C：辞書による部分一致置換 ---
+    if (pReplaceChoices && _nameReplaceDictionary
+            && _nameReplaceDictionary.size > 0) {
+        for (const [key, val] of _nameReplaceDictionary) {
+            if (text.includes(key)) {
+                text = text.split(key).join(val);
+            }
+        }
+    }
+
+    return text;
+}
+
+/**
+ * ●Game_Message.prototype.setChoices のフック
+ * MPP_ChoiceEX.js等が条件を評価した後の表示用テキストを翻訳する。
+ * pReplaceChoices は自動置換辞書にだけ適用し、\lanc[]は常に処理する。
+ */
+const _Game_Message_setChoices = Game_Message.prototype.setChoices;
+Game_Message.prototype.setChoices = function(choices, defaultType, cancelType) {
+    const args = Array.from(arguments);
+    args[0] = choices.map(_localizeChoiceText);
+    return _Game_Message_setChoices.apply(this, args);
 };
 
 /**
@@ -2021,6 +2140,7 @@ Window_NameBox.prototype.refresh = function() {
  * 置換が発生した場合は置換後文字列、発生しない場合は null を返す。
  */
 Window_NameBox.prototype._resolveDrawName = function() {
+    if (pDisableFeature) return null;
     if (!pReplaceNameBox) return null;
     if (!_nameReplaceDictionary || _nameReplaceDictionary.size === 0
             || !this._name) {
@@ -2054,6 +2174,11 @@ Window_NameBox.prototype._resolveDrawName = function() {
 const _Window_Base_convertEscapeCharacters =
     Window_Base.prototype.convertEscapeCharacters;
 Window_Base.prototype.convertEscapeCharacters = function(text) {
+    if (pDisableFeature) {
+        return _Window_Base_convertEscapeCharacters.call(
+            this, _stripLanguageControlCharacters(text));
+    }
+
     // MZ標準の convertEscapeCharacters は \\ → \x1b に変換した後に処理するため、
     // 本フックは元の \\ がある状態で呼ばれる。
     // \lanc[] / \lan[] はここで処理してから標準処理に渡す。
@@ -2103,6 +2228,7 @@ Window_Base.prototype.convertEscapeCharacters = function(text) {
  * drawTextEx() と異なり通常のエスケープ文字を処理しないため、\V[] や \C[] は残す。
  */
 function _resolveDrawTextLocalize(text) {
+    if (pDisableFeature) return _stripLanguageControlCharacters(text);
     if (typeof text !== "string" || !META_LAN_REGEXP.test(text)) return text;
 
     text = text.replace(/\\lanc\[([^\.]+)\.([^\]]+)\]/gi, function(match, sheet, id) {
@@ -2150,7 +2276,7 @@ PluginManager.parameters = function(name) {
     // 「言語プロジェクトを使用」がOFFの場合は、元の parameters を書き換えず
     // \lan[] を含む値だけを getter で遅延解決する。
     // 本プラグインより後に読み込まれるプラグインが対象となる。
-    if (!pUseLanguageProject) {
+    if (pDisableFeature || !pUseLanguageProject) {
         _defineLocalizedParamGetters(defaultParams);
         return defaultParams;
     }
@@ -2389,6 +2515,7 @@ DataManager._nrpLanguageBootTimeLogged = false;
  * ・同期処理（_loadLangDatabase より前に完了させる必要があるため）。
  */
 function _copyLangFiles() {
+    if (pDisableFeature) return;
     // NW.js環境かつテストプレイ時のみ実行
     if (!Utils.isNwjs() || !Utils.isOptionValid("test")) return;
     // 言語プロジェクト使用がオフ、またはオートコピーがオフの場合はスキップ
@@ -2464,7 +2591,7 @@ function _copyLangFiles() {
  */
 function _loadLangDatabase(onComplete) {
     // 言語プロジェクト使用がオフの場合はスキップ
-    if (!pUseLanguageProject) {
+    if (pDisableFeature || !pUseLanguageProject) {
         onComplete();
         return;
     }
@@ -2529,7 +2656,7 @@ function _loadLangDatabase(onComplete) {
 // 言語用System.jsonをマージしてから、正しいフォントファイルを読み込む。
 const _Scene_Boot_loadGameFonts = Scene_Boot.prototype.loadGameFonts;
 Scene_Boot.prototype.loadGameFonts = function() {
-    if (pUseLanguageProject) {
+    if (!pDisableFeature && pUseLanguageProject) {
         this._nrpDeferredGameFonts = true;
         return;
     }
@@ -2546,6 +2673,7 @@ Scene_Boot.prototype.isReady = function() {
     if (!_Scene_Boot_isReady.apply(this, arguments)) {
         return false;
     }
+    if (pDisableFeature) return true;
 
     if (DataManager._nrpLanguageBootStartTime === undefined) {
         DataManager._nrpLanguageBootStartTime = _startupNow();
@@ -2711,7 +2839,8 @@ function _applySystem(json) {
 
 const _Scene_Options_maxCommands = Scene_Options.prototype.maxCommands;
 Scene_Options.prototype.maxCommands = function() {
-    return _Scene_Options_maxCommands.apply(this, arguments) + 1;
+    return _Scene_Options_maxCommands.apply(this, arguments)
+        + (pDisableFeature ? 0 : 1);
 };
 
 const _Scene_Options_start = Scene_Options.prototype.start;
@@ -2726,6 +2855,10 @@ Scene_Options.prototype.start = function() {
  */
 const _Scene_Options_popScene = Scene_Options.prototype.popScene;
 Scene_Options.prototype.popScene = function() {
+    if (pDisableFeature) {
+        _Scene_Options_popScene.apply(this, arguments);
+        return;
+    }
     if (_currentLangCode !== this._nrpLangOnOpen) {
         _saveLangCode(_currentLangCode);
         SceneManager.reloadGame();
@@ -2741,6 +2874,7 @@ Scene_Options.prototype.popScene = function() {
 const _Window_Options_makeCommandList = Window_Options.prototype.makeCommandList;
 Window_Options.prototype.makeCommandList = function() {
     _Window_Options_makeCommandList.apply(this, arguments);
+    if (pDisableFeature) return;
     // タイトル画面からのオプション遷移かどうかを _stack で判定
     // Scene_Options は push() で呼ばれるため、呼び出し元が _stack の末尾に積まれている
     const callerClass = SceneManager._stack[SceneManager._stack.length - 1];
@@ -2792,6 +2926,7 @@ Window_Options.prototype.processOk = function() {
  * _currentLangCode を更新するのみ。保存はオプション画面を閉じる時。
  */
 Window_Options.prototype._nrpChangeLang = function(dir) {
+    if (pDisableFeature) return;
     if (!pLanguageList || pLanguageList.length === 0) return;
     const currentIdx = langListIndex(_currentLangCode);
     const nextIdx = (currentIdx + dir + pLanguageList.length) % pLanguageList.length;
@@ -2822,6 +2957,16 @@ Window_Options.prototype._nrpChangeLang = function(dir) {
  */
 const _Window_Message_startMessage = Window_Message.prototype.startMessage;
 Window_Message.prototype.startMessage = function() {
+    if (pDisableFeature) {
+        const speakerName = $gameMessage.speakerName();
+        const strippedName = _stripLanguageControlCharacters(speakerName);
+        if (strippedName !== speakerName) {
+            $gameMessage.setSpeakerName(strippedName);
+        }
+        _Window_Message_startMessage.call(this);
+        return;
+    }
+
     // 完全記法（シート名あり）
     const LANC_REGEXP_FULL = /\\lanc\[([^\.]+)\.([^\]]+)\]/i;
     const LANM_REGEXP_FULL = /\\lanm\[([^\.]+)\.([^\]]+)\]/i;
@@ -2932,6 +3077,7 @@ const META_LAN_REGEXP = /\\lan[cm]?\[/i;
  * @returns {string} 解決後の文字列
  */
 function _resolveMetaValue(raw) {
+    if (pDisableFeature) return _stripLanguageControlCharacters(raw);
     let text = raw;
 
     // \lanc[シート名.ID]（前方クリアなし・単純置換）
@@ -2985,7 +3131,7 @@ DataManager.extractMetadata = function(data) {
     _DataManager_extractMetadata.apply(this, arguments);
 
     // 言語プロジェクトを使用している場合は既にJSON上書きで対応するためスキップ
-    if (pUseLanguageProject) return;
+    if (pUseLanguageProject && !pDisableFeature) return;
 
     const meta = data.meta;
     for (const key of Object.keys(meta)) {
@@ -3011,6 +3157,7 @@ DataManager.extractMetadata = function(data) {
  * \lanc[] は翻訳が見つかった場合だけ、その記述より前の文字列を置き換える。
  */
 function _resolveDatabaseValue(raw) {
+    if (pDisableFeature) return _stripLanguageControlCharacters(raw);
     let text = raw;
 
     text = text.replace(/\\lanc\[([^\.]+)\.([^\]]+)\]/gi, function(match, sheet, id) {
@@ -3071,7 +3218,9 @@ function _defineLocalizedDatabaseGetters(data) {
 const _DataManager_onLoad = DataManager.onLoad;
 DataManager.onLoad = function(object) {
     _DataManager_onLoad.apply(this, arguments);
-    if (!pUseLanguageProject) _defineLocalizedDatabaseGetters(object);
+    if (pDisableFeature || !pUseLanguageProject) {
+        _defineLocalizedDatabaseGetters(object);
+    }
 };
     
 })();
