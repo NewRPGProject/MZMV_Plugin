@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.04 Multi-language support.
+ * @plugindesc v1.05 Multi-language support.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/521162546.html
  *
@@ -232,6 +232,23 @@
  * (To verify the file's existence)
  * 
  * -------------------------------------------------------------------
+ * [About Browser Launch]
+ * -------------------------------------------------------------------
+ * By default, it does not work when launching a browser
+ * (such as Plicy or itch), but you can enable this functionality
+ * by turning on "Create Browser File List."
+ * 
+ * When you do this, a file named "data\localize\FILE_LIST.json"
+ * will be created when the test is launched.
+ * This file is used to retrieve the list of files
+ * to be loaded when the browser starts.
+ * 
+ * Therefore, if you rename each XLSX file and then upload
+ * the production file without running a test even once,
+ * it will not function properly.
+ * ※I think it is unlikely to happen first...
+ * 
+ * -------------------------------------------------------------------
  * [Other Details]
  * -------------------------------------------------------------------
  * ◆Language Code Storage Location
@@ -382,6 +399,12 @@
  * @type boolean
  * @default false
  * @desc Skip SheetJS and xlsx loading when the current language is the original language.
+ *
+ * @param MakeBrowserFileList
+ * @text Create Browser File List
+ * @type boolean
+ * @default false
+ * @desc Generate data/localize/FILE_LIST.json during test play. Turn on if you plan to publish it in a browser.
  *
  * @param DisableFeature
  * @text [Dev]Disable Feature
@@ -602,7 +625,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.04 多言語対応
+ * @plugindesc v1.05 多言語対応
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/521162546.html
  *
@@ -785,6 +808,20 @@
  * （ファイルの存在確認を行うため）
  * 
  * -------------------------------------------------------------------
+ * ■ブラウザ起動について
+ * -------------------------------------------------------------------
+ * 初期状態だとブラウザ起動（Plicy、itch等）では動作しませんが、
+ * 『ブラウザ用のリスト作成』をオンにすることで対応できます。
+ * 
+ * その際、テスト起動時に、data\localize\FILE_LIST.json
+ * というファイルが作成されるようになります。
+ * これはブラウザ起動時に読込対象となるファイル一覧を取得するためのものです。
+ * 
+ * そのため、各xlsxのファイル名を変更した後、一度もテスト起動せず、
+ * 本番ファイルをアップロードすると正常に動作しません。
+ * ※まずありえないと思いますが……。
+ * 
+ * -------------------------------------------------------------------
  * ■その他詳細
  * -------------------------------------------------------------------
  * ◆言語コードの保存先
@@ -929,6 +966,13 @@
  * @default false
  * @desc 現在の言語がオリジナル言語ならば、SheetJSとxlsxを読み込みません。
  * 
+ * @param MakeBrowserFileList
+ * @text ブラウザ用のリスト作成
+ * @type boolean
+ * @default false
+ * @desc テストプレイ時にdata/localize/FILE_LIST.jsonを作成します。
+ * ブラウザ公開する場合はオンにしてください。
+ *
  * @param DisableFeature
  * @text [Dev]機能を無効化
  * @type boolean
@@ -1224,6 +1268,7 @@ const pDefaultSheetName = parameters["DefaultSheetName"] !== undefined
 const pDefaultLanguage  = setDefault(parameters["DefaultLanguage"], "en");
 const pOriginalLanguage = setDefault(parameters["OriginalLanguage"]);
 const pDisableFeature   = toBoolean(parameters["DisableFeature"], false);
+const pMakeBrowserFileList = toBoolean(parameters["MakeBrowserFileList"], false);
 const pSkipXlsxForOriginalLanguage =
     toBoolean(parameters["SkipXlsxForOriginalLanguage"], false);
 const pUseLanguageProject = toBoolean(parameters["UseLanguageProject"], true);
@@ -1663,6 +1708,78 @@ let _dictLoading = false;
 
 // ローカライズxlsxの配置フォルダ
 const LOCALIZE_DIR = "data/localize/";
+const BROWSER_FILE_LIST = "FILE_LIST.json";
+
+function _localizeFileNames(fs, dir) {
+    return fs.readdirSync(dir, { withFileTypes: true })
+        .filter(entry => entry.isFile() && /\.xlsx$/i.test(entry.name)
+            && !entry.name.startsWith("~$"))
+        .map(entry => entry.name).sort();
+}
+
+// 辞書の読み込み省略時も、公開用の一覧は最新にする。
+function _makeBrowserFileList() {
+    if (pDisableFeature || !pMakeBrowserFileList
+            || !Utils.isNwjs() || !Utils.isOptionValid("test")) return;
+    try {
+        const fs = require("fs");
+        const path = require("path");
+        const dir = path.join(path.dirname(process.mainModule.filename), LOCALIZE_DIR);
+        fs.mkdirSync(dir, { recursive: true });
+        const contents = JSON.stringify(_localizeFileNames(fs, dir), null, 2) + "\n";
+        const file = path.join(dir, BROWSER_FILE_LIST);
+        if (!fs.existsSync(file) || fs.readFileSync(file, "utf8") !== contents) {
+            fs.writeFileSync(file, contents, "utf8");
+        }
+    } catch (e) {
+        console.warn("NRP_MultiLanguage: Failed to create the browser file list.", e);
+    }
+}
+
+function _localizeFileUrl(file) {
+    return LOCALIZE_DIR + encodeURIComponent(file);
+}
+
+async function _fetchLocalizeWorkbook(file) {
+    const response = await fetch(_localizeFileUrl(file));
+    if (!response.ok) throw new Error(`${file}: HTTP ${response.status}`);
+    return XLSX.read(await response.arrayBuffer(), { type: "array" });
+}
+
+async function _loadLocalizeBrowser(onComplete) {
+    try {
+        const response = await fetch(_localizeFileUrl(BROWSER_FILE_LIST));
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const files = await response.json();
+        if (!Array.isArray(files) || files.some(file => typeof file !== "string"
+                || !/\.xlsx$/i.test(file) || /[\\/]/.test(file))) {
+            throw new Error("Invalid browser file list");
+        }
+        const workbooks = await Promise.all(files.map(async file => {
+            try {
+                return await _fetchLocalizeWorkbook(file);
+            } catch (e) {
+                console.warn(`NRP_MultiLanguage: Failed to read ${file}.`, e);
+                return null;
+            }
+        }));
+        // 通信の完了順によって、同じIDの上書き結果が変わらないようにする。
+        workbooks.forEach((workbook, index) => {
+            if (!workbook) return;
+            try {
+                _parseWorkbook(workbook);
+            } catch (e) {
+                console.warn(`NRP_MultiLanguage: Failed to parse ${files[index]}.`, e);
+            }
+        });
+    } catch (e) {
+        console.warn("NRP_MultiLanguage: Failed to load data/localize/FILE_LIST.json. "
+            + "Enable MakeBrowserFileList, run test play, and include the generated list in the release.", e);
+    }
+    _dictLoaded = true;
+    _dictLoading = false;
+    onComplete();
+}
 
 /**
  * 【独自】data/localize/ 以下の全xlsxを読み込み、辞書を構築する。
@@ -1701,11 +1818,10 @@ function _loadLocalizeDictionary(onComplete) {
                 onComplete();
             });
         } else {
-            // ブラウザ環境は未対応（空辞書で続行）
-            _dictLoaded  = true;
-            _dictLoading = false;
-            _logStartupTime("Load localization dictionary (browser)", dictionaryLoadStartTime);
-            onComplete();
+            _loadLocalizeBrowser(function() {
+                _logStartupTime("Load localization dictionary (browser)", dictionaryLoadStartTime);
+                onComplete();
+            });
         }
     });
 }
@@ -1727,7 +1843,7 @@ function _loadLocalizeNwjs(onComplete) {
             return;
         }
 
-        const files = fs.readdirSync(dir).filter(f => f.endsWith(".xlsx"));
+        const files = _localizeFileNames(fs, dir);
         for (const file of files) {
             const fileLoadStartTime = _startupNow();
             try {
@@ -1867,33 +1983,32 @@ let _nameReplaceDictionary = null;
  * ID列の値（日本語テキスト）をキー、現在言語列の値を置換後テキストとする。
  * 複数シート対応（全シートを走査してひとつの辞書にまとめる）。
  */
-function _loadNameReplaceDictionary() {
+async function _loadNameReplaceDictionary() {
     _nameReplaceDictionary = new Map();
     if (pDisableFeature) return;
     if (!pNameAutoReplaceFile) return;
     if (typeof XLSX === "undefined") return;
-    if (!Utils.isNwjs()) return;
 
     try {
-        const fs   = require("fs");
-        const path = require("path");
-        const base = path.dirname(process.mainModule.filename);
         // @type file は拡張子なしで返ることがあるので .xlsx を補完
-        let fileName = pNameAutoReplaceFile;
-        if (!fileName.endsWith(".xlsx")) fileName += ".xlsx";
-        const filePath = path.join(base, "data", "localize", path.basename(fileName));
-
-        if (!fs.existsSync(filePath)) {
-            console.warn(`NRP_MultiLanguage: Auto-Replacement File cannot be found: ${filePath}`);
-            return;
+        let fileName = pNameAutoReplaceFile.replace(/\\/g, "/").split("/").pop();
+        if (!/\.xlsx$/i.test(fileName)) fileName += ".xlsx";
+        let workbook;
+        if (Utils.isNwjs()) {
+            const fs = require("fs");
+            const path = require("path");
+            const base = path.dirname(process.mainModule.filename);
+            const filePath = path.join(base, LOCALIZE_DIR, fileName);
+            workbook = XLSX.read(fs.readFileSync(filePath), { type: "buffer" });
+        } else {
+            workbook = await _fetchLocalizeWorkbook(fileName);
         }
-
-        const buf      = fs.readFileSync(filePath);
-        const workbook = XLSX.read(buf, { type: "buffer" });
 
         for (const sheetName of workbook.SheetNames) {
             const sheet = workbook.Sheets[sheetName];
-            const rows  = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+            const range = _effectiveSheetRange(sheet);
+            if (!range) continue;
+            const rows  = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", range: range });
             if (rows.length < 2) continue;
 
             const header      = rows[0];
@@ -1923,6 +2038,7 @@ const _loadLocalizeDictionaryOrig = _loadLocalizeDictionary;
 
 // SheetJSロード完了後に名前置換辞書のロードと自動シート選択を行う
 const _loadLocalizeDictionaryWithName = function(onComplete) {
+    _makeBrowserFileList();
     if (pDisableFeature) {
         _localizeDictionary = new Map();
         _nameReplaceDictionary = new Map();
@@ -1943,9 +2059,9 @@ const _loadLocalizeDictionaryWithName = function(onComplete) {
         return;
     }
 
-    _loadLocalizeDictionaryOrig(function() {
+    _loadLocalizeDictionaryOrig(async function() {
         const nameReplaceLoadStartTime = _startupNow();
-        _loadNameReplaceDictionary();
+        await _loadNameReplaceDictionary();
         _logStartupTime("Load name replacement dictionary", nameReplaceLoadStartTime);
         // シートが1つだけの場合は自動選択
         _autoSelectSheet();
