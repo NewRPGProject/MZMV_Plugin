@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.05 Perform the result calculation for the skill first.
+ * @plugindesc v1.06 Perform the result calculation for the skill first.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_TraitsPlus
  * @orderBefore NRP_TraitsEX
@@ -100,7 +100,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.05 スキルの結果計算を演出より先に実行する。
+ * @plugindesc v1.06 スキルの結果計算を演出より先に実行する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_TraitsPlus
  * @orderBefore NRP_TraitsEX
@@ -226,7 +226,7 @@ function setDefault(str, def) {
     return str;
 }
 
-const PLUGIN_NAME = "NRP_calcResultFirst";
+const PLUGIN_NAME = "NRP_CalcResultFirst";
 const parameters = PluginManager.parameters(PLUGIN_NAME);
 const pCorrectRandomTarget = toBoolean(parameters["CorrectRandomTarget"]);
 const pStateResistToFailure = toBoolean(parameters["StateResistToFailure"]);
@@ -453,6 +453,13 @@ Game_Action.prototype.applyItemEffectFast = function(target, effect) {
  */
 const _Game_Action_apply = Game_Action.prototype.apply;
 Game_Action.prototype.apply = function(target) {
+    // 戦闘外では予約結果を使用しない。
+    // 過去のセーブデータに未消費の結果が残っている場合も通常処理にする。
+    if (!$gameParty.inBattle()) {
+        _Game_Action_apply.apply(this, arguments);
+        return;
+    }
+
     const reservedResults = target.reservedResults();
 
     // 予約した結果がないなら通常処理
@@ -595,6 +602,18 @@ Game_Battler.prototype.shiftReservedResult = function() {
  */
 Game_Battler.prototype.isDeadReserved = function() {
     return this._isDeadReserved;
+};
+
+/**
+ * ●戦闘終了
+ */
+const _Game_Battler_onBattleEnd = Game_Battler.prototype.onBattleEnd;
+Game_Battler.prototype.onBattleEnd = function() {
+    // 反射などで未消費となった予約情報を戦闘後に持ち越さない。
+    this._reservedResults = [];
+    this._isDeadReserved = false;
+    this._reservedHp = undefined;
+    _Game_Battler_onBattleEnd.apply(this, arguments);
 };
 
 /**
