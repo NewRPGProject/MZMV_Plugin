@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MV MZ
- * @plugindesc v1.052 Create counter skill.
+ * @plugindesc v1.06 Create counter skill.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @orderBefore NRP_ChainSkill
  * @url https://newrpg.seesaa.net/article/500432213.html
@@ -223,7 +223,7 @@
 
 /*:ja
  * @target MV MZ
- * @plugindesc v1.052 反撃スキルを作成する。
+ * @plugindesc v1.06 反撃スキルを作成する。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderBefore NRP_ChainSkill
  * @url https://newrpg.seesaa.net/article/500432213.html
@@ -726,6 +726,11 @@ Game_Battler.prototype.counterForceAction = function(skillId, target) {
  * ●対象が本来の対象サイドと異なるかどうか？
  */
 function isAnotherSide(action, subject, target) {
+    // 範囲が敵味方全体の場合は無視
+    if (action.isForEveryone && action.isForEveryone()) {
+        return false;
+    }
+
     // 範囲が敵なのに味方が対象
     if (action.isForOpponent() && subject.isActor() === target.isActor()) {
         return true;
