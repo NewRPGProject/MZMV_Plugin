@@ -3,14 +3,14 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.05 Multi-language support.
+ * @plugindesc v1.06 Multi-language support.
  * @author Takeshi Sunagawa (http://newrpg.seesaa.net/)
  * @url https://newrpg.seesaa.net/article/521162546.html
  *
  * @help This plugin adds multi-language support to RPG Maker MZ.
  *
  * Main features:
- * - Load text from Excel-compatible xlsx files
+ * - Load text from xlsx or LibreOffice Calc ods files
  *   and replace it by language.
  * - Load database JSON files and plugin parameters
  *   from language projects.
@@ -20,7 +20,7 @@
  * - Integrate with the MZ Text Editor extension.
  *
  * Microsoft Excel is not required.
- * Any spreadsheet application that can save xlsx files,
+ * Any spreadsheet application that can save xlsx or ods files,
  * such as LibreOffice, can be used.
  *
  * Note: Please place this plugin as high up in the list as possible.
@@ -29,7 +29,12 @@
  * -------------------------------------------------------------------
  * [xlsx file placement]
  * -------------------------------------------------------------------
- * Place xlsx files in [Project]/data/localize/.
+ * Place xlsx or ods files in [Project]/data/localize/.
+ * Both formats use the same sheet layout. In the explanations below,
+ * references to xlsx also apply to ods.
+ * Do not keep duplicate translations in both formats: later files overwrite
+ * entries with the same sheet name and ID.
+ * Regenerate FILE_LIST.json after changing files for browser releases.
  * 
  * If you look at the sample,
  * you should get a general idea of the format.
@@ -232,22 +237,27 @@
  * (To verify the file's existence)
  * 
  * -------------------------------------------------------------------
- * [About Browser Launch]
+ * [Create Fast JSON]
  * -------------------------------------------------------------------
- * By default, it does not work when launching a browser
- * (such as Plicy or itch), but you can enable this functionality
- * by turning on "Create Browser File List."
- * 
- * When you do this, a file named "data\localize\FILE_LIST.json"
- * will be created when the test is launched.
- * This file is used to retrieve the list of files
- * to be loaded when the browser starts.
- * 
- * Therefore, if you rename each XLSX file and then upload
- * the production file without running a test even once,
- * it will not function properly.
- * ※I think it is unlikely to happen first...
- * 
+ * When enabled, language-specific
+ * JSON files (e.g.:LANG_en.json) and a cache JSON file
+ * are generated in "data/localize/json/" during test play. 
+ *
+ * While parsing the xlsx/ods files takes time during
+ * the initial generation or when translation data is modified,
+ * this process significantly reduces load times
+ * in the production environment. 
+ *
+ * Additionally, enabling this feature
+ * allows the application to run in a browser.
+ * Please ensure this feature is turned on when launching in a browser. 
+ *
+ * Due to the system's design, if you modify
+ * the translation data (xlsx/ods) and upload the production files
+ * without first performing a test launch,
+ * the changes will not be correctly reflected. 
+ * ※Though it is highly unlikely that this would happen...
+ *
  * -------------------------------------------------------------------
  * [Other Details]
  * -------------------------------------------------------------------
@@ -398,13 +408,13 @@
  * @text Skip xlsx for Original Language
  * @type boolean
  * @default false
- * @desc Skip SheetJS and xlsx loading when the current language is the original language.
+ * @desc Skip SheetJS and xlsx/ods loading when the current language is the original language.
  *
- * @param MakeBrowserFileList
- * @text Create Browser File List
+ * @param MakeFastJson
+ * @text Create Fast JSON
  * @type boolean
- * @default false
- * @desc Generate data/localize/FILE_LIST.json during test play. Turn on if you plan to publish it in a browser.
+ * @default true
+ * @desc Generate per-language JSON during test play. Include the generated JSON in releases.
  *
  * @param DisableFeature
  * @text [Dev]Disable Feature
@@ -530,8 +540,8 @@
  * @parent <NameReplace>
  * @text Auto-Replacement File
  * @type string
- * @desc Name of the xlsx file for automatic name replacement. Place it under
- * data/localize/ (for example, name.xlsx). Leave blank to disable it.
+ * @desc Name of the xlsx/ods file for automatic name replacement. Place it under
+ * data/localize/ (name.xlsx or name.ods). Omitted extension means .xlsx. Blank disables it.
  *
  * @param ReplaceNameBox
  * @parent <NameReplace>
@@ -625,21 +635,21 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.05 多言語対応
+ * @plugindesc v1.06 多言語対応
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @url https://newrpg.seesaa.net/article/521162546.html
  *
  * @help RPGツクールMZ用の多言語対応プラグインです。
  * 
  * ◆主な機能
- * ・Excel（xlsx）ファイルを参照し、各言語の文章に変換。
+ * ・Excel（xlsx）またはLibreOffice Calc（ods）ファイルを参照し、各言語の文章に変換。
  * ・各言語のデータベースやプラグインパラメータを読み込んで切替。
  * ・登録した画像を設定言語で自動切替。
  * ・オプション画面に言語選択項目を追加。
  * ・MZ用テキスト編集エディタに連携して表示。
  * 
  * なお、Microsoft Excelである必要はありません。
- * xlsx形式で保存できるなら、Libre Officeなど無料ソフトで十分です。
+ * xlsxまたはods形式で保存できるなら、LibreOfficeなど無料ソフトで十分です。
  * 
  * ※このプラグインはなるべく上に配置してください。
  * 　順序がこれより下のプラグインのみが翻訳対象となります。
@@ -647,7 +657,10 @@
  * -------------------------------------------------------------------
  * ■xlsxファイルの配置
  * -------------------------------------------------------------------
- * [プロジェクト]/data/localize/ 以下にxlsxファイルを配置してください。
+ * [プロジェクト]/data/localize/ 以下にxlsxまたはodsファイルを配置してください。
+ * 両形式のシート構成・記入方法は共通です。以下のxlsxに関する説明はodsにも適用されます。
+ * 同じ翻訳を両形式で配置すると、同じシート名・IDは後のファイルで上書きされます。
+ * ブラウザ公開時はファイル変更後にFILE_LIST.jsonを再生成してください。
  * 
  * フォーマットはサンプルを見れば、大体分かると思います。
  * 以下詳細です。
@@ -808,17 +821,19 @@
  * （ファイルの存在確認を行うため）
  * 
  * -------------------------------------------------------------------
- * ■ブラウザ起動について
+ * ■高速化用のjson作成
  * -------------------------------------------------------------------
- * 初期状態だとブラウザ起動（Plicy、itch等）では動作しませんが、
- * 『ブラウザ用のリスト作成』をオンにすることで対応できます。
+ * オンの場合、テストプレイ時にdata/localize/json/に
+ * 言語別のjson（例：LANG_en.json）とキャッシュ用のjsonを生成します。
  * 
- * その際、テスト起動時に、data\localize\FILE_LIST.json
- * というファイルが作成されるようになります。
- * これはブラウザ起動時に読込対象となるファイル一覧を取得するためのものです。
+ * 初回生成時や翻訳データの変更時は、xlsx/odsの解析時間がかかりますが、
+ * これによって、本番ではロード時間を大幅に短縮できるようになります。
  * 
- * そのため、各xlsxのファイル名を変更した後、一度もテスト起動せず、
- * 本番ファイルをアップロードすると正常に動作しません。
+ * また、この機能を使うことでブラウザ起動にも対応できるようになります。
+ * ブラウザ起動時はこの機能を必ずオンにしてください。
+ * 
+ * 仕様上、各翻訳データ（xlsx/ods）を変更した後、一度もテスト起動せず、
+ * 本番ファイルをアップロードすると正常に変更が反映されません。
  * ※まずありえないと思いますが……。
  * 
  * -------------------------------------------------------------------
@@ -964,14 +979,13 @@
  * @text オリジナル言語はxlsx未使用
  * @type boolean
  * @default false
- * @desc 現在の言語がオリジナル言語ならば、SheetJSとxlsxを読み込みません。
+ * @desc 現在の言語がオリジナル言語ならば、SheetJSとxlsx/odsを読み込みません。
  * 
- * @param MakeBrowserFileList
- * @text ブラウザ用のリスト作成
+ * @param MakeFastJson
+ * @text 高速化用のjson作成
  * @type boolean
- * @default false
- * @desc テストプレイ時にdata/localize/FILE_LIST.jsonを作成します。
- * ブラウザ公開する場合はオンにしてください。
+ * @default true
+ * @desc テストプレイ時に言語別JSONを生成し、起動時は設定言語のJSONのみ読み込みます。公開時は生成したJSONも同梱してください。
  *
  * @param DisableFeature
  * @text [Dev]機能を無効化
@@ -1097,7 +1111,8 @@
  * @parent <NameReplace>
  * @text 自動置換ファイル
  * @type string
- * @desc 自動置換に使用するxlsxファイル名です。data/localize/ 以下に配置してください（例：name.xlsx）。
+ * @desc data/localize/ 以下のxlsx/odsファイル名です（例：name.ods）。
+ * 拡張子省略時は.xlsxを補完します。空欄で無効です。
  * 
  * @param ReplaceNameBox
  * @parent <NameReplace>
@@ -1268,7 +1283,7 @@ const pDefaultSheetName = parameters["DefaultSheetName"] !== undefined
 const pDefaultLanguage  = setDefault(parameters["DefaultLanguage"], "en");
 const pOriginalLanguage = setDefault(parameters["OriginalLanguage"]);
 const pDisableFeature   = toBoolean(parameters["DisableFeature"], false);
-const pMakeBrowserFileList = toBoolean(parameters["MakeBrowserFileList"], false);
+const pMakeFastJson      = toBoolean(parameters["MakeFastJson"], true);
 const pSkipXlsxForOriginalLanguage =
     toBoolean(parameters["SkipXlsxForOriginalLanguage"], false);
 const pUseLanguageProject = toBoolean(parameters["UseLanguageProject"], true);
@@ -1294,7 +1309,7 @@ const pAutoChangePatternList = parseImagePathList(parameters["AutoChangePatternL
 
 // 【検証用】起動時の多言語処理にかかった時間をコンソールへ出力する。
 // ※使用しない場合（通常）はfalseにしておく。
-const UseLogStartupTime = true;
+const UseLogStartupTime = false;
 function _startupNow() {
     if (UseLogStartupTime) {
         return performance.now();
@@ -1708,74 +1723,46 @@ let _dictLoading = false;
 
 // ローカライズxlsxの配置フォルダ
 const LOCALIZE_DIR = "data/localize/";
-const BROWSER_FILE_LIST = "FILE_LIST.json";
+const LOCALIZE_JSON_DIR = LOCALIZE_DIR + "json/";
 
 function _localizeFileNames(fs, dir) {
     return fs.readdirSync(dir, { withFileTypes: true })
-        .filter(entry => entry.isFile() && /\.xlsx$/i.test(entry.name)
+        .filter(entry => entry.isFile() && /\.(xlsx|ods)$/i.test(entry.name)
             && !entry.name.startsWith("~$"))
         .map(entry => entry.name).sort();
 }
 
-// 辞書の読み込み省略時も、公開用の一覧は最新にする。
-function _makeBrowserFileList() {
-    if (pDisableFeature || !pMakeBrowserFileList
-            || !Utils.isNwjs() || !Utils.isOptionValid("test")) return;
-    try {
-        const fs = require("fs");
-        const path = require("path");
-        const dir = path.join(path.dirname(process.mainModule.filename), LOCALIZE_DIR);
-        fs.mkdirSync(dir, { recursive: true });
-        const contents = JSON.stringify(_localizeFileNames(fs, dir), null, 2) + "\n";
-        const file = path.join(dir, BROWSER_FILE_LIST);
-        if (!fs.existsSync(file) || fs.readFileSync(file, "utf8") !== contents) {
-            fs.writeFileSync(file, contents, "utf8");
-        }
-    } catch (e) {
-        console.warn("NRP_MultiLanguage: Failed to create the browser file list.", e);
-    }
-}
-
 function _localizeFileUrl(file) {
-    return LOCALIZE_DIR + encodeURIComponent(file);
+    return LOCALIZE_JSON_DIR + encodeURIComponent(file);
 }
 
-async function _fetchLocalizeWorkbook(file) {
-    const response = await fetch(_localizeFileUrl(file));
-    if (!response.ok) throw new Error(`${file}: HTTP ${response.status}`);
-    return XLSX.read(await response.arrayBuffer(), { type: "array" });
-}
+/**
+ * ODSの未対応な数値書式についてSheetJSが出す警告だけを抑える。
+ * XLSX.read()は同期処理なので、読み込み後すぐにconsole.errorを戻せる。
+ */
+function _readLocalizeWorkbook(data, type, fileName) {
+    if (!/\.ods$/i.test(fileName)) return XLSX.read(data, { type: type });
 
-async function _loadLocalizeBrowser(onComplete) {
+    const originalError = console.error;
     try {
-        const response = await fetch(_localizeFileUrl(BROWSER_FILE_LIST));
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const files = await response.json();
-        if (!Array.isArray(files) || files.some(file => typeof file !== "string"
-                || !/\.xlsx$/i.test(file) || /[\\/]/.test(file))) {
-            throw new Error("Invalid browser file list");
-        }
-        const workbooks = await Promise.all(files.map(async file => {
-            try {
-                return await _fetchLocalizeWorkbook(file);
-            } catch (e) {
-                console.warn(`NRP_MultiLanguage: Failed to read ${file}.`, e);
-                return null;
+        console.error = function() {
+            if (typeof arguments[0] === "string"
+                    && arguments[0].startsWith("ODS number format may be incorrect: ")) {
+                return;
             }
-        }));
-        // 通信の完了順によって、同じIDの上書き結果が変わらないようにする。
-        workbooks.forEach((workbook, index) => {
-            if (!workbook) return;
-            try {
-                _parseWorkbook(workbook);
-            } catch (e) {
-                console.warn(`NRP_MultiLanguage: Failed to parse ${files[index]}.`, e);
-            }
-        });
-    } catch (e) {
-        console.warn("NRP_MultiLanguage: Failed to load data/localize/FILE_LIST.json. "
-            + "Enable MakeBrowserFileList, run test play, and include the generated list in the release.", e);
+            return originalError.apply(this, arguments);
+        };
+        return XLSX.read(data, { type: type });
+    } finally {
+        console.error = originalError;
     }
+}
+
+function _finishBrowserWithoutDictionary(onComplete, error) {
+    console.error("NRP_MultiLanguage: Browser play requires MakeFastJson and "
+        + "the generated LANG_<language code>.json files in data/localize/json/.", error || "");
+    _localizeDictionary = new Map();
+    _nameReplaceDictionary = new Map();
     _dictLoaded = true;
     _dictLoading = false;
     onComplete();
@@ -1791,6 +1778,10 @@ function _loadLocalizeDictionary(onComplete) {
         _dictLoaded = true;
         _dictLoading = false;
         onComplete();
+        return;
+    }
+    if (!Utils.isNwjs()) {
+        _finishBrowserWithoutDictionary(onComplete);
         return;
     }
     if (_dictLoaded) { onComplete(); return; }
@@ -1812,17 +1803,10 @@ function _loadLocalizeDictionary(onComplete) {
             onComplete();
             return;
         }
-        if (Utils.isNwjs()) {
-            _loadLocalizeNwjs(function() {
-                _logStartupTime("Load localization dictionary", dictionaryLoadStartTime);
-                onComplete();
-            });
-        } else {
-            _loadLocalizeBrowser(function() {
-                _logStartupTime("Load localization dictionary (browser)", dictionaryLoadStartTime);
-                onComplete();
-            });
-        }
+        _loadLocalizeNwjs(function() {
+            _logStartupTime("Load localization dictionary", dictionaryLoadStartTime);
+            onComplete();
+        });
     });
 }
 
@@ -1848,7 +1832,7 @@ function _loadLocalizeNwjs(onComplete) {
             const fileLoadStartTime = _startupNow();
             try {
                 const buf      = fs.readFileSync(path.join(dir, file));
-                const workbook = XLSX.read(buf, { type: "buffer" });
+                const workbook = _readLocalizeWorkbook(buf, "buffer", file);
                 _parseWorkbook(workbook);
             } catch (e) {
                 console.warn(`NRP_MultiLanguage: Failed to read ${file}.`, e);
@@ -1935,6 +1919,219 @@ function _parseWorkbook(workbook) {
     }
 }
 
+// 言語別JSONには、自動置換辞書も含めてSheetJSの起動時ロードをなくす。
+const FAST_JSON_META = "LANG_CACHE_META.json";
+const FAST_SOURCE_CACHE = "LANG_SOURCE_CACHE.json";
+
+function _fastJsonFileName(code) {
+    return "LANG_" + encodeURIComponent(code) + ".json";
+}
+
+function _autoReplaceFileName() {
+    if (!pNameAutoReplaceFile) return "";
+    let file = pNameAutoReplaceFile.replace(/\\/g, "/").split("/").pop();
+    if (!/\.(xlsx|ods)$/i.test(file)) file += ".xlsx";
+    return file;
+}
+
+function _parseWorkbookForFastJson(workbook, dictionaries, autoReplaceFile) {
+    for (const sheetName of workbook.SheetNames) {
+        const sheet = workbook.Sheets[sheetName];
+        const range = _effectiveSheetRange(sheet);
+        if (!range) continue;
+        const rows = XLSX.utils.sheet_to_json(sheet, {
+            header: 1, defval: "", range: range,
+        });
+        if (rows.length < 2) continue;
+
+        const header = rows[0];
+        const idCol = header.findIndex(h => String(h).trim() === "ID");
+        const originalCol = autoReplaceFile
+            ? header.findIndex(h => String(h).trim() === "original") : -1;
+        const sheetKey = sheetName.toLowerCase();
+
+        for (const [code, dictionary] of dictionaries) {
+            const langCol = header.indexOf(code);
+            if (langCol < 0) continue;
+
+            if (idCol >= 0 && idCol !== langCol) {
+                const sheetTexts = dictionary.sheets[sheetKey]
+                    || (dictionary.sheets[sheetKey] = Object.create(null));
+                for (let r = 1; r < rows.length; r++) {
+                    const row = rows[r];
+                    const id = String(row[idCol] ?? "").trim();
+                    if (id) sheetTexts[id] = String(row[langCol] ?? "").trim();
+                }
+            }
+
+            if (autoReplaceFile && idCol >= 0 && originalCol >= 0) {
+                for (let r = 1; r < rows.length; r++) {
+                    const row = rows[r];
+                    const original = String(row[originalCol] ?? "").trim();
+                    const value = String(row[langCol] ?? "").trim();
+                    if (original && value) dictionary.nameReplace[original] = value;
+                }
+            }
+        }
+    }
+}
+
+function _refreshFastJsonCache(onComplete) {
+    const generationStartTime = _startupNow();
+    try {
+        const fs = require("fs");
+        const path = require("path");
+        const dir = path.join(path.dirname(process.mainModule.filename), LOCALIZE_DIR);
+        const jsonDir = path.join(dir, "json");
+        fs.mkdirSync(jsonDir, { recursive: true });
+        const files = _localizeFileNames(fs, dir);
+        const codes = [...new Set(pLanguageList.map(entry => entry.LangCode).filter(Boolean))];
+        const nameFile = _autoReplaceFileName();
+        const source = {
+            version: 2,
+            languages: codes,
+            nameFile: nameFile,
+            files: files.map(file => {
+                const stat = fs.statSync(path.join(dir, file));
+                return { name: file, size: stat.size, modified: stat.mtimeMs };
+            }),
+        };
+        const signature = JSON.stringify(source);
+        const metaPath = path.join(jsonDir, FAST_JSON_META);
+        const cachePath = path.join(jsonDir, FAST_SOURCE_CACHE);
+        const hasAllLanguages = codes.every(code =>
+            fs.existsSync(path.join(jsonDir, _fastJsonFileName(code))));
+        if (hasAllLanguages && fs.existsSync(cachePath) && fs.existsSync(metaPath)
+                && fs.readFileSync(metaPath, "utf8") === signature) {
+            onComplete(true);
+            return;
+        }
+
+        let previous = null;
+        const legacyCachePath = path.join(dir, FAST_SOURCE_CACHE);
+        const previousPath = fs.existsSync(cachePath) ? cachePath : legacyCachePath;
+        if (fs.existsSync(previousPath)) {
+            try {
+                previous = JSON.parse(fs.readFileSync(previousPath, "utf8"));
+            } catch (e) {
+                // 壊れた中間キャッシュは全ファイルから作り直す。
+            }
+        }
+        const canReuse = previous && previous.version === 1
+            && JSON.stringify(previous.languages) === JSON.stringify(codes)
+            && previous.nameFile === nameFile && Array.isArray(previous.files);
+        const previousFiles = new Map(canReuse
+            ? previous.files.filter(entry => entry && typeof entry.name === "string")
+                .map(entry => [entry.name, entry])
+            : []);
+        const entries = source.files.map(file => {
+            const cached = previousFiles.get(file.name);
+            if (cached && cached.size === file.size && cached.modified === file.modified
+                    && cached.dictionaries && codes.every(code => {
+                        const data = cached.dictionaries[code];
+                        return data && data.sheets && data.nameReplace;
+                    })) {
+                return cached;
+            }
+            return { ...file, dictionaries: null };
+        });
+        const changedEntries = entries.filter(entry => !entry.dictionaries);
+
+        function finishGeneration() {
+            try {
+                for (const entry of changedEntries) {
+                    const fileStartTime = _startupNow();
+                    const dictionaries = new Map(codes.map(code => [code, {
+                        sheets: Object.create(null),
+                        nameReplace: Object.create(null),
+                    }]));
+                    const workbook = _readLocalizeWorkbook(
+                        fs.readFileSync(path.join(dir, entry.name)), "buffer", entry.name);
+                    _parseWorkbookForFastJson(workbook, dictionaries,
+                        entry.name.toLowerCase() === nameFile.toLowerCase());
+                    entry.dictionaries = Object.fromEntries(dictionaries);
+                    _logStartupTime(`Regenerate fast JSON: ${entry.name}`, fileStartTime);
+                }
+
+                const dictionaries = new Map(codes.map(code => [code, {
+                    version: 1,
+                    language: code,
+                    sheets: Object.create(null),
+                    nameReplace: Object.create(null),
+                }]));
+                for (const entry of entries) {
+                    for (const [code, dictionary] of dictionaries) {
+                        const contribution = entry.dictionaries[code];
+                        for (const [sheet, texts] of Object.entries(contribution.sheets)) {
+                            const target = dictionary.sheets[sheet]
+                                || (dictionary.sheets[sheet] = Object.create(null));
+                            Object.assign(target, texts);
+                        }
+                        Object.assign(dictionary.nameReplace, contribution.nameReplace);
+                    }
+                }
+                if (nameFile && !files.some(file =>
+                        file.toLowerCase() === nameFile.toLowerCase())) {
+                    console.warn(`NRP_MultiLanguage: Auto-Replacement File cannot be found: ${nameFile}`);
+                }
+                for (const [code, dictionary] of dictionaries) {
+                    fs.writeFileSync(path.join(jsonDir, _fastJsonFileName(code)),
+                        JSON.stringify(dictionary), "utf8");
+                }
+                fs.writeFileSync(cachePath, JSON.stringify({
+                    version: 1, languages: codes, nameFile: nameFile, files: entries,
+                }), "utf8");
+                fs.writeFileSync(metaPath, signature, "utf8");
+                _logStartupTime("Generate fast language JSON", generationStartTime);
+                onComplete(true);
+            } catch (e) {
+                console.warn("NRP_MultiLanguage: Failed to create fast language JSON.", e);
+                onComplete(false);
+            }
+        }
+
+        if (changedEntries.length === 0) {
+            finishGeneration();
+        } else {
+            _loadSheetJs(function() {
+                if (typeof XLSX === "undefined") {
+                    onComplete(false);
+                    return;
+                }
+                finishGeneration();
+            });
+        }
+    } catch (e) {
+        console.warn("NRP_MultiLanguage: Failed to check fast language JSON.", e);
+        onComplete(false);
+    }
+}
+
+async function _loadFastLanguageJson() {
+    const file = _fastJsonFileName(_currentLangCode);
+    let dictionary;
+    if (Utils.isNwjs()) {
+        const fs = require("fs");
+        const path = require("path");
+        const dir = path.join(path.dirname(process.mainModule.filename), LOCALIZE_JSON_DIR);
+        dictionary = JSON.parse(fs.readFileSync(path.join(dir, file), "utf8"));
+    } else {
+        const response = await fetch(_localizeFileUrl(file));
+        if (!response.ok) throw new Error(`${file}: HTTP ${response.status}`);
+        dictionary = await response.json();
+    }
+    if (!dictionary || dictionary.version !== 1
+            || dictionary.language !== _currentLangCode
+            || !dictionary.sheets || !dictionary.nameReplace) {
+        throw new Error(`Invalid fast language JSON: ${file}`);
+    }
+    _localizeDictionary = new Map(Object.entries(dictionary.sheets).map(
+        ([sheet, texts]) => [sheet, new Map(Object.entries(texts))]));
+    _nameReplaceDictionary = new Map(Object.entries(dictionary.nameReplace));
+    _dictLoaded = true;
+    _dictLoading = false;
+}
+
 /**
  * 【独自】辞書からテキストを取得する。
  * @param {string} sheetName シート名
@@ -1988,21 +2185,17 @@ async function _loadNameReplaceDictionary() {
     if (pDisableFeature) return;
     if (!pNameAutoReplaceFile) return;
     if (typeof XLSX === "undefined") return;
+    if (!Utils.isNwjs()) return;
 
     try {
         // @type file は拡張子なしで返ることがあるので .xlsx を補完
         let fileName = pNameAutoReplaceFile.replace(/\\/g, "/").split("/").pop();
-        if (!/\.xlsx$/i.test(fileName)) fileName += ".xlsx";
-        let workbook;
-        if (Utils.isNwjs()) {
-            const fs = require("fs");
-            const path = require("path");
-            const base = path.dirname(process.mainModule.filename);
-            const filePath = path.join(base, LOCALIZE_DIR, fileName);
-            workbook = XLSX.read(fs.readFileSync(filePath), { type: "buffer" });
-        } else {
-            workbook = await _fetchLocalizeWorkbook(fileName);
-        }
+        if (!/\.(xlsx|ods)$/i.test(fileName)) fileName += ".xlsx";
+        const fs = require("fs");
+        const path = require("path");
+        const base = path.dirname(process.mainModule.filename);
+        const filePath = path.join(base, LOCALIZE_DIR, fileName);
+        const workbook = _readLocalizeWorkbook(fs.readFileSync(filePath), "buffer", fileName);
 
         for (const sheetName of workbook.SheetNames) {
             const sheet = workbook.Sheets[sheetName];
@@ -2038,7 +2231,6 @@ const _loadLocalizeDictionaryOrig = _loadLocalizeDictionary;
 
 // SheetJSロード完了後に名前置換辞書のロードと自動シート選択を行う
 const _loadLocalizeDictionaryWithName = function(onComplete) {
-    _makeBrowserFileList();
     if (pDisableFeature) {
         _localizeDictionary = new Map();
         _nameReplaceDictionary = new Map();
@@ -2048,7 +2240,7 @@ const _loadLocalizeDictionaryWithName = function(onComplete) {
         return;
     }
 
-    if (pSkipXlsxForOriginalLanguage && _isOriginalLanguage()) {
+    function skipOriginalLanguage() {
         const skipStartTime = _startupNow();
         _localizeDictionary = new Map();
         _nameReplaceDictionary = new Map();
@@ -2056,17 +2248,55 @@ const _loadLocalizeDictionaryWithName = function(onComplete) {
         _dictLoading = false;
         _logStartupTime("Skip xlsx for original language", skipStartTime);
         onComplete();
+    }
+
+    function loadSourceFiles() {
+        _loadLocalizeDictionaryOrig(async function() {
+            const nameReplaceLoadStartTime = _startupNow();
+            await _loadNameReplaceDictionary();
+            _logStartupTime("Load name replacement dictionary", nameReplaceLoadStartTime);
+            // シートが1つだけの場合は自動選択
+            _autoSelectSheet();
+            onComplete();
+        });
+    }
+
+    if (pMakeFastJson) {
+        const loadSelectedLanguage = function(cacheReady) {
+            if (pSkipXlsxForOriginalLanguage && _isOriginalLanguage()) {
+                skipOriginalLanguage();
+            } else if (!cacheReady) {
+                loadSourceFiles();
+            } else {
+                const fastLoadStartTime = _startupNow();
+                _loadFastLanguageJson().then(function() {
+                    _logStartupTime("Load fast language JSON", fastLoadStartTime);
+                    _autoSelectSheet();
+                    onComplete();
+                }).catch(function(e) {
+                    if (Utils.isNwjs()) {
+                        console.warn("NRP_MultiLanguage: Failed to load fast language JSON. "
+                            + "Falling back to spreadsheet files.", e);
+                        loadSourceFiles();
+                    } else {
+                        _finishBrowserWithoutDictionary(onComplete, e);
+                    }
+                });
+            }
+        };
+        if (Utils.isNwjs() && Utils.isOptionValid("test")) {
+            _refreshFastJsonCache(loadSelectedLanguage);
+        } else {
+            loadSelectedLanguage(true);
+        }
         return;
     }
 
-    _loadLocalizeDictionaryOrig(async function() {
-        const nameReplaceLoadStartTime = _startupNow();
-        await _loadNameReplaceDictionary();
-        _logStartupTime("Load name replacement dictionary", nameReplaceLoadStartTime);
-        // シートが1つだけの場合は自動選択
-        _autoSelectSheet();
-        onComplete();
-    });
+    if (pSkipXlsxForOriginalLanguage && _isOriginalLanguage()) {
+        skipOriginalLanguage();
+        return;
+    }
+    loadSourceFiles();
 };
 
 // Scene_Boot.isReady フックが参照する関数を差し替える
