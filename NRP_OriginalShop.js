@@ -535,7 +535,7 @@ const _Window_Gold_currencyUnit = Window_Gold.prototype.currencyUnit;
 Window_Gold.prototype.currencyUnit = function() {
     // 独自単位を表示
     if (isOriginalShop()) {
-        return pSuffix;
+        return pSuffix || "";
     }
     return _Window_Gold_currencyUnit.apply(this, arguments);
 };
@@ -674,19 +674,6 @@ Window_ShopSell.prototype.includes = function(item) {
 };
 
 /**
- * ●カテゴリウィンドウの領域
- */
-const _Scene_Shop_categoryWindowRect = Scene_Shop.prototype.categoryWindowRect;
-Scene_Shop.prototype.categoryWindowRect = function() {
-    const rect = _Scene_Shop_categoryWindowRect.apply(this, arguments);
-    // 独自通貨使用時かつカテゴリが無効な場合は高さを０として扱う
-    if (isOriginalShop() && pNoCategory) {
-        rect.height = 0;
-    }
-    return rect;
-};
-
-/**
  * ●独自通貨対象アイテムかどうか？
  */
 function isOriginalShopItem(item) {
@@ -802,7 +789,7 @@ function isLimitTarget() {
  */
 function isOriginalShop() {
     // シーンがショップまたはマップであること
-    // ※マップは\$による通貨表示用
+    // ※マップは\$による通過表示用
     if (SceneManager._scene instanceof Scene_Shop || SceneManager._scene instanceof Scene_Map) {
         // かつ、スイッチを満たしていること
         return $gameSwitches.value(pSwitch);
