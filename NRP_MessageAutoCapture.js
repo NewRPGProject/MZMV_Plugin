@@ -3,7 +3,7 @@
 //=============================================================================
 /*:
  * @target MZ
- * @plugindesc v1.00 Automatically capture message screens.
+ * @plugindesc v1.001 Automatically capture message screens.
  * @author Takeshi Sunagawa (https://newrpg.seesaa.net/)
  * @orderAfter NRP_MultiLanguage
  * @url https://newrpg.seesaa.net/article/521916718.html
@@ -139,7 +139,7 @@
 
 /*:ja
  * @target MZ
- * @plugindesc v1.00 メッセージ画面を自動保存します。
+ * @plugindesc v1.001 メッセージ画面を自動保存します。
  * @author 砂川赳（http://newrpg.seesaa.net/）
  * @orderAfter NRP_MultiLanguage
  * @url https://newrpg.seesaa.net/article/521916718.html
@@ -346,9 +346,15 @@
             if (list?.[commandIndex]?.code === 102) {
                 return { speaker: "", text: list[commandIndex].parameters[0].join("\n") };
             }
-            if (!list || list[commandIndex]?.code !== 101) throw new Error("original text cannot be identified.");
+            if (!list || list[commandIndex]?.code !== 101) {
+                // 元のテキストを特定できない。
+                // throw new Error("original text cannot be identified.");
+                return fallback;
+            }
             const texts = [];
-            for (let i = commandIndex + 1; list[i]?.code === 401; i++) texts.push(list[i].parameters[0]);
+            for (let i = commandIndex + 1; list[i]?.code === 401; i++) {
+                texts.push(list[i].parameters[0]);
+            }
             return { speaker: list[commandIndex].parameters[4] || "", text: texts.join("\n") };
         } catch (error) {
             console.warn("NRP_MessageAutoCapture: Original text acquisition failure.", source, error);
